@@ -29,16 +29,16 @@ Phase 間でコードは共有しないが、**設計思想（Port/Adapter、`co
 - **Feature Store (Phase 5 で技術習得、Phase 7 で本実装)**: Vertex AI Feature Store (Feature Group / Feature View / Feature Online Store) により training-serving skew を防ぐ (Online Store を使う実務では **Feature View が serving 接続点**)。Phase 4 で BQ feature table / view の土台を作り、**Phase 5 (論理 Phase) では Phase 7 完成版コードを参照しながら Feature Store の格上げを学ぶ**。Phase 6 (論理 Phase) では Phase 7 完成版で Dataflow / Scheduled Query による更新パイプラインを学ぶ。**実装本体は Phase 7 にあり、KServe から Feature Online Store を Feature View 経由で opt-in 参照**
 - **Cloud Composer (Phase 7 で本実装、Phase 6 が論理境界)**: Managed Airflow Gen 3 を本線オーケストレーターとして **Phase 7 で本実装** (`7/study-hybrid-search-gke/infra/terraform/modules/composer/` + `7/study-hybrid-search-gke/pipeline/dags/` の 3 DAG)。**Phase 4 では Cloud Scheduler / Eventarc / Cloud Function 軽量経路で retrain trigger を扱う**。本線 retrain schedule は Composer DAG (`daily_feature_refresh` / `retrain_orchestration` / `monitoring_validation` の 3 本) + PMLE 追加 step (Dataflow / BQML / drift)。**Vertex `PipelineJobSchedule` は完全撤去** (同一 PipelineJob 二重起動禁止)、**Cloud Scheduler / Eventarc / Cloud Function trigger は軽量代替・比較対象 / smoke / manual trigger 用途として残す** (本線 retrain と同じ job を別系統で起動しないこと = 二重起動禁止)。**Phase 6 (論理 Phase) では Phase 7 完成版コードを参照しながら Composer 本線化の意義を学ぶ** (個別コード保守なし、詳細は親 [`README.md` §「Cloud Composer の位置づけ」](README.md))
   - ⚠️ **Composer DAG `retrain_orchestration` の LightGBM 接続前提**: Composer DAG が `retrain_orchestration` で「ranking_labels → training_dataset → Vertex AI Pipelines retrain」を駆動すると spec で書かれているが、**Phase 7 `pipeline/training_job/main.py` が `ml/data/loaders/ranker_repository.py` (BigQuery loader、実装済) を呼ばずに `synthetic_ranking_frames` で乱数学習している配線忘れがある**。Composer DAG が幾ら trigger しても、`training_job/main.py` の配線実装まで未接続のままだと **正解データは Vertex Pipelines retrain に届かない**。canonical 死守ラインとして Phase 7 配線実装が必要 (Phase 3 Wave 7 と並行作業)
-- **実案件 reference architecture**: Elasticsearch + Redis 同義語辞書 + ME5 + Vertex Vector Search + LightGBM (詳細は [`5/study-hybrid-search-vertex/docs/01_仕様と設計.md` §「実案件想定の reference architecture」](5/study-hybrid-search-vertex/docs/01_仕様と設計.md))。本リポは Meilisearch + Redis cache を **学習用 substitute** として据え置く。Port/Adapter で `MeilisearchAdapter` ↔ `ElasticsearchAdapter` の差し替えで到達可能な構造を維持。**Meilisearch を Elasticsearch に置換するのは user 合意必須**
+- **実案件 reference architecture**: Elasticsearch + Redis 同義語辞書 + ME5 + Vertex Vector Search + LightGBM (詳細は [`5/study-hybrid-search-vertex/docs/architecture/01_仕様と設計.md` §「実案件想定の reference architecture」](5/study-hybrid-search-vertex/docs/architecture/01_仕様と設計.md))。本リポは Meilisearch + Redis cache を **学習用 substitute** として据え置く。Port/Adapter で `MeilisearchAdapter` ↔ `ElasticsearchAdapter` の差し替えで到達可能な構造を維持。**Meilisearch を Elasticsearch に置換するのは user 合意必須**
 - **Event schema 共通契約 (v3 設計改訂、2026-05-05)**: 検索 MLOps の継続改善サイクル (行動ログ → 正解データ → 再学習 → 評価 → deployment gate) を Phase 3 / 4 / 7 で同型に維持するため、以下の 3 テーブル + `action_type` enum + 重み付き relevance label を **Phase 3 PostgreSQL → Phase 4 BigQuery → Phase 7 Composer DAG** で同型に保つ:
   - `search_events` (`event_id` / `search_id` / `user_id` / `session_id` / `query` / `filters_json` / `timestamp` / `app_version` / `model_version`)
   - `search_impressions` (`event_id` / `search_id` / `property_id` / `rank` / `lexical_score` / `vector_score` / `rrf_score` / `rerank_score` / `timestamp`)
   - `user_actions` (`event_id` / `search_id` / `property_id` / `action_type` / `action_value` / `timestamp`)
   - `action_type` enum 8 種: `click` / `detail_view` / `favorite` / `request_button_click` / `request_complete` / `inquiry_complete` / `contract` / `bounce`
-  - ※ **長時間滞在は `action_type` enum 値ではなく `action_value` 修飾子の概念** (`detail_view` の dwell time として `action_value` 列に入る予約)。enum 8 種にカウントされない。詳細は Phase 3 [`docs/02_移行ロードマップ.md` §2.1](3/study-hybrid-search-local/docs/02_移行ロードマップ.md)
+  - ※ **長時間滞在は `action_type` enum 値ではなく `action_value` 修飾子の概念** (`detail_view` の dwell time として `action_value` 列に入る予約)。enum 8 種にカウントされない。詳細は Phase 3 [`docs/tasks/02_移行ロードマップ.md` §2.1](3/study-hybrid-search-local/docs/tasks/02_移行ロードマップ.md)
   - 重み付き relevance label (LightGBM LambdaRank 学習 dataset の正本): `click`=1, `detail_view`=2, `favorite`=3, `request_button_click`=4, `request_complete`=5, `inquiry_complete`=7, `contract`=10, `no_action`=0, `bounce`=0/-1
   - `ranking_labels.label_source` カラムに書く文字列値の canonical: `no_action` / `bounce` 短形 (Phase 7 [`docs/architecture/01_仕様と設計.md §2.1`](7/study-hybrid-search-gke/docs/architecture/01_仕様と設計.md) と統一)
-  - ⚠️ **canonical 死守ライン (LightGBM 接続)**: 上記 `ranking_labels` を集めても、**`pipeline/training_job/main.py` から Repository 経由で trainer に届く配線実装が完了していない限り LightGBM 学習に流れない**。Phase 3 Wave 1-4 完了時点では trainer は `synthetic_ranking_frames(seed=42)` で乱数学習しており、`ranking_labels` 未接続。**Phase 3 Wave 7** = `ml/data/loaders/postgres_ranker_repository.py` を新設し `training_job/main.py` から呼ぶ配線実装、**Phase 7** = 既存 `7/study-hybrid-search-gke/ml/data/loaders/ranker_repository.py` を `pipeline/training_job/main.py` に配線、で初めて Event schema の正解データが LightGBM に届く。詳細は Phase 3 [`docs/02_移行ロードマップ.md` §0 不変ルール 0 + §5 Wave 7](3/study-hybrid-search-local/docs/02_移行ロードマップ.md)
+  - ⚠️ **canonical 死守ライン (LightGBM 接続)**: 上記 `ranking_labels` を集めても、**`pipeline/training_job/main.py` から Repository 経由で trainer に届く配線実装が完了していない限り LightGBM 学習に流れない**。Phase 3 Wave 1-4 完了時点では trainer は `synthetic_ranking_frames(seed=42)` で乱数学習しており、`ranking_labels` 未接続。**Phase 3 Wave 7** = `ml/data/loaders/postgres_ranker_repository.py` を新設し `training_job/main.py` から呼ぶ配線実装、**Phase 7** = 既存 `7/study-hybrid-search-gke/ml/data/loaders/ranker_repository.py` を `pipeline/training_job/main.py` に配線、で初めて Event schema の正解データが LightGBM に届く。詳細は Phase 3 [`docs/tasks/02_移行ロードマップ.md` §0 不変ルール 0 + §5 Wave 7](3/study-hybrid-search-local/docs/tasks/02_移行ロードマップ.md)
   - **クリックは「完全な正解」ではなく弱教師信号**として扱う (表示順位・写真の見栄え・釣り物件等の影響を受けるため)。複合ラベルで LightGBM LambdaRank 用 relevance label に変換するのが canonical
   - **詳細は [`docs/将来展開-v3.md`](docs/将来展開-v3.md) §「Event schema の標準化」 / §「ラベル作成の設計」を参照**
 - **Phase 5 / 6 は論理 Phase なので独立コードを持たない** (2026-05-03 改訂)。Phase 5 / 6 の技術習得は Phase 7 完成版コード (`7/study-hybrid-search-gke/` 配下) を参照することで行う。**Phase 7 中核コード (`/search` デフォルト挙動) は絶対に変えない** — Phase 5 / 6 で学ぶ Vertex AI / Composer / PMLE 等の追加技術は Phase 7 の opt-in feature flag / 別 Port / 別 endpoint として既に集約済
@@ -99,11 +99,11 @@ Phase 4 / 5 / 6 / 7 はローカル CI 同等チェックとして `make check` 
 
 これらは本リポ外なので、パスが実在するかは必要時に確認する。
 
-## current sprint の正本 (`docs/TASKS.md`)
+## current sprint の正本 (`docs/tasks/TASKS.md`)
 
-各 phase の `docs/TASKS.md` を **current sprint の正本** とする。「現在の目的 / 今回の作業対象 / 今回はやらない / 完了条件 / 実装済 / 未実装」を 1 ファイルに集約。長期 backlog/index は従来通り `docs/tasks/02_移行ロードマップ.md`、過去判断履歴は `docs/decisions/` (Phase 1/2/6/7)。権威順位は `02 > TASKS > 01 > README > CLAUDE`。
+各 phase の `docs/tasks/TASKS.md` を **current sprint の正本** とする。「現在の目的 / 今回の作業対象 / 今回はやらない / 完了条件 / 実装済 / 未実装」を 1 ファイルに集約。長期 backlog/index は `docs/tasks/02_移行ロードマップ.md`、過去判断履歴は `docs/decisions/`。権威順位は `02 > TASKS > 01 > README > CLAUDE`。
 
-**Phase 7 のみフォルダ構造**: Phase 7 では docs/ 配下を `architecture/` (01,03) / `tasks/` (TASKS, TASKS_ROADMAP) / `runbook/` (04,05) / `decisions/` / `conventions/` に再編済。`docs/tasks/TASKS.md` (current sprint) / `docs/tasks/TASKS_ROADMAP.md` (長期 backlog + Wave 1-3 詳細) / `docs/architecture/01_仕様と設計.md` / `docs/runbook/04_検証.md` / `docs/runbook/05_運用.md` を正本とする。Phase 1-6 は従来構造 (番号付き flat、`docs/02_移行ロードマップ.md` 等) を維持。
+**Phase 1-7 共通構造**: 現在は Phase 1-7 の docs/ 配下を `architecture/` / `tasks/` / `runbook/` / `decisions/` / `conventions/` ベースへ統一している。基本の正本は `docs/tasks/TASKS.md` (current sprint) / `docs/tasks/02_移行ロードマップ.md` (長期 backlog) / `docs/architecture/01_仕様と設計.md` / `docs/runbook/04_検証.md` / `docs/runbook/05_運用.md`。Phase 7 はこれに加えて `docs/tasks/TASKS_ROADMAP.md` を持つ。
 
 ## Claude Code 標準セット (`.claude/` 一式)
 
@@ -117,7 +117,7 @@ phase 横断のエージェント / スキル / コマンド / フックは **ro
 | skill | `phase-doc-sync` | phase 横断 doc 同期。`.github/skills/phase-doc-sync/SKILL.md` の複製 (両方 canonical) |
 | skill | `port-adapter-scaffolder` | 新 Port を切るときの 6 ステップ (Port → Noop adapter → RULES → Fake → composition root → 本番 adapter → 03_実装カタログ追記) |
 | command | `/check-parity` | `feature-parity-checker` を呼ぶ薄い wrapper |
-| hook | `SessionStart` (`hooks/show-tasks.sh`) | phase root を解決し `docs/tasks/TASKS.md` (Phase 7) または `docs/TASKS.md` (Phase 1-6) の先頭 50 行を表示。phase 外では何もしない |
+| hook | `SessionStart` (`hooks/show-tasks.sh`) | phase root を解決し `docs/tasks/TASKS.md` の先頭 50 行を表示。phase 外では何もしない |
 | hook | `PostToolUse` (`hooks/check-layers.sh`) | Edit/Write/MultiEdit の対象が Port-Adapter sensitive area (app/services/, app/composition_root.py, app/api/, app/domain/, app/schemas/, ml/<feat>/{ports,adapters}/, pipeline/<job>/ports/, pipeline/dags/, scripts/ci/layers.py) なら `make check-layers` をバックグラウンド実行、失敗時のみ stderr に短い出力 |
 
 その他:

@@ -241,7 +241,7 @@ study-gcp-mlops/
   - **ベクトル検索**: BigQuery `VECTOR_SEARCH` (GCP マネージドサービス基礎習得の範囲、Vertex Vector Search への置換は Phase 7 完成版で実施)
 - **扱わない (Phase 7 完成版コードに集約、教育上は Phase 5 / 6 で分解説明)**: Vertex AI Pipelines / Vertex Feature Store / Vertex Vector Search / Vertex Model Registry / Cloud Composer / Dataflow / GKE / KServe / PMLE 追加技術
 - **Phase 4 の到達点**: BigQuery 上で NDCG@10 / Recall@K / CTR / CVR を計算でき、再学習候補モデルを GCS に作れること。Vertex Model Registry への登録は Phase 7 側に寄せ、Phase 4 では GCS model artifact + BigQuery metrics までで止める
-- **⚠️ Phase 4 LightGBM 接続前提**: 上記の「再学習候補モデル」が **実 BigQuery `ranking_labels` 由来** で学習されるためには、**Phase 3 Wave 7 で `ml/data/loaders/postgres_ranker_repository.py` を新設し `pipeline/training_job/main.py` に配線する** 実装が完了している必要がある。現状 (Phase 3 Wave 1-4 完了時点) では trainer は `synthetic_ranking_frames(seed=42)` で乱数学習しており、`ranking_labels` を見ていない。Phase 4 では Repository 差し替え (`PostgresRankerRepository` → `BigQueryRankerRepository`) で BigQuery 経路に足し算するが、**Phase 3 Wave 7 未完了のままだと Phase 4 でも乱数学習が継続する**。canonical 死守ラインとして Phase 3 [`docs/02_移行ロードマップ.md` §0 不変ルール 0 + §5 Wave 7](3/study-hybrid-search-local/docs/02_移行ロードマップ.md) を遵守
+- **⚠️ Phase 4 LightGBM 接続前提**: 上記の「再学習候補モデル」が **実 BigQuery `ranking_labels` 由来** で学習されるためには、**Phase 3 Wave 7 で `ml/data/loaders/postgres_ranker_repository.py` を新設し `pipeline/training_job/main.py` に配線する** 実装が完了している必要がある。現状 (Phase 3 Wave 1-4 完了時点) では trainer は `synthetic_ranking_frames(seed=42)` で乱数学習しており、`ranking_labels` を見ていない。Phase 4 では Repository 差し替え (`PostgresRankerRepository` → `BigQueryRankerRepository`) で BigQuery 経路に足し算するが、**Phase 3 Wave 7 未完了のままだと Phase 4 でも乱数学習が継続する**。canonical 死守ラインとして Phase 3 [`docs/tasks/02_移行ロードマップ.md` §0 不変ルール 0 + §5 Wave 7](3/study-hybrid-search-local/docs/tasks/02_移行ロードマップ.md) を遵守
 - **Phase 3,4 アプリ差異の極小化** (2026-05-05 補追): Phase 3 と Phase 4 の `app/` 配下は完全同一、adapter のみ差し替え。アプリから取得不可な 4 種 (長時間滞在 / `inquiry_complete` / `contract` / `bounce`) は **Phase 4 でも UI / JS / Pydantic / EventWriter Port では実装せず**、BigQuery labeling SQL で `definitions/labeling/synthetic_actions.yaml` に基づき synthetic 注入 (Phase 3 と同 fixture / 同ロジック流用)
 
 ### Phase 5 / 6 (論理 Phase)
@@ -261,7 +261,7 @@ study-gcp-mlops/
 
 ## 6. 学習運用 (Phase 別 成果物の置き場 — 教育設計レベルの段差表)
 
-Phase ごとに成果物・評価結果・実行履歴の置き場を **段階移行** させる。具体的なコマンド / SA bind / IAM 設定など実装詳細は phase 配下 `docs/runbook/04_運用.md` (Phase 7 は `docs/runbook/05_運用.md`) が正本。本表は「どの Phase で何が登場するか」の俯瞰のみ。
+Phase ごとに成果物・評価結果・実行履歴の置き場を **段階移行** させる。具体的なコマンド / SA bind / IAM 設定など実装詳細は phase 配下 `docs/runbook/05_運用.md` が正本で、`docs/runbook/04_検証.md` が確認ゲート。本表は「どの Phase で何が登場するか」の俯瞰のみ。
 
 ### 全 Phase 共通ツール
 
@@ -324,7 +324,8 @@ Phase 1 → 2 → 3 → 4 → 5 (資料) → 6 (資料) → 7 の番号順。
 - `docs/README.md` — ルート docs の入口と参照優先順位
 - `docs/architecture/01_仕様と設計.md` — Phase 1〜7 の仕様設計ハブ
 - `docs/architecture/03_実装カタログ.md` — Phase 1〜7 の実装カタログハブ
-- `docs/runbook/04_運用.md` — Phase 1〜7 の運用ハブ
+- `docs/runbook/05_運用.md` — Phase 1〜7 の運用ハブ
+- `docs/runbook/04_検証.md` — Phase 1〜7 の検証ハブ
 - `docs/conventions/` — 規約・配置・命名の正本セット
 - `docs/phases/README.md` — Phase 別 docs 入口
 - `docs/教育資料/02_移行ロードマップ.md` — 教育資料の改修計画書
@@ -333,7 +334,7 @@ Phase 1 → 2 → 3 → 4 → 5 (資料) → 6 (資料) → 7 の番号順。
 
 - `docs/phases/phase1/README.md` 〜 `docs/phases/phase5/README.md`
 - `6/study-hybrid-search-pmle/README.md` (論理 Phase)
-- `6/study-hybrid-search-pmle/docs/01_仕様と設計.md` (論理 Phase の技術習得主眼)
+- `6/study-hybrid-search-pmle/docs/architecture/01_仕様と設計.md` (論理 Phase の技術習得主眼)
 - `7/study-hybrid-search-gke/docs/architecture/01_仕様と設計.md` (canonical)
 - `7/study-hybrid-search-gke/docs/tasks/TASKS_ROADMAP.md` (到達ゴール: GKE + KServe)
 
@@ -386,11 +387,11 @@ Phase 1 → 2 → 3 → 4 → 5 (資料) → 6 (資料) → 7 の番号順。
 
 ### Phase 3,4 アプリ差異の極小化 + アプリ取得不可 4 種の synthetic 注入 (2026-05-05 補追)
 
-**`action_type` enum 8 種の内訳** (Phase 3 [`docs/02_移行ロードマップ.md`](3/study-hybrid-search-local/docs/02_移行ロードマップ.md) §2.1 / §4.7 で確定):
+**`action_type` enum 8 種の内訳** (Phase 3 [`docs/tasks/02_移行ロードマップ.md`](3/study-hybrid-search-local/docs/tasks/02_移行ロードマップ.md) §2.1 / §4.7 で確定):
 
 - **アプリ emit 5 種** (Phase 3-7 全フェーズ共通の UI / Pydantic / EventWriter Port で実装): `click` / `detail_view` / `favorite` / `request_button_click` / `request_complete`
 - **アプリから取得不可な 4 種 (= synthetic 注入専用)**: 長時間滞在 / `inquiry_complete` / `contract` / `bounce`
-  - ※ **長時間滞在は `action_type` enum 値ではなく `action_value` 修飾子の概念** (`detail_view` の dwell time として `action_value` 列に入る予約)。enum 8 種にカウントされず、`ranking_labels.label_source` への注入のみで使う。詳細は Phase 3 [`docs/02_移行ロードマップ.md` §2.1](3/study-hybrid-search-local/docs/02_移行ロードマップ.md) (canonical)
+  - ※ **長時間滞在は `action_type` enum 値ではなく `action_value` 修飾子の概念** (`detail_view` の dwell time として `action_value` 列に入る予約)。enum 8 種にカウントされず、`ranking_labels.label_source` への注入のみで使う。詳細は Phase 3 [`docs/tasks/02_移行ロードマップ.md` §2.1](3/study-hybrid-search-local/docs/tasks/02_移行ロードマップ.md) (canonical)
   - 全フェーズで **UI / JS / Pydantic / EventWriter Port / `user_actions` テーブルへの INSERT 経路は実装しない**
   - dwell tracking / 問い合わせフォーム / CRM 連携 / bounce 検出は **Phase 3-7 全フェーズで実装しない** (= 「アプリからログとれない」前提が canonical)
   - **labeling_job が `definitions/labeling/synthetic_actions.yaml` に基づき `ranking_labels.label_source='synthetic_*'` で擬似正解データを書き込む** (Phase 3 PostgreSQL labeling_job、Phase 4 BigQuery labeling SQL、Phase 7 Composer DAG `retrain_orchestration` のいずれも同 YAML fixture を流用)
@@ -406,6 +407,6 @@ Phase 1 → 2 → 3 → 4 → 5 (資料) → 6 (資料) → 7 の番号順。
 - **学習目的では Meilisearch で十分** — BM25 全文検索 + 構造化フィルタ (`city` / `price_lte` / `walk_min` 等) という本リポの要件を素直にカバーできる
 - **セットアップコストが低い** — 単一バイナリ・軽量 Docker image・チューニング項目が少ないため、**学習関心事 (Port/Adapter、semantic 統合、RRF、rerank) に集中できる**
 - **adapter 差し替えで Elasticsearch へ切り替え可能** — Phase 3 で lexical 層を Port/Adapter の背後に隠しているため、**本番想定では `MeilisearchAdapter` を `ElasticsearchAdapter` に差し替えるだけ** で切り替え可能 (= 本リポジトリの軸「設計思想は一貫、adapter だけ差し替え」の具体例)
-- **実案件 reference architecture** は Phase 5 論理 Phase 資料 + Phase 7 完成版コード [`5/study-hybrid-search-vertex/docs/01_仕様と設計.md` の §「実案件想定の reference architecture」](5/study-hybrid-search-vertex/docs/01_仕様と設計.md) を参照 (Elasticsearch + Redis 同義語辞書 + ME5 + Vertex Vector Search + LightGBM の構成。本リポでは Meilisearch + Redis cache がその学習用 substitute)
+- **実案件 reference architecture** は Phase 5 論理 Phase 資料 + Phase 7 完成版コード [`5/study-hybrid-search-vertex/docs/architecture/01_仕様と設計.md` の §「実案件想定の reference architecture」](5/study-hybrid-search-vertex/docs/architecture/01_仕様と設計.md) を参照 (Elasticsearch + Redis 同義語辞書 + ME5 + Vertex Vector Search + LightGBM の構成。本リポでは Meilisearch + Redis cache がその学習用 substitute)
 
 他の選定 (LightGBM / multilingual-e5 / Redis / Vertex Vector Search (Phase 7) / BigQuery `VECTOR_SEARCH` (Phase 4) 等) は各 Phase の CLAUDE.md / README に理由を記載。
