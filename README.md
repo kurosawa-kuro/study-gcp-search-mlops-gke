@@ -15,11 +15,11 @@ MLOps 学習用の **7 フェーズ構成リポジトリ**。
 
 - Phase 1: **ML 基礎に集中** (学習・評価・保存) — **コード化対象**
 - Phase 2: **App / Pipeline / Port-Adapter** を導入 — **コード化対象**
-- Phase 3: 不動産検索ドメインで **Local ハイブリッド検索** を一巡 — **コード化対象**
-- Phase 4: **GCP MLOps の土台** (Cloud Run / BigQuery / Secret Manager / Terraform / WIF) — **コード化対象** (Phase 3 からの足し算で構築、Vertex AI 以降は含めない)
+- Phase 3: 不動産検索ドメインで **Local ハイブリッド検索 + 最小行動ログ収集** を一巡 — **コード化対象**。Meilisearch / multilingual-e5 / LightGBM LambdaRank / Redis / PostgreSQL に加えて、検索・表示・クリック・資料請求ボタンクリックを PostgreSQL に保存し、ローカルで弱教師 ranking label と LightGBM 再学習用 training dataset を作成する
+- Phase 4: **GCP MLOps の土台 + 検索ログ正解データパイプライン** — **コード化対象** (Phase 3 からの足し算で構築、Vertex AI 以降は含めない)。Cloud Run / Cloud Run Jobs / GCS / BigQuery / Cloud Logging / Secret Manager / Terraform / WIF を用いて、検索アプリから発生する検索ログ・表示ログ・行動ログを GCS raw logs と BigQuery curated tables に蓄積し、BigQuery 上で正解データ・評価データ・LightGBM LambdaRank 用 training dataset・**NDCG@10 / Recall@K / CTR / CVR metrics** を作成し、GCS に再学習候補モデルを保存する
 - Phase 5: **Vertex AI MLOps 化の技術境界** — **論理 Phase (個別コード保守なし)**。Phase 7 完成版コードを基準に Vertex AI Pipelines / Feature Store / Vector Search / Model Registry を理解する
 - Phase 6: **PMLE 追加技術 + Composer 本線化の論理境界** — **論理 Phase (個別コード保守なし)**。Phase 7 完成版コードを基準に BQML / Dataflow / Explainable AI / Monitoring SLO / Cloud Composer を理解する
-- Phase 7: **教材コード完成版 / canonical 起点 / 到達ゴール** — **コード化対象**。Cloud Composer 本線 orchestration + PMLE 4 技術 + Vertex AI Pipelines + **Vertex AI Feature Store (Feature Group / Feature View / Feature Online Store)** + **Vertex Vector Search** + Model Registry + BigQuery + Meilisearch + **GKE Deployment + KServe InferenceService** をすべて本 phase 配下に本実装
+- Phase 7: **教材コード完成版 / canonical 起点 / 到達ゴール / 継続改善 MLOps サイクル** — **コード化対象**。Phase 4 の検索ログ正解データパイプラインを Cloud Composer 本線 orchestration + Vertex AI Pipelines + **Vertex AI Feature Store (Feature Group / Feature View / Feature Online Store)** + **Vertex Vector Search** + Model Registry + BigQuery + Meilisearch + **GKE Deployment + KServe InferenceService** + PMLE 4 技術に接続し、**ログ収集 → ラベル作成 → 特徴量更新 → ベクトル index 更新 → reranker 再学習 → 評価 → deployment gate → KServe 反映** までを一連の継続改善サイクルとして本 phase 配下に本実装
 
 ### 設計思想の不変性
 
@@ -41,11 +41,11 @@ MLOps 学習用の **7 フェーズ構成リポジトリ**。
 |---|---|---|---|---|---|
 | 1 | `1/study-ml-foundations/` | ML 基礎 (回帰、独立コード) | **コード化対象** | LightGBM, PostgreSQL | Docker Compose |
 | 2 | `2/study-ml-app-pipeline/` | App + Pipeline + Port/Adapter (独立コード) | **コード化対象** | FastAPI, LightGBM, PostgreSQL | Docker Compose |
-| 3 | `3/study-hybrid-search-local/` | 不動産ハイブリッド検索 (Local、独立コード) | **コード化対象** | Meilisearch, multilingual-e5, LightGBM LambdaRank, Redis, uv | uv + Docker Compose |
-| 4 | `4/study-hybrid-search-gcp/` | **GCP MLOps の土台** (Phase 3 からの足し算で構築、独立コード) | **コード化対象** | Cloud Run, Cloud Run Jobs, GCS, BigQuery, Cloud Logging, **Secret Manager**, Pub/Sub, Eventarc, Cloud Scheduler, Artifact Registry, Cloud Build, Terraform, WIF, IAM, 軽量 retrain trigger | uv + クラウド実行基盤 |
+| 3 | `3/study-hybrid-search-local/` | 不動産ハイブリッド検索 (Local) **+ 最小行動ログ収集** (独立コード) | **コード化対象** | Meilisearch, multilingual-e5, LightGBM LambdaRank, Redis, PostgreSQL event tables (`search_events` / `search_impressions` / `user_actions`), uv | uv + Docker Compose |
+| 4 | `4/study-hybrid-search-gcp/` | **GCP MLOps の土台 + 検索ログ正解データパイプライン** (Phase 3 からの足し算で構築、独立コード) | **コード化対象** | Cloud Run, Cloud Run Jobs, GCS, BigQuery (`raw_events` / curated / `ranking_labels` / `training_dataset` / `evaluation_metrics`), Cloud Logging structured log, **Secret Manager**, Eventarc, Cloud Scheduler, Cloud Function, Artifact Registry, Cloud Build, Terraform, WIF, IAM, LightGBM reranker retrain Job, GCS model artifact | uv + クラウド実行基盤 |
 | 5 | `5/study-hybrid-search-vertex/` | Vertex AI MLOps 化の技術境界 | **論理 Phase (個別コード保守なし、Phase 7 完成版を参照)** | (Phase 7 配下) Vertex AI Pipelines, Vertex AI Endpoint / KServe, Vertex AI Model Registry, Vertex AI Model Monitoring, **Vertex AI Feature Store (Feature Group / Feature View / Feature Online Store)**, **Vertex Vector Search**, Dataform | (実装なし) |
 | 6 | `6/study-hybrid-search-pmle/` | PMLE 追加技術 + Composer 本線化の論理境界 | **論理 Phase (個別コード保守なし、Phase 7 完成版を参照)** | (Phase 7 配下) BQML, Dataflow Flex Template, **Cloud Composer / Managed Airflow Gen 3**, Monitoring SLO + burn-rate alert, TreeSHAP / Explainability, **Composer-managed BigQuery monitoring query** | (実装なし) |
-| 7 | `7/study-hybrid-search-gke/` | **教材コード完成版 / canonical 起点 / 到達ゴール** | **コード化対象** | GKE Autopilot, KServe, Cloud Composer / Managed Airflow Gen 3, Vertex AI Pipelines, Vertex AI Feature Store, Vertex Vector Search, Vertex Model Registry, BigQuery, Meilisearch, BQML, Dataflow, TreeSHAP, Monitoring SLO, Gateway API + HTTPRoute, External Secrets Operator, Workload Identity, GMP (PodMonitoring), HPA, IAP (GCPBackendPolicy), NetworkPolicy, Helm provider | uv + GKE Autopilot/KServe + Composer |
+| 7 | `7/study-hybrid-search-gke/` | **教材コード完成版 / canonical 起点 / 到達ゴール / 継続改善 MLOps サイクル** | **コード化対象** | GKE Autopilot, KServe, Cloud Composer / Managed Airflow Gen 3 (3 DAG: `daily_feature_refresh` / `retrain_orchestration` / `monitoring_validation`), Vertex AI Pipelines, Vertex AI Feature Store, Vertex Vector Search, Vertex Model Registry, BigQuery, Meilisearch, BQML, Dataflow, TreeSHAP, Monitoring SLO, Gateway API + HTTPRoute, External Secrets Operator, Workload Identity, GMP (PodMonitoring), HPA, IAP (GCPBackendPolicy), NetworkPolicy, Helm provider | uv + GKE Autopilot/KServe + Composer |
 
 ---
 
@@ -186,7 +186,7 @@ Phase 2 で学んだ **Port/Adapter を、より複雑なドメインで実践�
 
 ### 4.5 Phase 3 → 4 の接続 (足し算境界)
 
-Phase 3 の Local 実装に対して、**実行基盤を GCP に移す** のが Phase 4。Vertex AI 以降は含めず、GCP マネージドサービスの基礎習得に集中:
+Phase 3 の Local 実装に対して、**実行基盤を GCP に移し、検索ログ正解データパイプラインを構築する** のが Phase 4。Vertex AI 以降は含めず、GCP マネージドサービスの基礎習得 + 行動ログ → 正解データ → 再学習サイクルの土台構築に集中:
 
 - 実行基盤: Docker Compose → Cloud Run / Cloud Run Jobs
 - データ層: PostgreSQL → BigQuery
@@ -197,8 +197,9 @@ Phase 3 の Local 実装に対して、**実行基盤を GCP に移す** のが 
 - CI/CD 認証: なし → Workload Identity Federation (SA Key 禁止)
 - 監視: 手動 → Cloud Logging + Cloud Monitoring
 - retrain trigger: 手動 → Cloud Scheduler + Eventarc + Cloud Function (軽量 orchestration、Composer 本線化は Phase 7 で実装)
+- **行動ログ → 正解データ → 再学習段差** (v3 設計改訂): Phase 3 PostgreSQL `search_events` / `search_impressions` / `user_actions` (ローカル最小契約) → Phase 4 Cloud Run 構造化ログ → Cloud Logging routing → GCS raw event logs → BigQuery `raw_events` → BigQuery `curated` / `ranking_labels` / `training_dataset` / `evaluation_metrics` tables → GCS model artifact (再学習候補)
 
-Phase 4 では **Vertex AI Pipelines / Feature Store / Vector Search / Cloud Composer / GKE / KServe は扱わない**。これらは Phase 7 完成版で扱い、教育上は Phase 5 / 6 の論理 Phase で分解説明する。
+Phase 4 では **Vertex AI Pipelines / Feature Store / Vector Search / Model Registry / Cloud Composer / Dataflow / GKE / KServe は扱わない**。これらは Phase 7 完成版で扱い、教育上は Phase 5 / 6 の論理 Phase で分解説明する。BigQuery `VECTOR_SEARCH` は Phase 4 に残し、GCP マネージドサービス基礎習得の範囲に収める。
 
 ### リポジトリ構成
 
@@ -229,11 +230,17 @@ study-gcp-mlops/
 - 検索品質改善は「この 3 要素を前提にした上で」実施
 - 置換・削減・無効化は事前に明示的な合意を必要とする
 
-### Phase 4 (GCP MLOps 土台)
+### Phase 4 (GCP MLOps 土台 + 検索ログ正解データパイプライン)
 
 - **Phase 7 完成版からの引き算ではなく、Phase 3 からの足し算で構築**
-- 扱うのは **Cloud Run / Cloud Run Jobs / BigQuery / GCS / Secret Manager / Cloud Logging / Artifact Registry / Cloud Build / Terraform / WIF / IAM / 軽量 retrain trigger (Cloud Scheduler + Eventarc + Cloud Function)** まで
-- **Vertex AI Pipelines / Feature Store / Vector Search / Model Registry / Cloud Composer / GKE / KServe / PMLE 追加技術は扱わない** (これらは Phase 7 完成版コードに集約、教育上は Phase 5 / 6 で分解説明)
+- **Phase 4 の主役は単なる Cloud Run 化ではなく、検索アプリを改善し続けるための学習データ基盤** (v3 設計改訂)
+- 扱う scope (将来展開-v3.md L218-236 と整合):
+  - **基盤**: Cloud Run / Cloud Run Jobs / BigQuery / GCS / Secret Manager / Cloud Logging / Artifact Registry / Cloud Build / Terraform / WIF / IAM
+  - **行動ログパイプライン**: Cloud Run 構造化ログ → Cloud Logging structured log → GCS raw event bucket → BigQuery `raw_events` → BigQuery `curated` / `ranking_labels` / `training_dataset` tables → BigQuery `evaluation_metrics` table (NDCG@10 / Recall@K / CTR / CVR)
+  - **再学習トリガー**: Cloud Scheduler + Eventarc + Cloud Function による軽量 orchestration → Cloud Run Job retrain → GCS model artifact 保存
+  - **ベクトル検索**: BigQuery `VECTOR_SEARCH` (GCP マネージドサービス基礎習得の範囲、Vertex Vector Search への置換は Phase 7 完成版で実施)
+- **扱わない (Phase 7 完成版コードに集約、教育上は Phase 5 / 6 で分解説明)**: Vertex AI Pipelines / Vertex Feature Store / Vertex Vector Search / Vertex Model Registry / Cloud Composer / Dataflow / GKE / KServe / PMLE 追加技術
+- **Phase 4 の到達点**: BigQuery 上で NDCG@10 / Recall@K / CTR / CVR を計算でき、再学習候補モデルを GCS に作れること。Vertex Model Registry への登録は Phase 7 側に寄せ、Phase 4 では GCS model artifact + BigQuery metrics までで止める
 
 ### Phase 5 / 6 (論理 Phase)
 
@@ -268,13 +275,14 @@ Phase 表には各 Phase で**新規に登場する**技術を載せる。下記
 
 ### Phase 別 成果物・評価・ログの置き場 (段差俯瞰)
 
-| Phase | モデル | 評価 / 実験履歴 | ログ / 監視 | CI/CD / IaC | 秘匿情報 |
-|---|---|---|---|---|---|
-| 1-3 (Local) | `model.pkl` (local filesystem) | `runs/{run_id}/` + JSON/CSV metrics | local | — | local `.env` |
-| 4 (GCP MLOps 土台) | GCS | BigQuery table | Cloud Logging + Cloud Monitoring | GitHub Actions + WIF + Terraform | **Secret Manager → Cloud Run secret injection (必須習得)** |
-| 5 (論理 Phase: Vertex AI) | (Phase 7 配下) Vertex Model Registry | (Phase 7 配下) Vertex Pipelines Metadata | (Phase 7 配下) Cloud Monitoring + Vertex Model Monitoring | Phase 4 継承 | Phase 4 継承 |
-| 6 (論理 Phase: PMLE + Composer) | Phase 5 継承 (Phase 7 配下) | Phase 5 継承 (Phase 7 配下) | (Phase 7 配下) Composer-managed BQ monitoring query + SLO + burn-rate | Phase 5 継承 | Phase 5 継承 |
-| 7 (GKE + KServe = canonical) | Vertex Model Registry | Vertex Pipelines Metadata | Cloud Monitoring + Vertex Model Monitoring + GMP (PodMonitoring) + Composer-managed BQ monitoring query + SLO + burn-rate | Phase 4 + Composer + Vertex 一式 | Secret Manager + **External Secrets Operator** (Secret Manager → K8s Secret 自動同期) |
+| Phase | モデル | 評価 / 実験履歴 | ログ / 監視 | **行動ログ / 正解データ / metrics** | CI/CD / IaC | 秘匿情報 |
+|---|---|---|---|---|---|---|
+| 1-2 (Local) | `model.pkl` (local filesystem) | `runs/{run_id}/` + JSON/CSV metrics | local | — | — | local `.env` |
+| 3 (Local + 最小行動ログ収集) | `model.pkl` (local filesystem) | `runs/{run_id}/` + JSON/CSV metrics + local NDCG@10 | local | **PostgreSQL event tables** (`search_events` / `search_impressions` / `user_actions`) + 重み付き relevance ローカル labeling job + LightGBM 再学習用 training dataset (local CSV/Parquet) | — | local `.env` |
+| 4 (GCP MLOps 土台 + 検索ログ正解データパイプライン) | GCS model artifact (再学習候補) | BigQuery `evaluation_metrics` table (NDCG@10 / Recall@K / CTR / CVR) | Cloud Logging structured log + Cloud Monitoring | **Cloud Logging → GCS raw event logs → BigQuery `raw_events` / `curated` / `ranking_labels` / `training_dataset` tables** + Cloud Run Job labeling / retrain | GitHub Actions + WIF + Terraform | **Secret Manager → Cloud Run secret injection (必須習得)** |
+| 5 (論理 Phase: Vertex AI) | (Phase 7 配下) Vertex Model Registry | (Phase 7 配下) Vertex Pipelines Metadata | (Phase 7 配下) Cloud Monitoring + Vertex Model Monitoring | Phase 4 継承 (Phase 7 配下では Feature Store / Vector Search に格上げ) | Phase 4 継承 | Phase 4 継承 |
+| 6 (論理 Phase: PMLE + Composer) | Phase 5 継承 (Phase 7 配下) | Phase 5 継承 (Phase 7 配下) | (Phase 7 配下) Composer-managed BQ monitoring query + SLO + burn-rate | Phase 5 継承 (Phase 7 配下では Composer DAG が labeling / training dataset / metrics を駆動) | Phase 5 継承 | Phase 5 継承 |
+| 7 (GKE + KServe = canonical / 継続改善 MLOps サイクル) | Vertex Model Registry | Vertex Pipelines Metadata | Cloud Monitoring + Vertex Model Monitoring + GMP (PodMonitoring) + Composer-managed BQ monitoring query + SLO + burn-rate | **Composer DAG 駆動** (`daily_feature_refresh` = Feature Store + Vector Search index 更新 / `retrain_orchestration` = `search_events` / `search_impressions` / `user_actions` / `ranking_labels` → training dataset → Vertex Pipelines retrain → Model Registry / `monitoring_validation` = `evaluation_metrics` + skew/drift + deployment gate) | Phase 4 + Composer + Vertex 一式 | Secret Manager + **External Secrets Operator** (Secret Manager → K8s Secret 自動同期) |
 
 Phase 7 で本実装する **Vertex AI Feature Store** (Feature Group / Feature View / Feature Online Store、training-serving skew 防止) と **Vertex Vector Search** (ME5 ベクトルの本番 serving index、BQ は embedding 履歴正本) は §2 Phase 一覧と Phase 7 [`docs/architecture/01_仕様と設計.md`](7/study-hybrid-search-gke/docs/architecture/01_仕様と設計.md) §2 を参照。
 
@@ -362,6 +370,19 @@ Phase 1 → 2 → 3 → 4 → 5 (資料) → 6 (資料) → 7 の番号順。
 1. **Phase 4 は GCP MLOps の土台として独立コード化する価値が高い** — Phase 5 / 6 / 7 の前提となるクラウド基盤を、Phase 3 からの足し算で自然に学べる
 2. **Phase 5 / 6 の中間コードを作るよりも、Phase 7 の完成版を正本にして技術境界を説明した方が、教材としても実務資料としても強い** — 差分コードの保守負担を避けつつ、各 Phase の技術習得主眼を段階的に説明できる
 3. **土台までは独立コード、上位レイヤーは完成版コードを分解して理解する教材** として設計するのが最も合理的
+
+### Phase 4 を「検索ログ正解データパイプライン」として再定義する理由 (2026-05-05 v3 設計改訂)
+
+旧版では Phase 4 を「GCP MLOps の土台 (Cloud Run / BigQuery / Terraform / WIF / 軽量 retrain trigger)」として位置づけていたが、v3 改訂で **Phase 4 = 「GCP MLOps の土台 + 検索ログ正解データパイプライン」** に再定義した。詳細は [`docs/将来展開-v3.md`](docs/将来展開-v3.md) 参照。
+
+判断理由:
+
+1. **v2 で「Redis 活用を指示したのに実装で使われない」破綻** が発生し、教材として canonical → code drift を許容しないという反省を踏まえた
+2. **検索 MLOps の本質は「行動ログ → 正解データ → 再学習 → 評価 → deployment gate」の継続改善サイクル** であり、Phase 4 を「単なる Cloud 化」で終わらせると Phase 7 の Composer DAG 本線オーケストレーションへの段差が大きすぎる
+3. **Event schema 共通契約** (`search_events` / `search_impressions` / `user_actions` の 3 テーブル + `action_type` enum 8 種 + 重み付き relevance label) を Phase 3 PostgreSQL → Phase 4 BigQuery → Phase 7 Composer DAG で同型維持し、Phase を跨ぐ canonical を担保する
+4. **Phase 別段差**: Phase 3 = ローカル最小行動ログ + 弱教師 labeling、Phase 4 = GCS raw + BigQuery curated + labeling SQL + LightGBM training dataset + GCS model artifact + BigQuery metrics、Phase 7 = Cloud Composer 本線 + Vertex Pipelines + Feature Store + Vector Search + Model Registry + KServe による継続改善サイクル完成版
+
+新 Phase 追加は不要 (既存 7 Phase 構成を維持)。Phase 4 のテーマ拡張のみで対応する。
 
 ### 検索エンジン (Phase 3 以降): Meilisearch
 
