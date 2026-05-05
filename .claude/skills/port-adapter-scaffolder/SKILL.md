@@ -8,7 +8,7 @@ argument-hint: 'What concept is the new Port for? (e.g. "Memorystore Redis cache
 
 ## What This Skill Produces
 
-- A 6-step proposal for adding a new Port to the **Phase 7 canonical** structure (`7/study-hybrid-search-gke/`).
+- A 6-step proposal for adding a new Port to the **root canonical** structure.
 - File path, class name, and minimal code skeleton for each step.
 - An explicit `scripts/ci/layers.py` patch suggestion so `make check-layers` keeps passing.
 - A docs entry (`docs/architecture/03_実装カタログ.md`) line so the implementation catalog stays in sync.
@@ -64,7 +64,7 @@ class Noop<Concept>:
 
 ### Step 3 — Update `scripts/ci/layers.py`
 
-If the new Port lives under an already-covered prefix (`app/services/protocols/` / `ml/<feat>/ports/`), `DIRECTORY_RULES` covers it — **no edit needed**. Verify with `rg "<module>" 7/study-hybrid-search-gke/scripts/ci/layers.py`.
+If the new Port lives under an already-covered prefix (`app/services/protocols/` / `ml/<feat>/ports/`), `DIRECTORY_RULES` covers it — **no edit needed**. Verify with `rg "<module>" scripts/ci/layers.py`.
 
 If the new Port lives outside (e.g. you added a new `ml/<new-feat>/ports/` subtree), add to `DIRECTORY_RULES`:
 ```python
@@ -124,7 +124,7 @@ class <Backend><Concept>:
         ...  # SDK call
 ```
 
-**Update**: append a row to `7/study-hybrid-search-gke/docs/architecture/03_実装カタログ.md` (Port × adapter table) so the implementation snapshot stays accurate.
+**Update**: append a row to `docs/architecture/03_実装カタログ.md` (Port × adapter table) so the implementation snapshot stays accurate.
 
 ## Decision Points
 
@@ -138,11 +138,11 @@ class <Backend><Concept>:
 - All 6 steps proposed (none skipped).
 - `RULES`/`DIRECTORY_RULES` patch is shown if needed (or "no edit needed" with verification command).
 - One line for `docs/architecture/03_実装カタログ.md`.
-- A final command for the user to run: `cd 7/study-hybrid-search-gke && make check-layers`.
+- A final command for the user to run: `make check-layers`.
 
 ## Suggested Verification Commands
 
-- After applying: `cd 7/study-hybrid-search-gke && make check-layers` — must exit 0.
-- After applying: `cd 7/study-hybrid-search-gke && SEMANTIC_BACKEND=noop LEXICAL_BACKEND=noop make api-dev` then `curl localhost:8000/livez` — must return 200.
-- Find any forgotten Port: `rg "class \w+Port" 7/study-hybrid-search-gke/app/services/protocols/ 7/study-hybrid-search-gke/ml/`.
-- Confirm composition root is the only `new`-site for the new adapter: `rg "<Backend><Concept>\(" 7/study-hybrid-search-gke/app/`.
+- After applying: `make check-layers` — must exit 0.
+- After applying: `SEMANTIC_BACKEND=noop LEXICAL_BACKEND=noop make api-dev` then `curl localhost:8000/livez` — must return 200.
+- Find any forgotten Port: `rg "class \w+Port" app/services/protocols/ ml/`.
+- Confirm composition root is the only `new`-site for the new adapter: `rg "<Backend><Concept>\(" app/`.

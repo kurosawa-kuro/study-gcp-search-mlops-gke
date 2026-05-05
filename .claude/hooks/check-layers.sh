@@ -30,25 +30,25 @@ case "$file_path" in
   *) exit 0 ;;
 esac
 
-# Walk up to find the phase root.
+# Walk up to find the repo root.
 dir=$(dirname "$file_path")
-phase_root=""
+repo_root=""
 while [ "$dir" != "/" ] && [ -n "$dir" ]; do
   if [ -f "$dir/Makefile" ] && [ -f "$dir/pyproject.toml" ]; then
-    phase_root="$dir"
+    repo_root="$dir"
     break
   fi
   dir=$(dirname "$dir")
 done
 
-[ -z "$phase_root" ] && exit 0
+[ -z "$repo_root" ] && exit 0
 
 # Background check — only output if check-layers fails.
-log_file="$phase_root/.claude-check-layers.log"
+log_file="$repo_root/.claude-check-layers.log"
 (
-  cd "$phase_root"
+  cd "$repo_root"
   if ! make check-layers > "$log_file" 2>&1; then
-    echo "[check-layers FAILED] $phase_root" >&2
+    echo "[check-layers FAILED] $repo_root" >&2
     tail -20 "$log_file" >&2
   fi
 ) </dev/null >/dev/null 2>&1 &

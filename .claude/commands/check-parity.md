@@ -1,11 +1,11 @@
 ---
-description: "Run the feature-parity-checker agent for the 6-file invariant (Phase 7 canonical)."
+description: "Run the feature-parity-checker agent for the 6-file invariant (root canonical)."
 argument-hint: "<feature-name> | <PR#> | <commit-range> | (empty for working-tree changes)"
 ---
 
 Invoke the **feature-parity-checker** agent to verify the 6-file feature parity invariant for `$ARGUMENTS`.
 
-Context: Phase 7 (`7/study-hybrid-search-gke/`) requires that any feature column change touches all 6 sites (Dataform / `build_ranker_features` / `FEATURE_COLS_RANKER` / TF `ranking_log.features` RECORD / `validate_feature_skew.sql` UNPIVOT / Vertex Feature Group). Otherwise training-serving skew leaks in.
+Context: the repo root canonical implementation requires that any feature column change touches all 6 sites (Dataform / `build_ranker_features` / `FEATURE_COLS_RANKER` / TF `ranking_log.features` RECORD / `validate_feature_skew.sql` UNPIVOT / Vertex Feature Group). Otherwise training-serving skew leaks in.
 
 Agent prompt to dispatch:
 
