@@ -2432,6 +2432,15 @@ ml = [
     { name = "lightgbm" },
     { name = "sentence-transformers" },
 ]
+ml-encoder = [
+    { name = "sentence-transformers" },
+]
+ml-reranker = [
+    { name = "lightgbm" },
+]
+ml-train = [
+    { name = "lightgbm" },
+]
 pipelines = [
     { name = "google-cloud-pipeline-components" },
     { name = "kfp" },
@@ -2468,6 +2477,8 @@ requires-dist = [
     { name = "jinja2", specifier = ">=3.1" },
     { name = "kfp", marker = "extra == 'pipelines'", specifier = ">=2.9,<3" },
     { name = "lightgbm", marker = "extra == 'ml'", specifier = ">=4.5" },
+    { name = "lightgbm", marker = "extra == 'ml-reranker'", specifier = ">=4.5" },
+    { name = "lightgbm", marker = "extra == 'ml-train'", specifier = ">=4.5" },
     { name = "numpy", specifier = ">=2.0" },
     { name = "pandas", specifier = ">=2.2" },
     { name = "prometheus-fastapi-instrumentator", specifier = ">=7.0" },
@@ -2477,9 +2488,10 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6.0" },
     { name = "redis", specifier = ">=5.0" },
     { name = "sentence-transformers", marker = "extra == 'ml'", specifier = ">=3.0" },
+    { name = "sentence-transformers", marker = "extra == 'ml-encoder'", specifier = ">=3.0" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.30" },
 ]
-provides-extras = ["ml", "pipelines"]
+provides-extras = ["ml-encoder", "ml-reranker", "ml-train", "ml", "pipelines"]
 
 [package.metadata.requires-dev]
 dev = [

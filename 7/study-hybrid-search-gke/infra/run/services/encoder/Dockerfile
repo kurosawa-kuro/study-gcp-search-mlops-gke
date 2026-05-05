@@ -1,9 +1,10 @@
 # syntax=docker/dockerfile:1.7
 # KServe InferenceService: multilingual-e5-base encoder。
-# Local build を高速化するため、search-api と同じく uv multi-stage +
-# BuildKit cache mount で third-party venv を先に固める。
+# Local build では ML_BUILDER_IMAGE=phase7-ml-base:local を渡すことで、
+# base deps 解決済み builder から sentence-transformers 分だけ差分 install する。
 
-FROM ghcr.io/astral-sh/uv:0.5.4-python3.12-bookworm-slim AS builder
+ARG ML_BUILDER_IMAGE=ghcr.io/astral-sh/uv:0.5.4-python3.12-bookworm-slim
+FROM ${ML_BUILDER_IMAGE} AS builder
 
 ENV UV_LINK_MODE=copy \
     UV_COMPILE_BYTECODE=1 \
@@ -14,7 +15,7 @@ WORKDIR /src
 
 COPY pyproject.toml uv.lock* ./
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev --extra ml --no-install-project
+    uv sync --frozen --no-dev --extra ml-encoder --no-install-project
 
 
 FROM python:3.12-slim-bookworm AS runtime

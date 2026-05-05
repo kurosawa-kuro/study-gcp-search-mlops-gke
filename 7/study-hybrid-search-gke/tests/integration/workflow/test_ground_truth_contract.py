@@ -21,6 +21,7 @@ def test_makefile_exposes_ground_truth_targets() -> None:
         "label-build: ## Materialize ranking_labels from search_impressions + user_actions",
         "build-training-dataset: ## Export ranking_labels-based training dataset CSV under dist/training_datasets",
         "ops-label-seed: ## Seed canonical user actions against /search",
+        "build-ml-base-local: ## Local docker buildx cache base for encoder/reranker builder stages",
         "verify-local-app: ## Fast local app loop (layer check + app/script unit tests, no live GCP)",
         "verify-local-ml: ## Fast local ML loop (ML/pipeline unit tests + smoke train, no deploy)",
         "verify-local-hybrid: ## Local hybrid loop (contract + app + ML; avoids deploy-all/run-all live steps)",
@@ -29,6 +30,27 @@ def test_makefile_exposes_ground_truth_targets() -> None:
         "sync-pipelines: ## uv sync for local pipeline work (base deps + dev + ml + pipelines extras)",
     ):
         assert required in makefile, f"Makefile lost ground-truth target: {required}"
+    for required in (
+        "uv sync --dev --extra ml-encoder --extra ml-reranker --extra ml-train",
+        "uv sync --dev --extra ml-train --extra pipelines",
+        "uv run --extra ml-train rank-train --dry-run",
+        "uv run --extra ml-encoder --extra ml-reranker python -m scripts.setup.local_hybrid",
+        "docker buildx build --file infra/run/services/ml_base/Dockerfile --load -t phase7-ml-base:local .",
+    ):
+        assert required in makefile, f"Makefile lost local-build optimization contract: {required}"
+
+
+def test_kserve_dockerfiles_use_split_ml_extras() -> None:
+    ml_base_dockerfile = _read("infra/run/services/ml_base/Dockerfile")
+    encoder_dockerfile = _read("infra/run/services/encoder/Dockerfile")
+    reranker_dockerfile = _read("infra/run/services/reranker/Dockerfile")
+
+    assert "uv sync --frozen --no-dev --no-install-project" in ml_base_dockerfile
+    assert "ARG ML_BUILDER_IMAGE" in encoder_dockerfile
+    assert "--extra ml-encoder --no-install-project" in encoder_dockerfile
+    assert "ARG ML_BUILDER_IMAGE" in reranker_dockerfile
+    assert "--extra ml-reranker --no-install-project" in reranker_dockerfile
+    assert "--mount=type=cache,target=/var/cache/apt,sharing=locked" in reranker_dockerfile
 
 
 def test_training_pipeline_contract_uses_ranking_labels_not_feedback_events() -> None:

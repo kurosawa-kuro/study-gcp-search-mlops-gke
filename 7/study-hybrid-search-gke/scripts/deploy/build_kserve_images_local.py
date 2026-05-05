@@ -16,6 +16,7 @@ import time
 from scripts._common import env, resolve_git_sha, run
 
 NAMESPACE = "kserve-inference"
+ML_BASE_IMAGE = "phase7-ml-base:local"
 
 
 def _step(msg: str) -> None:
@@ -99,6 +100,8 @@ def _build_local_image(*, dockerfile: str, image_uri: str) -> None:
             "build",
             "--file",
             dockerfile,
+            "--build-arg",
+            f"ML_BUILDER_IMAGE={ML_BASE_IMAGE}",
             "--tag",
             image_uri,
             "--push",
@@ -171,6 +174,25 @@ def main() -> int:
     _ensure_docker_buildx()
     _ensure_ar_auth(region)
     _ensure_kubectl_context(cluster_name, region, project_id)
+
+    _step(f"build shared ml base image={ML_BASE_IMAGE}")
+    base_proc = subprocess.run(
+        [
+            "docker",
+            "buildx",
+            "build",
+            "--file",
+            "infra/run/services/ml_base/Dockerfile",
+            "--tag",
+            ML_BASE_IMAGE,
+            "--load",
+            ".",
+        ],
+        check=False,
+    )
+    if base_proc.returncode != 0:
+        _error("docker buildx build FAILED for shared ml base image")
+        raise SystemExit(base_proc.returncode)
 
     _build_local_image(
         dockerfile="infra/run/services/encoder/Dockerfile",

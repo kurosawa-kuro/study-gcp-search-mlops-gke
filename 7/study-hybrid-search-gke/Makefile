@@ -57,7 +57,7 @@ export PROJECT_ID REGION API_SERVICE ARTIFACT_REPO VERTEX_LOCATION PIPELINE_ROOT
         sync-meili sync-synonyms \
         label-build build-training-dataset train-smoke train-smoke-persist api-dev api-dev-hybrid \
         verify-local-app verify-local-ml verify-local-hybrid clean \
-        docker-auth deploy-api deploy-api-local deploy-kserve-images deploy-kserve-images-local deploy-kserve-models kube-creds \
+        docker-auth build-ml-base-local deploy-api deploy-api-local deploy-kserve-images deploy-kserve-images-local deploy-kserve-models kube-creds \
         composer-deploy-dags build-composer-runner ops-composer-trigger ops-composer-list-runs ops-composer-task-states \
 		ops-deploy-monitor \
         ops-api-url ops-daily ops-livez ops-search ops-search-components ops-ranking ops-feedback \
@@ -91,10 +91,10 @@ sync-app: ## uv sync for app-centric local work (base deps + dev only)
 	uv sync --dev
 
 sync-ml: ## uv sync for local ML work (base deps + dev + ml extra)
-	uv sync --dev --extra ml
+	uv sync --dev --extra ml-encoder --extra ml-reranker --extra ml-train
 
 sync-pipelines: ## uv sync for local pipeline work (base deps + dev + ml + pipelines extras)
-	uv sync --dev --extra ml --extra pipelines
+	uv sync --dev --extra ml-train --extra pipelines
 
 test: ## Run pytest across the workspace
 	uv run pytest
@@ -326,16 +326,16 @@ build-training-dataset: ## Export ranking_labels-based training dataset CSV unde
 	uv run python -m pipeline.training_dataset_job.main
 
 train-smoke: ## Dry-run the ranker training job locally (synthetic data, no GCS/BQ)
-	uv run --extra ml rank-train --dry-run
+	uv run --extra ml-train rank-train --dry-run
 
 train-smoke-persist: ## Dry-run ranker trainer and copy the model to $(MODEL_PATH_OVERRIDE)
-	uv run --extra ml rank-train --dry-run --save-to "$(MODEL_PATH_OVERRIDE)"
+	uv run --extra ml-train rank-train --dry-run --save-to "$(MODEL_PATH_OVERRIDE)"
 
 api-dev: ## Start uvicorn locally (rerank-free /search requires ENABLE_SEARCH=1 + BQ creds)
 	ENABLE_SEARCH=false uv run uvicorn app.main:app --reload
 
 api-dev-hybrid: ## Start local-first hybrid stack (app + local encoder/reranker + local Meili if present)
-	env UV_CACHE_DIR=/tmp/uv-cache uv run --extra ml python -m scripts.setup.local_hybrid
+	env UV_CACHE_DIR=/tmp/uv-cache uv run --extra ml-encoder --extra ml-reranker python -m scripts.setup.local_hybrid
 
 verify-local-app: ## Fast local app loop (layer check + app/script unit tests, no live GCP)
 	$(MAKE) check-layers
@@ -348,7 +348,7 @@ verify-local-ml: ## Fast local ML loop (ML/pipeline unit tests + smoke train, no
 	uv run ruff check ml pipeline tests/unit/ml tests/unit/pipeline
 	uv run ruff format --check ml pipeline tests/unit/ml tests/unit/pipeline
 	uv run mypy ml pipeline
-	uv run --extra ml --extra pipelines pytest tests/unit/ml tests/unit/pipeline -q
+	uv run --extra ml-train --extra pipelines pytest tests/unit/ml tests/unit/pipeline -q
 	$(MAKE) train-smoke
 
 verify-local-hybrid: ## Local hybrid loop (contract + app + ML; avoids deploy-all/run-all live steps)
@@ -360,6 +360,9 @@ verify-local-hybrid: ## Local hybrid loop (contract + app + ML; avoids deploy-al
 
 docker-auth: ## (Optional) configure local docker for Artifact Registry
 	gcloud auth configure-docker $(REGION)-docker.pkg.dev --quiet
+
+build-ml-base-local: ## Local docker buildx cache base for encoder/reranker builder stages
+	docker buildx build --file infra/run/services/ml_base/Dockerfile --load -t phase7-ml-base:local .
 
 kube-creds: ## Fetch kubeconfig for the Phase 6 GKE Autopilot cluster
 	gcloud container clusters get-credentials $${GKE_CLUSTER_NAME:-hybrid-search} \
