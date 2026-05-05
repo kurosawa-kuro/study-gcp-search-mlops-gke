@@ -241,6 +241,7 @@ study-gcp-mlops/
   - **ベクトル検索**: BigQuery `VECTOR_SEARCH` (GCP マネージドサービス基礎習得の範囲、Vertex Vector Search への置換は Phase 7 完成版で実施)
 - **扱わない (Phase 7 完成版コードに集約、教育上は Phase 5 / 6 で分解説明)**: Vertex AI Pipelines / Vertex Feature Store / Vertex Vector Search / Vertex Model Registry / Cloud Composer / Dataflow / GKE / KServe / PMLE 追加技術
 - **Phase 4 の到達点**: BigQuery 上で NDCG@10 / Recall@K / CTR / CVR を計算でき、再学習候補モデルを GCS に作れること。Vertex Model Registry への登録は Phase 7 側に寄せ、Phase 4 では GCS model artifact + BigQuery metrics までで止める
+- **Phase 3,4 アプリ差異の極小化** (2026-05-05 補追): Phase 3 と Phase 4 の `app/` 配下は完全同一、adapter のみ差し替え。アプリから取得不可な 4 種 (長時間滞在 / `inquiry_complete` / `contract` / `bounce`) は **Phase 4 でも UI / JS / Pydantic / EventWriter Port では実装せず**、BigQuery labeling SQL で `definitions/labeling/synthetic_actions.yaml` に基づき synthetic 注入 (Phase 3 と同 fixture / 同ロジック流用)
 
 ### Phase 5 / 6 (論理 Phase)
 
@@ -381,6 +382,18 @@ Phase 1 → 2 → 3 → 4 → 5 (資料) → 6 (資料) → 7 の番号順。
 2. **検索 MLOps の本質は「行動ログ → 正解データ → 再学習 → 評価 → deployment gate」の継続改善サイクル** であり、Phase 4 を「単なる Cloud 化」で終わらせると Phase 7 の Composer DAG 本線オーケストレーションへの段差が大きすぎる
 3. **Event schema 共通契約** (`search_events` / `search_impressions` / `user_actions` の 3 テーブル + `action_type` enum 8 種 + 重み付き relevance label) を Phase 3 PostgreSQL → Phase 4 BigQuery → Phase 7 Composer DAG で同型維持し、Phase を跨ぐ canonical を担保する
 4. **Phase 別段差**: Phase 3 = ローカル最小行動ログ + 弱教師 labeling、Phase 4 = GCS raw + BigQuery curated + labeling SQL + LightGBM training dataset + GCS model artifact + BigQuery metrics、Phase 7 = Cloud Composer 本線 + Vertex Pipelines + Feature Store + Vector Search + Model Registry + KServe による継続改善サイクル完成版
+
+### Phase 3,4 アプリ差異の極小化 + アプリ取得不可 4 種の synthetic 注入 (2026-05-05 補追)
+
+**`action_type` enum 8 種の内訳** (Phase 3 [`docs/02_移行ロードマップ.md`](3/study-hybrid-search-local/docs/02_移行ロードマップ.md) §2.1 / §4.7 で確定):
+
+- **アプリ emit 5 種** (Phase 3-7 全フェーズ共通の UI / Pydantic / EventWriter Port で実装): `click` / `detail_view` / `favorite` / `request_button_click` / `request_complete`
+- **アプリから取得不可な 4 種 (= synthetic 注入専用)**: 長時間滞在 / `inquiry_complete` / `contract` / `bounce`
+  - 全フェーズで **UI / JS / Pydantic / EventWriter Port / `user_actions` テーブルへの INSERT 経路は実装しない**
+  - dwell tracking / 問い合わせフォーム / CRM 連携 / bounce 検出は **Phase 3-7 全フェーズで実装しない** (= 「アプリからログとれない」前提が canonical)
+  - **labeling_job が `definitions/labeling/synthetic_actions.yaml` に基づき `ranking_labels.label_source='synthetic_*'` で擬似正解データを書き込む** (Phase 3 PostgreSQL labeling_job、Phase 4 BigQuery labeling SQL、Phase 7 Composer DAG `retrain_orchestration` のいずれも同 YAML fixture を流用)
+
+**Phase 3,4 アプリ差異の極小化** (canonical 設計原則): 上記 4 種を全フェーズで実装対象外とすることで、Phase 3 と Phase 4 の `app/` 配下 (UI / JS / Pydantic schema / Service / Port 定義) は完全同一 → **adapter (DI 配線先) のみ差し替え** で Phase 4 化が成立。Pydantic `FeedbackRequest.action` は Literal 5 種に絞り、4 種をアプリ経路で弾く。`ml/labeling/policy.py` + `ml/labeling/synthetic_injector.py` + `definitions/labeling/synthetic_actions.yaml` は Phase 3-7 で **不変の純粋ロジック / fixture** (psycopg / google.cloud import 禁止 → Phase 4 / 7 で同コード流用、`scripts/ci/layers.py` で AST 検出)。
 
 新 Phase 追加は不要 (既存 7 Phase 構成を維持)。Phase 4 のテーマ拡張のみで対応する。
 
