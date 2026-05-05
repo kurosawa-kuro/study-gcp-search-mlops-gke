@@ -133,14 +133,23 @@ def fetch_task_states_json(
 
 
 def main() -> int:
+    import os as _os
+
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--dag-id", default="retrain_orchestration")
     parser.add_argument(
-        "--run-id", default="", help="DAG run id (manual__...). Omit with --latest."
+        "--dag-id",
+        default=_os.environ.get("DAG", "").strip() or "retrain_orchestration",
+        help="DAG id. Defaults to $DAG env var, then 'retrain_orchestration'.",
+    )
+    parser.add_argument(
+        "--run-id",
+        default=_os.environ.get("RUN_ID", "").strip(),
+        help="DAG run id (manual__...). Defaults to $RUN_ID env. Empty triggers --latest.",
     )
     parser.add_argument(
         "--latest",
         action="store_true",
+        default=not _os.environ.get("RUN_ID", "").strip(),
         help="Resolve run_id from `dags list-runs` (first row for dag-id).",
     )
     args = parser.parse_args()

@@ -235,9 +235,7 @@ def main() -> int:
     remaining = addresses_starting_with(INFRA, f"{KSERVE_MODULE_TARGET}.")
     if proc_rc != 0 or remaining:
         reason = (
-            "exit code 非 0"
-            if proc_rc != 0
-            else f"exit 0 だが state に {len(remaining)} 件残存"
+            "exit code 非 0" if proc_rc != 0 else f"exit 0 だが state に {len(remaining)} 件残存"
         )
         print(
             f"    targeted destroy で K8s/Helm を片付けきれず ({reason}) — "

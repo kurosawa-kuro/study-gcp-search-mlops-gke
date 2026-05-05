@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from typing import Any
@@ -241,22 +242,44 @@ def _run_alias(args: argparse.Namespace) -> dict[str, Any]:
     }
 
 
+def _env_fallback(name: str) -> str | None:
+    """Return the env var value if non-empty, else None.
+
+    Replaces the legacy ``$${VAR:+--flag=$${VAR}}`` shell shim that used to
+    live in the Makefile. ``make ops-promote-reranker VERSION_ID=N APPLY=1``
+    keeps working because make exports those names as env vars to the
+    recipe's child process.
+    """
+    value = os.environ.get(name, "").strip()
+    return value or None
+
+
+def _env_flag(name: str) -> bool:
+    """Return True when env var is set to a truthy value (matches `$${VAR:+...}`)."""
+    return bool(os.environ.get(name, "").strip())
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Promote a Vertex Model Registry version")
-    parser.add_argument("model_kind", choices=["reranker", "encoder"])
+    parser.add_argument(
+        "model_kind",
+        nargs="?",
+        default=os.environ.get("PROMOTE_KIND") or None,
+        choices=["reranker", "encoder"],
+    )
     parser.add_argument(
         "--version-id",
-        default=None,
+        default=_env_fallback("VERSION_ID"),
         help="explicit Vertex Model Registry version_id (preferred selector)",
     )
     parser.add_argument(
         "--version-alias",
-        default=None,
+        default=_env_fallback("VERSION_ALIAS"),
         help="select by an existing version alias (e.g. 'staging')",
     )
     parser.add_argument(
         "--model-id",
-        default=None,
+        default=_env_fallback("MODEL_ID"),
         help=(
             "Vertex Model resource numeric id (trailing component of "
             "projects/.../models/<id>). Use this when multiple Model resources "
@@ -267,10 +290,15 @@ def main() -> int:
     parser.add_argument(
         "--bst-rename",
         action="store_true",
+        default=_env_flag("BST_RENAME"),
         help="reranker only: copy model.txt → model.bst in artifact_uri (KServe LGBServer)",
     )
-    parser.add_argument("--apply", action="store_true")
+    parser.add_argument("--apply", action="store_true", default=_env_flag("APPLY"))
     args = parser.parse_args()
+    if args.model_kind is None:
+        return fail(
+            "promote: model_kind required (reranker|encoder) — pass as positional or PROMOTE_KIND env"
+        )
 
     try:
         result = _run_alias(args)

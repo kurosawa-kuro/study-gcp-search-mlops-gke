@@ -72,12 +72,7 @@ export PROJECT_ID REGION API_SERVICE ARTIFACT_REPO VERTEX_LOCATION PIPELINE_ROOT
         ops-vertex-all
 
 help: ## Show this help
-	@echo "First-time setup:  see README.md §セットアップ (run 'make doctor' to verify tools)"
-	@echo "Quick start:       make sync-app && make verify-local-app"
-	@echo ""
-	@awk 'BEGIN {FS = ":.*##"; printf "Targets:\n"} \
-		/^[a-zA-Z0-9_-]+:.*##/ { printf "  \033[36m%-26s\033[0m %s\n", $$1, $$2 }' \
-		$(MAKEFILE_LIST)
+	@uv run python -m scripts.lib.makefile_help $(MAKEFILE_LIST)
 
 doctor: ## Verify that prerequisite tools are installed
 	uv run python -m scripts.setup.doctor
@@ -156,27 +151,13 @@ deploy-all: ## End-to-end provisioning + search-api rollout (tf-apply → kubect
 	uv run python -m scripts.setup.deploy_all
 
 verify-deploy-all: ## Run deploy-all and aggregate stdout/stderr under logs/verification/
-	@mkdir -p "$(VERIFY_LOG_DIR)"
-	@ts=$$(date -u +%Y%m%dT%H%M%SZ); \
-	log_file="$(VERIFY_LOG_DIR)/deploy-all-$$ts.log"; \
-	status_file="$(VERIFY_LOG_DIR)/deploy-all-$$ts.exit.txt"; \
-	latest_log="$(VERIFY_LOG_DIR)/deploy-all.latest.log"; \
-	latest_status="$(VERIFY_LOG_DIR)/deploy-all.latest.exit.txt"; \
-	echo "verification-log: $$log_file"; \
-	bash -o pipefail -c '$(MAKE) deploy-all 2>&1 | tee "$$1"; printf "%s\n" "$$?" > "$$2"' -- "$$log_file" "$$status_file"; \
-	rc=$$(cat "$$status_file"); \
-	ln -sfn "$$(basename "$$log_file")" "$$latest_log"; \
-	ln -sfn "$$(basename "$$status_file")" "$$latest_status"; \
-	exit "$$rc"
+	uv run python -m scripts.verify.deploy_all
 
 state-recover: ## Import orphan GCP resources back into tfstate (緊急 cleanup 後の "alreadyExists" fail 回避、`docs/tasks/TASKS_ROADMAP.md §4.10`)
 	uv run python -m scripts.infra.state_recovery
 
 ops-deploy-monitor: ## Real-time monitor: runs deploy-all and reports live step/build stall status
-	@mkdir -p "$(MONITOR_LOG_DIR)"
-	@log_file="$(MONITOR_LOG_DIR)/$$(date -u +%Y%m%dT%H%M%SZ)-deploy-monitor.log"; \
-	echo "monitor-log: $$log_file"; \
-	bash -o pipefail -c 'uv run python -u -m scripts.deploy.monitor 2>&1 | tee "$$0"' "$$log_file"
+	uv run python -u -m scripts.deploy.monitor --label deploy-monitor
 
 deploy-all-direct: ## Compatibility alias of deploy-all (Phase4 naming)
 	$(MAKE) deploy-all
@@ -202,10 +183,7 @@ run-all-core: ## Core validation flow after deploy (no monitor wrapper)
 	$(MAKE) ops-accuracy-report
 
 ops-run-all-monitor: ## Real-time monitor for run-all-core
-	@mkdir -p "$(MONITOR_LOG_DIR)"
-	@log_file="$(MONITOR_LOG_DIR)/$$(date -u +%Y%m%dT%H%M%SZ)-run-all-monitor.log"; \
-	echo "monitor-log: $$log_file"; \
-	bash -o pipefail -c 'uv run python -u -m scripts.deploy.monitor --label run-all -- make run-all-core 2>&1 | tee "$$0"' "$$log_file"
+	uv run python -u -m scripts.deploy.monitor --label run-all -- make run-all-core
 
 verify-all: ## Alias of run-all-core for cross-phase teaching vocabulary
 	$(MAKE) run-all-core
@@ -214,46 +192,13 @@ destroy-all: ## Tear down every Terraform-managed resource (no prompt — PDCA l
 	uv run python -m scripts.setup.destroy_all
 
 verify-destroy-all: ## Run destroy-all and aggregate stdout/stderr under logs/verification/
-	@mkdir -p "$(VERIFY_LOG_DIR)"
-	@ts=$$(date -u +%Y%m%dT%H%M%SZ); \
-	log_file="$(VERIFY_LOG_DIR)/destroy-all-$$ts.log"; \
-	status_file="$(VERIFY_LOG_DIR)/destroy-all-$$ts.exit.txt"; \
-	latest_log="$(VERIFY_LOG_DIR)/destroy-all.latest.log"; \
-	latest_status="$(VERIFY_LOG_DIR)/destroy-all.latest.exit.txt"; \
-	echo "verification-log: $$log_file"; \
-	bash -o pipefail -c '$(MAKE) destroy-all 2>&1 | tee "$$1"; printf "%s\n" "$$?" > "$$2"' -- "$$log_file" "$$status_file"; \
-	rc=$$(cat "$$status_file"); \
-	ln -sfn "$$(basename "$$log_file")" "$$latest_log"; \
-	ln -sfn "$$(basename "$$status_file")" "$$latest_status"; \
-	exit "$$rc"
+	uv run python -m scripts.verify.destroy_all
 
 verify-live-acceptance: ## Run canonical live acceptance and aggregate logs under logs/verification/
-	@mkdir -p "$(VERIFY_LOG_DIR)"
-	@ts=$$(date -u +%Y%m%dT%H%M%SZ); \
-	log_file="$(VERIFY_LOG_DIR)/live-acceptance-$$ts.log"; \
-	status_file="$(VERIFY_LOG_DIR)/live-acceptance-$$ts.exit.txt"; \
-	latest_log="$(VERIFY_LOG_DIR)/live-acceptance.latest.log"; \
-	latest_status="$(VERIFY_LOG_DIR)/live-acceptance.latest.exit.txt"; \
-	echo "verification-log: $$log_file"; \
-	bash -o pipefail -c 'RUN_LIVE_GCP_ACCEPTANCE=1 uv run pytest tests/e2e/test_phase7_acceptance_gate.py -m live_gcp -v -s 2>&1 | tee "$$1"; printf "%s\n" "$$?" > "$$2"' -- "$$log_file" "$$status_file"; \
-	rc=$$(cat "$$status_file"); \
-	ln -sfn "$$(basename "$$log_file")" "$$latest_log"; \
-	ln -sfn "$$(basename "$$status_file")" "$$latest_status"; \
-	exit "$$rc"
+	uv run python -m scripts.verify.live_acceptance
 
 verify-full-recreate: ## Run destroy-all -> deploy-all -> live acceptance gate and aggregate logs under logs/verification/
-	@mkdir -p "$(VERIFY_LOG_DIR)"
-	@ts=$$(date -u +%Y%m%dT%H%M%SZ); \
-	log_file="$(VERIFY_LOG_DIR)/full-recreate-$$ts.log"; \
-	status_file="$(VERIFY_LOG_DIR)/full-recreate-$$ts.exit.txt"; \
-	latest_log="$(VERIFY_LOG_DIR)/full-recreate.latest.log"; \
-	latest_status="$(VERIFY_LOG_DIR)/full-recreate.latest.exit.txt"; \
-	echo "verification-log: $$log_file"; \
-	bash -o pipefail -c 'RUN_LIVE_GCP_FULL_RECREATE=1 uv run pytest tests/e2e/test_phase7_full_recreate_gate.py -m "live_gcp and full_recreate" -v -s 2>&1 | tee "$$1"; printf "%s\n" "$$?" > "$$2"' -- "$$log_file" "$$status_file"; \
-	rc=$$(cat "$$status_file"); \
-	ln -sfn "$$(basename "$$log_file")" "$$latest_log"; \
-	ln -sfn "$$(basename "$$status_file")" "$$latest_status"; \
-	exit "$$rc"
+	uv run python -m scripts.verify.full_recreate
 
 ops-destroy-check: ## Assert no high-cost residual Phase 7 resources remain after destroy-all
 	uv run python -m scripts.ops.destroy_check --project-id=$(PROJECT_ID) --region=$(REGION) --vertex-location=$(VERTEX_LOCATION)
@@ -268,54 +213,11 @@ seed-test: ## Insert 5 test properties for PDCA smoke
 seed-test-clean: ## Drop the test seed data (benign if absent)
 	uv run python -m scripts.setup.seed_minimal_clean
 
-sync-synonyms: ## Phase 7 SYN-1 — Sync synonym dictionary YAML -> Cloud Memorystore for Redis
-	@# Phase 7 SYN-1 placeholder. Cloud Memorystore は VPC private IP のみで listen
-	@# しているので、本コマンドは **クラスタ外から直接到達不可**。実機運用では:
-	@#   1. ``make build-composer-runner`` 同様に専用 image を Artifact Registry に push
-	@#   2. ``gcloud run jobs create sync-synonyms-once --image=<repo>/sync-synonyms:latest``
-	@#      (VPC connector 経由で Memorystore に到達)
-	@#   3. ``gcloud run jobs execute sync-synonyms-once --wait``
-	@# とするか、kubectl exec で search-api Pod から ``python -m scripts.ops.sync_synonyms``
-	@# を叩く運用が前提。本 target は ``enable_redis_synonym=true`` でプロビジョニング
-	@# 済かどうかを `gcloud redis instances describe` で確認し、未プロビジョニング時は
-	@# exit 0 で skip (run-all-core 既定経路を壊さない)。
-	@REDIS_HOST=$$(gcloud redis instances describe phase7-synonym \
-	    --project=$(PROJECT_ID) --region=$(REGION) \
-	    --format='value(host)' 2>/dev/null); \
-	 if [ -z "$$REDIS_HOST" ]; then \
-	    echo "[skip] Memorystore phase7-synonym not provisioned (set enable_redis_synonym=true to opt in)" >&2; \
-	    exit 0; \
-	 fi; \
-	 REDIS_PORT=$$(gcloud redis instances describe phase7-synonym \
-	    --project=$(PROJECT_ID) --region=$(REGION) \
-	    --format='value(port)' 2>/dev/null); \
-	 export REDIS_AUTH=$$(gcloud secrets versions access latest \
-	    --secret=phase7-synonym-redis-auth --project=$(PROJECT_ID) 2>/dev/null || echo ""); \
-	 echo "==> sync-synonyms host=$$REDIS_HOST port=$$REDIS_PORT auth_len=$${#REDIS_AUTH}"; \
-	 echo "[note] Memorystore is VPC-private; this CLI must run from a Cloud Run Job, GKE Pod, or Cloud Shell with VPC SC."; \
-	 uv run python -m scripts.ops.sync_synonyms \
-	    --redis-url="redis://$$REDIS_HOST:$$REDIS_PORT/0" \
-	    --dictionary definitions/synonyms/real_estate_ja.yaml
+sync-synonyms: ## Sync synonym dictionary YAML -> Cloud Memorystore for Redis (skips when Memorystore not provisioned)
+	uv run python -m scripts.ops.sync_synonyms
 
 sync-meili: ## Sync feature_mart.properties_cleaned -> Meilisearch (run-all-core 用、PDCA dev 想定)
-	@# Phase 7 Run 2: meili-sync-once Cloud Run Job の image (`mlops/meili-sync:latest`) が
-	@# 未ビルドのため、ローカルから直接 sync_meili.py を叩く構成。User OAuth では
-	@# google.oauth2.id_token.fetch_id_token (SA only) が通らないため、
-	@# `gcloud auth print-identity-token` の値を MEILI_PRESIGNED_ID_TOKEN env で
-	@# 注入して escape hatch を使う。Cloud Run Job 化したら本ターゲットは
-	@# `gcloud run jobs execute meili-sync-once --wait` に置換できる。
-	@MEILI_URL=$$(gcloud run services describe meili-search --project=$(PROJECT_ID) --region=$(REGION) --format='value(status.url)' 2>/dev/null); \
-	if [ -z "$$MEILI_URL" ]; then echo "[error] meili-search Cloud Run service not found in $(PROJECT_ID)/$(REGION)" >&2; exit 1; fi; \
-	MEILI_KEY=$$(gcloud secrets versions access latest --secret=meili-master-key --project=$(PROJECT_ID) 2>/dev/null); \
-	if [ -z "$$MEILI_KEY" ]; then echo "[error] meili-master-key Secret Manager value is empty" >&2; exit 1; fi; \
-	export MEILI_PRESIGNED_ID_TOKEN=$$(gcloud auth print-identity-token 2>/dev/null); \
-	if [ -z "$$MEILI_PRESIGNED_ID_TOKEN" ]; then echo "[error] gcloud auth print-identity-token returned empty" >&2; exit 1; fi; \
-	echo "==> sync-meili url=$$MEILI_URL key_len=$${#MEILI_KEY} id_token_len=$${#MEILI_PRESIGNED_ID_TOKEN}"; \
-	uv run python -m scripts.ops.sync_meili \
-		--project-id=$(PROJECT_ID) \
-		--meili-base-url=$$MEILI_URL \
-		--require-identity-token \
-		--api-key="$$MEILI_KEY"
+	uv run python -m scripts.ops.sync_meili --require-identity-token
 
 # ----- App / Job smoke commands (local) -----
 
@@ -364,25 +266,20 @@ docker-auth: ## (Optional) configure local docker for Artifact Registry
 build-ml-base-local: ## Local docker buildx cache base for encoder/reranker builder stages
 	docker buildx build --file infra/run/services/ml_base/Dockerfile --load -t phase7-ml-base:local .
 
-kube-creds: ## Fetch kubeconfig for the Phase 6 GKE Autopilot cluster
-	gcloud container clusters get-credentials $${GKE_CLUSTER_NAME:-hybrid-search} \
-		--region=$(REGION) --project=$(PROJECT_ID)
+kube-creds: ## Fetch kubeconfig for the GKE Autopilot cluster
+	gcloud container clusters get-credentials $${GKE_CLUSTER_NAME:-hybrid-search} --region=$(REGION) --project=$(PROJECT_ID)
 
 deploy-api: ## Cloud Build (kaniko cache) + `kubectl set image` for search-api
-	@GIT_SHA="$${GIT_SHA:-$$(git rev-parse HEAD 2>/dev/null || echo dev-$$(date +%s))}" \
-		uv run python -m scripts.deploy.api_gke
+	uv run python -m scripts.deploy.api_gke
 
 deploy-api-local: ## ローカル docker buildx + push + rollout (BuildKit cache mount で 2 回目以降が高速)
-	@GIT_SHA="$${GIT_SHA:-$$(git rev-parse HEAD 2>/dev/null || echo dev-$$(date +%s))}" \
-		uv run python -m scripts.deploy.api_gke_local
+	uv run python -m scripts.deploy.api_gke_local
 
 deploy-kserve-images: ## Cloud Build + image patch for property-encoder/reranker InferenceServices
-	@GIT_SHA="$${GIT_SHA:-$$(git rev-parse HEAD 2>/dev/null || echo dev-$$(date +%s))}" \
-		uv run python -m scripts.deploy.build_kserve_images
+	uv run python -m scripts.deploy.build_kserve_images
 
 deploy-kserve-images-local: ## Local docker buildx + push + cluster patch for encoder/reranker
-	@GIT_SHA="$${GIT_SHA:-$$(git rev-parse HEAD 2>/dev/null || echo dev-$$(date +%s))}" \
-		uv run python -m scripts.deploy.build_kserve_images_local
+	uv run python -m scripts.deploy.build_kserve_images_local
 
 deploy-kserve-models: ## Sync Model Registry artifacts into KServe InferenceService
 	uv run python -m scripts.deploy.kserve_models
@@ -394,21 +291,13 @@ build-composer-runner: ## Cloud Build composer-runner image (DAG KubernetesPodOp
 	uv run python -m scripts.deploy.composer_runner
 
 ops-composer-trigger: ## Trigger a Composer DAG manually (DAG=retrain_orchestration etc.)
-	@if [ -z "$(DAG)" ]; then echo "Usage: make ops-composer-trigger DAG=<dag_id>"; exit 1; fi
-	gcloud composer environments run $(COMPOSER_ENV) \
-	  --project=$(PROJECT_ID) --location=$(REGION) \
-	  dags trigger -- $(DAG)
+	DAG=$(DAG) uv run python -m scripts.ops.composer_dag trigger
 
 ops-composer-list-runs: ## List recent runs of a Composer DAG (DAG=retrain_orchestration etc.)
-	@if [ -z "$(DAG)" ]; then echo "Usage: make ops-composer-list-runs DAG=<dag_id>"; exit 1; fi
-	gcloud composer environments run $(COMPOSER_ENV) \
-	  --project=$(PROJECT_ID) --location=$(REGION) \
-	  dags list-runs -- --dag-id $(DAG)
+	DAG=$(DAG) uv run python -m scripts.ops.composer_dag list-runs
 
 ops-composer-task-states: ## Task states for latest run (DAG=...) or RUN_ID=manual__...
-	uv run python -m scripts.ops.composer_task_states \
-	  --dag-id "$(or $(DAG),retrain_orchestration)" \
-	  $(if $(RUN_ID),--run-id $(RUN_ID),--latest)
+	DAG=$(DAG) RUN_ID=$(RUN_ID) uv run python -m scripts.ops.composer_task_states
 
 seed-lgbm-model: ## Seed a synthetic LightGBM model into gs://$(MODELS_BUCKET)/lgbm/latest/ (idempotent)
 	uv run python -m scripts.deploy.seed_lgbm_model
@@ -454,19 +343,10 @@ ops-pipeline-run: ## Submit a pipeline manually: TARGET=embed|train PARAM='key=v
 	uv run python -m pipeline.workflow.compile --target $${TARGET:-train} --output-dir dist/pipelines --submit --project-id $(PROJECT_ID) --location $(VERTEX_LOCATION) --pipeline-root gs://$(PIPELINE_ROOT_BUCKET)/runs --service-account sa-pipeline@$(PROJECT_ID).iam.gserviceaccount.com $${PARAM:+--parameter $$PARAM}
 
 ops-promote-reranker: ## Promote a reranker to `production` alias. Usage: MODEL_ID=N or VERSION_ID=N [BST_RENAME=1] [APPLY=1].
-	uv run python -m scripts.ops.promote reranker \
-	  $${MODEL_ID:+--model-id=$${MODEL_ID}} \
-	  $${VERSION_ID:+--version-id=$${VERSION_ID}} \
-	  $${VERSION_ALIAS:+--version-alias=$${VERSION_ALIAS}} \
-	  $${BST_RENAME:+--bst-rename} \
-	  $${APPLY:+--apply}
+	uv run python -m scripts.ops.promote reranker
 
 ops-promote-encoder: ## Promote an encoder to `production` alias. Usage: MODEL_ID=N or VERSION_ID=N [APPLY=1].
-	uv run python -m scripts.ops.promote encoder \
-	  $${MODEL_ID:+--model-id=$${MODEL_ID}} \
-	  $${VERSION_ID:+--version-id=$${VERSION_ID}} \
-	  $${VERSION_ALIAS:+--version-alias=$${VERSION_ALIAS}} \
-	  $${APPLY:+--apply}
+	uv run python -m scripts.ops.promote encoder
 
 ops-reload-api: ## Trigger a rolling restart of search-api Pods to re-read ConfigMap / model URIs
 	kubectl rollout restart deployment/search-api --namespace=search

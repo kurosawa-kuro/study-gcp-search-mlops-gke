@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import subprocess
 import sys
 import traceback
 from typing import Any
@@ -47,15 +48,101 @@ def _log(msg: str) -> None:
     print(f"[sync_meili] {msg}", file=sys.stderr, flush=True)
 
 
+def _gcloud(args: list[str]) -> str:
+    """Run a ``gcloud`` command and return stdout.strip(); empty on failure."""
+    try:
+        proc = subprocess.run(
+            ["gcloud", *args],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+    except (FileNotFoundError, subprocess.SubprocessError) as exc:
+        _log(f"gcloud invocation failed: {exc}")
+        return ""
+    if proc.returncode != 0:
+        _log(f"gcloud {' '.join(args)} -> rc={proc.returncode} stderr={proc.stderr.strip()[:200]}")
+        return ""
+    return proc.stdout.strip()
+
+
+def _resolve_meili_base_url(*, project_id: str, region: str, service: str) -> str:
+    explicit = os.environ.get("MEILI_BASE_URL", "").strip()
+    if explicit:
+        return explicit
+    return _gcloud(
+        [
+            "run",
+            "services",
+            "describe",
+            service,
+            f"--project={project_id}",
+            f"--region={region}",
+            "--format=value(status.url)",
+        ]
+    )
+
+
+def _resolve_meili_api_key(*, project_id: str, secret_id: str) -> str:
+    explicit = os.environ.get("MEILI_API_KEY", "").strip()
+    if explicit:
+        return explicit
+    return _gcloud(
+        [
+            "secrets",
+            "versions",
+            "access",
+            "latest",
+            f"--secret={secret_id}",
+            f"--project={project_id}",
+        ]
+    )
+
+
+def _resolve_presigned_id_token() -> str:
+    """Local PDCA dev: ``gcloud auth print-identity-token`` の値を env に注入する。
+
+    ``MEILI_PRESIGNED_ID_TOKEN`` が既に set されていれば優先 (Makefile 旧経路の互換)。
+    set されていなければ ``gcloud auth print-identity-token`` を 1 回だけ叩く。
+    """
+    preset = os.environ.get("MEILI_PRESIGNED_ID_TOKEN", "").strip()
+    if preset:
+        return preset
+    minted = _gcloud(["auth", "print-identity-token"])
+    if minted:
+        os.environ["MEILI_PRESIGNED_ID_TOKEN"] = minted
+    return minted
+
+
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Sync properties_cleaned -> Meilisearch")
-    parser.add_argument("--project-id", default="mlops-dev-a")
+    parser.add_argument("--project-id", default=os.environ.get("PROJECT_ID", "mlops-dev-a"))
+    parser.add_argument("--region", default=os.environ.get("REGION", "asia-northeast1"))
+    parser.add_argument(
+        "--meili-service",
+        default=os.environ.get("MEILI_SERVICE", "meili-search"),
+        help="Cloud Run service name to resolve --meili-base-url from when omitted.",
+    )
+    parser.add_argument(
+        "--meili-master-key-secret-id",
+        default=os.environ.get("MEILI_MASTER_KEY_SECRET_ID", "meili-master-key"),
+        help="Secret Manager secret id to resolve --api-key from when omitted.",
+    )
     parser.add_argument("--table", default="feature_mart.properties_cleaned")
-    parser.add_argument("--meili-base-url", required=True)
+    parser.add_argument(
+        "--meili-base-url",
+        default="",
+        help="If empty, resolved via gcloud run services describe <meili-service>.",
+    )
     parser.add_argument("--index", default="properties")
     parser.add_argument("--batch-size", type=int, default=1000)
     parser.add_argument("--require-identity-token", action="store_true", default=False)
-    parser.add_argument("--api-key", default="")
+    parser.add_argument(
+        "--api-key",
+        default="",
+        help="If empty, resolved via gcloud secrets versions access latest --secret=<id>.",
+    )
     return parser.parse_args(argv)
 
 
@@ -137,8 +224,38 @@ def _load_rows(*, client: bigquery.Client, table: str) -> list[dict[str, Any]]:
 def run(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
     _log("STEP 1 — args parsed")
+
+    if not args.meili_base_url:
+        args.meili_base_url = _resolve_meili_base_url(
+            project_id=args.project_id,
+            region=args.region,
+            service=args.meili_service,
+        )
+        if not args.meili_base_url:
+            _log(
+                f"ERROR: --meili-base-url empty and Cloud Run service '{args.meili_service}' "
+                f"not found in {args.project_id}/{args.region}"
+            )
+            return 1
+
+    if not args.api_key:
+        args.api_key = _resolve_meili_api_key(
+            project_id=args.project_id,
+            secret_id=args.meili_master_key_secret_id,
+        )
+        if not args.api_key:
+            _log(
+                f"ERROR: --api-key empty and Secret Manager '{args.meili_master_key_secret_id}' "
+                f"not found in {args.project_id}"
+            )
+            return 1
+
+    if args.require_identity_token and not _resolve_presigned_id_token():
+        _log("ERROR: --require-identity-token but gcloud auth print-identity-token returned empty")
+        return 1
+
     _log(f"  project_id={args.project_id} table={args.table} index={args.index}")
-    _log(f"  meili_base_url={args.meili_base_url}")
+    _log(f"  meili_base_url={args.meili_base_url} api_key_len={len(args.api_key)}")
     _log(f"  require_identity_token={args.require_identity_token} batch_size={args.batch_size}")
 
     fq_table = args.table

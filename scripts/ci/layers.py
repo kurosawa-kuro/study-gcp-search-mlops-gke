@@ -63,8 +63,7 @@ RULES: dict[str, frozenset[str]] = {
     # Phase 7 SYN-1 — services must reach Redis only through ``SynonymExpanderPort``;
     # the concrete redis client lives in ``app/services/adapters/redis_synonym_expander.py``.
     "app/services/ranking.py": ADAPTER_BANS | frozenset({"sentence_transformers", "redis"}),
-    "app/services/search_service.py": ADAPTER_BANS
-    | frozenset({"sentence_transformers", "redis"}),
+    "app/services/search_service.py": ADAPTER_BANS | frozenset({"sentence_transformers", "redis"}),
     # --- app/schemas (Pydantic + extra bans) ---
     "app/schemas/search.py": ADAPTER_BANS | frozenset({"lightgbm", "numpy"}),
 }

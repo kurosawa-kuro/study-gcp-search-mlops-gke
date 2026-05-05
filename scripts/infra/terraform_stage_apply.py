@@ -95,6 +95,4 @@ def terraform_apply_stage1_with_retries(
             )
             time.sleep(sleep_s)
             continue
-        raise subprocess.CalledProcessError(
-            proc.returncode, stage1_args, proc.stdout, proc.stderr
-        )
+        raise subprocess.CalledProcessError(proc.returncode, stage1_args, proc.stdout, proc.stderr)

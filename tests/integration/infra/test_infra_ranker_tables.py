@@ -112,7 +112,7 @@ def test_user_actions_declared() -> None:
     block = _extract_resource_block("google_bigquery_table", "user_actions")
     assert 'field = "timestamp"' in block
     assert 'clustering = ["search_id", "property_id"]' in block
-    assert 'request_complete' in block
+    assert "request_complete" in block
 
 
 def test_ranking_labels_declared() -> None:

@@ -3,10 +3,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from pathlib import Path
 import re
 import sys
+from dataclasses import dataclass
+from pathlib import Path
 
 
 @dataclass(frozen=True)
@@ -76,14 +76,18 @@ def _check_phase_layout_and_naming() -> list[CheckResult]:
     for phase_root in phase_roots:
         rel_phase = "." if phase_root == ROOT else phase_root.relative_to(ROOT).as_posix()
         if phase_root == ROOT:
-            dockerfiles = [ROOT / rel for rel in [
-                "infra/run/services/search_api/Dockerfile",
-                "infra/run/services/encoder/Dockerfile",
-                "infra/run/services/reranker/Dockerfile",
-                "infra/run/services/composer_runner/Dockerfile",
-                "infra/run/services/ml_base/Dockerfile",
-                "ml/streaming/container/Dockerfile",
-            ] if (ROOT / rel).is_file()]
+            dockerfiles = [
+                ROOT / rel
+                for rel in [
+                    "infra/run/services/search_api/Dockerfile",
+                    "infra/run/services/encoder/Dockerfile",
+                    "infra/run/services/reranker/Dockerfile",
+                    "infra/run/services/composer_runner/Dockerfile",
+                    "infra/run/services/ml_base/Dockerfile",
+                    "ml/streaming/container/Dockerfile",
+                ]
+                if (ROOT / rel).is_file()
+            ]
         else:
             dockerfiles = [p for p in phase_root.glob("**/Dockerfile") if p.is_file()]
         if not dockerfiles:

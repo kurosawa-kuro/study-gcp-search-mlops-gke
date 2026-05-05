@@ -15,20 +15,27 @@ Behavior:
 from __future__ import annotations
 
 import argparse
+import io
 import json
 import os
 import re
 import select
 import subprocess
+import sys
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from pathlib import Path
 
 from scripts._common import env, fail, run
 
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Monitor deploy-all in real time.")
+    parser = argparse.ArgumentParser(
+        description="Monitor a long-running deploy-style command in real time.",
+    )
     parser.add_argument(
         "--poll-sec",
         type=int,
@@ -46,7 +53,59 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="Do not print every raw line; print only heartbeat/summary logs",
     )
+    parser.add_argument(
+        "--label",
+        default="deploy-monitor",
+        help=(
+            "Log filename label. Output is written to "
+            "$MONITOR_LOG_DIR/<utc>-<label>.log (default: deploy-monitor)."
+        ),
+    )
+    parser.add_argument(
+        "command",
+        nargs=argparse.REMAINDER,
+        help=(
+            "Optional override command. Default runs ``uv run python -u -m "
+            "scripts.setup.deploy_all``. Pass after ``--`` to invoke an "
+            "alternate entry point (e.g. ``-- make run-all-core``)."
+        ),
+    )
     return parser.parse_args(argv)
+
+
+def _resolve_log_dir() -> Path:
+    """Match Makefile default ``$(MONITOR_LOG_DIR) = $(LOG_ROOT)/deploy-monitor``."""
+    explicit = os.environ.get("MONITOR_LOG_DIR")
+    if explicit:
+        return Path(explicit)
+    log_root = os.environ.get("LOG_ROOT") or str(_REPO_ROOT / "logs")
+    return Path(log_root) / "deploy-monitor"
+
+
+def _utc_stamp() -> str:
+    return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+
+
+def _open_log_sink(label: str) -> tuple[io.TextIOWrapper, Path]:
+    log_dir = _resolve_log_dir()
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_file = log_dir / f"{_utc_stamp()}-{label}.log"
+    sink = log_file.open("w", encoding="utf-8", buffering=1)
+    print(f"monitor-log: {log_file}")
+    sys.stdout.flush()
+    return sink, log_file
+
+
+def _resolve_command(cli_command: list[str]) -> list[str]:
+    """Build the subprocess command from the CLI tail (or fall back to deploy-all).
+
+    ``argparse.REMAINDER`` keeps the leading ``--`` token when present, so
+    drop it before exec.
+    """
+    cmd = [tok for tok in cli_command if tok != "--"]
+    if not cmd:
+        return ["uv", "run", "python", "-u", "-m", "scripts.setup.deploy_all"]
+    return cmd
 
 
 def _build_describe(project_id: str, build_id: str) -> tuple[str, str]:
@@ -160,8 +219,10 @@ def main(argv: list[str] | None = None) -> int:
 
     child_env = dict(os.environ)
     child_env["PYTHONUNBUFFERED"] = "1"
-    cmd = ["uv", "run", "python", "-u", "-m", "scripts.setup.deploy_all"]
-    print(f"[monitor] start deploy-all command={' '.join(cmd)}")
+    cmd = _resolve_command(args.command)
+    sink, _log_file = _open_log_sink(args.label)
+    print(f"[monitor] start command={' '.join(cmd)}")
+    sys.stdout.flush()
     proc = subprocess.Popen(
         cmd,
         stdout=subprocess.PIPE,
@@ -174,29 +235,33 @@ def main(argv: list[str] | None = None) -> int:
     assert proc.stdout is not None
     next_heartbeat = time.monotonic() + max(1, args.poll_sec)
     poll_interval = min(max(1, args.poll_sec), 2)
-    while True:
-        now_ts = time.monotonic()
-        ready, _, _ = select.select([proc.stdout], [], [], poll_interval)
-        if ready:
-            line = proc.stdout.readline()
-            if line:
-                stripped = line.rstrip("\n")
-                state.last_line = stripped
-                state.last_line_at = now_ts
-                _maybe_parse_step(stripped, state)
-                _maybe_parse_build_wait(stripped, state, now_ts)
-                if not args.quiet_steps:
-                    print(stripped)
+    try:
+        while True:
+            now_ts = time.monotonic()
+            ready, _, _ = select.select([proc.stdout], [], [], poll_interval)
+            if ready:
+                line = proc.stdout.readline()
+                if line:
+                    stripped = line.rstrip("\n")
+                    state.last_line = stripped
+                    state.last_line_at = now_ts
+                    _maybe_parse_step(stripped, state)
+                    _maybe_parse_build_wait(stripped, state, now_ts)
+                    if not args.quiet_steps:
+                        print(stripped)
+                    sink.write(line)
+                elif proc.poll() is not None:
+                    break
             elif proc.poll() is not None:
                 break
-        elif proc.poll() is not None:
-            break
 
-        if now_ts >= next_heartbeat:
-            _print_heartbeat(state, project_id, now_ts, args.stall_warn_sec)
-            next_heartbeat = now_ts + max(1, args.poll_sec)
+            if now_ts >= next_heartbeat:
+                _print_heartbeat(state, project_id, now_ts, args.stall_warn_sec)
+                next_heartbeat = now_ts + max(1, args.poll_sec)
 
-    rc = proc.wait()
+        rc = proc.wait()
+    finally:
+        sink.close()
     if rc == 0:
         print(
             "[monitor] deploy-all succeeded "
