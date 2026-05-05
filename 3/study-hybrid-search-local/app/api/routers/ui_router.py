@@ -1,9 +1,6 @@
-"""Phase 3 — Browser UI router (Phase 7 から流用、search-user 1 page のみ).
+"""Phase 3 — Browser UI router.
 
-Phase 7 の `ui_router.py` から ``ui-search-dev`` / ``ui-model-metrics`` /
-``ui-data`` / ``ui-ops`` を削除した最小版。
-
-UI ページは AJAX `fetch()` で `/search` / `/feedback` を叩く。
+UI ページは AJAX `fetch()` で `/search` / `/feedback` / `/model/*` を叩く。
 Jinja2 templates は `app/templates/`、static asset は `app/static/`。
 """
 
@@ -37,6 +34,22 @@ def build_ui_router(*, app_root: Path) -> APIRouter:
                 "default_max_rent": 150000,
                 "default_top_k": 20,
             },
+        )
+
+    @router.get("/ui/dev/model/metrics", name="ui-model-metrics")
+    def ui_model_metrics(request: Request) -> object:
+        return templates.TemplateResponse(
+            request,
+            "model_metrics.html",
+            {"active": "model-metrics", "default_k": 10, "page_mode": "dev"},
+        )
+
+    @router.get("/ui/dev/data", name="ui-data")
+    def ui_data(request: Request) -> object:
+        return templates.TemplateResponse(
+            request,
+            "data.html",
+            {"active": "data", "page_mode": "dev"},
         )
 
     @router.get("/ui/property/{property_id}", name="ui-property-detail")

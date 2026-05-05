@@ -1,11 +1,12 @@
 """Phase 3 — FastAPI hybrid-search API entrypoint (Local Docker Compose 版).
 
 Phase 7 から:
-- model router / ops router / retrain router / search-dev / model-metrics / data / ops UI ページを削除
+- ops router / retrain router / ops UI ページを削除
 - Prometheus exposition / observability.py を簡素化 (標準 logging のみ)
 - KServe / Vertex / Pub/Sub / BigQuery 由来の依存を全削除
 
-UI は Phase 7 から流用 (Pico-admin dark theme + Jinja2 + search_ui.js)、search-user 1 page のみ。
+UI は Phase 7 から流用 (Pico-admin dark theme + Jinja2 + search_ui.js)。Phase 3 でも
+`/ui/dev/model/metrics` と `/ui/dev/data` は developer 向け必須ページとして保持する。
 
 DI wiring は ``app/composition_root.py``、endpoint logic は ``app/api/routers/``、
 business logic は ``app/services/``。本ファイルは HTTP server entrypoint のみ。
@@ -22,7 +23,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from app.api.middleware import RequestLoggingMiddleware
-from app.api.routers import feedback_router, health_router, search_router
+from app.api.routers import feedback_router, health_router, model_router, search_router
 from app.api.routers.ui_router import build_ui_router
 from app.composition_root import ContainerBuilder
 from app.settings import ApiSettings
@@ -55,8 +56,9 @@ def create_app() -> FastAPI:
     app.include_router(health_router)
     app.include_router(search_router)
     app.include_router(feedback_router)
+    app.include_router(model_router)
 
-    # Browser UI (search-user 1 page、`/` → `/ui/`、`/ui/` → index.html)
+    # Browser UI (`/` → `/ui/`。Phase 3 でも model-metrics / data を持つ)
     app.include_router(build_ui_router(app_root=app_root))
 
     return app
