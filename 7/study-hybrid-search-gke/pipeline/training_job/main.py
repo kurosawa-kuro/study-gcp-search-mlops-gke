@@ -4,6 +4,42 @@ Invoked by:
 
 * ``python -m pipeline.training_job.main compile``  — KFP compile → YAML
 * ``python -m pipeline.training_job.main submit``   — Vertex PipelineJob submit
+
+------------------------------------------------------------------------------
+⚠️ TODO Wave ?-? (canonical 死守ライン、User 指示 2026-05-05): ranker_repository 配線
+------------------------------------------------------------------------------
+本 main は KFP pipeline 定義のみ。実際の training data 取得は components 配下:
+
+* ``components/load_features.py`` — **現状 BigQuery contract stub のみ** (L58:
+  ``"STEP 2 — build payload (no BigQuery call; this is a contract stub)"``)。
+  SQL クエリ文字列を JSON metadata に書き出すだけで、BigQuery を実際にクエリしない。
+* ``components/train_reranker.py`` — 同 stub の training_frame を受け取って
+  ``ml.training.trainer.run`` を呼ぶ想定。
+
+一方、``ml/data/loaders/ranker_repository.py`` (BigQuery loader) は **実装済**
+だが、``load_features`` component から呼ばれていない (= 配線忘れ)。結果、
+Composer DAG ``retrain_orchestration`` が trigger しても、trainer は実 BigQuery
+``ranking_labels`` を読まず ``synthetic_ranking_frames`` で乱数学習する状態が
+残る。
+
+Wave ?-? で以下を実装する:
+
+1. ``components/load_features.py`` の contract stub を実装に切り替え:
+   - ``ml.data.loaders.ranker_repository.create_rank_repository(...)`` を呼ぶ
+   - 返される pandas DataFrame を training_frame.path に Parquet で書き出す
+   - JSON metadata は補助情報として残す
+
+2. ``components/train_reranker.py`` で training_frame.path から Parquet 読み出し →
+   ``trainer.run(df=df, ...)`` に渡す経路を確認 (現状の trainer.py は
+   ``df=None`` 経路で synthetic に流れるため、production では明示的に df を渡す)。
+
+詳細仕様は Phase 7 ``docs/architecture/01_仕様と設計.md §3`` (Composer 位置づけ)
+の警告ボックス + 親 ``docs/architecture/01_仕様と設計.md`` (3 段差表) を参照。
+
+本配線実装が完了するまで、Composer DAG ``retrain_orchestration`` は orchestration
+は動いても **正解データを Vertex AI Pipelines retrain に届けていない** (= canonical
+の根幹未実証 = ゴール劣化)。「別 sprint 候補」「stub のままで OK」等で逃さない。
+------------------------------------------------------------------------------
 """
 
 import argparse

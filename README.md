@@ -241,6 +241,7 @@ study-gcp-mlops/
   - **ベクトル検索**: BigQuery `VECTOR_SEARCH` (GCP マネージドサービス基礎習得の範囲、Vertex Vector Search への置換は Phase 7 完成版で実施)
 - **扱わない (Phase 7 完成版コードに集約、教育上は Phase 5 / 6 で分解説明)**: Vertex AI Pipelines / Vertex Feature Store / Vertex Vector Search / Vertex Model Registry / Cloud Composer / Dataflow / GKE / KServe / PMLE 追加技術
 - **Phase 4 の到達点**: BigQuery 上で NDCG@10 / Recall@K / CTR / CVR を計算でき、再学習候補モデルを GCS に作れること。Vertex Model Registry への登録は Phase 7 側に寄せ、Phase 4 では GCS model artifact + BigQuery metrics までで止める
+- **⚠️ Phase 4 LightGBM 接続前提**: 上記の「再学習候補モデル」が **実 BigQuery `ranking_labels` 由来** で学習されるためには、**Phase 3 Wave 7 で `ml/data/loaders/postgres_ranker_repository.py` を新設し `pipeline/training_job/main.py` に配線する** 実装が完了している必要がある。現状 (Phase 3 Wave 1-4 完了時点) では trainer は `synthetic_ranking_frames(seed=42)` で乱数学習しており、`ranking_labels` を見ていない。Phase 4 では Repository 差し替え (`PostgresRankerRepository` → `BigQueryRankerRepository`) で BigQuery 経路に足し算するが、**Phase 3 Wave 7 未完了のままだと Phase 4 でも乱数学習が継続する**。canonical 死守ラインとして Phase 3 [`docs/02_移行ロードマップ.md` §0 不変ルール 0 + §5 Wave 7](3/study-hybrid-search-local/docs/02_移行ロードマップ.md) を遵守
 - **Phase 3,4 アプリ差異の極小化** (2026-05-05 補追): Phase 3 と Phase 4 の `app/` 配下は完全同一、adapter のみ差し替え。アプリから取得不可な 4 種 (長時間滞在 / `inquiry_complete` / `contract` / `bounce`) は **Phase 4 でも UI / JS / Pydantic / EventWriter Port では実装せず**、BigQuery labeling SQL で `definitions/labeling/synthetic_actions.yaml` に基づき synthetic 注入 (Phase 3 と同 fixture / 同ロジック流用)
 
 ### Phase 5 / 6 (論理 Phase)
