@@ -47,9 +47,9 @@ Phase 3 を **Phase 4 (GCP MLOps 土台) への足し算起点** として完成
 
 ## Wave 4: 検証 + docs 整備 — 進行中 🟡
 
-- [x] `docs/03_実装カタログ.md` 再生成
-- [x] `docs/04_運用.md` 再生成
-- [x] 本ファイル (`docs/TASKS.md`) 再生成
+- [x] `docs/architecture/03_実装カタログ.md` 再生成
+- [x] `docs/runbook/05_運用.md` 再生成
+- [x] 本ファイル (`docs/tasks/TASKS.md`) 再生成
 - [x] `tests/conftest.py` 新規
 - [x] `tests/_fakes/__init__.py` を Phase 3 用 (3 stub 除外)
 - [x] `tests/unit/app/test_search_service_smoke.py` 新規

@@ -1,6 +1,6 @@
 # docs/conventions/ — 規約・配置・命名の正本セット
 
-`study-gcp-mlops` 全 phase 横断の **規約・配置・命名** ドキュメントを集約するディレクトリ。各 phase の `CLAUDE.md` / `docs/01_仕様と設計.md` 等から参照される。
+`study-gcp-mlops` 全 phase 横断の **規約・配置・命名** ドキュメントを集約するディレクトリ。各 phase の `CLAUDE.md` / `docs/architecture/01_仕様と設計.md` 等から参照される。
 
 ## 各ファイルの目的
 

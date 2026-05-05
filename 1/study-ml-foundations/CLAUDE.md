@@ -4,10 +4,10 @@ Phase 1 (`study-ml-foundations`) で作業する Claude Code 向けガイド。M
 
 ## 最初に読むもの
 
-1. [docs/TASKS.md](docs/TASKS.md) — current sprint
-2. [docs/02_移行ロードマップ.md](docs/02_移行ロードマップ.md) — 決定的仕様 (権威 1 位)
-3. [docs/01_仕様と設計.md](docs/01_仕様と設計.md) — 機能仕様 + 設計
-4. [docs/04_運用.md](docs/04_運用.md) — 運用 / Scripts / Docker / Configuration / Testing 詳細
+1. [docs/tasks/TASKS.md](docs/tasks/TASKS.md) — current sprint
+2. [docs/tasks/02_移行ロードマップ.md](docs/tasks/02_移行ロードマップ.md) — 決定的仕様 (権威 1 位)
+3. [docs/architecture/01_仕様と設計.md](docs/architecture/01_仕様と設計.md) — 機能仕様 + 設計
+4. [docs/runbook/05_運用.md](docs/runbook/05_運用.md) — 運用 / Scripts / Docker / Configuration / Testing 詳細
 
 ## Project Overview
 
@@ -59,7 +59,7 @@ infra/run/jobs/trainer/Dockerfile   seed / trainer イメージ
 
 ## Commands (要点)
 
-詳細は [docs/04_運用.md](docs/04_運用.md) (Scripts / Docker サービス / Configuration / Dependencies / Testing)。
+詳細は [docs/runbook/05_運用.md](docs/runbook/05_運用.md) (Scripts / Docker サービス / Configuration / Dependencies / Testing)。
 
 ```bash
 make build          # Docker イメージビルド
@@ -83,4 +83,4 @@ make clean          # Docker 停止 + 生成ファイル削除
 
 ## 権威順位
 
-`docs/02_移行ロードマップ.md > docs/TASKS.md > docs/01_仕様と設計.md > README.md > CLAUDE.md`
+`docs/tasks/02_移行ロードマップ.md > docs/tasks/TASKS.md > docs/architecture/01_仕様と設計.md > README.md > CLAUDE.md`

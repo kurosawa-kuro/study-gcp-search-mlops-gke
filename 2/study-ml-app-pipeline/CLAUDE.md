@@ -1,11 +1,11 @@
 # CLAUDE.md
 
-Phase 2 (`study-ml-app-pipeline`) の作業ガイド。正本は [docs/02_移行ロードマップ.md](docs/02_移行ロードマップ.md)。
+Phase 2 (`study-ml-app-pipeline`) の作業ガイド。正本は [docs/tasks/02_移行ロードマップ.md](docs/tasks/02_移行ロードマップ.md)。
 
 ## 最初に読むもの
 
-1. [docs/02_移行ロードマップ.md](docs/02_移行ロードマップ.md)
-2. [docs/01_仕様と設計.md](docs/01_仕様と設計.md)
+1. [docs/tasks/02_移行ロードマップ.md](docs/tasks/02_移行ロードマップ.md)
+2. [docs/architecture/01_仕様と設計.md](docs/architecture/01_仕様と設計.md)
 3. [README.md](README.md)
 
 ## 不変ルール

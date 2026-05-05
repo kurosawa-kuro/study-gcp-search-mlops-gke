@@ -1,6 +1,6 @@
 # TASKS.md (Phase 6)
 
-`docs/02_移行ロードマップ.md` (長期 backlog/index) の current-sprint 抜粋。
+`docs/tasks/02_移行ロードマップ.md` (長期 backlog/index) の current-sprint 抜粋。
 
 ## 現在の目的
 

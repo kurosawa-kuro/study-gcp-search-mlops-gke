@@ -2,7 +2,7 @@
 
 本リポジトリ (`7/study-hybrid-search-gke`) で作業する Claude Code 向けのガイド。**Phase 7 は Phase 6 (`6/study-hybrid-search-pmle/`) の PMLE 技術統合をそのまま継承した上で、Serving 層のみを Vertex AI Endpoint から GKE + KServe InferenceService に差し替えた Draft フェーズ**。中核コード (不動産ハイブリッド検索) は変えず、encoder / reranker の推論呼び出しを cluster-local HTTP に切り替える。
 
-ドキュメント全般の運用規約は [`docs/README.md`](docs/README.md)、スコープの決定権は [`docs/02_移行ロードマップ.md`](docs/02_移行ロードマップ.md)。本 CLAUDE.md はそれらに従属する。
+ドキュメント全般の運用規約は [`docs/README.md`](docs/README.md)、スコープの決定権は [`docs/tasks/02_移行ロードマップ.md`](docs/tasks/02_移行ロードマップ.md)。本 CLAUDE.md はそれらに従属する。
 
 ---
 
@@ -30,10 +30,10 @@ User からの**包括的事前承認**として、本 phase の検証目的で�
 
 ## 最初に読むもの (順番)
 
-1. [`docs/02_移行ロードマップ切り替え基盤.md`](docs/02_移行ロードマップ切り替え基盤.md) — Phase 6 からの差分 (Serving 層のみ Vertex Endpoint → GKE + KServe)。母艦の [`docs/02_移行ロードマップ.md`](docs/02_移行ロードマップ.md) は backlog/index として維持し、本ファイルと下記 Port-Adapter-DI ファイルが暫定の決定仕様
+1. [`docs/02_移行ロードマップ切り替え基盤.md`](docs/02_移行ロードマップ切り替え基盤.md) — Phase 6 からの差分 (Serving 層のみ Vertex Endpoint → GKE + KServe)。母艦の [`docs/tasks/02_移行ロードマップ.md`](docs/tasks/02_移行ロードマップ.md) は backlog/index として維持し、本ファイルと下記 Port-Adapter-DI ファイルが暫定の決定仕様
 2. [`docs/02_移行ロードマップ-Port-Adapter-DI.md`](docs/02_移行ロードマップ-Port-Adapter-DI.md) — Phase 7 で全面整備した DI / Port / Adapter / fakes / handlers / mappers の層境界ルール
-3. [`docs/01_仕様と設計.md`](docs/01_仕様と設計.md) — 機能仕様 + アーキテクチャ設計 (Phase 6 から継承の PMLE 統合トピック含む)
-4. [`docs/03_実装カタログ.md`](docs/03_実装カタログ.md) + [`docs/04_運用.md`](docs/04_運用.md) — 実装 / 運用詳細
+3. [`docs/architecture/01_仕様と設計.md`](docs/architecture/01_仕様と設計.md) — 機能仕様 + アーキテクチャ設計 (Phase 6 から継承の PMLE 統合トピック含む)
+4. [`docs/architecture/03_実装カタログ.md`](docs/architecture/03_実装カタログ.md) + [`docs/runbook/05_運用.md`](docs/runbook/05_運用.md) — 実装 / 運用詳細
 5. `infra/manifests/` — search-api 系 (Deployment / Service / Gateway / HPA / PodMonitoring / ConfigMap example) + KServe 系 (encoder / reranker / reranker-explain / PodMonitoring) + `policies/` (IAP / NetworkPolicy) + 統合 `kustomization.yaml`
 
 ---
@@ -94,7 +94,7 @@ Phase 6 から継承。特徴量を追加 / 変更するとき、以下 6 つを
 
 `CLAUDE.md` と `03_実装カタログ.md` は上位 3 者から派生する従属ドキュメント。
 
-**現状の補足**: `docs/02_移行ロードマップ.md` は backlog/index として維持し、詳細仕様は以下のサブドキュメントに分割済み:
+**現状の補足**: `docs/tasks/02_移行ロードマップ.md` は backlog/index として維持し、詳細仕様は以下のサブドキュメントに分割済み:
 - `docs/02_移行ロードマップ-Port-Adapter-DI.md` — Port / Adapter / DI 層境界
 - `docs/02_移行ロードマップ切り替え基盤.md` — Serving 層差し替え (Vertex → KServe) の差分
 
@@ -104,7 +104,7 @@ Phase 6 から継承。特徴量を追加 / 変更するとき、以下 6 つを
 
 ## 開発コマンド
 
-生コマンドは `docs/04_運用.md §1` の STEP、全ターゲットは `make help`。`make check` でローカル CI 同等 (ruff / ruff format / mypy strict / pytest) を走らせる。
+生コマンドは `docs/runbook/05_運用.md §1` の STEP、全ターゲットは `make help`。`make check` でローカル CI 同等 (ruff / ruff format / mypy strict / pytest) を走らせる。
 
 | target | 用途 |
 |---|---|
@@ -149,7 +149,7 @@ Phase 6 から継承。特徴量を追加 / 変更するとき、以下 6 つを
 
 ## Port / Adapter / DI 境界と make check
 
-Phase 7 では Phase 6 から継承した Port-Adapter 構造を **DI 最優先で全面整備しなおした**。詳細は [`docs/02_移行ロードマップ-Port-Adapter-DI.md`](docs/02_移行ロードマップ-Port-Adapter-DI.md) と [`docs/01_仕様と設計.md §4`](docs/01_仕様と設計.md)。設計優先順位は **DI > Port-Adapter > Clean > Domain**。
+Phase 7 では Phase 6 から継承した Port-Adapter 構造を **DI 最優先で全面整備しなおした**。詳細は [`docs/02_移行ロードマップ-Port-Adapter-DI.md`](docs/02_移行ロードマップ-Port-Adapter-DI.md) と [`docs/architecture/01_仕様と設計.md §4`](docs/architecture/01_仕様と設計.md)。設計優先順位は **DI > Port-Adapter > Clean > Domain**。
 
 ### 新しいコードを追加するときの基準
 

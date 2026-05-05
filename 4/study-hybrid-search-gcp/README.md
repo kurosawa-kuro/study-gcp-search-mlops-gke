@@ -32,12 +32,12 @@ Phase 4 は、Phase 3 の不動産ハイブリッド検索を維持したまま�
 - Monitoring SLO
 - Explainable AI
 - GKE / KServe
-- 親 [`README.md` §1 教材対象外](../../README.md) / [`docs/02_移行ロードマップ.md` §1.4](../../docs/tasks/02_移行ロードマップ.md) の禁止技術
+- 親 [`README.md` §1 教材対象外](../../README.md) / [`docs/tasks/02_移行ロードマップ.md` §1.4](../../docs/tasks/02_移行ロードマップ.md) の禁止技術
 
 ## ドキュメント
 
-- [docs/02_移行ロードマップ.md](docs/02_移行ロードマップ.md): Phase 4 の決定的仕様
-- [docs/01_仕様と設計.md](docs/01_仕様と設計.md): 実装配置
-- [docs/03_実装カタログ.md](docs/03_実装カタログ.md): 実装棚卸し
-- [docs/04_運用.md](docs/04_運用.md): 運用手順
+- [docs/tasks/02_移行ロードマップ.md](docs/tasks/02_移行ロードマップ.md): Phase 4 の決定的仕様
+- [docs/architecture/01_仕様と設計.md](docs/architecture/01_仕様と設計.md): 実装配置
+- [docs/architecture/03_実装カタログ.md](docs/architecture/03_実装カタログ.md): 実装棚卸し
+- [docs/runbook/05_運用.md](docs/runbook/05_運用.md): 運用手順
 - [CLAUDE.md](CLAUDE.md): 作業ガイド

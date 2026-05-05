@@ -1,6 +1,6 @@
 # TASKS.md (Phase 4)
 
-`docs/02_移行ロードマップ.md` (長期 backlog/index) の current-sprint 抜粋。
+`docs/tasks/02_移行ロードマップ.md` (長期 backlog/index) の current-sprint 抜粋。
 
 ## 現在の目的
 
@@ -43,8 +43,8 @@ Phase 4 = Phase 3 のローカル検索を **Cloud Run / BigQuery / GCS / Pub/Su
 
 `02_移行ロードマップ.md §5` 抜粋:
 
-- [ ] `docs/03_実装カタログ.md` の旧命名 / 過剰説明の整理 (必要に応じて)
-- [ ] `docs/04_運用.md` の旧 Phase 表現の圧縮 (必要に応じて)
+- [ ] `docs/architecture/03_実装カタログ.md` の旧命名 / 過剰説明の整理 (必要に応じて)
+- [ ] `docs/runbook/05_運用.md` の旧 Phase 表現の圧縮 (必要に応じて)
 - [ ] ローカルで回せる範囲のテスト追従 (必要に応じて)
 
 優先度低 (Phase 5 以降の作業を妨げない)。

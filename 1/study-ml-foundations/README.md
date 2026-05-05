@@ -95,6 +95,6 @@ python scripts/local/ops/test.py -k test_train     # 単体テスト指定
 
 ## ドキュメント
 
-- [移行ロードマップ](docs/02_移行ロードマップ.md) — Phase 1 の決定的仕様
-- [設計書](docs/01_仕様と設計.md) — 全体設計・構成・設定
-- [運用手順書](docs/04_運用.md) — セットアップ・実行手順・環境変数一覧
+- [移行ロードマップ](docs/tasks/02_移行ロードマップ.md) — Phase 1 の決定的仕様
+- [設計書](docs/architecture/01_仕様と設計.md) — 全体設計・構成・設定
+- [運用手順書](docs/runbook/05_運用.md) — セットアップ・実行手順・環境変数一覧

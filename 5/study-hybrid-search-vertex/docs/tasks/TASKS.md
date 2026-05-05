@@ -1,6 +1,6 @@
 # TASKS.md (Phase 5)
 
-`docs/02_移行ロードマップ.md` (長期 backlog/index) の current-sprint 抜粋。
+`docs/tasks/02_移行ロードマップ.md` (長期 backlog/index) の current-sprint 抜粋。
 
 ## 現在の目的
 
@@ -54,8 +54,8 @@ Phase 5 = Phase 4 の GCP serverless 構成を土台に **Vertex AI Pipelines / 
 
 `02_移行ロードマップ.md §5` 抜粋:
 
-- [ ] `docs/03_実装カタログ.md` の現行スコープへの圧縮 (必要に応じて)
-- [ ] `docs/04_運用.md` の旧命名 / 旧手順の整理 (必要に応じて)
+- [ ] `docs/architecture/03_実装カタログ.md` の現行スコープへの圧縮 (必要に応じて)
+- [ ] `docs/runbook/05_運用.md` の旧命名 / 旧手順の整理 (必要に応じて)
 - [ ] ローカルで回せる範囲のテスト追従 (必要に応じて)
 
 優先度低 (Phase 6 以降の作業を妨げない)。

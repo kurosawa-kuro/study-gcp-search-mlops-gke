@@ -1,6 +1,6 @@
 # TASKS.md (Phase 1)
 
-`docs/02_移行ロードマップ.md` (長期 backlog/index) の current-sprint 抜粋。Claude Code の新セッションで「今 Phase で何をやり、何をやらないか」を最初に確認する単一エントリポイント。
+`docs/tasks/02_移行ロードマップ.md` (長期 backlog/index) の current-sprint 抜粋。Claude Code の新セッションで「今 Phase で何をやり、何をやらないか」を最初に確認する単一エントリポイント。
 
 ## 現在の目的
 
