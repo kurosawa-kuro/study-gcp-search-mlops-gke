@@ -42,7 +42,7 @@ NA_TARGETS := up down wait-db free-ports build seed serve test-e2e install-brows
 	api-dev-search-rerank setup-encoder-endpoint setup-reranker-endpoint \
 	ops-monitor ops-monitor-lro ops-enable-search
 
-include ../../mk/base.mk
+include mk/base.mk
 
 export PROJECT_ID REGION API_SERVICE ARTIFACT_REPO VERTEX_LOCATION PIPELINE_ROOT_BUCKET PIPELINE_TEMPLATE_GCS_PATH
 

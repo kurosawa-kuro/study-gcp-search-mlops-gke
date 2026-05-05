@@ -1,14 +1,14 @@
 # study-gcp-mlops
 
-現在の **canonical 実装は Phase 7** です。  
-日常的に触る現役コードは [7/study-hybrid-search-gke](/home/ubuntu/repos/study-gcp-search-mlops-gke/7/study-hybrid-search-gke/README.md) を起点にしてください。
+現在の **canonical 実装は repo ルート** です。  
+もともと `7/study-hybrid-search-gke/` にあった Phase 7 完成版コードは、ルート昇格を開始しており、日常的に触る現役コードはこのルート配下 `app/` `ml/` `pipeline/` `infra/` `scripts/` `tests/` です。
 
 この親リポジトリは、Phase 1-7 の学習履歴と比較教材も含めて保持しています。  
-ただし **実装の正本 / 継続改善の対象 / local 検証の入口は Phase 7** です。
+ただし **実装の正本 / 継続改善の対象 / local 検証の入口は旧 Phase 7 系統の完成版** です。
 
 > 最初の入口:
-> [7/study-hybrid-search-gke/README.md](/home/ubuntu/repos/study-gcp-search-mlops-gke/7/study-hybrid-search-gke/README.md)  
-> [7/study-hybrid-search-gke/CLAUDE.md](/home/ubuntu/repos/study-gcp-search-mlops-gke/7/study-hybrid-search-gke/CLAUDE.md)  
+> [README.md](/home/ubuntu/repos/study-gcp-search-mlops-gke/README.md)  
+> [CLAUDE.md](/home/ubuntu/repos/study-gcp-search-mlops-gke/CLAUDE.md)  
 > [7/study-hybrid-search-gke/docs/tasks/TASKS.md](/home/ubuntu/repos/study-gcp-search-mlops-gke/7/study-hybrid-search-gke/docs/tasks/TASKS.md)
 
 以下は「なぜこういう構成になっているか」を理解するための全体ナビゲーションです。
