@@ -2,6 +2,9 @@
 
 Phase 3 で完了した **「ML 連動検索アプリ + 正解データ作成 + 再学習」** を、Phase 7 canonical 実装へ反映するための調査結果と作業計画。
 
+> 進捗更新: 2026-05-06 時点で **Wave A / B / C の大半と Wave D / G の一部はコーディング済み**。  
+> まだ残っている中心は **KFP / Composer 本線化、`/admin/mlops`、docs/runbook 全面同期、総合検証**。
+
 ---
 
 ## 0. この計画の目的
@@ -29,53 +32,90 @@ search-api
 
 を **コードと検証で成立** させる。
 
+## 0.1 現在地
+
+### すでにコード反映済み
+
+- `/feedback` action は 5 種へ拡張済み
+  - `click`
+  - `detail_view`
+  - `favorite`
+  - `request_button_click`
+  - `request_complete`
+- `SearchService` / `FeedbackService` に `EventWriter` を接続済み
+- `CloudLoggingEventWriter` を追加済み
+- `BigQueryEventRepository` / `BigQueryLabelRepository` を追加済み
+- Terraform に以下を追加済み
+  - `mlops.search_events`
+  - `mlops.search_impressions`
+  - `mlops.user_actions`
+  - `mlops.ranking_labels`
+  - `mlops.evaluation_metrics`
+- `BigQueryRankerRepository` は `ranking_labels × search_impressions × feature_mart` ベースへ切り替え済み
+- `pipeline/labeling_job/` と `pipeline/training_dataset_job/` を追加済み
+- `Makefile` に `label-build` / `build-training-dataset` を追加済み
+- Dataform `property_features_daily.sqlx` は `search_impressions + user_actions` 集計へ更新済み
+- workflow contract test を含む追加テストを作成済み
+
+### まだ残っていること
+
+- `pipeline/training_job/components/load_features.py` は **query contract は更新済みだが、まだ stub**
+- `train_reranker.py` は **まだ stub**
+- Composer DAG `retrain_orchestration` へ labeling / dataset job を本線接続していない
+- `/admin/mlops` は未実装
+- docs / runbook / 実装カタログの全面同期は未完
+- 総合動作検証はこれから
+
 ---
 
 ## 1. 調査結論
 
 ## 1.1 一言でいうと
 
-**Phase 7 は docs では新 event schema / ranking_labels 経路を前提にしているが、実コードはまだ `feedback_events` 中心の旧経路が残っている。**
+**調査開始時点では** Phase 7 は docs では新 event schema / `ranking_labels` 経路を前提にしていたが、実コードは `feedback_events` 中心の旧経路が残っていた。
 
-つまり、Phase 3 の成果を持ち上げる時の主作業は **「Phase 7 docs の想定へ実コードを追いつかせること」**。
+現時点では、Phase 3 の成果を持ち上げる主作業のうち **app contract / schema / repository / 最低限 job 土台** はかなり進んでおり、残る主作業は **orchestration 本線化と運用同期**。
 
 ## 1.2 いま実際に残っている旧経路
 
 ### app / API
 
 - [`app/schemas/search.py`](../../app/schemas/search.py)
-  - `FeedbackRequest.action` はまだ `click|favorite|inquiry`
+  - **対応済み**。`FeedbackRequest.action` は 5 種へ拡張済み
 - [`app/api/routers/feedback_router.py`](../../app/api/routers/feedback_router.py)
-  - `/feedback` は旧 action 前提
+  - **概ね対応済み**。HTTP contract は 5 種 action 前提へ更新済み
 - [`app/services/feedback_service.py`](../../app/services/feedback_service.py)
-  - `FeedbackRecorder` 1 本だけ
+  - **対応済み**。legacy recorder + `EventWriter` の dual path 化済み
 - [`app/container/infra.py`](../../app/container/infra.py)
-  - `PubSubFeedbackRecorder` を組んでいる
+  - **一部対応済み**。`PubSubFeedbackRecorder` を残しつつ、`BigQueryEventRepository` / `BigQueryLabelRepository` / `CloudLoggingEventWriter` を組むよう更新済み
 - [`app/services/search_service.py`](../../app/services/search_service.py)
-  - `EventWriter` 未接続、`ranking_log_publisher` のみ
+  - **対応済み**。`EventWriter.emit_search_event(...)` / `emit_impression(...)` を呼ぶ
 
 ### 学習データ / trainer
 
 - [`ml/data/loaders/ranker_repository.py`](../../ml/data/loaders/ranker_repository.py)
-  - `ranking_log × feedback_events` join で label を作る旧設計
+  - **対応済み**。`ranking_labels × search_impressions × feature_mart` ベースへ切り替え済み
 - [`pipeline/training_job/main.py`](../../pipeline/training_job/main.py)
-  - TODO が残っており、**BigQuery loader は実装済みでも KFP component 側が未配線**
+  - **一部対応済み**。parameter contract は `search_impressions_table` / `ranking_labels_table` 前提へ更新済み
+  - ただし **KFP component 側 stub 問題はまだ残る**
 - [`pipeline/training_job/components/load_features.py`](../../pipeline/training_job/components/load_features.py)
-  - docs コメントどおり contract stub のまま
+  - **query contract は更新済み** だが、docs コメントどおり **まだ stub のまま**
 
 ### infra / BigQuery
 
 - [`infra/terraform/modules/data/main.tf`](../../infra/terraform/modules/data/main.tf)
-  - `mlops.feedback_events` はある
-  - `search_events` / `search_impressions` / `user_actions` / `ranking_labels` / `evaluation_metrics` の canonical 一式にコード側がまだ追従していない
+  - `mlops.feedback_events` は互換目的で残置
+  - `search_events` / `search_impressions` / `user_actions` / `ranking_labels` / `evaluation_metrics` は **追加済み**
 - [`tests/integration/infra/test_infra_ranker_tables.py`](../../tests/integration/infra/test_infra_ranker_tables.py)
-  - `feedback_events` 中心の構造検証
+  - **一部対応済み**。新 event schema テーブル contract を追加済み
 
 ### UI
 
 - [`app/api/routers/ui_router.py`](../../app/api/routers/ui_router.py)
   - `/ui/dev` `/ui/dev/model/metrics` `/ui/dev/data` `/ui/dev/ops` はある
   - ただし **Phase 3 の物件詳細ページ `/ui/property/{property_id}` は未実装**
+- [`app/templates/_feedback_panel.html`](../../app/templates/_feedback_panel.html)
+  - **対応済み**。feedback UI の action 選択肢は 5 種へ更新済み
 - `/admin/mlops`
   - 調査範囲では未実装
 
@@ -113,6 +153,16 @@ Phase 3 と同様、**app 層の contract を先に固め、保存先や orchest
 4. KFP / Composer 本線
 5. UI / `/admin/mlops`
 6. tests / docs / runbook
+
+## 2.3 実装済み wave の整理
+
+- Wave A: **ほぼ完了**
+- Wave B: **ほぼ完了**
+- Wave C: **ほぼ完了**
+- Wave D: **最小土台まで実装済み**
+- Wave E: **未完**
+- Wave F: **未着手**
+- Wave G: **一部実施済み**
 
 ---
 
@@ -163,6 +213,16 @@ Phase 3 と同様、**app 層の contract を先に固め、保存先や orchest
 - `/search` と `/feedback` から event schema へ publish できる
 - 旧 `feedback_events` best-effort publish は互換目的で当面残してよい
 
+### 状態
+
+**概ね完了**
+
+- `FeedbackRequest.action` 5 種化: 完了
+- `FeedbackService` dual path 化: 完了
+- `SearchService` から `emit_search_event` / `emit_impression`: 完了
+- `/feedback` から `emit_user_action`: 完了
+- legacy `feedback_events` 互換 path 残置: 完了
+
 ---
 
 ## 3.2 Wave B — BigQuery event schema を本当に作る
@@ -195,6 +255,15 @@ Phase 3 と同様、**app 層の contract を先に固め、保存先や orchest
   - または完全撤去
   のどちらかで明確になる
 
+### 状態
+
+**ほぼ完了**
+
+- Terraform table 追加: 完了
+- `destroy_all.py` / `state_recovery.py` / outputs 追従: 完了
+- `feedback_events` の扱い: **互換残置で明確化済み**
+- ただし messaging / sink / curated ingest の最終整理はまだ残る
+
 ---
 
 ## 3.3 Wave C — repository を `feedback_events` 依存から `ranking_labels` 依存へ切り替える
@@ -220,6 +289,15 @@ Phase 3 と同様、**app 層の contract を先に固め、保存先や orchest
 
 - `fetch_training_rows()` が `ranking_labels` ベースになる
 - trainer が `feedback_events` ではなく `ranking_labels` を前提にする
+
+### 状態
+
+**ほぼ完了**
+
+- `BigQueryRankerRepository` 切り替え: 完了
+- `BigQueryEventRepository` / `BigQueryLabelRepository` 追加: 完了
+- retrain query の `feedback_events` -> `user_actions` 化: 完了
+- ただし本当に Vertex retrain 本線で consume する部分は Wave E へ残る
 
 ---
 
@@ -255,6 +333,16 @@ Phase 3 と同様、**app 層の contract を先に固め、保存先や orchest
 - `training_dataset` が GCS または artifact として保存される
 - `evaluation_metrics` が BigQuery に保存される
 
+### 状態
+
+**一部完了**
+
+- `pipeline/labeling_job/`: 追加済み
+- `pipeline/training_dataset_job/`: 追加済み
+- `Makefile` `label-build` / `build-training-dataset`: 追加済み
+- `evaluation_metrics` table: Terraform 追加済み
+- ただし `evaluation_metrics` writer / evaluate job の本線保存は未完
+
 ---
 
 ## 3.5 Wave E — KFP / Composer 本線へ実データを通す
@@ -287,6 +375,15 @@ Phase 3 と同様、**app 層の contract を先に固め、保存先や orchest
 - Vertex retrain が `ranking_labels` 由来の dataset を実際に consume する
 - docs の「stub 残り」が消える
 
+### 状態
+
+**未完**
+
+- `pipeline/training_job/main.py` parameter contract 更新: 済み
+- `load_features.py` query contract 更新: 済み
+- しかし `load_features.py` / `train_reranker.py` はまだ stub
+- Composer DAG から `label-build` / `build-training-dataset` 本線接続も未実施
+
 ---
 
 ## 3.6 Wave F — Phase 7 UI / `/admin/mlops` を追加する
@@ -317,6 +414,14 @@ Phase 3 と同様、**app 層の contract を先に固め、保存先や orchest
 
 - `/admin/mlops` から Phase 7 の継続改善サイクルの状態が見える
 
+### 状態
+
+**未着手**
+
+- `/feedback` UI の action 選択肢更新のみ実施済み
+- `/admin/mlops` は未実装
+- `/ui/property/{property_id}` も未実装
+
 ---
 
 ## 3.7 Wave G — テスト / contract / docs を新 canonical に揃える
@@ -343,6 +448,23 @@ Phase 3 と同様、**app 層の contract を先に固め、保存先や orchest
 - docs とコードが同じことを言っている
 - 新 event schema / label flow を test が固定している
 
+### 状態
+
+**一部完了**
+
+- unit test 追加
+  - `BigQueryEventRepository`
+  - `BigQueryLabelRepository`
+  - `labeling_job`
+  - `training_dataset_job`
+  - `/search` event emit
+  - `/feedback` canonical action
+- workflow contract test 追加
+  - `test_ground_truth_contract.py`
+- infra contract test 追加
+  - `test_infra_ranker_tables.py`
+- ただし docs / runbook / 実装カタログの本文同期はまだ残る
+
 ---
 
 ## 4. 推奨実施順
@@ -356,6 +478,16 @@ Phase 3 と同様、**app 層の contract を先に固め、保存先や orchest
 5. Wave E: KFP / Composer 配線
 6. Wave G: tests / docs
 7. Wave F: `/admin/mlops`
+
+## 4.1 残作業の推奨順
+
+2026-05-06 時点では、次の順が現実的。
+
+1. Wave E: KFP / Composer 本線化
+2. Wave D 残り: `evaluation_metrics` 保存と evaluate job 整備
+3. Wave G 残り: docs / runbook / 実装カタログ同期
+4. Wave F: `/admin/mlops`
+5. 総合動作検証
 
 理由:
 
@@ -402,6 +534,8 @@ app と infra を先に直し、KFP component stub を最後に配線するの�
 - `search_events` / `search_impressions` / `user_actions` / `ranking_labels` テーブル定義あり
 - repository が `ranking_labels` ベース
 
+**状態**: ほぼ達成
+
 ### M2: offline 正解データ経路完了
 
 - labeling job
@@ -409,19 +543,33 @@ app と infra を先に直し、KFP component stub を最後に配線するの�
 - evaluation metrics
 - offline tests PASS
 
+**状態**: 一部達成
+
+- labeling job: 済み
+- dataset job: 済み
+- evaluation metrics: table のみ
+- offline tests: 追加済み
+
 ### M3: orchestration 本線完了
 
 - KFP stub 撤去
 - Composer retrain_orchestration が `ranking_labels` 由来で回る
+
+**状態**: 未達
 
 ### M4: operator UX 完了
 
 - `/admin/mlops` 表示
 - runbook / docs / contract test 同期
 
+**状態**: 未達
+
 ---
 
 ## 7. 最初の着手単位
+
+この節は **調査開始時点の分割案** として残す。  
+2026-05-06 時点では PR-1 相当は概ね実施済みで、実際の残作業は PR-4 / PR-5 相当が中心。
 
 最初の PR / 作業単位は次がよい。
 
@@ -441,21 +589,31 @@ app と infra を先に直し、KFP component stub を最後に配線するの�
 - ここが全部の出発点
 - BigQuery schema と job 実装を後続 PR に安全に分けられる
 
+**状態**: 概ね完了
+
 ### PR-2
 
 **BigQuery schema + repository 切り替え**
+
+**状態**: 概ね完了
 
 ### PR-3
 
 **labeling / dataset / metrics jobs**
 
+**状態**: 一部完了
+
 ### PR-4
 
 **KFP / Composer 本線**
 
+**状態**: 未完
+
 ### PR-5
 
 **`/admin/mlops` + docs 同期**
+
+**状態**: 未着手
 
 ---
 

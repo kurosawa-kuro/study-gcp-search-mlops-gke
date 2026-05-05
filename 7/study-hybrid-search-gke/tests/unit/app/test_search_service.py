@@ -15,6 +15,7 @@ from app.domain.search import SearchInput
 from app.services.search_service import SearchService, SearchServiceUnavailable
 from tests._fakes import (
     InMemoryCandidateRetriever,
+    InMemoryEventWriter,
     InMemoryRankingLogPublisher,
     MockRerankerClient,
     StubEncoderClient,
@@ -46,14 +47,17 @@ def _build_service(
     candidates: list[Candidate] | None = None,
     reranker: MockRerankerClient | None = None,
     popularity_scorer: StubPopularityScorer | None = None,
+    event_writer: InMemoryEventWriter | None = None,
 ) -> tuple[SearchService, dict[str, object]]:
     retriever = InMemoryCandidateRetriever(candidates=candidates)
     encoder = StubEncoderClient()
     publisher = InMemoryRankingLogPublisher()
+    event_writer = event_writer or InMemoryEventWriter()
     service = SearchService(
         retriever_default=retriever,
         encoder=encoder,
         publisher=publisher,
+        event_writer=event_writer,
         reranker=reranker,
         popularity_scorer=popularity_scorer,
     )
@@ -61,6 +65,7 @@ def _build_service(
         "retriever": retriever,
         "encoder": encoder,
         "publisher": publisher,
+        "event_writer": event_writer,
         "reranker": reranker,
         "popularity_scorer": popularity_scorer,
     }
@@ -150,3 +155,29 @@ def test_search_populates_popularity_score_when_scorer_present() -> None:
         input=SearchInput(query="x", filters={}, top_k=1),
     )
     assert output.items[0].popularity_score == 0.42
+
+
+def test_search_emits_search_event_and_impressions() -> None:
+    candidates = [
+        _make_candidate("P-001", lexical_rank=1, semantic_rank=1),
+        _make_candidate("P-002", lexical_rank=2, semantic_rank=2),
+    ]
+    event_writer = InMemoryEventWriter()
+    service, deps = _build_service(candidates=candidates, event_writer=event_writer)
+
+    service.search(
+        request_id="req-gt-1",
+        input=SearchInput(
+            query="新宿 ペット可",
+            filters={"max_rent": 180000, "pet_ok": True},
+            top_k=2,
+        ),
+    )
+
+    writer = deps["event_writer"]
+    assert isinstance(writer, InMemoryEventWriter)
+    assert len(writer.search_events) == 1
+    assert writer.search_events[0].search_id == "req-gt-1"
+    assert '"max_rent": 180000' in writer.search_events[0].filters_json
+    assert len(writer.impressions) == 2
+    assert [impression.rank for impression in writer.impressions] == [1, 2]

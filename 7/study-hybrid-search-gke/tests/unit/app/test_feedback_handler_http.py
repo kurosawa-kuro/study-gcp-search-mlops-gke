@@ -25,3 +25,19 @@ def test_feedback_endpoint_rejects_invalid_action(fake_client) -> None:
     )
     # Pydantic literal contract enforces the canonical action set.
     assert response.status_code == 422
+
+
+def test_feedback_endpoint_accepts_all_canonical_actions(fake_client) -> None:
+    for action in (
+        "click",
+        "detail_view",
+        "favorite",
+        "request_button_click",
+        "request_complete",
+    ):
+        response = fake_client.post(
+            "/feedback",
+            json={"request_id": "r-2", "property_id": "P-010", "action": action},
+        )
+        assert response.status_code == 200, action
+        assert response.json() == {"accepted": True}

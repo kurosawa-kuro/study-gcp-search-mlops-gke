@@ -97,3 +97,26 @@ def test_search_endpoint_explain_returns_attributions(
     # MockRerankerClient.predict_with_explain returns flat 1/N attributions
     assert item["attributions"] is not None
     assert "_baseline" in item["attributions"]
+
+
+def test_search_endpoint_emits_canonical_event_logs(
+    fake_client,
+    fake_event_writer,
+    fake_candidate_retriever,
+) -> None:
+    fake_candidate_retriever._candidates = [
+        _candidate("P-101", lex=1, sem=1),
+        _candidate("P-102", lex=2, sem=2),
+    ]
+    response = fake_client.post(
+        "/search",
+        json={"query": "赤羽 1LDK", "filters": {"max_rent": 150000}, "top_k": 2},
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert len(fake_event_writer.search_events) == 1
+    assert fake_event_writer.search_events[0].search_id == body["request_id"]
+    assert fake_event_writer.search_events[0].query == "赤羽 1LDK"
+    assert len(fake_event_writer.impressions) == 2
+    assert fake_event_writer.impressions[0].search_id == body["request_id"]
