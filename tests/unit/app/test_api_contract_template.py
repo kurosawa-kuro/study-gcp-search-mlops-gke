@@ -1,4 +1,4 @@
-"""Cross-phase API contract template tests for /search /feedback /readyz."""
+"""Cross-phase API contract template tests for /api/v1/search /api/v1/feedback /readyz."""
 
 from __future__ import annotations
 
@@ -62,19 +62,19 @@ def test_api_contract_readyz_returns_ok(app_with_search_stub) -> None:
 
 
 def test_api_contract_search_success_shape(search_client) -> None:
-    r = search_client.post("/search", json=_search_payload())
+    r = search_client.post("/api/v1/search", json=_search_payload())
     assert r.status_code == 200
     _assert_search_shape(r.json())
 
 
 def test_api_contract_search_has_trace_identifier(search_client) -> None:
-    r = search_client.post("/search", json=_search_payload())
+    r = search_client.post("/api/v1/search", json=_search_payload())
     assert r.status_code == 200
     _assert_trace_identifier(r.json())
 
 
 def test_api_contract_search_result_item_required_fields(search_client) -> None:
-    r = search_client.post("/search", json=_search_payload())
+    r = search_client.post("/api/v1/search", json=_search_payload())
     assert r.status_code == 200
     _assert_result_item_required_fields(r.json())
 
@@ -84,7 +84,7 @@ def test_api_contract_feedback_accepts_click(app_with_search_stub) -> None:
 
     with TestClient(app_with_search_stub) as client:
         r = client.post(
-            "/feedback",
+            "/api/v1/feedback",
             json={"request_id": "abc", "property_id": "P-001", "action": "click"},
         )
     assert r.status_code == 200
@@ -94,7 +94,7 @@ def test_api_contract_feedback_accepts_click(app_with_search_stub) -> None:
 def test_api_contract_search_validation_error(search_client) -> None:
     payload = _search_payload()
     payload["query"] = ""
-    r = search_client.post("/search", json=payload)
+    r = search_client.post("/api/v1/search", json=payload)
     assert r.status_code == 422
 
 
@@ -103,7 +103,7 @@ def test_api_contract_feedback_rejects_unknown_action(app_with_search_stub) -> N
 
     with TestClient(app_with_search_stub) as client:
         r = client.post(
-            "/feedback",
+            "/api/v1/feedback",
             json={"request_id": "abc", "property_id": "P-001", "action": "teleport"},
         )
     assert r.status_code == 422
@@ -114,7 +114,7 @@ def test_api_contract_feedback_validation_error(app_with_search_stub) -> None:
 
     with TestClient(app_with_search_stub) as client:
         # Missing required field `property_id`.
-        r = client.post("/feedback", json={"request_id": "abc", "action": "click"})
+        r = client.post("/api/v1/feedback", json={"request_id": "abc", "action": "click"})
     assert r.status_code == 422
 
 
@@ -123,5 +123,5 @@ def test_api_contract_search_unavailable_behavior(app_with_search_stub) -> None:
 
     _replace_search_container(app_with_search_stub, encoder_client=None)
     with TestClient(app_with_search_stub) as client:
-        r = client.post("/search", json=_search_payload())
+        r = client.post("/api/v1/search", json=_search_payload())
     assert r.status_code == 503

@@ -20,7 +20,7 @@ def main() -> int:
     except Exception as exc:
         return fail(f"ranking config error: {exc}")
     payload = {"query": query, "top_k": top_k}
-    status, body = target.call("POST", "/search", payload=payload)
+    status, body = target.call("POST", "/api/v1/search", payload=payload)
     if status != 200:
         return fail(f"search returned HTTP {status}: {body}")
 

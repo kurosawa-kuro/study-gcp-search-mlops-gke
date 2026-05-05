@@ -19,7 +19,7 @@ def main() -> int:
     except Exception as exc:
         return fail(f"feedback config error: {exc}")
 
-    status, body = target.call("POST", "/search", payload={"query": query, "top_k": 1})
+    status, body = target.call("POST", "/api/v1/search", payload={"query": query, "top_k": 1})
     if status != 200:
         return fail(f"search returned HTTP {status}: {body}")
 
@@ -34,7 +34,7 @@ def main() -> int:
 
     fb_status, fb_body = target.call(
         "POST",
-        "/feedback",
+        "/api/v1/feedback",
         payload={"request_id": request_id, "property_id": property_id, "action": action},
     )
     if fb_status != 200:

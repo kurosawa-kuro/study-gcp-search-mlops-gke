@@ -10,7 +10,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 import pytest
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI
 from fastapi.testclient import TestClient
 
 from app.api.middleware import RequestLoggingMiddleware
@@ -57,9 +57,13 @@ def app_with_search_stub(
     app.state.container = container
     app.add_middleware(RequestLoggingMiddleware, logger=get_logger("app"))
     app.include_router(health_router)
-    app.include_router(search_router)
-    app.include_router(feedback_router)
-    app.include_router(retrain_router)
+    api_v1 = APIRouter(prefix="/api/v1")
+    api_v1.include_router(search_router)
+    api_v1.include_router(feedback_router)
+    app.include_router(api_v1)
+    ops = APIRouter(prefix="/ops")
+    ops.include_router(retrain_router)
+    app.include_router(ops)
     return app
 
 

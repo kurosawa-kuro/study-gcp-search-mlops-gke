@@ -36,7 +36,7 @@ def main() -> int:
     posted = 0
     for action in ACTIONS:
         for _ in range(n_per_action):
-            status, body = target.call("POST", "/search", payload=search_payload)
+            status, body = target.call("POST", "/api/v1/search", payload=search_payload)
             if status != 200:
                 time.sleep(1)
                 continue
@@ -47,7 +47,7 @@ def main() -> int:
             if rid and pid:
                 target.call(
                     "POST",
-                    "/feedback",
+                    "/api/v1/feedback",
                     payload={"request_id": rid, "property_id": pid, "action": action},
                 )
                 posted += 1

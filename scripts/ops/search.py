@@ -14,7 +14,7 @@ from scripts._common import fail, print_pretty, resolve_api_target
 
 def _search_once(*, payload: dict[str, object]) -> tuple[int, str]:
     target = resolve_api_target()
-    return target.call("POST", "/search", payload=payload)
+    return target.call("POST", "/api/v1/search", payload=payload)
 
 
 def main() -> int:

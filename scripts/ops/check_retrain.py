@@ -1,4 +1,4 @@
-"""POST /jobs/check-retrain on search-api with an OIDC token. The endpoint
+"""POST /ops/jobs/check-retrain on search-api with an OIDC token. The endpoint
 inspects training_runs / feedback freshness and returns whether the
 retrain-trigger Pub/Sub topic should fire (used by Cloud Scheduler daily).
 """
@@ -34,9 +34,9 @@ def main() -> int:
         f"has_token={bool(target.token)}"
     )
 
-    _diag("calling POST /jobs/check-retrain ...")
+    _diag("calling POST /ops/jobs/check-retrain ...")
     try:
-        status, body = target.call("POST", "/jobs/check-retrain")
+        status, body = target.call("POST", "/ops/jobs/check-retrain")
     except Exception as exc:
         _diag(f"target.call FAILED: {type(exc).__name__}: {exc!r}")
         return fail(f"check-retrain transport error: {type(exc).__name__}: {exc}")

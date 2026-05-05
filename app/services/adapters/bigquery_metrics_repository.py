@@ -39,9 +39,7 @@ class BigQueryMetricsRepository(MetricsRepository):
                 "dataset_version": metric.dataset_version,
                 "metric_name": metric.metric_name,
                 "metric_value": float(metric.metric_value),
-                "threshold": (
-                    float(metric.threshold) if metric.threshold is not None else None
-                ),
+                "threshold": (float(metric.threshold) if metric.threshold is not None else None),
                 "passed": metric.passed,
                 "evaluated_at": (metric.evaluated_at or datetime.now(timezone.utc)).isoformat(),
                 "payload": None,

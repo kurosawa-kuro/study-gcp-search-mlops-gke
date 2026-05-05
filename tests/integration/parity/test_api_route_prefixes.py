@@ -17,7 +17,6 @@ Wave 1 (2026-05-06) で API endpoint を 4 軸 prefix に整理した:
 from __future__ import annotations
 
 import pytest
-from fastapi.routing import APIRoute
 from fastapi.testclient import TestClient
 
 # Allowed prefixes (新 canonical の 4 軸).
@@ -38,6 +37,7 @@ _ROOT_RESERVED_EXACT: frozenset[str] = frozenset(
     }
 )
 _ROOT_RESERVED_PREFIXES: tuple[str, ...] = ("/static/",)
+_ROOT_RESERVED_EXACT = _ROOT_RESERVED_EXACT | {"/static"}
 
 # 1-sprint 互換のために残置している旧 path (Wave 1 終了後に削除予定).
 _LEGACY_REDIRECTS: dict[str, str] = {
@@ -141,7 +141,9 @@ def test_legacy_paths_redirect_to_new_prefix(app_no_lifespan) -> None:  # type: 
     with TestClient(app_no_lifespan) as client:
         for old_path, new_path in _LEGACY_REDIRECTS.items():
             response = client.request(
-                method="POST" if old_path in {"/search", "/feedback", "/jobs/check-retrain"} else "GET",
+                method="POST"
+                if old_path in {"/search", "/feedback", "/jobs/check-retrain"}
+                else "GET",
                 url=old_path,
                 follow_redirects=False,
             )

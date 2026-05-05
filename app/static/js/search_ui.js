@@ -134,7 +134,7 @@
     if (!btn || !card || !tbody) return;
     btn.setAttribute("aria-busy", "true");
     try {
-      const res = await fetch("/model/info");
+      const res = await fetch("/ops/model/info");
       const body = await res.json();
       tbody.innerHTML = "";
       Object.entries(body).forEach(([key, value]) => {
@@ -178,7 +178,7 @@
         top_k: parseInt(root.querySelector("#q-top-k")?.value || "", 10) || 20,
       };
       const explain = root.querySelector("#q-explain")?.checked === true;
-      const url = explain ? "/search?explain=true" : "/search";
+      const url = explain ? "/api/v1/search?explain=true" : "/api/v1/search";
 
       try {
         const res = await fetch(url, {
@@ -277,7 +277,7 @@
         property_id: root.querySelector("#fb-pid")?.value || "",
         action: root.querySelector("#fb-action")?.value || "click",
       };
-      const res = await fetch("/feedback", {
+      const res = await fetch("/api/v1/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

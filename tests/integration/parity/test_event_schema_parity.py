@@ -85,9 +85,7 @@ def test_app_emit_keys_match_terraform_user_actions_description() -> None:
     )
     assert body is not None, "user_actions resource missing in main.tf"
     for action in ACTION_WEIGHTS_APP_EMIT:
-        assert action in body, (
-            f"Terraform user_actions.action_type description missing {action!r}"
-        )
+        assert action in body, f"Terraform user_actions.action_type description missing {action!r}"
 
 
 def test_terraform_user_actions_description_excludes_synthetic() -> None:
@@ -154,7 +152,7 @@ def test_synthetic_yaml_label_source_format() -> None:
 
 
 def test_action_weights_is_app_emit_union_synthetic_no_overlap() -> None:
-    """ACTION_WEIGHTS = APP_EMIT ∪ SYNTHETIC, no overlapping keys, all int."""
+    """ACTION_WEIGHTS = APP_EMIT + SYNTHETIC, no overlapping keys, all int."""
     overlap = set(ACTION_WEIGHTS_APP_EMIT) & set(ACTION_WEIGHTS_SYNTHETIC)
     assert overlap == set(), f"app emit and synthetic share keys: {overlap}"
     assert ACTION_WEIGHTS == {**ACTION_WEIGHTS_APP_EMIT, **ACTION_WEIGHTS_SYNTHETIC}

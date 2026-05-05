@@ -64,7 +64,7 @@
     btn.setAttribute("aria-busy", "true");
     meta.textContent = "読込中です...";
     try {
-      const res = await fetch("/model/data");
+      const res = await fetch("/ops/model/data");
       const body = await res.json();
       if (!res.ok) {
         meta.textContent = `error: HTTP ${res.status}`;

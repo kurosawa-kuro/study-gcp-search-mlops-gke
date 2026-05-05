@@ -61,7 +61,7 @@ variable "feature_view_id" {
 }
 
 variable "api_external_url" {
-  description = "Public HTTPS URL of search-api GKE Gateway. DAG `retrain_orchestration::check_retrain` POSTs `/jobs/check-retrain` to this URL as a smoke."
+  description = "Public HTTPS URL of search-api GKE Gateway. DAG `retrain_orchestration::check_retrain` POSTs `/ops/jobs/check-retrain` to this URL as a smoke."
   type        = string
   default     = ""
 }

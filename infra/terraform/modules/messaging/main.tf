@@ -3,7 +3,7 @@
 #
 # Phase 5 の Cloud Run Service (search-api) はこのモジュールから抜けた。
 # Phase 6 では search-api は GKE に載るため、Cloud Run 関連リソースはここには
-# 置かない。Scheduler は GKE Gateway 経由で /jobs/check-retrain を叩く。
+# 置かない。Scheduler は GKE Gateway 経由で /ops/jobs/check-retrain を叩く。
 # =========================================================================
 
 data "google_project" "current" {}
@@ -114,14 +114,14 @@ resource "google_cloud_scheduler_job" "check_retrain_daily" {
   count = var.api_external_url == "" ? 0 : 1
 
   name        = "check-retrain-daily"
-  description = "[smoke / 軽量代替] POST /jobs/check-retrain (本線 retrain は Composer DAG retrain_orchestration、本 trigger は月 1 回 smoke のみ)"
+  description = "[smoke / 軽量代替] POST /ops/jobs/check-retrain (本線 retrain は Composer DAG retrain_orchestration、本 trigger は月 1 回 smoke のみ)"
   schedule    = "0 4 1 * *"
   time_zone   = "Asia/Tokyo"
   region      = var.region
 
   http_target {
     http_method = "POST"
-    uri         = "${var.api_external_url}/jobs/check-retrain"
+    uri         = "${var.api_external_url}/ops/jobs/check-retrain"
 
     oidc_token {
       service_account_email = var.service_accounts.scheduler.email

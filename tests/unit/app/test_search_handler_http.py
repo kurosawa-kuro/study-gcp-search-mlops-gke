@@ -1,4 +1,4 @@
-"""HTTP-level tests for the ``/search`` handler.
+"""HTTP-level tests for the ``/api/v1/search`` handler.
 
 Phase D-2 / Phase A-2 — exercises the full Depends() injection path
 (``get_container`` → Container → SearchService) using the ``fake_app``
@@ -37,7 +37,7 @@ def test_search_endpoint_returns_results(fake_client, fake_candidate_retriever) 
     ]
 
     response = fake_client.post(
-        "/search",
+        "/api/v1/search",
         json={"query": "渋谷", "filters": {"max_rent": 200000}, "top_k": 5},
     )
 
@@ -74,7 +74,7 @@ def test_search_endpoint_503_when_retriever_unavailable(
     fake_app.state.container = new_container
 
     response = fake_client.post(
-        "/search",
+        "/api/v1/search",
         json={"query": "x", "filters": {}, "top_k": 1},
     )
 
@@ -88,7 +88,7 @@ def test_search_endpoint_explain_returns_attributions(
     fake_candidate_retriever._candidates = [_candidate("P-EX", lex=1, sem=1)]
 
     response = fake_client.post(
-        "/search?explain=true",
+        "/api/v1/search?explain=true",
         json={"query": "x", "filters": {}, "top_k": 1},
     )
 
@@ -109,7 +109,7 @@ def test_search_endpoint_emits_canonical_event_logs(
         _candidate("P-102", lex=2, sem=2),
     ]
     response = fake_client.post(
-        "/search",
+        "/api/v1/search",
         json={"query": "赤羽 1LDK", "filters": {"max_rent": 150000}, "top_k": 2},
     )
 

@@ -2,7 +2,7 @@
 
 {% block title %}モデル精度 · ハイブリッド検索 Console{% endblock %}
 {% block page_title %}モデル精度{% endblock %}
-{% block page_copy %}`/model/metrics` の評価結果を、template ベースの card と table で確認します。{% endblock %}
+{% block page_copy %}`/ops/model/metrics` の評価結果を、template ベースの card と table で確認します。{% endblock %}
 
 {% block content %}
   <section class="admin-content admin-stack">
@@ -60,7 +60,7 @@
     btn.setAttribute("aria-busy", "true");
     try {
       const k = parseInt(document.getElementById("q-k").value, 10) || 10;
-      const res = await fetch(`/model/metrics?k=${k}`);
+      const res = await fetch(`/ops/model/metrics?k=${k}`);
       const body = await res.json();
       if (!res.ok) {
         document.getElementById("acc-meta").textContent = `error: HTTP ${res.status} ${JSON.stringify(body)}`;

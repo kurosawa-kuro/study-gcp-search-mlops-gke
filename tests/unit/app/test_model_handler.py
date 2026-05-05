@@ -1,4 +1,4 @@
-"""Unit tests for ``/model/metrics`` and ``/model/info`` / ``/model/data``.
+"""Unit tests for ``/ops/model/metrics`` and ``/ops/model/info`` / ``/ops/model/data``.
 
 The handler is the first response surface for hybrid-search accuracy
 evaluation (the role originally implied by ``/metrics``). We pin:
@@ -31,7 +31,11 @@ from app.services.model_metrics_service import ModelMetricsService
 def _build_client(container: Container) -> TestClient:
     app = FastAPI()
     app.state.container = container
-    app.include_router(model_router)
+    from fastapi import APIRouter
+
+    ops = APIRouter(prefix="/ops")
+    ops.include_router(model_router)
+    app.include_router(ops)
     return TestClient(app)
 
 
@@ -64,7 +68,7 @@ def test_model_metrics_returns_summary_and_per_case(
     container = fake_container_factory()
     client = _build_client(container)
 
-    res = client.get("/model/metrics?k=10")
+    res = client.get("/ops/model/metrics?k=10")
 
     assert res.status_code == 200, res.text
     body = res.json()
@@ -85,7 +89,7 @@ def test_model_metrics_503_when_service_missing(
     container = fake_container_factory(model_metrics_service=None)
     client = _build_client(container)
 
-    res = client.get("/model/metrics")
+    res = client.get("/ops/model/metrics")
 
     assert res.status_code == 503
     assert "not configured" in res.json()["detail"]
@@ -98,7 +102,7 @@ def test_model_metrics_rejects_invalid_k(
 ) -> None:
     container = fake_container_factory()
     client = _build_client(container)
-    res = client.get(f"/model/metrics?k={k}")
+    res = client.get(f"/ops/model/metrics?k={k}")
     assert res.status_code == 422
 
 
@@ -108,7 +112,7 @@ def test_model_info_reports_container_state(
     container = fake_container_factory()
     client = _build_client(container)
 
-    res = client.get("/model/info")
+    res = client.get("/ops/model/info")
 
     assert res.status_code == 200
     body = res.json()
@@ -125,7 +129,7 @@ def test_model_data_returns_preview_tables(
     container = fake_container_factory()
     client = _build_client(container)
 
-    res = client.get("/model/data")
+    res = client.get("/ops/model/data")
 
     assert res.status_code == 200
     body = res.json()

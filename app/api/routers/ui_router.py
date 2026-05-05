@@ -2,8 +2,8 @@
 
 Routed under ``/ui/`` (see ``app/main.py``) so the bare ``/metrics``
 path stays exclusive to Prometheus exposition. UI pages use AJAX
-``fetch()`` to call the JSON APIs (``/search``, ``/feedback``,
-``/model/metrics``, ``/model/info``); this keeps the UI layer thin and
+``fetch()`` to call the JSON APIs (``/api/v1/search``, ``/api/v1/feedback``,
+``/ops/model/metrics``, ``/ops/model/info``); this keeps the UI layer thin and
 removable without touching API contracts.
 """
 

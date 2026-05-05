@@ -1,7 +1,7 @@
 """Happy-path tests for RequestLoggingMiddleware.
 
 Exercised via the FastAPI TestClient against /healthz (always available)
-and /search (requires the search-stub fixture).
+and /api/v1/search (requires the search-stub fixture).
 """
 
 from __future__ import annotations
@@ -25,7 +25,7 @@ def test_middleware_preserves_client_supplied_request_id(search_client) -> None:
 def test_middleware_request_id_matches_search_response(app_with_search_stub) -> None:
     with TestClient(app_with_search_stub) as client:
         r = client.post(
-            "/search",
+            "/api/v1/search",
             json={"query": "test", "top_k": 1},
             headers={"x-request-id": "my-trace"},
         )

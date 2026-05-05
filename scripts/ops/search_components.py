@@ -47,7 +47,7 @@ def main() -> int:
         return fail(f"component-check config error: {exc}")
 
     payload = {"query": query, "filters": {"max_rent": max_rent}, "top_k": top_k}
-    status, body = resolved.call("POST", "/search", payload=payload)
+    status, body = resolved.call("POST", "/api/v1/search", payload=payload)
     if status != 200:
         return fail(f"component-check search returned HTTP {status}: {body}")
     try:

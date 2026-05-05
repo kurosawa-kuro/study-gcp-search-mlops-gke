@@ -1,4 +1,4 @@
-"""Lightweight ranking accuracy report for local and GCP /search."""
+"""Lightweight ranking accuracy report for local and GCP /api/v1/search."""
 
 from __future__ import annotations
 
@@ -134,7 +134,7 @@ def main() -> int:
 
     for case in cases:
         payload = {"query": case.query, "filters": case.filters, "top_k": case.top_k}
-        status, body = resolved.call("POST", "/search", payload=payload)
+        status, body = resolved.call("POST", "/api/v1/search", payload=payload)
         if status != 200:
             return fail(f"accuracy-report search failed ({case.name}) HTTP {status}: {body}")
         try:

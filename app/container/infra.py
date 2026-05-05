@@ -163,9 +163,7 @@ class InfraBuilder:
             synonym_expander=self.build_synonym_expander(),
         )
 
-    def build_metrics_repository(
-        self, *, evaluation_metrics_table: str
-    ) -> MetricsRepository:
+    def build_metrics_repository(self, *, evaluation_metrics_table: str) -> MetricsRepository:
         if not self._settings.enable_search:
             return NoopMetricsRepository()
         return BigQueryMetricsRepository(

@@ -46,7 +46,7 @@ def test_check_retrain_does_nothing_when_fresh(app_with_search_stub):
     )
 
     with TestClient(app) as client:
-        r = client.post("/jobs/check-retrain")
+        r = client.post("/ops/jobs/check-retrain")
     assert r.status_code == 200
     body = r.json()
     assert body["should_retrain"] is False
@@ -63,7 +63,7 @@ def test_check_retrain_publishes_when_feedback_threshold_exceeded(app_with_searc
     )
 
     with TestClient(app) as client:
-        r = client.post("/jobs/check-retrain")
+        r = client.post("/ops/jobs/check-retrain")
     assert r.status_code == 200
     body = r.json()
     assert body["should_retrain"] is True
@@ -82,7 +82,7 @@ def test_check_retrain_publishes_when_ndcg_drops(app_with_search_stub):
     )
 
     with TestClient(app) as client:
-        r = client.post("/jobs/check-retrain")
+        r = client.post("/ops/jobs/check-retrain")
     body = r.json()
     assert body["should_retrain"] is True
     assert any(reason.startswith("ndcg_drop=") for reason in body["reasons"])

@@ -22,7 +22,7 @@ from collections.abc import Callable, Generator
 from typing import Any
 
 import pytest
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI
 from fastapi.testclient import TestClient
 
 from app.composition_root import Container
@@ -38,7 +38,9 @@ from tests._fakes import (
     InMemoryEventWriter,
     InMemoryFeatureFetcher,
     InMemoryFeedbackRecorder,
+    InMemoryMetricsRepository,
     InMemoryRankingLogPublisher,
+    InMemoryTrainingDatasetRepository,
     MockPredictionPublisher,
     MockRerankerClient,
     StubEncoderClient,
@@ -181,6 +183,8 @@ def fake_container_factory(
             "event_writer": fake_event_writer,
             "event_repository": NoopEventRepository(),
             "label_repository": NoopLabelRepository(),
+            "metrics_repository": InMemoryMetricsRepository(),
+            "training_dataset_repository": InMemoryTrainingDatasetRepository(),
             "feature_fetcher": None,  # PR-4 default off — preserves Phase 5 behaviour
         }
         defaults.update(overrides)
@@ -245,9 +249,13 @@ def fake_app(fake_container: Container) -> FastAPI:
     app = FastAPI()
     app.state.container = fake_container
     app.include_router(health_router)
-    app.include_router(search_router)
-    app.include_router(feedback_router)
-    app.include_router(retrain_router)
+    api_v1 = APIRouter(prefix="/api/v1")
+    api_v1.include_router(search_router)
+    api_v1.include_router(feedback_router)
+    app.include_router(api_v1)
+    ops = APIRouter(prefix="/ops")
+    ops.include_router(retrain_router)
+    app.include_router(ops)
     return app
 
 

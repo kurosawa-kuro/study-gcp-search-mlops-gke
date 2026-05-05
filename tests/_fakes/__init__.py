@@ -24,8 +24,10 @@ from .in_memory_event_writer import InMemoryEventWriter
 from .in_memory_feature_fetcher import InMemoryFeatureFetcher
 from .in_memory_feedback_recorder import InMemoryFeedbackRecorder
 from .in_memory_lexical_search import InMemoryLexicalSearch
+from .in_memory_metrics_repository import InMemoryMetricsRepository
 from .in_memory_ranking_log_publisher import InMemoryRankingLogPublisher
 from .in_memory_semantic_search import InMemorySemanticSearch
+from .in_memory_training_dataset_repository import InMemoryTrainingDatasetRepository
 from .mock_prediction_publisher import MockPredictionPublisher
 from .mock_reranker_client import MockRerankerClient
 from .stub_encoder_client import StubEncoderClient
@@ -38,8 +40,10 @@ __all__ = [
     "InMemoryFeatureFetcher",
     "InMemoryFeedbackRecorder",
     "InMemoryLexicalSearch",
+    "InMemoryMetricsRepository",
     "InMemoryRankingLogPublisher",
     "InMemorySemanticSearch",
+    "InMemoryTrainingDatasetRepository",
     "MockPredictionPublisher",
     "MockRerankerClient",
     "StubEncoderClient",
