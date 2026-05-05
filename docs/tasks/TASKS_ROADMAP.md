@@ -321,3 +321,51 @@ Composer = 上位 orchestrator、Vertex Pipelines = 下位 ML executor。`train/
 - [`../../README.md`](../../README.md) — プロジェクト概要 + 技術スタック + 非負制約
 - [`../../CLAUDE.md`](../../CLAUDE.md) — Claude Code 向けガイド
 - [`../../AGENTS.md`](../../AGENTS.md) — Cursor / Codex 向け charter
+
+
+Findings
+
+
+make check が現在通りません。Makefile の check は test を含み、その test は repo 全体の uv run pytest を実行しますが、実際には 8 件失敗しています。特に ops 系 unit test と config drift/parity test が落ちています。根拠は Makefile (line 94) と test_ops_handler.py (line 27)、test_configmap_drift.py (line 72)、test_manifests_structure.py (line 321)、test_destroy_all_table_parity.py (line 123) です。
+
+
+
+ConfigMap 生成と Deployment 参照がずれています。deployment.yaml は synonym_backend と synonym_redis_url を configMapKeyRef で参照していますが、ConfigMap の生成元と example YAML にはそのキーがありません。将来 Redis 同義語辞書を有効化しても overlay/generator が値を出せず、設定導線が壊れやすい状態です。根拠は deployment.yaml (line 133), config.py (line 22), configmap.example.yaml (line 14) です。
+
+
+
+ops ルータの unit test が現在の実装契約とずれています。実装側は ops_router 自体に prefix を持たせず、親側で /ops を付与する設計ですが、テストは ops_router をそのまま mount して /ops/... を叩いているため 404 になります。実ランタイムの不具合というより、prefix-axis 再設計後にテストが追従できていません。根拠は ops_router.py (line 22), app/main.py (line 126), test_ops_handler.py (line 27) です。
+
+
+
+destroy-all の protected target baseline contract が古いままです。実装は 16 target を持っていますが、テストは 11 の前提で固定されています。これは destroy_all.py を更新したのに incident/contract 側の baseline 更新が漏れている状態で、destroy 系の safety net が赤いままです。根拠は destroy_all.py (line 79) と test_destroy_all_table_parity.py (line 123) です。
+
+
+
+lint が赤いです。未使用 noqa と曖昧 Unicode で ruff check . が失敗します。機能バグではありませんが、check 系を止めるので放置コストが高いです。根拠は noop_metrics_repository.py (line 14), noop_training_dataset_repository.py (line 14), load_features.py (line 4) です。
+
+
+
+repo 全体の型健全性は崩れています。make check 相当の mypy app ml pipeline は通りますが、repo 全体で見ると scripts/tests/fakes に多数の型崩れがあります。特に fake が protocol の SearchFilters 契約を守っておらず、今後 interface 変更の検知が鈍ります。根拠は in_memory_semantic_search.py (line 28), in_memory_lexical_search.py (line 23), in_memory_candidate_retriever.py (line 23), semantic_search.py (line 28), search.py (line 20) です。
+
+
+
+確認
+
+
+uv run ruff check . → 失敗
+
+uv run mypy app ml pipeline → 成功
+
+uv run mypy app ml pipeline scripts tests → 失敗
+
+uv run pytest -q → 8 failed, 755 passed, 2 skipped
+
+
+必要なら次に、この順で直します。
+
+ConfigMap drift 修正
+ops handler test 追従
+destroy-all baseline contract 更新
+lint 赤の掃除
+fake/protocol の型契約修正
