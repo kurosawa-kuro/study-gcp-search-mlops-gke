@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate Dockerfile placement rules across phases."""
+"""Validate Dockerfile placement rules across phases and root canonical."""
 
 from __future__ import annotations
 
@@ -24,18 +24,16 @@ def _exists(relpath: str) -> bool:
 
 def _check_required() -> list[CheckResult]:
     required = [
+        "infra/run/services/search_api/Dockerfile",
+        "infra/run/services/encoder/Dockerfile",
+        "infra/run/services/reranker/Dockerfile",
+        "infra/run/services/composer_runner/Dockerfile",
+        "infra/run/services/ml_base/Dockerfile",
+        "ml/streaming/container/Dockerfile",
         "2/study-ml-app-pipeline/infra/run/services/api/Dockerfile",
         "2/study-ml-app-pipeline/infra/run/jobs/trainer/Dockerfile",
-        "3/study-hybrid-search-local/infra/run/services/search_api/Dockerfile",
-        "4/study-hybrid-search-gcp/infra/run/services/search_api/Dockerfile",
-        "4/study-hybrid-search-gcp/infra/run/jobs/embedding/Dockerfile",
-        "4/study-hybrid-search-gcp/infra/run/jobs/training/Dockerfile",
-        "5/study-hybrid-search-vertex/infra/run/jobs/embedding/Dockerfile",
-        "5/study-hybrid-search-vertex/infra/run/jobs/training/Dockerfile",
-        "5/study-hybrid-search-vertex/infra/run/services/encoder/Dockerfile",
-        "5/study-hybrid-search-vertex/infra/run/services/reranker/Dockerfile",
-        "5/study-hybrid-search-vertex/infra/run/services/search_api/Dockerfile",
-        "1/study-ml-foundations/infra/run/jobs/trainer/Dockerfile",
+        "3/study-hybrid-search-local/infra/run/services/api/Dockerfile",
+        "3/study-hybrid-search-local/infra/run/jobs/pipeline/Dockerfile",
     ]
     results: list[CheckResult] = []
     for rel in required:
@@ -68,17 +66,26 @@ def _check_unexpected_suffix_dockerfiles() -> list[CheckResult]:
 
 def _check_phase_layout_and_naming() -> list[CheckResult]:
     phase_roots = [
+        ROOT,
         ROOT / "2/study-ml-app-pipeline",
         ROOT / "3/study-hybrid-search-local",
-        ROOT / "4/study-hybrid-search-gcp",
-        ROOT / "5/study-hybrid-search-vertex",
     ]
     snake_case = re.compile(r"^[a-z0-9_]+$")
     results: list[CheckResult] = []
 
     for phase_root in phase_roots:
-        rel_phase = phase_root.relative_to(ROOT).as_posix()
-        dockerfiles = [p for p in phase_root.glob("**/Dockerfile") if p.is_file()]
+        rel_phase = "." if phase_root == ROOT else phase_root.relative_to(ROOT).as_posix()
+        if phase_root == ROOT:
+            dockerfiles = [ROOT / rel for rel in [
+                "infra/run/services/search_api/Dockerfile",
+                "infra/run/services/encoder/Dockerfile",
+                "infra/run/services/reranker/Dockerfile",
+                "infra/run/services/composer_runner/Dockerfile",
+                "infra/run/services/ml_base/Dockerfile",
+                "ml/streaming/container/Dockerfile",
+            ] if (ROOT / rel).is_file()]
+        else:
+            dockerfiles = [p for p in phase_root.glob("**/Dockerfile") if p.is_file()]
         if not dockerfiles:
             results.append(
                 CheckResult(ok=False, message=f"dockerfile-present: {rel_phase} has none")
@@ -89,19 +96,29 @@ def _check_phase_layout_and_naming() -> list[CheckResult]:
             rel = path.relative_to(ROOT).as_posix()
             parts = path.relative_to(phase_root).parts
 
-            # Must be infra/run/jobs/<name>/Dockerfile or infra/run/services/<name>/Dockerfile.
-            ok_shape = (
-                len(parts) == 5
-                and parts[0] == "infra"
-                and parts[1] == "run"
-                and parts[2] in {"jobs", "services"}
-                and parts[4] == "Dockerfile"
-            )
+            if phase_root == ROOT:
+                allowed_root = {
+                    ("infra", "run", "services", "search_api", "Dockerfile"),
+                    ("infra", "run", "services", "encoder", "Dockerfile"),
+                    ("infra", "run", "services", "reranker", "Dockerfile"),
+                    ("infra", "run", "services", "composer_runner", "Dockerfile"),
+                    ("infra", "run", "services", "ml_base", "Dockerfile"),
+                    ("ml", "streaming", "container", "Dockerfile"),
+                }
+                ok_shape = tuple(parts) in allowed_root
+            else:
+                ok_shape = (
+                    len(parts) == 5
+                    and parts[0] == "infra"
+                    and parts[1] == "run"
+                    and parts[2] in {"jobs", "services"}
+                    and parts[4] == "Dockerfile"
+                )
             if not ok_shape:
                 results.append(CheckResult(ok=False, message=f"layout: {rel}"))
                 continue
 
-            name = parts[3]
+            name = parts[-2]
             results.append(
                 CheckResult(
                     ok=bool(snake_case.fullmatch(name)),
