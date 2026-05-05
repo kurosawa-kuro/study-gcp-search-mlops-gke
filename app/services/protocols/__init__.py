@@ -9,6 +9,7 @@ from .feature_fetcher import FeatureFetcher, FeatureRow
 from .feedback_recorder import FeedbackRecorder
 from .label_repository import LabelRepository
 from .lexical_search import LexicalSearchPort
+from .metrics_repository import MetricsRepository
 from .popularity_scorer import PopularityScorer
 from .publisher import NoopPublisher, PredictionPublisher
 from .ranking_log_publisher import RankingLogPublisher
@@ -16,6 +17,7 @@ from .reranker_client import RerankerClient, RerankerExplainer
 from .retrain_queries import RetrainQueries
 from .semantic_search import SemanticSearchPort
 from .synonym_expander import SynonymExpanderPort
+from .training_dataset_repository import TrainingDatasetRepository
 
 __all__ = [
     "CandidateRetriever",
@@ -28,6 +30,7 @@ __all__ = [
     "FeedbackRecorder",
     "LabelRepository",
     "LexicalSearchPort",
+    "MetricsRepository",
     "NoopPublisher",
     "PopularityScorer",
     "PredictionPublisher",
@@ -37,4 +40,5 @@ __all__ = [
     "RetrainQueries",
     "SemanticSearchPort",
     "SynonymExpanderPort",
+    "TrainingDatasetRepository",
 ]

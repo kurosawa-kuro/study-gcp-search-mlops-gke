@@ -76,4 +76,24 @@ def build_ui_router(*, app_root: Path) -> APIRouter:
     def ui_api_docs() -> RedirectResponse:
         return RedirectResponse(url="/docs", status_code=308)
 
+    @router.get("/property/{property_id}", name="ui-property-detail")
+    def ui_property_detail(
+        request: Request,
+        property_id: str,
+        request_id: str | None = None,
+    ) -> object:
+        """Property detail page — auto-emits ``detail_view`` and exposes
+        favorite / request_button_click / request_complete buttons that
+        POST to ``/api/v1/feedback`` (Wave 3 アプリ取得経路の最小 UI 導線)."""
+        return templates.TemplateResponse(
+            request,
+            "property_detail.html",
+            {
+                "active": "search-user",
+                "page_mode": "user",
+                "property_id": property_id,
+                "request_id": request_id or "",
+            },
+        )
+
     return router

@@ -1,3 +1,23 @@
-from .policy import ACTION_WEIGHTS, compute_label
+from .policy import (
+    ACTION_WEIGHTS,
+    ACTION_WEIGHTS_APP_EMIT,
+    ACTION_WEIGHTS_SYNTHETIC,
+    LABEL_SOURCE_NO_ACTION,
+    LABEL_SOURCE_SYNTHETIC_PREFIX,
+    LABEL_SOURCE_USER_ACTION,
+    NO_ACTION_WEIGHT,
+    compute_label,
+    synthetic_label_source,
+)
 
-__all__ = ["ACTION_WEIGHTS", "compute_label"]
+__all__ = [
+    "ACTION_WEIGHTS",
+    "ACTION_WEIGHTS_APP_EMIT",
+    "ACTION_WEIGHTS_SYNTHETIC",
+    "LABEL_SOURCE_NO_ACTION",
+    "LABEL_SOURCE_SYNTHETIC_PREFIX",
+    "LABEL_SOURCE_USER_ACTION",
+    "NO_ACTION_WEIGHT",
+    "compute_label",
+    "synthetic_label_source",
+]

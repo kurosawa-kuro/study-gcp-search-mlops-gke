@@ -33,9 +33,11 @@ from app.services.protocols import (
     FeedbackRecorder,
     LabelRepository,
     LexicalSearchPort,
+    MetricsRepository,
     PredictionPublisher,
     RankingLogPublisher,
     RerankerClient,
+    TrainingDatasetRepository,
 )
 from app.services.protocols.feature_fetcher import FeatureFetcher
 from app.services.protocols.popularity_scorer import PopularityScorer
@@ -82,6 +84,8 @@ class Container:
     event_writer: EventWriter
     event_repository: EventRepository
     label_repository: LabelRepository
+    metrics_repository: MetricsRepository
+    training_dataset_repository: TrainingDatasetRepository
 
     # Phase 7 W2-8 で canonical 化済み: Vertex AI Feature Online Store fetcher。
     # FOS endpoint が unconfigured なら build 段で RuntimeError を出すため、
@@ -203,6 +207,8 @@ class ContainerBuilder:
             event_writer=infra.event_writer,
             event_repository=infra.event_repository,
             label_repository=infra.label_repository,
+            metrics_repository=infra.metrics_repository,
+            training_dataset_repository=infra.training_dataset_repository,
             feature_fetcher=feature_fetcher,
             search_service=search_service,
             feedback_service=feedback_service,

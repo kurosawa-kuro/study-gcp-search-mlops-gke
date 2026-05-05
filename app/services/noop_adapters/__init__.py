@@ -22,8 +22,10 @@ from .noop_event_writer import NoopEventWriter
 from .noop_feedback_recorder import NoopFeedbackRecorder
 from .noop_label_repository import NoopLabelRepository
 from .noop_lexical_search import NoopLexicalSearch
+from .noop_metrics_repository import NoopMetricsRepository
 from .noop_ranking_log_publisher import NoopRankingLogPublisher
 from .noop_retrain_queries import NoopRetrainQueries
+from .noop_training_dataset_repository import NoopTrainingDatasetRepository
 
 __all__ = [
     "NoopDataCatalogReader",
@@ -32,6 +34,8 @@ __all__ = [
     "NoopFeedbackRecorder",
     "NoopLabelRepository",
     "NoopLexicalSearch",
+    "NoopMetricsRepository",
     "NoopRankingLogPublisher",
     "NoopRetrainQueries",
+    "NoopTrainingDatasetRepository",
 ]

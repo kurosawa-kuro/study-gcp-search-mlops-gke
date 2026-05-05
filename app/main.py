@@ -44,6 +44,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api.middleware import RequestLoggingMiddleware
 from app.api.routers import (
+    admin_mlops_router,
     build_ui_router,
     feedback_router,
     health_router,
@@ -126,6 +127,7 @@ def create_app() -> FastAPI:
     ops.include_router(retrain_router)  # /ops/jobs/check-retrain
     ops.include_router(model_router)  # /ops/model/info, /ops/model/metrics, /ops/model/data
     ops.include_router(ops_router)  # /ops/destroy-check, /ops/search-volume, /ops/runs-recent
+    ops.include_router(admin_mlops_router)  # /ops/admin/mlops (Wave 5 dashboard)
     app.include_router(ops)
 
     # Probes (no prefix, no auth, OpenAPI-excluded by route definitions).

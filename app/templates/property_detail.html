@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}物件詳細 — ハイブリッド検索 UI{% endblock %}
+{% block page_title %}物件詳細{% endblock %}
+{% block page_copy %}検索結果から遷移した物件の詳細を確認し、`detail_view` / `favorite` / `request_button_click` / `request_complete` を `/api/v1/feedback` に emit します。{% endblock %}
+
+{% block content %}
+<article class="panel admin-card">
+  <div class="admin-card__body">
+    <div class="admin-section-heading">
+      <div>
+        <p class="eyebrow">Property</p>
+        <h2 id="property-title">{{ property_id }}</h2>
+        <p class="section-copy">request_id: <code id="request-id">{{ request_id or "(not set)" }}</code></p>
+      </div>
+      <a class="secondary" href="javascript:history.back()">← 検索結果へ戻る</a>
+    </div>
+
+    <section class="grid">
+      <div>
+        <p><strong>property_id</strong></p>
+        <p><code>{{ property_id }}</code></p>
+      </div>
+      <div>
+        <p><strong>action emit endpoint</strong></p>
+        <p><code>POST /api/v1/feedback</code></p>
+      </div>
+    </section>
+
+    <hr>
+
+    <section>
+      <h3>行動ログ emit</h3>
+      <p class="section-copy">
+        ボタンを押すと該当 <code>action_type</code> を <code>/api/v1/feedback</code> に POST します。
+        <strong>detail_view</strong> はページ表示時に自動 emit します。
+      </p>
+      <div class="action-row" role="group">
+        <button id="btn-favorite" type="button" class="secondary">お気に入り (favorite)</button>
+        <button id="btn-request-click" type="button" class="secondary">資料請求ボタンクリック</button>
+        <button id="btn-request-complete" type="button">資料請求完了</button>
+      </div>
+      <pre id="emit-result" aria-live="polite"></pre>
+    </section>
+  </div>
+</article>
+
+<script>
+(() => {
+  const propertyId = {{ property_id|tojson }};
+  const requestId = {{ (request_id or "")|tojson }};
+  const resultEl = document.getElementById("emit-result");
+
+  function logResult(action, status, payload) {
+    const stamp = new Date().toISOString();
+    const line = `[${stamp}] ${action} → ${status}\n${payload}`;
+    resultEl.textContent = line + "\n\n" + (resultEl.textContent || "");
+  }
+
+  async function emitAction(action) {
+    try {
+      const response = await fetch("/api/v1/feedback", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          request_id: requestId,
+          property_id: propertyId,
+          action,
+        }),
+      });
+      const text = await response.text();
+      logResult(action, response.status, text);
+    } catch (err) {
+      logResult(action, "error", String(err));
+    }
+  }
+
+  document.getElementById("btn-favorite").addEventListener(
+    "click", () => emitAction("favorite"),
+  );
+  document.getElementById("btn-request-click").addEventListener(
+    "click", () => emitAction("request_button_click"),
+  );
+  document.getElementById("btn-request-complete").addEventListener(
+    "click", () => emitAction("request_complete"),
+  );
+
+  // detail_view を自動 emit (ページ表示 = 詳細閲覧の最小定義)。
+  if (requestId) {
+    emitAction("detail_view");
+  } else {
+    logResult(
+      "detail_view",
+      "skipped",
+      "request_id 不在のため auto emit 抑止 (`?request_id=...` を URL に付けてください)",
+    );
+  }
+})();
+</script>
+{% endblock %}

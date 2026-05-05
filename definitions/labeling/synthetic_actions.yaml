@@ -1,0 +1,49 @@
+# Synthetic 注入: アプリから取得不可な 3 種の action を labeling SQL で擬似生成。
+#
+# 経路:
+#   labeling SQL が search_impressions × search_events × user_actions を読み、
+#   本 fixture の trigger / probability に従って ranking_labels に
+#   label_source='synthetic_<action_type>' で直接 INSERT する。
+#   user_actions テーブル / EventWriter Port は経由しない。
+#
+# アプリ emit 5 種 (click / detail_view / favorite / request_button_click /
+# request_complete) は EventWriter.emit_user_action 経由で user_actions テーブルへ
+# 流れる別経路。本 fixture には含めない。
+#
+# `weight` は ml/labeling/policy.py::ACTION_WEIGHTS_SYNTHETIC と完全一致させる
+# (tests/integration/parity/test_event_schema_parity.py が lock-step で pin)。
+#
+# `long_stay` は action_type enum 値ではなく user_actions.action_value 修飾子の
+# 概念 (detail_view の dwell time として将来格納する予約)。本 fixture には含めない。
+
+synthetic_actions:
+  - action_type: inquiry_complete
+    weight: 7
+    label_source: synthetic_inquiry_complete
+    trigger: "request_complete があった search_id 内の同 property_id"
+    probability: 0.20
+    description: |
+      資料請求完了からの問い合わせ完了。CRM 連携が無いためアプリ取得不可。
+      labeling SQL は request_complete から確率 0.20 で擬似 inquiry_complete
+      ラベルを ranking_labels に注入する。
+
+  - action_type: contract
+    weight: 10
+    label_source: synthetic_contract
+    trigger: "inquiry_complete があった search_id 内の同 property_id"
+    probability: 0.05
+    description: |
+      成約。CRM 連携が無いためアプリ取得不可。labeling SQL は
+      synthetic_inquiry_complete ラベルから確率 0.05 で擬似 contract ラベルを
+      ranking_labels に注入する。
+
+  - action_type: bounce
+    weight: -1
+    label_source: synthetic_bounce
+    trigger: "click のみで detail_view が無い search_id × property_id"
+    probability: 1.0
+    description: |
+      クリック後すぐ離脱 (dwell time が取れないため synthetic 判定)。
+      labeling SQL は click が記録されているが detail_view が無い impression
+      に対して確率 1.0 で擬似 bounce ラベル (weight=-1, LightGBM LambdaRank の
+      負例) を ranking_labels に注入する。

@@ -336,7 +336,7 @@ resource "google_bigquery_table" "user_actions" {
   schema = jsonencode([
     { name = "search_id", type = "STRING", mode = "REQUIRED" },
     { name = "property_id", type = "STRING", mode = "REQUIRED" },
-    { name = "action_type", type = "STRING", mode = "REQUIRED", description = "click | detail_view | favorite | request_button_click | request_complete" },
+    { name = "action_type", type = "STRING", mode = "REQUIRED", description = "App emit 5 種のみ: click | detail_view | favorite | request_button_click | request_complete (canonical = ml/labeling/policy.py::ACTION_WEIGHTS_APP_EMIT)。synthetic 注入 3 種 (inquiry_complete / contract / bounce) は本テーブルを通らず ranking_labels.label_source='synthetic_*' で別経路。" },
     { name = "action_value", type = "FLOAT64", mode = "NULLABLE" },
     { name = "timestamp", type = "TIMESTAMP", mode = "REQUIRED" },
     { name = "schema_version", type = "INT64", mode = "NULLABLE" },
@@ -357,8 +357,8 @@ resource "google_bigquery_table" "ranking_labels" {
   schema = jsonencode([
     { name = "search_id", type = "STRING", mode = "REQUIRED" },
     { name = "property_id", type = "STRING", mode = "REQUIRED" },
-    { name = "relevance_label", type = "INT64", mode = "REQUIRED" },
-    { name = "label_source", type = "STRING", mode = "REQUIRED" },
+    { name = "relevance_label", type = "INT64", mode = "REQUIRED", description = "重み付き relevance label。canonical = ml/labeling/policy.py::ACTION_WEIGHTS (8 種 + no_action=0)。click=1, detail_view=2, favorite=3, request_button_click=4, request_complete=5, inquiry_complete=7, contract=10, bounce=-1, no_action=0。" },
+    { name = "label_source", type = "STRING", mode = "REQUIRED", description = "user_action (アプリ emit 5 種), no_action (impression のみ), synthetic_inquiry_complete / synthetic_contract / synthetic_bounce (synthetic 注入 3 種、definitions/labeling/synthetic_actions.yaml に対応)。" },
     { name = "created_at", type = "TIMESTAMP", mode = "REQUIRED" },
   ])
 }
@@ -377,8 +377,10 @@ resource "google_bigquery_table" "evaluation_metrics" {
   schema = jsonencode([
     { name = "run_id", type = "STRING", mode = "REQUIRED" },
     { name = "dataset_version", type = "STRING", mode = "NULLABLE" },
-    { name = "metric_name", type = "STRING", mode = "REQUIRED" },
+    { name = "metric_name", type = "STRING", mode = "REQUIRED", description = "ndcg_at_10 | recall_at_20 | map | ctr | cvr のいずれか。Composer DAG monitoring_validation が deployment gate 判定で使う。" },
     { name = "metric_value", type = "FLOAT64", mode = "NULLABLE" },
+    { name = "threshold", type = "FLOAT64", mode = "NULLABLE", description = "deployment gate 閾値 (NULL = 未評価 / 閾値未設定)。" },
+    { name = "passed", type = "BOOL", mode = "NULLABLE", description = "deployment gate 結果 (NULL = 未判定、true = promote 可、false = block)。" },
     { name = "evaluated_at", type = "TIMESTAMP", mode = "REQUIRED" },
     { name = "payload", type = "JSON", mode = "NULLABLE" },
   ])

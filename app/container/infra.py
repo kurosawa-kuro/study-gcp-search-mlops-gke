@@ -14,8 +14,10 @@ from app.services.adapters import (
     BigQueryDataCatalogReader,
     BigQueryEventRepository,
     BigQueryLabelRepository,
+    BigQueryMetricsRepository,
     BigQueryRetrainQueries,
     CloudLoggingEventWriter,
+    GcsTrainingDatasetRepository,
     PubSubFeedbackRecorder,
     PubSubPublisher,
     PubSubRankingLogPublisher,
@@ -27,8 +29,10 @@ from app.services.noop_adapters import (
     NoopEventWriter,
     NoopFeedbackRecorder,
     NoopLabelRepository,
+    NoopMetricsRepository,
     NoopRankingLogPublisher,
     NoopRetrainQueries,
+    NoopTrainingDatasetRepository,
 )
 from app.services.noop_adapters.noop_synonym_expander import NoopSynonymExpander
 from app.services.protocols import (
@@ -37,9 +41,11 @@ from app.services.protocols import (
     EventWriter,
     FeedbackRecorder,
     LabelRepository,
+    MetricsRepository,
     PredictionPublisher,
     RankingLogPublisher,
     SynonymExpanderPort,
+    TrainingDatasetRepository,
 )
 from app.services.protocols.retrain_queries import RetrainQueries
 from app.settings import ApiSettings
@@ -64,6 +70,8 @@ class InfraComponents:
     event_writer: EventWriter
     event_repository: EventRepository
     label_repository: LabelRepository
+    metrics_repository: MetricsRepository
+    training_dataset_repository: TrainingDatasetRepository
     training_runs_table: str
     synonym_expander: SynonymExpanderPort
 
@@ -91,6 +99,8 @@ class InfraBuilder:
                 event_writer=NoopEventWriter(),
                 event_repository=NoopEventRepository(),
                 label_repository=NoopLabelRepository(),
+                metrics_repository=NoopMetricsRepository(),
+                training_dataset_repository=NoopTrainingDatasetRepository(),
                 training_runs_table=training_runs_table,
                 synonym_expander=NoopSynonymExpander(),
             )
@@ -113,6 +123,9 @@ class InfraBuilder:
         )
         user_actions_table = f"{settings.project_id}.{settings.bq_dataset_mlops}.user_actions"
         ranking_labels_table = f"{settings.project_id}.{settings.bq_dataset_mlops}.ranking_labels"
+        evaluation_metrics_table = (
+            f"{settings.project_id}.{settings.bq_dataset_mlops}.evaluation_metrics"
+        )
         return InfraComponents(
             retrain_trigger_publisher=self.build_retrain_publisher(),
             retrain_queries=BigQueryRetrainQueries(
@@ -142,8 +155,46 @@ class InfraBuilder:
                 client=self._context._bigquery(),
                 ranking_labels_table=ranking_labels_table,
             ),
+            metrics_repository=self.build_metrics_repository(
+                evaluation_metrics_table=evaluation_metrics_table,
+            ),
+            training_dataset_repository=self.build_training_dataset_repository(),
             training_runs_table=training_runs_table,
             synonym_expander=self.build_synonym_expander(),
+        )
+
+    def build_metrics_repository(
+        self, *, evaluation_metrics_table: str
+    ) -> MetricsRepository:
+        if not self._settings.enable_search:
+            return NoopMetricsRepository()
+        return BigQueryMetricsRepository(
+            client=self._context._bigquery(),
+            evaluation_metrics_table=evaluation_metrics_table,
+        )
+
+    def build_training_dataset_repository(self) -> TrainingDatasetRepository:
+        """Wire the GCS-backed training dataset manifest repository.
+
+        The bucket name comes from ``ApiSettings.gcs_pipeline_root_bucket``
+        when set. Without a bucket, fall back to Noop so the search-api
+        Pod boots even on a stripped-down deploy.
+        """
+        settings = self._settings
+        if not settings.enable_search:
+            return NoopTrainingDatasetRepository()
+        bucket = getattr(settings, "gcs_pipeline_root_bucket", "") or ""
+        if not bucket:
+            return NoopTrainingDatasetRepository()
+        try:
+            from google.cloud import storage
+        except ImportError:
+            logger.warning("google-cloud-storage unavailable; training dataset repo disabled")
+            return NoopTrainingDatasetRepository()
+        return GcsTrainingDatasetRepository(
+            client=storage.Client(project=settings.project_id),
+            bucket=bucket,
+            prefix="training_dataset",
         )
 
     def build_retrain_publisher(self) -> PredictionPublisher | None:

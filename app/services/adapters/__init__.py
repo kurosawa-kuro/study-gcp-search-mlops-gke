@@ -4,8 +4,10 @@ from .bigquery_candidate_retriever import BigQueryCandidateRetriever
 from .bigquery_data_catalog_reader import BigQueryDataCatalogReader
 from .bigquery_event_repository import BigQueryEventRepository
 from .bigquery_label_repository import BigQueryLabelRepository
+from .bigquery_metrics_repository import BigQueryMetricsRepository
 from .cloud_logging_event_writer import CloudLoggingEventWriter
 from .feature_online_store_fetcher import FeatureOnlineStoreFetcher
+from .gcs_training_dataset_repository import GcsTrainingDatasetRepository
 from .kserve_encoder import KServeEncoder
 from .kserve_reranker import KServeReranker
 from .lexical_search import MeilisearchLexical
@@ -20,9 +22,11 @@ __all__ = [
     "BigQueryDataCatalogReader",
     "BigQueryEventRepository",
     "BigQueryLabelRepository",
+    "BigQueryMetricsRepository",
     "BigQueryRetrainQueries",
     "CloudLoggingEventWriter",
     "FeatureOnlineStoreFetcher",
+    "GcsTrainingDatasetRepository",
     "KServeEncoder",
     "KServeReranker",
     "MeilisearchLexical",
