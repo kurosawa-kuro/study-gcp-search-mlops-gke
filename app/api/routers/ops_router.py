@@ -19,7 +19,9 @@ from app.schemas.ops import (
 from scripts._common import env
 from scripts.ops.destroy_check import collect_findings
 
-router = APIRouter(prefix="/ops")
+# ``/ops`` prefix は ``app/main.py`` 側で ``APIRouter(prefix="/ops")`` で compose する。
+# 本ファイルは prefix を持たず、内部 path のみを定義する (``/destroy-check`` 等)。
+router = APIRouter()
 ROOT = Path(__file__).resolve().parents[3]
 SEARCH_VOLUME_SQL = ROOT / "scripts" / "sql" / "search_volume.sql"
 RUNS_RECENT_SQL = ROOT / "scripts" / "sql" / "runs_recent.sql"

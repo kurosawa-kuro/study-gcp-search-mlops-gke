@@ -1,13 +1,27 @@
-# IAP backend policy.
+# IAP backend policy (search-api).
 #
-# `enabled: false` を **dev デフォルト** とした理由 (Phase 7 Run 1):
+# Prefix-axis 認証境界 (2026-05-06 Wave 1 整理) — `app/main.py` で route を 4 軸に
+# 分けたので、IAP 有効化時は HTTPRoute の path matcher と組み合わせて prefix 単位で
+# 認証境界を引く。本ファイルは Service 全体に attach する単一 GCPBackendPolicy で、
+# 「IAP は default で off / 有効時は backend 全体に効く」という土台のみを提供する。
+# prefix 別の細粒度 gating (例: ``/api/v1/*`` を APIキー、``/ops/*`` ``/ui/*`` を
+# IAP 必須) は将来の HTTPRoute 分割 + 複数 GCPBackendPolicy で実現する。
+#
+# Prefix → 認証境界の到達ゴール:
+#   /api/v1/*    エンドユーザー契約 (将来 IAP or APIキー併用)
+#   /ops/*       開発者・運用者専用 (IAP 必須)
+#   /ui/*        Operator UI (IAP 必須)
+#   /livez /healthz /readyz   k8s probe (auth なし、cluster 内のみ)
+#   /metrics                  Prometheus / GMP scrape (auth なし)
+#
+# `enabled: false` を **dev デフォルト** とした理由:
 #   IAP を有効にするには (a) GCP Console で OAuth consent screen を Internal/External
 #   いずれかで設定し (b) `gcloud iap oauth-clients create` で OAuth client を作って
 #   client_id をここに貼り (c) client_secret を Secret Manager の
 #   `search-api-iap-oauth-client-secret` に投入する 3 ステップ手作業が必要。
 #   PDCA dev project を `destroy-all → deploy-all` で何度も回す前提では不適当
 #   (OAuth consent screen は project レベルで残存するが client は再作成が必要)。
-#   Run 1 では `enabled: true` + placeholder の組み合わせで GCPBackendPolicy が
+#   過去 incident: `enabled: true` + placeholder の組み合わせで GCPBackendPolicy が
 #   `Invalid: oauth2ClientSecret cannot be found` 状態になり、Gateway が
 #   `GatewayHealthy=False` warning を出し続けた。
 #
