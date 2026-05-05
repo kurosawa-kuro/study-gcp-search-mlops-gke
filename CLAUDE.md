@@ -4,8 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## このディレクトリの性質
 
-MLOps 学習用の **7 フェーズ構成の親ディレクトリ** (Phase 7 = 到達ゴール)。  
-全 phase を単一の親 Git リポジトリで管理する。フェーズを跨ぐ共通ビルド / テストは持たず、作業は常に各 phase 配下で完結する。
+MLOps 学習用の親ディレクトリ。  
+**現役の canonical 実装は `7/study-hybrid-search-gke/`** で、他 phase は比較教材 / 学習履歴 / 補助的な独立実装として扱う。
+
+root で迷ったら、まず次を読む:
+
+- [7/study-hybrid-search-gke/README.md](/home/ubuntu/repos/study-gcp-search-mlops-gke/7/study-hybrid-search-gke/README.md)
+- [7/study-hybrid-search-gke/CLAUDE.md](/home/ubuntu/repos/study-gcp-search-mlops-gke/7/study-hybrid-search-gke/CLAUDE.md)
+- [7/study-hybrid-search-gke/docs/tasks/TASKS.md](/home/ubuntu/repos/study-gcp-search-mlops-gke/7/study-hybrid-search-gke/docs/tasks/TASKS.md)
+
+全 phase を単一の親 Git リポジトリで管理するが、フェーズを跨ぐ共通ビルド / テストは持たず、作業は常に各 phase 配下で完結する。
 
 | Phase | ディレクトリ | テーマ | 学習の主題 |
 |---|---|---|---|

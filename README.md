@@ -1,9 +1,17 @@
 # study-gcp-mlops
 
-MLOps 学習用の **7 フェーズ構成リポジトリ**。
-**全フェーズを単一の親 Git リポジトリで管理**し、Phase ごとに学習対象を段階的に広げる。Phase 7 (GKE + KServe) を到達ゴール / 教材コード完成版 (canonical) とする。
+現在の **canonical 実装は Phase 7** です。  
+日常的に触る現役コードは [7/study-hybrid-search-gke](/home/ubuntu/repos/study-gcp-search-mlops-gke/7/study-hybrid-search-gke/README.md) を起点にしてください。
 
-各 Phase の正本は phase 配下ドキュメント。本ファイルは全体ナビゲーションを担う。
+この親リポジトリは、Phase 1-7 の学習履歴と比較教材も含めて保持しています。  
+ただし **実装の正本 / 継続改善の対象 / local 検証の入口は Phase 7** です。
+
+> 最初の入口:
+> [7/study-hybrid-search-gke/README.md](/home/ubuntu/repos/study-gcp-search-mlops-gke/7/study-hybrid-search-gke/README.md)  
+> [7/study-hybrid-search-gke/CLAUDE.md](/home/ubuntu/repos/study-gcp-search-mlops-gke/7/study-hybrid-search-gke/CLAUDE.md)  
+> [7/study-hybrid-search-gke/docs/tasks/TASKS.md](/home/ubuntu/repos/study-gcp-search-mlops-gke/7/study-hybrid-search-gke/docs/tasks/TASKS.md)
+
+以下は「なぜこういう構成になっているか」を理解するための全体ナビゲーションです。
 
 > **2026-05-03 教育コード化方針の改訂**: コード化対象を **Phase 1 / 2 / 3 / 4 / 7** に限定する。Phase 5 / 6 は独立コード保守をやめ、**Phase 7 完成版コードを基準にして Vertex AI MLOps 化 / PMLE 追加技術 + Composer 本線化を理解する論理 Phase** に変更。Phase 4 は Phase 7 からの引き算ではなく **Phase 3 からの足し算 (local → cloud)** として独立コード化する。詳細は本ファイル §4 コード化方針 を参照。
 

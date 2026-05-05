@@ -1,146 +1,142 @@
-# Phase 7 ルート昇格 + Meilisearch 廃止 + Elasticsearch on GKE 移行 整理
+# Phase 7 ルート昇格 実行メモ
+
+## 1. 今回の目的
+
+- まずは **Phase 7 を repo ルートへ昇格**する
+- **Meilisearch 廃止 / ECK / Elasticsearch 移行は今回やらない**
+- ルート昇格後に、必要なら検索基盤の置換を別タスクとして扱う
 
 ---
 
-## 1. 全体方針
+## 2. 今回のスコープ
 
-- チーム内教育資料の作成は完了したので、今後はphaseが不要。
-- 個人技術検証プラットフォームとして再定義、Phase 構造を解体
-- Phase 7 を repo ルートに昇格、canonical 起点とする
-- Phase 1/2/3/4/6 は archive ブランチに退避、main から削除
-- Phase 6 は `docs/pmle-prep/` に移植、論理 Phase 概念を解体
-- 検索基盤を Meilisearch から Elasticsearch on ECK に全面移行
-- `experiments/` 領域を新設、新技術検証は Phase 設計議論なしで開始可能に
+### やること
 
----
+- `7/study-hybrid-search-gke/` を **canonical 実装**として扱う
+- 親 repo ルートの README / CLAUDE / docs 導線を **Phase 7 起点**へ再定義する
+- ルート直下の構成を、Phase 7 の構成に寄せる
+- 旧 Phase 群 (`1/2/3/4/5/6/`) は **archive 扱い**へ寄せる
+- CI / Makefile / import path / docs 内リンクを **ルート昇格後パス**へ合わせる
 
-## 2. ディレクトリ構造(移行後)
+### やらないこと
 
-- ルート直下が現役構成、Phase 番号なし
-- `ml/` がコード本体(embed / train / serve / sync)
-- `pipeline/` が Vertex AI Pipelines + Composer DAG
-- `terraform/stacks/` 配下に永続化レイヤごとのスタック
-  - `persistent/`: GCS embedding archive(prevent_destroy)
-  - `vector_search/`: Vertex Vector Search Index + Endpoint(prevent_destroy)
-  - `elasticsearch/`: ECK Operator + Elasticsearch cluster(新規)
-  - `core/`: Composer / GKE / Cloud Run / セッション都度破棄
-- `experiments/` で新技術検証(Ray / vLLM / Kubeflow standalone 等)
-- `docs/pmle-prep/` で PMLE 学習ドキュメント
-- `archive/README.md` で archive ブランチへの参照のみ残す
+- Meilisearch 廃止
+- Elasticsearch / ECK 導入
+- Vertex Vector Search の役割変更
+- 検索アーキテクチャ自体の再設計
+- ranking / rerank / event schema の意味変更
 
 ---
 
-## 3. Meilisearch 廃止の理由
+## 3. 完了条件
 
-- Phase 3-4 が archive 退避対象となり、Meili のメンテ動機が消滅
-- Phase 7(=ルート昇格対象)は元々 Meili + ES 並存を計画していたが、Meili を残す合理性が消える
-- ES が BM25 + dense_vector を1サービスで完結、Meili+別ベクトルストアより構成シンプル
-- 業界標準 ES 経験のほうが転職アピール価値が高い
-- BM25 スコア透明性(`explain=true`)で学習価値も高い
-- 日本語処理は kuromoji analyzer で対応可能
-
----
-
-## 4. Elasticsearch on GKE 採用の理由
-
-- Cloud Run は構造的に不可(エフェメラルストレージ・スケールゼロ)
-- GKE は Phase 7 で既に KServe 用に導入済み、追加学習コストほぼゼロ
-- ECK Operator で Elasticsearch クラスタを宣言的に管理可能
-- 転職アピール観点で「k8s Operator 経験」として ECK + KServe の2つを押さえられる
-- セッション都度起動・終了のコスト最適化が GKE 上で実現可能
+- repo ルートを開けば、**現役コードは Phase 7 相当**だと分かる
+- ルート `README.md` が **Phase 7 canonical 起点**として読める
+- ルート `CLAUDE.md` が **Phase 7 直結**の作業ガイドになる
+- `make help` / `make verify-local-app` / `make verify-local-ml` などの **主要 local 導線**がルートまたは明確な入口から辿れる
+- docs 内の「今触るべきコード」が **7/study-hybrid-search-gke** ではなく **昇格後の canonical path** を向く
+- 旧 Phase は「現役コード」ではなく「archive / 学習履歴」として整理される
 
 ---
 
-## 5. ES と Vertex Vector Search の役割分担
+## 4. 実行方針
 
-- Elasticsearch on ECK: lexical search(BM25)担当
-- Vertex Vector Search: semantic search(dense vector)担当
-- 統合: RRF または weighted score でハイブリッド
-- LightGBM reranker(KServe)で最終ランキング
-- 「マネージドベクトル検索 + セルフホスト全文検索」という実務頻出パターン
+### 方針A: 段階移行
 
----
+- いきなり物理移動せず、まず **論理的に Phase 7 を正本化**
+- その後でファイル移動 / import path 変更を行う
 
-## 6. 3層永続化アーキテクチャ(ES側にも転用)
+### 方針B: Meili/ECK を切り離す
 
-- Layer 1: GCS snapshot repository(prevent_destroy、無料)
-  - ES snapshot を `gs://...es-snapshots/` に保存
-- Layer 2: GKE PVC retain policy(永続・低コスト)
-  - Pod 削除されても PV 残存、再起動時に即マウント
-- Layer 3: ES Pod 本体 + Service(セッション都度起動・破棄)
-  - 検証終了で `kubectl delete` で破棄
-- Vertex Vector Search の3層思想を ES にも適用、コスト構造を統一
+- 検索基盤の話を混ぜると差分が大きくなりすぎる
+- 今回は **構造移行だけ**を独立 PR 群で進める
+
+### 方針C: archive は削除より先に参照整理
+
+- 旧 Phase はいきなり消さず、まず「現役でない」と分かる状態へ
+- その後に archive branch / archive dir / docs/archive のどれで保全するか決める
 
 ---
 
-## 7. 移行 PR シリーズ(順序)
+## 5. PR シリーズ (今回対象)
 
-- PR1: archive ブランチ作成、phase1/2/3/4/6 を archive 側に保全
-- PR2: main から phase1/2/3/4/6 ディレクトリ削除
-- PR3: phase7/ をルートにフラット化(ml/ pipeline/ terraform/)
-- PR4: docs/pmle-prep/ 作成(phase5/ から移植)
-- PR5: phase5/ 削除
-- PR6: README 全面書き換え(個人検証プラットフォームとして再定義)
-- PR7: experiments/ ディレクトリ初期化
-- PR8: Makefile / CI / import path 修正
-- PR9: docs/conventions.md 作成(命名規則ロック)
-- PR10: 3層永続化アーキテクチャ実装(Vertex Vector Search 側、5PR相当を統合)
-- PR11: ECK Operator 導入(Helm / Terraform)
-- PR12: Elasticsearch cluster manifest(PVC + GCS snapshot)
-- PR13: ElasticsearchAdapter 実装(BM25 + kNN + ハイブリッド)
-- PR14: Meilisearch adapter / docker-compose 削除
-- PR15: KFP コンポーネントで multilingual-e5 embedding を ES に投入
-- PR16: Composer DAG に ES index 更新ステップを統合
-- PR17: A/B 評価パイプライン(NDCG@10 / Recall@K)で ES 単独構成を検証
+### Wave 1: 正本宣言
 
----
+- PR1: ルート `README.md` を「Phase 7 canonical 起点」へ書き換え
+- PR2: ルート `CLAUDE.md` を「Phase 7 直結」前提へ整理
+- PR3: ルート `docs/` の案内を「Phase 群の索引」から「Phase 7 正本 + archive 補助」へ変更
 
-## 8. 残るメンテ対象
+### Wave 2: 導線の正規化
 
-- `ml/`(embed / train / serve / sync)
-- `pipeline/`(Vertex AI Pipelines + Composer DAG)
-- `terraform/stacks/`(persistent / vector_search / elasticsearch / core)
-- `docs/pmle-prep/`(PMLE 学習)
-- `experiments/`(新技術検証、自由領域)
+- PR4: `7/study-hybrid-search-gke/docs/` 内で、canonical path 前提の docs 方針へ修正
+- PR5: CI / Makefile / hook / script で `7/study-hybrid-search-gke` 前提になっている入口を洗い出す
+- PR6: local 検証入口 (`verify-local-app` / `verify-local-ml` / `verify-local-hybrid`) を canonical 導線として固定
+
+### Wave 3: 構造移行
+
+- PR7: `7/study-hybrid-search-gke/` 配下を repo ルートへ移す具体手順を確定
+- PR8: import path / relative path / workflow path / docs link を一括更新
+- PR9: 旧 `7/study-hybrid-search-gke/` を archive or redirect 扱いへ
+
+### Wave 4: 旧 Phase 整理
+
+- PR10: `1/2/3/4/5/6/` を archive 扱いとして docs から明示
+- PR11: root から現役入口を消し、archive 参照だけ残す
 
 ---
 
-## 9. archive 退避対象
+## 6. 実コードで先に調べるべき箇所
 
-- phase1/(ML基礎)
-- phase2/(App / Pipeline / Port-Adapter)
-- phase3/(Local ハイブリッド検索 + Meili)
-- phase4/(GCP ログ基盤)
-- phase6/(PMLE 論理学習)
-- 退避先: archive ブランチ、main からは削除
-- archive ブランチは凍結、commit しない方針
+### load-bearing
 
----
+- ルート [README.md](/home/ubuntu/repos/study-gcp-search-mlops-gke/README.md)
+- ルート [CLAUDE.md](/home/ubuntu/repos/study-gcp-search-mlops-gke/CLAUDE.md)
+- [7/study-hybrid-search-gke/README.md](/home/ubuntu/repos/study-gcp-search-mlops-gke/7/study-hybrid-search-gke/README.md)
+- [7/study-hybrid-search-gke/CLAUDE.md](/home/ubuntu/repos/study-gcp-search-mlops-gke/7/study-hybrid-search-gke/CLAUDE.md)
+- [7/study-hybrid-search-gke/Makefile](/home/ubuntu/repos/study-gcp-search-mlops-gke/7/study-hybrid-search-gke/Makefile)
+- [7/study-hybrid-search-gke/.github/workflows](</home/ubuntu/repos/study-gcp-search-mlops-gke/7/study-hybrid-search-gke/.github/workflows>)
 
-## 10. 転職アピール時の語り口
+### path 変更の影響が大きい
 
-- 「Vertex AI + ECK on GKE + KServe による商品検索向けハイブリッド検索基盤」
-- 「Vertex Vector Search(dense)+ Elasticsearch on ECK(lexical/BM25)+ KServe(reranker)」
-- 「ECK Operator + GCS snapshot + PVC retain で 3層永続化、セッション都度起動でコスト最適化」
-- 「KFP v2 SDK でパイプライン記述、Vertex AI Pipelines マネージド実行」
-- 「k8s Operator 経験: KServe + ECK」
-- 「`experiments/` で新技術検証(Ray / vLLM / Kubeflow standalone 等)を継続」
+- `scripts/` 配下の repo root 前提 path
+- `pipeline/dags/` の参照 path
+- `infra/terraform/**` の相対 path
+- `docs/**` の内部リンク
+- `.claude/hooks` / `.github/agents` / `.github/skills`
 
 ---
 
-## 11. 着手順序の推奨
+## 7. 今回の非スコープを明記
 
-- 第1優先: 構造移行(PR1-9)、フラット化と archive 退避
-- 第2優先: 3層永続化アーキテクチャ(PR10)、Vertex Vector Search のコスト最適化
-- 第3優先: ECK + Elasticsearch 統合(PR11-17)、Meili 削除
-- 第4優先: `experiments/` で次の検証(KubeRay / vLLM / Kubeflow standalone)
+以下は **別タスク** として扱う:
+
+- Meilisearch 廃止
+- Elasticsearch adapter 実装
+- ECK operator 導入
+- ES snapshot / PVC retain 3層永続化
+- KFP / Composer による ES index 更新
+
+つまり、今回の問いは:
+
+> 「検索基盤を何にするか」ではなく、  
+> 「Phase 7 を repo の現役正本にするには何を動かすか」
+
+に限定する。
 
 ---
 
-## 12. 注意点
+## 8. いまの結論
 
-- archive ブランチは作成後 commit しない、ブランチ保護を設定
-- import path 変更で CI が一時的に壊れる、PR3 と PR8 を同一 PR にまとめる選択肢あり
-- README 書き換え(PR6)を**最終段階で実施**、移行途中の状態を反映しない
-- ECK 導入時、GKE Autopilot のリソース上限(Composer worker / KServe / ES の同居)を事前見積もり
-- Elasticsearch 8.x は security デフォルト ON、ECK では証明書自動発行されるため明示的な無効化は不要
+- **今すぐ着手すべきは Wave 1-2**
+- 具体的には、まず **README / CLAUDE / docs の正本宣言** を先にやる
+- その後に **構造移行の実ファイル移動** を行う
+- Meilisearch 廃止は、この作業と混ぜない
+
+---
+
+## 9. 次アクション
+
+1. ルート `README.md` / `CLAUDE.md` の Phase 7 正本化差分を作る
+2. `7/study-hybrid-search-gke` の local 導線を canonical として宣言する
+3. path 変更の影響一覧を docs に起こす
+4. その後に物理移動 PR を切る
