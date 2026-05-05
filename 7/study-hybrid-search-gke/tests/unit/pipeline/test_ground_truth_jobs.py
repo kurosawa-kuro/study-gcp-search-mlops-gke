@@ -82,9 +82,7 @@ def test_labeling_job_builds_labels_from_impressions_and_actions(monkeypatch) ->
     }
 
 
-def test_training_dataset_job_exports_relevance_label_csv(
-    monkeypatch, tmp_path: Path
-) -> None:
+def test_training_dataset_job_exports_relevance_label_csv(monkeypatch, tmp_path: Path) -> None:
     from pipeline.training_dataset_job import main as module
 
     frame = pd.DataFrame(

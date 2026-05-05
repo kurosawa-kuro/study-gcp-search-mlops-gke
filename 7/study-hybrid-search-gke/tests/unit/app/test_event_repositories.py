@@ -3,9 +3,9 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from unittest.mock import MagicMock
 
+from app.domain.labeling import RankingLabel
 from app.services.adapters.bigquery_event_repository import BigQueryEventRepository
 from app.services.adapters.bigquery_label_repository import BigQueryLabelRepository
-from app.domain.labeling import RankingLabel
 
 
 def _result_with_rows(*rows: dict[str, object]) -> MagicMock:

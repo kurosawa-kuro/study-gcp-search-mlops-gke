@@ -145,7 +145,7 @@ def main() -> int:
     build_start = time.monotonic()
     # `--push` 直接 AR に push する (load + push の 2 段階を避ける)。
     # `DOCKER_BUILDKIT=1` env は buildx で常に on。
-    proc = subprocess.run(
+    build_proc = subprocess.run(
         [
             "docker",
             "buildx",
@@ -159,7 +159,7 @@ def main() -> int:
         ],
         check=False,
     )
-    if proc.returncode != 0:
+    if build_proc.returncode != 0:
         _error(f"docker buildx build FAILED elapsed={(time.monotonic() - build_start):.0f}s")
         return 1
     _info(f"docker buildx build SUCCESS elapsed={(time.monotonic() - build_start):.0f}s")
@@ -178,7 +178,7 @@ def main() -> int:
 
     _step(f"[4/4] kubectl rollout status (timeout={ROLLOUT_TIMEOUT_SEC}s)")
     rollout_start = time.monotonic()
-    proc = run(
+    rollout_proc = run(
         [
             "kubectl",
             "rollout",
@@ -190,10 +190,10 @@ def main() -> int:
         capture=True,
         check=False,
     )
-    if proc.stdout:
-        print(proc.stdout.rstrip())
-    if proc.returncode != 0:
-        _diag("kubectl rollout status", proc)
+    if rollout_proc.stdout:
+        print(rollout_proc.stdout.rstrip())
+    if rollout_proc.returncode != 0:
+        _diag("kubectl rollout status", rollout_proc)
         _error(
             f"rollout FAILED image={image_uri} elapsed={(time.monotonic() - rollout_start):.0f}s"
         )

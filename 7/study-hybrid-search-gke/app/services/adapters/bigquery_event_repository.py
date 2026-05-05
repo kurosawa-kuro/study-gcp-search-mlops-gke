@@ -75,10 +75,14 @@ class BigQueryEventRepository(EventRepository):
               rerank_score,
               timestamp
             FROM `{self._search_impressions_table}`
-            {_where_clause([
-                ("search_id = @search_id", search_id is not None),
-                ("timestamp >= @since", since is not None),
-            ])}
+            {
+            _where_clause(
+                [
+                    ("search_id = @search_id", search_id is not None),
+                    ("timestamp >= @since", since is not None),
+                ]
+            )
+        }
             ORDER BY timestamp ASC, rank ASC
         """
         rows = self._query(sql, _scalar_params(search_id=search_id, since=since))
@@ -113,11 +117,15 @@ class BigQueryEventRepository(EventRepository):
               action_value,
               timestamp
             FROM `{self._user_actions_table}`
-            {_where_clause([
-                ("search_id = @search_id", search_id is not None),
-                ("action_type = @action_type", action_type is not None),
-                ("timestamp >= @since", since is not None),
-            ])}
+            {
+            _where_clause(
+                [
+                    ("search_id = @search_id", search_id is not None),
+                    ("action_type = @action_type", action_type is not None),
+                    ("timestamp >= @since", since is not None),
+                ]
+            )
+        }
             ORDER BY timestamp ASC
         """
         rows = self._query(

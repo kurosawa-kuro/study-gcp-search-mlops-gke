@@ -68,9 +68,7 @@ class BigQueryLabelRepository(LabelRepository):
                             bigquery.ScalarQueryParameter(
                                 "label_source", "STRING", label.label_source
                             ),
-                            bigquery.ScalarQueryParameter(
-                                "created_at", "TIMESTAMP", created_at
-                            ),
+                            bigquery.ScalarQueryParameter("created_at", "TIMESTAMP", created_at),
                         ]
                     ),
                 ).result()

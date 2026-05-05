@@ -14,8 +14,8 @@ from app.services.adapters import (
     BigQueryDataCatalogReader,
     BigQueryEventRepository,
     BigQueryLabelRepository,
-    CloudLoggingEventWriter,
     BigQueryRetrainQueries,
+    CloudLoggingEventWriter,
     PubSubFeedbackRecorder,
     PubSubPublisher,
     PubSubRankingLogPublisher,
@@ -204,14 +204,12 @@ class InfraBuilder:
         if synonym.backend != "redis" or not synonym.redis_url:
             return NoopSynonymExpander()
         try:
-            import redis  # type: ignore[import-not-found]
+            import redis
         except ImportError:
-            logger.warning(
-                "redis package unavailable; synonym expansion disabled"
-            )
+            logger.warning("redis package unavailable; synonym expansion disabled")
             return NoopSynonymExpander()
         password = os.environ.get(synonym.redis_password_env) or None
-        client = redis.from_url(  # type: ignore[no-untyped-call]
+        client = redis.from_url(
             synonym.redis_url,
             password=password,
             socket_connect_timeout=2.0,

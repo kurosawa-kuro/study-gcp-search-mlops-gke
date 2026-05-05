@@ -46,7 +46,7 @@ include ../../mk/base.mk
 
 export PROJECT_ID REGION API_SERVICE ARTIFACT_REPO VERTEX_LOCATION PIPELINE_ROOT_BUCKET PIPELINE_TEMPLATE_GCS_PATH
 
-.PHONY: help doctor sync test lint fmt fmt-check typecheck check \
+.PHONY: help doctor sync sync-app sync-ml sync-pipelines test lint fmt fmt-check typecheck check \
         check-layers sync-dataform-config sync-configmap \
 	tf-bootstrap tf-init tf-validate tf-fmt tf-fmt-fix tf-plan \
 	setup-model-monitoring \
@@ -55,8 +55,9 @@ export PROJECT_ID REGION API_SERVICE ARTIFACT_REPO VERTEX_LOCATION PIPELINE_ROOT
         deploy-all deploy-all-direct run-all destroy-all seed-test seed-test-clean \
 	verify-deploy-all verify-destroy-all verify-live-acceptance verify-full-recreate \
         sync-meili sync-synonyms \
-        label-build build-training-dataset train-smoke train-smoke-persist api-dev api-dev-hybrid clean \
-        docker-auth deploy-api deploy-api-local deploy-kserve-models kube-creds \
+        label-build build-training-dataset train-smoke train-smoke-persist api-dev api-dev-hybrid \
+        verify-local-app verify-local-ml verify-local-hybrid clean \
+        docker-auth deploy-api deploy-api-local deploy-kserve-images deploy-kserve-images-local deploy-kserve-models kube-creds \
         composer-deploy-dags build-composer-runner ops-composer-trigger ops-composer-list-runs ops-composer-task-states \
 		ops-deploy-monitor \
         ops-api-url ops-daily ops-livez ops-search ops-search-components ops-ranking ops-feedback \
@@ -72,7 +73,7 @@ export PROJECT_ID REGION API_SERVICE ARTIFACT_REPO VERTEX_LOCATION PIPELINE_ROOT
 
 help: ## Show this help
 	@echo "First-time setup:  see README.md §セットアップ (run 'make doctor' to verify tools)"
-	@echo "Quick start:       make sync && make check && make train-smoke"
+	@echo "Quick start:       make sync-app && make verify-local-app"
 	@echo ""
 	@awk 'BEGIN {FS = ":.*##"; printf "Targets:\n"} \
 		/^[a-zA-Z0-9_-]+:.*##/ { printf "  \033[36m%-26s\033[0m %s\n", $$1, $$2 }' \
@@ -83,8 +84,17 @@ doctor: ## Verify that prerequisite tools are installed
 
 # ----- Python workspace -----
 
-sync: ## uv sync (root package + dev group + all extras: ml, pipelines)
+sync: ## uv sync (full workspace: root package + dev group + all extras: ml, pipelines)
 	uv sync --dev --all-extras
+
+sync-app: ## uv sync for app-centric local work (base deps + dev only)
+	uv sync --dev
+
+sync-ml: ## uv sync for local ML work (base deps + dev + ml extra)
+	uv sync --dev --extra ml
+
+sync-pipelines: ## uv sync for local pipeline work (base deps + dev + ml + pipelines extras)
+	uv sync --dev --extra ml --extra pipelines
 
 test: ## Run pytest across the workspace
 	uv run pytest
@@ -316,16 +326,35 @@ build-training-dataset: ## Export ranking_labels-based training dataset CSV unde
 	uv run python -m pipeline.training_dataset_job.main
 
 train-smoke: ## Dry-run the ranker training job locally (synthetic data, no GCS/BQ)
-	uv run rank-train --dry-run
+	uv run --extra ml rank-train --dry-run
 
 train-smoke-persist: ## Dry-run ranker trainer and copy the model to $(MODEL_PATH_OVERRIDE)
-	uv run rank-train --dry-run --save-to "$(MODEL_PATH_OVERRIDE)"
+	uv run --extra ml rank-train --dry-run --save-to "$(MODEL_PATH_OVERRIDE)"
 
 api-dev: ## Start uvicorn locally (rerank-free /search requires ENABLE_SEARCH=1 + BQ creds)
 	ENABLE_SEARCH=false uv run uvicorn app.main:app --reload
 
-api-dev-hybrid: ## Start local hybrid stack (app + local encoder/reranker + Cloud Run Meili/BQ)
-	env UV_CACHE_DIR=/tmp/uv-cache uv run python -m scripts.setup.local_hybrid
+api-dev-hybrid: ## Start local-first hybrid stack (app + local encoder/reranker + local Meili if present)
+	env UV_CACHE_DIR=/tmp/uv-cache uv run --extra ml python -m scripts.setup.local_hybrid
+
+verify-local-app: ## Fast local app loop (layer check + app/script unit tests, no live GCP)
+	$(MAKE) check-layers
+	uv run ruff check app tests/unit/app tests/unit/scripts/test_local_hybrid.py scripts/setup/local_hybrid.py scripts/deploy/api_gke_local.py scripts/deploy/build_kserve_images_local.py
+	uv run ruff format --check app tests/unit/app tests/unit/scripts/test_local_hybrid.py scripts/setup/local_hybrid.py scripts/deploy/api_gke_local.py scripts/deploy/build_kserve_images_local.py
+	uv run mypy app scripts/setup/local_hybrid.py scripts/deploy/api_gke_local.py scripts/deploy/build_kserve_images_local.py
+	uv run pytest tests/unit/app tests/unit/scripts/test_local_hybrid.py -q
+
+verify-local-ml: ## Fast local ML loop (ML/pipeline unit tests + smoke train, no deploy)
+	uv run ruff check ml pipeline tests/unit/ml tests/unit/pipeline
+	uv run ruff format --check ml pipeline tests/unit/ml tests/unit/pipeline
+	uv run mypy ml pipeline
+	uv run --extra ml --extra pipelines pytest tests/unit/ml tests/unit/pipeline -q
+	$(MAKE) train-smoke
+
+verify-local-hybrid: ## Local hybrid loop (contract + app + ML; avoids deploy-all/run-all live steps)
+	uv run pytest tests/integration/workflow/test_ground_truth_contract.py -q
+	$(MAKE) verify-local-app
+	$(MAKE) verify-local-ml
 
 # ----- Local deploy path (bypasses CI; uses Cloud Build + kubectl) -----
 
@@ -347,6 +376,10 @@ deploy-api-local: ## ローカル docker buildx + push + rollout (BuildKit cache
 deploy-kserve-images: ## Cloud Build + image patch for property-encoder/reranker InferenceServices
 	@GIT_SHA="$${GIT_SHA:-$$(git rev-parse HEAD 2>/dev/null || echo dev-$$(date +%s))}" \
 		uv run python -m scripts.deploy.build_kserve_images
+
+deploy-kserve-images-local: ## Local docker buildx + push + cluster patch for encoder/reranker
+	@GIT_SHA="$${GIT_SHA:-$$(git rev-parse HEAD 2>/dev/null || echo dev-$$(date +%s))}" \
+		uv run python -m scripts.deploy.build_kserve_images_local
 
 deploy-kserve-models: ## Sync Model Registry artifacts into KServe InferenceService
 	uv run python -m scripts.deploy.kserve_models

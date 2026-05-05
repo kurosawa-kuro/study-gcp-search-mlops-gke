@@ -25,6 +25,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from urllib.parse import urlparse
 
 from scripts._common import env, gcloud, run, secret
 from scripts.lib.gcp_resources import MEILI_SERVICE_NAME_DEFAULT
@@ -40,10 +41,37 @@ def _require(name: str, value: str) -> str:
     return value.strip()
 
 
+def _is_local_url(url: str) -> bool:
+    host = urlparse(url).hostname or ""
+    return host in {"127.0.0.1", "localhost"}
+
+
+def _http_available(url: str, *, timeout_sec: float = 1.5) -> bool:
+    import urllib.error
+    import urllib.request
+
+    deadline = time.monotonic() + timeout_sec
+    while time.monotonic() < deadline:
+        try:
+            with urllib.request.urlopen(url, timeout=0.5) as resp:
+                if 200 <= resp.status < 500:
+                    return True
+        except urllib.error.URLError:
+            time.sleep(0.2)
+    return False
+
+
 def _resolve_meili_base_url() -> str:
     explicit = env("MEILI_BASE_URL")
     if explicit:
         return explicit.rstrip("/")
+    local_url = env("LOCAL_MEILI_BASE_URL", "http://127.0.0.1:7700").rstrip("/")
+    if _is_local_url(local_url) and _http_available(f"{local_url}/health"):
+        _log(f"use local Meilisearch {local_url}")
+        return local_url
+    if env("LOCAL_HYBRID_ALLOW_GCP_FALLBACK", "false").lower() not in {"1", "true", "yes"}:
+        _log("local Meilisearch not found; continue with lexical disabled")
+        return ""
     service = env("MEILI_SERVICE", MEILI_SERVICE_NAME_DEFAULT)
     return _require(
         "MEILI_BASE_URL",
@@ -60,10 +88,14 @@ def _resolve_meili_base_url() -> str:
     ).rstrip("/")
 
 
-def _resolve_meili_master_key() -> str:
+def _resolve_meili_master_key(*, meili_base_url: str) -> str:
+    if not meili_base_url:
+        return ""
     local_value = secret("MEILI_MASTER_KEY")
     if local_value:
         return local_value
+    if _is_local_url(meili_base_url):
+        return env("MEILI_API_KEY", "")
     secret_id = env("MEILI_MASTER_KEY_SECRET_ID", "meili-master-key")
     return _require(
         "MEILI_MASTER_KEY",
@@ -112,7 +144,7 @@ def _port_in_use(port: int) -> bool:
         return sock.connect_ex(("127.0.0.1", port)) == 0
 
 
-def _spawn(cmd: list[str], *, child_env: dict[str, str]) -> subprocess.Popen[str]:
+def _spawn(cmd: list[str], *, child_env: dict[str, str]) -> subprocess.Popen[bytes]:
     return subprocess.Popen(cmd, env=child_env)
 
 
@@ -122,7 +154,7 @@ def main() -> int:
     reranker_port = env("LOCAL_RERANKER_PORT", "18082")
     app_port = env("LOCAL_API_PORT", "8000")
     meili_base_url = _resolve_meili_base_url()
-    meili_master_key = _resolve_meili_master_key()
+    meili_master_key = _resolve_meili_master_key(meili_base_url=meili_base_url)
     model_path = Path(
         env("LOCAL_RERANKER_MODEL_PATH", "/tmp/hybrid-search-cloud-smoke-model.txt")
     ).expanduser()
@@ -165,10 +197,11 @@ def main() -> int:
         "KSERVE_RERANKER_EXPLAIN_URL": f"http://127.0.0.1:{reranker_port}/explain",
         "MEILI_BASE_URL": meili_base_url,
         "MEILI_MASTER_KEY": meili_master_key,
+        "MEILI_REQUIRE_IDENTITY_TOKEN": "false" if _is_local_url(meili_base_url) else "true",
         "MEILI_IMPERSONATE_SERVICE_ACCOUNT": impersonate_sa,
     }
 
-    processes: list[subprocess.Popen[str]] = []
+    processes: list[subprocess.Popen[bytes]] = []
     try:
         _log("start local encoder")
         processes.append(

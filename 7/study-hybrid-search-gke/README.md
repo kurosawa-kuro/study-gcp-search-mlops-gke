@@ -89,7 +89,7 @@ raw.properties (upstream ETL)
 
 初めてこのリポジトリに触る人は、まず [`docs/runbook/05_運用.md §1 PDCA メインフロー`](docs/runbook/05_運用.md) を上から叩く (`make deploy-all` → `make run-all` → `make destroy-all`)。
 
-local で hybrid 検索まで動かす標準手順は `make api-dev-hybrid`。このターゲットは `scripts/setup/local_hybrid.py` を呼び、非秘密値は `env/config/setting.yaml`、秘密値は `env/secret/credential.yaml` または Secret Manager から解決して、local encoder / reranker / app をまとめて起動する。
+local の日常反復は live GCP の `run-all` 系ではなく、まず `make sync-app && make verify-local-app`、ML を触る日は `make verify-local-ml`、app + ML をまとめて見る日は `make verify-local-hybrid` を使う。`make api-dev-hybrid` は `scripts/setup/local_hybrid.py` を呼び、local encoder / reranker / app をまとめて起動する。local Meilisearch (`http://127.0.0.1:7700`) が見つかればそれを優先し、無ければ lexical を無効化して local 起動をブロックしない。Cloud Run Meili を使いたいときだけ `LOCAL_HYBRID_ALLOW_GCP_FALLBACK=true` を明示する。
 
 | ドキュメント | 目的 | 主な読者 |
 |---|---|---|

@@ -21,6 +21,12 @@ def test_makefile_exposes_ground_truth_targets() -> None:
         "label-build: ## Materialize ranking_labels from search_impressions + user_actions",
         "build-training-dataset: ## Export ranking_labels-based training dataset CSV under dist/training_datasets",
         "ops-label-seed: ## Seed canonical user actions against /search",
+        "verify-local-app: ## Fast local app loop (layer check + app/script unit tests, no live GCP)",
+        "verify-local-ml: ## Fast local ML loop (ML/pipeline unit tests + smoke train, no deploy)",
+        "verify-local-hybrid: ## Local hybrid loop (contract + app + ML; avoids deploy-all/run-all live steps)",
+        "sync-app: ## uv sync for app-centric local work (base deps + dev only)",
+        "sync-ml: ## uv sync for local ML work (base deps + dev + ml extra)",
+        "sync-pipelines: ## uv sync for local pipeline work (base deps + dev + ml + pipelines extras)",
     ):
         assert required in makefile, f"Makefile lost ground-truth target: {required}"
 
@@ -67,5 +73,9 @@ def test_dataform_and_app_contract_use_canonical_event_schema() -> None:
         'option value="request_complete"',
     ):
         assert option in feedback_panel
-    for event_name in ('"event_name": "search_event"', '"event_name": "search_impression"', '"event_name": "user_action"'):
+    for event_name in (
+        '"event_name": "search_event"',
+        '"event_name": "search_impression"',
+        '"event_name": "user_action"',
+    ):
         assert event_name in event_writer
