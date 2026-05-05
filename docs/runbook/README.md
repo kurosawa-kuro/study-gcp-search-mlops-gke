@@ -1,28 +1,24 @@
-# docs/runbook/ — 運用 ハブ (リポ全体)
+# runbook/ — 検証ゲート + 運用手順
 
-リポ全体の運用ハブ。  
-ただし **現役の運用 / 検証の正本は Phase 7** の
-[`05_運用.md`](05_運用.md)
-と
-[`04_検証.md`](04_検証.md)
-を優先する。
+検証・運用・PDCA loop を集約。`make deploy-all` / `make destroy-all` 周辺の手順はここ。
 
 ## 収録ファイル
 
 | ファイル | 役割 | いつ読むか |
 |---|---|---|
-| [`05_運用.md`](05_運用.md) | phase 横断の薄い案内 | root から運用 docs の入口を探す時 |
-| [`04_検証.md`](04_検証.md) | phase 横断の薄い案内 | root から検証 docs の入口を探す時 |
+| [`04_検証.md`](04_検証.md) | 検証ゲート定義 + 「OK」判定基準 + 検証シナリオ (ローカル / GCP ゲート) | 検証実施時 / 「これで通ったと言えるか?」の判定時 |
+| [`05_運用.md`](05_運用.md) | PDCA loop (`make deploy-all` / `destroy-all`) + 定常運用 + インシデント対応 | デプロイ・運用・PDCA 周回時 |
 
-## 各 Phase の運用 docs
+## 棲み分け
 
-| Phase | パス | 内容 |
-|---|---|---|
-| 1-6 | `<phase>/docs/runbook/04_検証.md` + `<phase>/docs/runbook/05_運用.md` | 各 Phase の検証 / 運用 |
-| 7 | [`04_検証.md`](04_検証.md) + [`05_運用.md`](05_運用.md) | **現役正本** |
+- **`04_検証.md` = ゲート (判定基準)**。「OK か NG か」を決める。
+- **`05_運用.md` = 実行 (手順書)**。「どうやって動かすか」を書く。
+
+検証で通ったら運用に進む、という前後関係。
 
 ## 関連
 
-- 仕様ハブ: [`../architecture/01_仕様と設計.md`](../architecture/01_仕様と設計.md)
-- 実装カタログハブ: [`../architecture/03_実装カタログ.md`](../architecture/03_実装カタログ.md)
-- 移行ロードマップ: [`../tasks/02_移行ロードマップ.md`](../tasks/02_移行ロードマップ.md)
+- 設計根拠: [`../architecture/01_仕様と設計.md`](../architecture/01_仕様と設計.md)
+- 実装場所: [`../architecture/03_実装カタログ.md`](../architecture/03_実装カタログ.md)
+- current sprint: [`../tasks/TASKS.md`](../tasks/TASKS.md)
+- 過去判断: [`../decisions/`](../decisions/) (ADR 0001〜0008)

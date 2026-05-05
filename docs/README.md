@@ -1,40 +1,31 @@
 # docs
 
-ルート `docs/` は、**Phase 7 を canonical とした補助ハブ**です。  
-現役コードの正本は **repo ルート** にあり、ここには phase 横断の整理メモ・導線・規約を置きます。
-
-トップ入口:
-
-- ルート: [`../README.md`](../README.md)
-- 現役正本: [README.md](README.md)
+本プロジェクトの仕様 / 設計 / 運用 / 検証 / 規約を集約するハブ。
 
 ## まず読むファイル
 
-- [`../archive/7/study-hybrid-search-gke/docs/tasks/TASKS.md`](../archive/7/study-hybrid-search-gke/docs/tasks/TASKS.md)
-  - 現在の sprint / 実装進捗の正本
-- [`architecture/01_仕様と設計.md`](architecture/01_仕様と設計.md)
-  - 現役の仕様と設計
-- [`runbook/05_運用.md`](runbook/05_運用.md)
-  - 現役の運用と local / live 検証導線
-- [`conventions/`](conventions/README.md) — 規約・配置・命名の正本セット (5 ファイル + 索引 README)
-  - `conventions/命名規約.md` — フォルダ名・ファイル名・役割の共通規約
-  - `conventions/フォルダ-ファイル.md` — Phase 1-7 を 1 枚で見る構造索引
-  - `conventions/スクリプト規約.md` — scripts 命名標準
-  - `conventions/Makefile規約.md` — Make Command Matrix (auto-generated)
-  - `conventions/Docker配置規約.md` — Dockerfile / compose 関連の共通ルール
-- `archive/README.md`
-  - 過去ログの退避方針
-- `phases/README.md`
-  - 旧 phase 群の補助入口
+- [`tasks/TASKS.md`](tasks/TASKS.md) — current sprint の正本 (新セッションで最初に読む)
+- [`tasks/TASKS_ROADMAP.md`](tasks/TASKS_ROADMAP.md) — 長期 backlog + 決定的仕様 + Wave 計画
+- [`architecture/01_仕様と設計.md`](architecture/01_仕様と設計.md) — 仕様 + アーキテクチャ canonical
+- [`architecture/03_実装カタログ.md`](architecture/03_実装カタログ.md) — 実装物スナップショット
+- [`runbook/05_運用.md`](runbook/05_運用.md) — PDCA loop + STEP 詳細 + インシデント対応
+- [`runbook/04_検証.md`](runbook/04_検証.md) — 検証ゲート定義 + 「OK」判定基準
 
-## 位置付け
+## ディレクトリ構成
 
-- **現役正本は Phase 7 配下**
-- ルート `docs/` は、phase 横断の管理情報と移行メモを置く場所
-- 旧 Phase 1-6 は、比較教材 / 学習履歴 / archive 候補として扱う
-- 実装詳細・運用・検証は、常に Phase 7 配下を優先参照する
+| ディレクトリ | 内容 |
+|---|---|
+| [`architecture/`](architecture/) | 仕様 + 実装カタログ |
+| [`runbook/`](runbook/) | 検証ゲート + 運用手順 |
+| [`tasks/`](tasks/) | current sprint + 長期 backlog |
+| [`decisions/`](decisions/) | ADR (恒久対処ギャップの記録、0001〜0008) |
+| [`conventions/`](conventions/) | 命名 / 配置 / Make / Docker の規約セット |
 
-## 補助資料
+## 権威順位 (矛盾時の勝者)
 
-- [`conventions/フォルダ-ファイル.md`](conventions/フォルダ-ファイル.md) — Phase 1-7 構造索引 + 各要素の役割と実装形態 (旧 `パイプラインとジョブ.md` を統合)
-- `archive/パイプラインとジョブ.md` — 旧版 (2026-04-26 archived、`conventions/フォルダ-ファイル.md` の前身)
+```
+TASKS_ROADMAP.md  >  TASKS.md  >  01_仕様と設計.md  >  README.md  >  CLAUDE.md
+(長期 backlog)       (current sprint) (機能仕様+設計)    (入口)        (Claude 向けガイド)
+```
+
+恒久的な判断履歴は [`decisions/`](decisions/) (ADR 形式)。
