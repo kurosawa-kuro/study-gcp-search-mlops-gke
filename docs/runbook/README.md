@@ -1,20 +1,25 @@
 # docs/runbook/ — 運用 ハブ (リポ全体)
 
-リポ全体の Phase 横断運用の **薄いナビゲーションハブ**。各 Phase 配下の `docs/runbook/05_運用.md` (必要に応じて `docs/runbook/04_検証.md`) が正本。
+リポ全体の運用ハブ。  
+ただし **現役の運用 / 検証の正本は Phase 7** の
+[`../../7/study-hybrid-search-gke/docs/runbook/05_運用.md`](../../7/study-hybrid-search-gke/docs/runbook/05_運用.md)
+と
+[`../../7/study-hybrid-search-gke/docs/runbook/04_検証.md`](../../7/study-hybrid-search-gke/docs/runbook/04_検証.md)
+を優先する。
 
 ## 収録ファイル
 
 | ファイル | 役割 | いつ読むか |
 |---|---|---|
-| [`05_運用.md`](05_運用.md) | Phase 横断運用の **薄いハブ** (canonical は Phase 7 [`docs/runbook/05_運用.md`](../../7/study-hybrid-search-gke/docs/runbook/05_運用.md)) | Phase ごとの運用 docs を見つけたい時 |
-| [`04_検証.md`](04_検証.md) | 検証 docs の参照入口 | Phase ごとの検証 docs を見つけたい時 |
+| [`05_運用.md`](05_運用.md) | phase 横断の薄い案内 | root から運用 docs の入口を探す時 |
+| [`04_検証.md`](04_検証.md) | phase 横断の薄い案内 | root から検証 docs の入口を探す時 |
 
 ## 各 Phase の運用 docs
 
 | Phase | パス | 内容 |
 |---|---|---|
 | 1-6 | `<phase>/docs/runbook/04_検証.md` + `<phase>/docs/runbook/05_運用.md` | 各 Phase の検証 / 運用 |
-| 7 | [`../../7/study-hybrid-search-gke/docs/runbook/04_検証.md`](../../7/study-hybrid-search-gke/docs/runbook/04_検証.md) + [`05_運用.md`](../../7/study-hybrid-search-gke/docs/runbook/05_運用.md) | Phase 7 の検証 / 運用 |
+| 7 | [`../../7/study-hybrid-search-gke/docs/runbook/04_検証.md`](../../7/study-hybrid-search-gke/docs/runbook/04_検証.md) + [`../../7/study-hybrid-search-gke/docs/runbook/05_運用.md`](../../7/study-hybrid-search-gke/docs/runbook/05_運用.md) | **現役正本** |
 
 ## 関連
 
