@@ -1,3 +1,77 @@
+## 今の課題
+
+## 今の課題
+
+### 1. プロジェクト方針の変更
+
+チームメンバー向けの Phase 形式の学習資料はリリース済みであり、役目を終えた。
+
+今後は、その資産を活かしつつ、個人の技術学習プロジェクトとして、より深く柔軟に学習するため、Phase 形式を廃止した。
+
+---
+
+### 2. 仕様の大幅変更
+
+以前は、正解データを度外視した設計だった。
+
+現在は、正解データとモデル品質改善サイクルを大前提とする仕様へ大幅に変更している。
+
+そのため、以下の両方で正解データ対応が必要である。
+
+- アプリ側
+- モデル側
+
+---
+
+### 3. 検索基盤の変更
+
+Meilisearch を廃止し、Elasticsearch を採用する。
+
+ただし、Elastic Cloud は利用せず、GKE 上で Elasticsearch を稼働させる。
+
+---
+
+### 4. API エンドポイントの整理
+
+API エンドポイントは、試行錯誤の過程でつぎはぎになっている。
+
+今後、正解データ、イベントログ、モデル再学習、評価、Elasticsearch 連携を実装する前に、API 境界を一斉に整理する必要がある。
+
+---
+
+### 5. Makefile / 実行系の破綻
+
+Makefile が仕様破綻している。
+
+特に、「コード直書き禁止」のルールが破られているため、修正が必要である。
+
+ただし、Makefile 全体の本格整理は、仕様・API・実装方針が固まった後に行う。
+先に行うのは、危険箇所の止血に限定する。
+
+## 関連ドキュメント
+
+- `/home/ubuntu/repos/study-gcp-search-mlops-gke/docs/tasks/継続改善サイクル設計.md`
+- `/home/ubuntu/repos/study-gcp-search-mlops-gke/docs/tasks/正解データ反映計画.md`
+- `/home/ubuntu/repos/study-gcp-search-mlops-gke/docs/tasks/ルート昇格-実行メモ.md`
+- `/home/ubuntu/repos/study-gcp-search-mlops-gke/docs/tasks/Makefile-多行禁止違反メモ.md`
+- `/home/ubuntu/repos/study-gcp-search-mlops-gke/docs/tasks/Elasticsearch-GCP稼働先比較.md`
+- `/home/ubuntu/repos/study-gcp-search-mlops-gke/docs/tasks/APIエンドポイント再設計案.md`
+
+
+こういう順番か？
+
+1. APIエンドポイント再設計
+2. 正解データの仕様確定
+3. アプリ側の正解データログ実装
+4. モデル側の学習データ反映
+5. 継続改善サイクルの最小実装
+6. Elasticsearch 移行
+7. GKE 上の Elasticsearch 稼働
+8. Makefile / 実行系の整理
+9. ドキュメント再統合
+
+
+
 # 02. 移行ロードマップ — 検索アプリを最新仕様へ
 
 Phase 7 の現コードを、最新仕様 (親 [README.md](../../../../README.md) §1-§4 / 親 [docs/architecture/01_仕様と設計.md](../../../../docs/architecture/01_仕様と設計.md) / 本 phase [docs/architecture/01_仕様と設計.md](../architecture/01_仕様と設計.md)) に追従させるための移行計画。
