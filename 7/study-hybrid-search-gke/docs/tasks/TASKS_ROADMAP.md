@@ -86,7 +86,7 @@ Phase 7 の現コードを、最新仕様 (親 [README.md](../../../../README.md
 
 残ギャップ（優先順は [`TASKS.md`](TASKS.md)）:
 - **V4** — 2 周目 `deploy-all`（import 経路の live 再検証）
-- **V6** — **既存 deploy 上** `RUN_LIVE_GCP_ACCEPTANCE=1 pytest tests/e2e/test_phase7_acceptance_gate.py -m live_gcp`（**full recreate** は `test_phase7_full_recreate_gate.py` に分離）
+- **V6** — **既存 deploy 上** `make verify-live-acceptance`（**full recreate** は `make verify-full-recreate` に分離、ログは `logs/verification/`）
 - **V3** — `destroy-all` live 1 周（最後）
 - KFP 2.16 互換の運用上の回避は DAG / runner で継続（詳細は実装カタログ）
 - [`docs/architecture/01_仕様と設計.md`](../architecture/01_仕様と設計.md) の最終同期
@@ -108,7 +108,7 @@ Wave 1 ではローカル完結のために一時的な backend 切替と fallba
 ## 3. Wave 1 — 検索アプリ層 (本 roadmap の主タスク)
 
 残（Wave 1 名称は歴史的経緯 — **offline parity** は `tests/integration/parity/`、**live V6** は e2e gate）:
-- [ ] **V6** — `RUN_LIVE_GCP_ACCEPTANCE=1 pytest tests/e2e/test_phase7_acceptance_gate.py -m live_gcp`（既存環境）。optional: `RUN_LIVE_GCP_FULL_RECREATE=1` … `test_phase7_full_recreate_gate.py`
+- [ ] **V6** — `make verify-live-acceptance`（既存環境）。optional: `make verify-full-recreate`
 - [ ] Cloud Logging ベースの eventual consistency 観測
 - [ ] KFP 2.16 import 互換 issue の根本対処
 

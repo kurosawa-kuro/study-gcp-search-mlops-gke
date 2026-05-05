@@ -24,11 +24,12 @@ NA_TARGETS := \
 
 include ../../mk/base.mk
 
-.PHONY: help doctor sync build seed train label build-training-dataset evaluate serve api-dev test check check-layers \
-	verify-pipeline run-all-core run-all verify-all down clean wait-db
+.PHONY: help doctor sync build up seed train label build-training-dataset evaluate serve serve-bg api-dev test check check-layers \
+	wait-db wait-api verify-pipeline verify-app verify-ml verify-all-core run-all-core run-all verify-all down clean
 
 help: ## Show this help
-	@echo "Phase 3 (Local hybrid search) — quick start: make build && make seed && make train && make serve"
+	@echo "Phase 3 (Local hybrid search) — quick start: make build && make up && make seed && make train && make serve"
+	@echo "Full verification: make verify-all"
 	@echo ""
 	@awk 'BEGIN {FS = ":.*##"; printf "Targets:\n"} \
 		/^[a-zA-Z0-9_-]+:.*##/ { printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2 }' \
@@ -81,6 +82,19 @@ evaluate: ## NDCG@10 / MAP / Recall@20 の hold-out 評価 → metrics.json
 serve: ## search-api を :8000 で起動 (foreground)
 	$(COMPOSE) up search-api
 
+serve-bg: ## search-api を :8000 で起動 (background)
+	$(COMPOSE) up -d search-api
+
+wait-api: ## search-api /health が 200 になるまで待つ
+	@printf "Waiting search-api "
+	@for i in $$(seq 1 60); do \
+		if curl -fsS http://localhost:8000/health >/dev/null 2>&1; then \
+			echo " OK"; exit 0; \
+		fi; \
+		printf "."; sleep 1; \
+	done; \
+	echo " timeout"; exit 1
+
 api-dev: ## ローカル uvicorn (Docker なし、uv run。前提: postgres/meili/redis は up 済)
 	uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
@@ -99,18 +113,36 @@ check-layers: ## Port-Adapter 境界の AST 検査
 verify-pipeline: ## seed → train → serve の integration E2E (docker compose 立ち上げ済前提)
 	uv run pytest tests/integration -q
 
-run-all-core: ## build → seed → train → test を 1 コマンドで
+verify-app: ## app / API / UI の総合疎通 (serve 起動込み)
+	$(MAKE) serve-bg
+	$(MAKE) wait-api
+	uv run pytest tests/integration/test_pipeline_e2e.py tests/integration/test_app_ui_e2e.py -q
+
+verify-ml: ## feedback → labeling → dataset → retrain → evaluate の ML 経路検証
+	$(MAKE) label
+	$(MAKE) build-training-dataset
+	$(MAKE) train
+	$(MAKE) evaluate
+	uv run pytest tests/integration/test_ml_feedback_cycle_e2e.py -q
+
+verify-all-core: ## 静的検証 + local stack + app + ML 経路を 1 コマンドで
+	$(MAKE) check
+	$(MAKE) check-layers
 	$(MAKE) build
 	$(MAKE) up
 	$(MAKE) seed
 	$(MAKE) train
-	$(MAKE) test
+	$(MAKE) verify-app
+	$(MAKE) verify-ml
+
+run-all-core: ## verify-all-core の alias
+	$(MAKE) verify-all-core
 
 run-all: ## run-all-core の alias
 	$(MAKE) run-all-core
 
-verify-all: ## verify-pipeline の alias (Phase 横断 vocabulary)
-	$(MAKE) verify-pipeline
+verify-all: ## verify-all-core の alias (Phase 横断 vocabulary)
+	$(MAKE) verify-all-core
 
 down: ## docker compose down (volume 残す)
 	$(COMPOSE) down --remove-orphans

@@ -89,6 +89,8 @@ Thumbs.db
 # ファイルへリダイレクトして検証する場合の作業用ファイル。誤 commit 防止。
 _*_out.txt
 _*_exit.txt
+logs/**/*.exit.txt
+logs/**/*.out.txt
 _task_states_*.txt
 _make_check*.txt
 .cursor_shell_test

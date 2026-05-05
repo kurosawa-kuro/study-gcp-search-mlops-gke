@@ -12,11 +12,11 @@ routine V6 verification.
 Run (long-running; tee + monitor):
 
     cd 7/study-hybrid-search-gke
-    RUN_LIVE_GCP_FULL_RECREATE=1 uv run pytest tests/e2e/test_phase7_full_recreate_gate.py -m 'live_gcp and full_recreate' -v 2>&1 | tee _full_recreate_gate.log
+    make verify-full-recreate
 
 Monitor (another terminal):
 
-    tail -f /home/ubuntu/repos/study-gcp-mlops/7/study-hybrid-search-gke/_full_recreate_gate.log
+    tail -f logs/verification/full-recreate.latest.log
 """
 
 from __future__ import annotations

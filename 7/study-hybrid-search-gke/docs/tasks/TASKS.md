@@ -10,9 +10,9 @@
 
 | 優先 | コマンド（リポルート `7/study-hybrid-search-gke/`） | destroy |
 |------|-----------------------------------------------------|---------|
-| **V6（通常）** | `RUN_LIVE_GCP_ACCEPTANCE=1 pytest tests/e2e/test_phase7_acceptance_gate.py -m live_gcp` | **含まない** |
-| **Full recreate（別ゲート・フレークし得る）** | `RUN_LIVE_GCP_FULL_RECREATE=1 pytest tests/e2e/test_phase7_full_recreate_gate.py -m 'live_gcp and full_recreate'` | **含む**（`destroy-all` → `deploy-all` → 上と同一チェック） |
-| **復旧**（環境が teardown 寄り） | `make deploy-all`（`scripts/setup/deploy_all.py` が Feature Group / Online Store の list API 解放待ち後に tf-apply） | — |
+| **V6（通常）** | `make verify-live-acceptance` | **含まない** |
+| **Full recreate（別ゲート・フレークし得る）** | `make verify-full-recreate` | **含む**（`destroy-all` → `deploy-all` → 上と同一チェック） |
+| **復旧**（環境が teardown 寄り） | `make verify-deploy-all`（`scripts/setup/deploy_all.py` が Feature Group / Online Store の list API 解放待ち後に tf-apply） | — |
 
 **完了の定義**: 上表の pytest が **exit 0 / PASS**（ログに最終 `passed` が残る）。ローカル CI のみ・Terraform plan のみ・「ほぼできた」は **ゴール未達**。
 
@@ -24,17 +24,17 @@
 
 ```bash
 # make deploy-all をファイルへリダイレクトしたとき
-tail -f /home/ubuntu/repos/study-gcp-mlops/7/study-hybrid-search-gke/_verify_deploy_all.log
+tail -f /home/ubuntu/repos/study-gcp-search-mlops-gke/7/study-hybrid-search-gke/logs/verification/deploy-all.latest.log
 ```
 
 ```bash
 # full recreate ゲートを tee しているとき（destroy → deploy → pytest 全体）
-tail -f /home/ubuntu/repos/study-gcp-mlops/7/study-hybrid-search-gke/_full_recreate_gate.log
+tail -f /home/ubuntu/repos/study-gcp-search-mlops-gke/7/study-hybrid-search-gke/logs/verification/full-recreate.latest.log
 ```
 
 （実際のファイル名が違えばそのパスに読み替える。`step N/15` や Terraform の行が増え続ければ進行中。）
 
-**ログが数十行のまま長時間止まる**ときは、バッファ・バックグラウンド中断・子プロセス捕获を疑う。対策の例: `PYTHONUNBUFFERED=1`、`pytest -s`、または **pytest に長時間 make を閉じ込めず** `make destroy-all 2>&1 | tee _destroy.log` → `make deploy-all 2>&1 | tee _deploy.log` → acceptance を **段階実行**。
+**ログが数十行のまま長時間止まる**ときは、バッファ・バックグラウンド中断・子プロセス捕获を疑う。対策の例: `PYTHONUNBUFFERED=1`、`pytest -s`、または **pytest に長時間 make を閉じ込めず** `make verify-destroy-all` → `make verify-deploy-all` → `make verify-live-acceptance` を **段階実行**。
 
 ---
 
@@ -72,16 +72,16 @@ tail -f /home/ubuntu/repos/study-gcp-mlops/7/study-hybrid-search-gke/_full_recre
 | 時点 (UTC) | 状態 | メモ |
 |---|---|---|
 | 2026-05-03 | **V5 E2E 締め** | Run `manual__2026-05-03T09:18:07+00:00`: `check_retrain` / `submit_train_pipeline` / `wait_train_succeeded` / `gate_auto_promote` **success**、`promote_reranker` **skipped**（`AUTO_PROMOTE=false`）。`make ops-livez` / `make ops-search-components` **緑**。 |
-| **2026-05-03** (JST 夕) | **V4** | ✅ `make deploy-all` **exit 0**（全 15 step・計 ~14.7 min）。ログ `_v4_deploy_all.log`。 |
+| **2026-05-03** (JST 夕) | **V4** | ✅ `make deploy-all` **exit 0**（全 15 step・計 ~14.7 min）。ログは `logs/verification/legacy/_v4_deploy_all.log` へ退避。 |
 | **2026-05-03** (JST 夕) | **V6** | ⚠️ 旧 e2e（1 テスト内 `destroy-all` → 即 `deploy-all`）は Vertex **409** になり得る。**対処済**: deploy-all に名前解放待ち + stage1 409 リトライ、e2e を **acceptance** と **full recreate** に分割。 |
 | **2026-05-03** | **V6 acceptance** | ✅ 既存 deploy 上 `RUN_LIVE_GCP_ACCEPTANCE=1 … test_phase7_acceptance_gate` **PASS**（実測）。 |
-| **2026-05-03** (JST 夕) | **V3** | ✅ `make destroy-all` **exit 0**（計 ~8 min）。ログ `_v3_destroy_all.log`。 |
+| **2026-05-03** (JST 夕) | **V3** | ✅ `make destroy-all` **exit 0**（計 ~8 min）。ログは `logs/verification/legacy/_v3_destroy_all.log` へ退避。 |
 
 **次に実行（正本の並び）**:
 
-1. **復旧**: teardown 寄りなら **`make deploy-all`**。
-2. **V6（通常）**: `RUN_LIVE_GCP_ACCEPTANCE=1 pytest tests/e2e/test_phase7_acceptance_gate.py -m live_gcp`。
-3. **Full recreate（任意・不安定）**: `RUN_LIVE_GCP_FULL_RECREATE=1 pytest tests/e2e/test_phase7_full_recreate_gate.py -m 'live_gcp and full_recreate'` — 監視は `_full_recreate_gate.log`（§上）。
+1. **復旧**: teardown 寄りなら **`make verify-deploy-all`**。
+2. **V6（通常）**: `make verify-live-acceptance`。
+3. **Full recreate（任意・不安定）**: `make verify-full-recreate` — 監視は `logs/verification/full-recreate.latest.log`（§上）。
 
 **再検証（Composer E2E だけ繰り返す場合）**: `make composer-deploy-dags` → `make ops-composer-trigger DAG=retrain_orchestration` → **`make ops-composer-task-states`** → `make ops-livez` / `make ops-search-components`。Terraform は `make tf-plan` 経由。
 

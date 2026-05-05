@@ -9,7 +9,11 @@ Destructive ``destroy-all -> deploy-all`` PDCA is a separate unstable gate; see
 
 Run (dev project only, kubectl context ready):
 
-    RUN_LIVE_GCP_ACCEPTANCE=1 pytest tests/e2e/test_phase7_acceptance_gate.py -m live_gcp
+    make verify-live-acceptance
+
+Follow log:
+
+    tail -f logs/verification/live-acceptance.latest.log
 """
 
 from __future__ import annotations

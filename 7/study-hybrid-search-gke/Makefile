@@ -28,8 +28,10 @@ ONCALL_EMAIL  ?= $(call _yaml_get,oncall_email)
 # Local model path produced by `make train-smoke-persist`.
 MODEL_PATH_OVERRIDE ?= /tmp/hybrid-search-cloud-smoke-model.txt
 
-# deploy-monitor log output directory.
-MONITOR_LOG_DIR ?= $(ROOT)/logs/deploy-monitor
+# deploy / verification log output directories.
+LOG_ROOT ?= $(ROOT)/logs
+MONITOR_LOG_DIR ?= $(LOG_ROOT)/deploy-monitor
+VERIFY_LOG_DIR ?= $(LOG_ROOT)/verification
 
 PHASE_NAME := phase-7-gke
 NA_TARGETS := up down wait-db free-ports build seed serve test-e2e install-browsers \
@@ -51,6 +53,7 @@ export PROJECT_ID REGION API_SERVICE ARTIFACT_REPO VERTEX_LOCATION PIPELINE_ROOT
         setup-pipeline-schedule \
         apply-manifests \
         deploy-all deploy-all-direct run-all destroy-all seed-test seed-test-clean \
+	verify-deploy-all verify-destroy-all verify-live-acceptance verify-full-recreate \
         sync-meili sync-synonyms \
         train-smoke train-smoke-persist api-dev api-dev-hybrid clean \
         docker-auth deploy-api deploy-api-local deploy-kserve-models kube-creds \
@@ -142,6 +145,20 @@ apply-manifests: ## Apply infra/manifests via kubectl apply -k
 deploy-all: ## End-to-end provisioning + search-api rollout (tf-apply → kubectl apply -k → overlay-configmap → deploy-api)
 	uv run python -m scripts.setup.deploy_all
 
+verify-deploy-all: ## Run deploy-all and aggregate stdout/stderr under logs/verification/
+	@mkdir -p "$(VERIFY_LOG_DIR)"
+	@ts=$$(date -u +%Y%m%dT%H%M%SZ); \
+	log_file="$(VERIFY_LOG_DIR)/deploy-all-$$ts.log"; \
+	status_file="$(VERIFY_LOG_DIR)/deploy-all-$$ts.exit.txt"; \
+	latest_log="$(VERIFY_LOG_DIR)/deploy-all.latest.log"; \
+	latest_status="$(VERIFY_LOG_DIR)/deploy-all.latest.exit.txt"; \
+	echo "verification-log: $$log_file"; \
+	bash -o pipefail -c '$(MAKE) deploy-all 2>&1 | tee "$$1"; printf "%s\n" "$$?" > "$$2"' -- "$$log_file" "$$status_file"; \
+	rc=$$(cat "$$status_file"); \
+	ln -sfn "$$(basename "$$log_file")" "$$latest_log"; \
+	ln -sfn "$$(basename "$$status_file")" "$$latest_status"; \
+	exit "$$rc"
+
 state-recover: ## Import orphan GCP resources back into tfstate (緊急 cleanup 後の "alreadyExists" fail 回避、`docs/tasks/TASKS_ROADMAP.md §4.10`)
 	uv run python -m scripts.infra.state_recovery
 
@@ -185,6 +202,48 @@ verify-all: ## Alias of run-all-core for cross-phase teaching vocabulary
 
 destroy-all: ## Tear down every Terraform-managed resource (no prompt — PDCA loop, pair with deploy-all)
 	uv run python -m scripts.setup.destroy_all
+
+verify-destroy-all: ## Run destroy-all and aggregate stdout/stderr under logs/verification/
+	@mkdir -p "$(VERIFY_LOG_DIR)"
+	@ts=$$(date -u +%Y%m%dT%H%M%SZ); \
+	log_file="$(VERIFY_LOG_DIR)/destroy-all-$$ts.log"; \
+	status_file="$(VERIFY_LOG_DIR)/destroy-all-$$ts.exit.txt"; \
+	latest_log="$(VERIFY_LOG_DIR)/destroy-all.latest.log"; \
+	latest_status="$(VERIFY_LOG_DIR)/destroy-all.latest.exit.txt"; \
+	echo "verification-log: $$log_file"; \
+	bash -o pipefail -c '$(MAKE) destroy-all 2>&1 | tee "$$1"; printf "%s\n" "$$?" > "$$2"' -- "$$log_file" "$$status_file"; \
+	rc=$$(cat "$$status_file"); \
+	ln -sfn "$$(basename "$$log_file")" "$$latest_log"; \
+	ln -sfn "$$(basename "$$status_file")" "$$latest_status"; \
+	exit "$$rc"
+
+verify-live-acceptance: ## Run canonical live acceptance and aggregate logs under logs/verification/
+	@mkdir -p "$(VERIFY_LOG_DIR)"
+	@ts=$$(date -u +%Y%m%dT%H%M%SZ); \
+	log_file="$(VERIFY_LOG_DIR)/live-acceptance-$$ts.log"; \
+	status_file="$(VERIFY_LOG_DIR)/live-acceptance-$$ts.exit.txt"; \
+	latest_log="$(VERIFY_LOG_DIR)/live-acceptance.latest.log"; \
+	latest_status="$(VERIFY_LOG_DIR)/live-acceptance.latest.exit.txt"; \
+	echo "verification-log: $$log_file"; \
+	bash -o pipefail -c 'RUN_LIVE_GCP_ACCEPTANCE=1 uv run pytest tests/e2e/test_phase7_acceptance_gate.py -m live_gcp -v -s 2>&1 | tee "$$1"; printf "%s\n" "$$?" > "$$2"' -- "$$log_file" "$$status_file"; \
+	rc=$$(cat "$$status_file"); \
+	ln -sfn "$$(basename "$$log_file")" "$$latest_log"; \
+	ln -sfn "$$(basename "$$status_file")" "$$latest_status"; \
+	exit "$$rc"
+
+verify-full-recreate: ## Run destroy-all -> deploy-all -> live acceptance gate and aggregate logs under logs/verification/
+	@mkdir -p "$(VERIFY_LOG_DIR)"
+	@ts=$$(date -u +%Y%m%dT%H%M%SZ); \
+	log_file="$(VERIFY_LOG_DIR)/full-recreate-$$ts.log"; \
+	status_file="$(VERIFY_LOG_DIR)/full-recreate-$$ts.exit.txt"; \
+	latest_log="$(VERIFY_LOG_DIR)/full-recreate.latest.log"; \
+	latest_status="$(VERIFY_LOG_DIR)/full-recreate.latest.exit.txt"; \
+	echo "verification-log: $$log_file"; \
+	bash -o pipefail -c 'RUN_LIVE_GCP_FULL_RECREATE=1 uv run pytest tests/e2e/test_phase7_full_recreate_gate.py -m "live_gcp and full_recreate" -v -s 2>&1 | tee "$$1"; printf "%s\n" "$$?" > "$$2"' -- "$$log_file" "$$status_file"; \
+	rc=$$(cat "$$status_file"); \
+	ln -sfn "$$(basename "$$log_file")" "$$latest_log"; \
+	ln -sfn "$$(basename "$$status_file")" "$$latest_status"; \
+	exit "$$rc"
 
 ops-destroy-check: ## Assert no high-cost residual Phase 7 resources remain after destroy-all
 	uv run python -m scripts.ops.destroy_check --project-id=$(PROJECT_ID) --region=$(REGION) --vertex-location=$(VERTEX_LOCATION)

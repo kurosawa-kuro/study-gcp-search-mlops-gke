@@ -18,10 +18,12 @@
 
 ```bash
 # V6（既存環境）
-RUN_LIVE_GCP_ACCEPTANCE=1 pytest tests/e2e/test_phase7_acceptance_gate.py -m live_gcp
+make verify-live-acceptance
 
 # Full recreate（破壊的・フレークし得る）
-RUN_LIVE_GCP_FULL_RECREATE=1 pytest tests/e2e/test_phase7_full_recreate_gate.py -m 'live_gcp and full_recreate'
+make verify-full-recreate
 ```
+
+ログは `logs/verification/` に集約され、`*.latest.log` を `tail -f` すれば追跡できる。
 
 `deploy-all` は `scripts/infra/vertex_feature_store_wait.py` で Feature Group / Feature Online Store 名の解放を待ってから tf-apply する（destroy 直後の 409 緩和）。
