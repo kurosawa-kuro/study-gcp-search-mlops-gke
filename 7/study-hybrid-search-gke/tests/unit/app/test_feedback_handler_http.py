@@ -23,5 +23,5 @@ def test_feedback_endpoint_rejects_invalid_action(fake_client) -> None:
         "/feedback",
         json={"request_id": "r-1", "property_id": "P-001", "action": "evil"},
     )
-    # Pydantic regex pattern enforces (click|favorite|inquiry)
+    # Pydantic literal contract enforces the canonical action set.
     assert response.status_code == 422

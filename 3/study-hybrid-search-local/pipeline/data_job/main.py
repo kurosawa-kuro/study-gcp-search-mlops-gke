@@ -28,7 +28,7 @@ import meilisearch
 import psycopg
 from sentence_transformers import SentenceTransformer
 
-from ml.common import get_logger
+from ml.common import get_logger, resolve_sentence_transformer_source
 
 logger = get_logger("pipeline.data_job")
 
@@ -185,7 +185,8 @@ def embed_and_insert(
     props: list[Property],
     model_name: str,
 ) -> None:
-    model = SentenceTransformer(model_name)
+    source = resolve_sentence_transformer_source(model_name)
+    model = SentenceTransformer(source)
     texts = [f"passage: {p.title} {p.description}" for p in props]
     vecs = model.encode(texts, normalize_embeddings=True, show_progress_bar=False, batch_size=32)
 

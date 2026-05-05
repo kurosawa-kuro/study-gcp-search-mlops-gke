@@ -30,6 +30,7 @@ class BaseAppSettings(BaseSettings):
     region: str = "asia-northeast1"
     bq_dataset_mlops: str = "mlops"
     bq_dataset_feature_mart: str = "feature_mart"
+    bq_table_property_features_daily: str = "property_features_daily"
     bq_table_training_runs: str = "training_runs"
     gcs_models_bucket: str = "mlops-dev-a-models"
 

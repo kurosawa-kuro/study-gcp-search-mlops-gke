@@ -1,7 +1,7 @@
 """BQ-backed adapter for :class:`app.services.protocols.retrain_queries.RetrainQueries`.
 
 Ranker-only after Phase 10b. Reads ``mlops.training_runs`` for run metadata
-and ``mlops.feedback_events`` for the new-feedback-row counter.
+and ``mlops.user_actions`` for the new-behaviour-signal counter.
 """
 
 from __future__ import annotations
@@ -33,12 +33,12 @@ class BigQueryRetrainQueries:
         return row["ts"] if row and row["ts"] is not None else None
 
     def feedback_rows_since(self, since: datetime) -> int | None:
-        """Count feedback_events rows inserted since ``since``.
+        """Count user_actions rows inserted since ``since``.
 
         Returns None if the table does not yet exist (early staging); the
         retrain policy treats None as 'no signal'.
         """
-        table = self._training_runs_table.rsplit(".", 1)[0] + ".feedback_events"
+        table = self._training_runs_table.rsplit(".", 1)[0] + ".user_actions"
         query = f"""
             SELECT COUNT(*) AS n
             FROM `{table}`

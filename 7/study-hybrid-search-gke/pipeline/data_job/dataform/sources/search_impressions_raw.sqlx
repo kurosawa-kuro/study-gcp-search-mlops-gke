@@ -1,0 +1,7 @@
+config {
+  type: "declaration",
+  database: "mlops-dev-a",
+  schema: "mlops",
+  name: "search_impressions",
+  description: "Infra-owned canonical impression log table. Used by property_features_daily to count per-property exposures."
+}

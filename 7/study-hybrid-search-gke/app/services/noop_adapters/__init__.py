@@ -17,14 +17,20 @@ adapter; the composition root selects each explicitly.
 """
 
 from .noop_data_catalog_reader import NoopDataCatalogReader
+from .noop_event_repository import NoopEventRepository
+from .noop_event_writer import NoopEventWriter
 from .noop_feedback_recorder import NoopFeedbackRecorder
+from .noop_label_repository import NoopLabelRepository
 from .noop_lexical_search import NoopLexicalSearch
 from .noop_ranking_log_publisher import NoopRankingLogPublisher
 from .noop_retrain_queries import NoopRetrainQueries
 
 __all__ = [
     "NoopDataCatalogReader",
+    "NoopEventRepository",
+    "NoopEventWriter",
     "NoopFeedbackRecorder",
+    "NoopLabelRepository",
     "NoopLexicalSearch",
     "NoopRankingLogPublisher",
     "NoopRetrainQueries",

@@ -15,12 +15,13 @@ from typing import Protocol
 
 
 class FeedbackRecorder(Protocol):
-    """Writes a single feedback event (click / favorite / inquiry) to the log sink.
+    """Writes a legacy feedback event to the compatibility sink.
 
-    ``action`` is one of {"click", "favorite", "inquiry"}; the schema is
-    enforced by ``app.schemas.search.FeedbackRequest``. Implementations
-    should be idempotent on (request_id, property_id, action) because the
-    HTTP client may retry.
+    Phase 7 keeps the older Pub/Sub ``search-feedback`` topic alive for
+    backward compatibility, but only a subset of the canonical actions are
+    dual-written here. See ``app.services.feedback_service.LEGACY_ACTIONS``.
+    Implementations should stay idempotent on
+    ``(request_id, property_id, action)`` because the HTTP client may retry.
     """
 
     def record(self, *, request_id: str, property_id: str, action: str) -> None: ...

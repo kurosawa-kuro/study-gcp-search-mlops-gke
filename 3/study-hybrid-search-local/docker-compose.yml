@@ -74,6 +74,7 @@ services:
       MEILI_BASE_URL: http://meilisearch:7700
       MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-phase3-local-master-key}
       E5_MODEL_NAME: ${E5_MODEL_NAME:-intfloat/multilingual-e5-small}
+      HF_HUB_DISABLE_TELEMETRY: "1"
       MODEL_ARTIFACTS_ROOT: /app/ml/registry/artifacts
     volumes:
       - ./ml/registry/artifacts:/app/ml/registry/artifacts
@@ -108,6 +109,17 @@ services:
       - "redis://redis:6379/0"
       - "--dictionary"
       - "definitions/synonyms/real_estate_ja.yaml"
+
+  model-warmup:
+    image: *pipeline-image
+    build: *pipeline-build
+    container_name: phase3-model-warmup
+    environment:
+      E5_MODEL_NAME: ${E5_MODEL_NAME:-intfloat/multilingual-e5-small}
+      HF_HUB_DISABLE_TELEMETRY: "1"
+    volumes:
+      - hf_cache:/root/.cache/huggingface
+    command: ["python", "-m", "pipeline.model_warmup.main"]
 
   trainer:
     image: *pipeline-image
@@ -176,6 +188,7 @@ services:
       MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-phase3-local-master-key}
       REDIS_URL: redis://redis:6379/0
       E5_MODEL_NAME: ${E5_MODEL_NAME:-intfloat/multilingual-e5-small}
+      HF_HUB_DISABLE_TELEMETRY: "1"
       MODEL_ARTIFACTS_ROOT: /app/ml/registry/artifacts
       ENABLE_SEARCH: "true"
       # Phase 3 SYN-1 — Redis 同義語辞書を有効化。

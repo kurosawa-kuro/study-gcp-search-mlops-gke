@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from app.services.feedback_service import FeedbackService
-from tests._fakes import InMemoryFeedbackRecorder
+from tests._fakes import InMemoryEventWriter, InMemoryFeedbackRecorder
 
 
 def test_record_returns_true_on_success() -> None:
@@ -27,3 +27,20 @@ def test_record_returns_false_on_publish_failure() -> None:
     accepted = service.record(request_id="r-2", property_id="P-002", action="favorite")
 
     assert accepted is False
+
+
+def test_record_emits_new_user_action_contract() -> None:
+    recorder = InMemoryFeedbackRecorder()
+    event_writer = InMemoryEventWriter()
+    service = FeedbackService(recorder=recorder, event_writer=event_writer)
+
+    accepted = service.record(
+        request_id="r-3",
+        property_id="P-003",
+        action="request_complete",
+    )
+
+    assert accepted is True
+    assert len(event_writer.user_actions) == 1
+    assert event_writer.user_actions[0].action_type == "request_complete"
+    assert recorder.events == []

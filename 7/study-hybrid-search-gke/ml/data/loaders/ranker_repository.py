@@ -2,9 +2,9 @@
 
 Contains the Protocol (:class:`RankerTrainingRepository`) and the BigQuery
 implementation. Assembles the LambdaRank training set by joining
-``mlops.ranking_log`` (features + lexical_rank + me5_score) to
-``mlops.feedback_events`` (labels). Rows are ordered by ``request_id``
-followed by ``lexical_rank`` so LightGBM group sizes line up directly.
+``mlops.ranking_labels`` to ``mlops.search_impressions`` and the latest
+``feature_mart.property_features_daily`` snapshot. Rows are ordered by
+``request_id`` followed by ``rank`` so LightGBM group sizes line up directly.
 
 ``save_run`` writes ranker metrics (``ndcg_at_10`` / ``map`` /
 ``recall_at_20`` / ``best_iteration``) + LambdaRank hyperparameters into
@@ -47,38 +47,44 @@ class RankerTrainingRepository(Protocol):
 
 
 _TRAINING_SELECT = """
-  SELECT
-    r.request_id,
-    r.property_id,
-    r.features.rent       AS rent,
-    r.features.walk_min   AS walk_min,
-    r.features.age_years  AS age_years,
-    r.features.area_m2    AS area_m2,
-    r.features.ctr        AS ctr,
-    r.features.fav_rate   AS fav_rate,
-    r.features.inquiry_rate AS inquiry_rate,
-    r.features.me5_score    AS me5_score,
-    r.features.lexical_rank AS lexical_rank,
-    COALESCE(l.label, 0)  AS label
-  FROM `{ranking_log}` r
-  LEFT JOIN (
+  WITH latest_features AS (
     SELECT
-      request_id,
       property_id,
-      CASE
-        WHEN COUNTIF(action = 'inquiry')  > 0 THEN 3
-        WHEN COUNTIF(action = 'favorite') > 0 THEN 2
-        WHEN COUNTIF(action = 'click')    > 0 THEN 1
-        ELSE 0
-      END AS label
-    FROM `{feedback_events}`
-    WHERE ts >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL @window_days DAY)
-    GROUP BY request_id, property_id
-  ) l
-  USING (request_id, property_id)
-  WHERE r.ts >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL @window_days DAY)
-    AND r.features.rent IS NOT NULL
-  ORDER BY r.request_id, r.lexical_rank
+      rent,
+      walk_min,
+      age_years,
+      area_m2,
+      ctr,
+      fav_rate,
+      inquiry_rate
+    FROM `{feature_table}`
+    WHERE event_date = (SELECT MAX(event_date) FROM `{feature_table}`)
+  )
+  SELECT
+    rl.search_id AS request_id,
+    rl.property_id,
+    COALESCE(f.rent, r.features.rent) AS rent,
+    COALESCE(f.walk_min, r.features.walk_min) AS walk_min,
+    COALESCE(f.age_years, r.features.age_years) AS age_years,
+    COALESCE(f.area_m2, r.features.area_m2) AS area_m2,
+    COALESCE(f.ctr, r.features.ctr) AS ctr,
+    COALESCE(f.fav_rate, r.features.fav_rate) AS fav_rate,
+    COALESCE(f.inquiry_rate, r.features.inquiry_rate) AS inquiry_rate,
+    COALESCE(si.vector_score, r.features.me5_score) AS me5_score,
+    COALESCE(CAST(si.lexical_rank_orig AS FLOAT64), r.features.lexical_rank) AS lexical_rank,
+    COALESCE(CAST(si.semantic_rank_orig AS FLOAT64), r.features.semantic_rank, 0.0) AS semantic_rank,
+    GREATEST(rl.relevance_label, 0) AS label
+  FROM `{ranking_labels}` rl
+  JOIN `{search_impressions}` si
+    ON si.search_id = rl.search_id
+   AND si.property_id = rl.property_id
+  LEFT JOIN `{ranking_log}` r
+    ON r.request_id = rl.search_id
+   AND r.property_id = rl.property_id
+  LEFT JOIN latest_features f
+    ON f.property_id = rl.property_id
+  WHERE rl.created_at >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL @window_days DAY)
+  ORDER BY rl.search_id, si.rank
 """
 
 
@@ -90,7 +96,9 @@ class BigQueryRankerRepository:
         *,
         project_id: str,
         ranking_log_table: str,
-        feedback_events_table: str,
+        ranking_labels_table: str,
+        search_impressions_table: str,
+        feature_table: str,
         training_runs_table: str,
         client: object | None = None,
     ) -> None:
@@ -98,7 +106,9 @@ class BigQueryRankerRepository:
 
         self._project_id = project_id
         self._ranking_log_table = ranking_log_table
-        self._feedback_events_table = feedback_events_table
+        self._ranking_labels_table = ranking_labels_table
+        self._search_impressions_table = search_impressions_table
+        self._feature_table = feature_table
         self._training_runs_table = training_runs_table
         self._client = client or bigquery.Client(project=project_id)
 
@@ -107,7 +117,9 @@ class BigQueryRankerRepository:
 
         query = _TRAINING_SELECT.format(
             ranking_log=self._ranking_log_table,
-            feedback_events=self._feedback_events_table,
+            ranking_labels=self._ranking_labels_table,
+            search_impressions=self._search_impressions_table,
+            feature_table=self._feature_table,
         )
         logger.info(
             "Fetching ranker training rows (window=%dd) from %s",
@@ -221,7 +233,11 @@ def create_rank_repository(settings: TrainSettings) -> RankerTrainingRepository:
     return BigQueryRankerRepository(
         project_id=project,
         ranking_log_table=f"{project}.{settings.bq_dataset_mlops}.ranking_log",
-        feedback_events_table=f"{project}.{settings.bq_dataset_mlops}.feedback_events",
+        ranking_labels_table=f"{project}.{settings.bq_dataset_mlops}.ranking_labels",
+        search_impressions_table=f"{project}.{settings.bq_dataset_mlops}.search_impressions",
+        feature_table=(
+            f"{project}.{settings.bq_dataset_feature_mart}.{settings.bq_table_property_features_daily}"
+        ),
         training_runs_table=(
             f"{project}.{settings.bq_dataset_mlops}.{settings.bq_table_training_runs}"
         ),

@@ -46,6 +46,26 @@ output "feedback_events_table" {
   value = google_bigquery_table.feedback_events
 }
 
+output "search_events_table" {
+  value = google_bigquery_table.search_events
+}
+
+output "search_impressions_table" {
+  value = google_bigquery_table.search_impressions
+}
+
+output "user_actions_table" {
+  value = google_bigquery_table.user_actions
+}
+
+output "ranking_labels_table" {
+  value = google_bigquery_table.ranking_labels
+}
+
+output "evaluation_metrics_table" {
+  value = google_bigquery_table.evaluation_metrics
+}
+
 # Phase 6 T2 — Dataflow streaming aggregate sink.
 output "ranking_log_hourly_ctr_table" {
   value = google_bigquery_table.ranking_log_hourly_ctr

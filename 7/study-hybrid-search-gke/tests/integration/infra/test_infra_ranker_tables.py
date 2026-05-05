@@ -96,6 +96,31 @@ def test_feedback_events_declared() -> None:
     assert 'clustering = ["request_id", "property_id"]' in block
 
 
+def test_search_events_declared() -> None:
+    block = _extract_resource_block("google_bigquery_table", "search_events")
+    assert 'field = "timestamp"' in block
+    assert 'clustering = ["search_id"]' in block
+
+
+def test_search_impressions_declared() -> None:
+    block = _extract_resource_block("google_bigquery_table", "search_impressions")
+    assert 'field = "timestamp"' in block
+    assert 'clustering = ["search_id", "property_id"]' in block
+
+
+def test_user_actions_declared() -> None:
+    block = _extract_resource_block("google_bigquery_table", "user_actions")
+    assert 'field = "timestamp"' in block
+    assert 'clustering = ["search_id", "property_id"]' in block
+    assert 'request_complete' in block
+
+
+def test_ranking_labels_declared() -> None:
+    block = _extract_resource_block("google_bigquery_table", "ranking_labels")
+    assert 'field = "created_at"' in block
+    assert 'clustering = ["search_id", "property_id"]' in block
+
+
 # ---- training_runs.metrics now carries both regression + ranker columns ----
 
 

@@ -30,10 +30,12 @@ from app.observability import Observability
 from app.services.data_catalog_service import DataCatalogService
 from app.services.feedback_service import FeedbackService
 from app.services.model_metrics_service import ModelMetricsService, default_cases_path
+from app.services.noop_adapters import NoopEventRepository, NoopLabelRepository
 from app.services.search_service import SearchService
 from app.settings import ApiSettings
 from tests._fakes import (
     InMemoryCandidateRetriever,
+    InMemoryEventWriter,
     InMemoryFeatureFetcher,
     InMemoryFeedbackRecorder,
     InMemoryRankingLogPublisher,
@@ -113,6 +115,11 @@ def fake_feedback_recorder() -> InMemoryFeedbackRecorder:
 
 
 @pytest.fixture
+def fake_event_writer() -> InMemoryEventWriter:
+    return InMemoryEventWriter()
+
+
+@pytest.fixture
 def fake_retrain_queries() -> StubRetrainQueries:
     return StubRetrainQueries()
 
@@ -141,6 +148,7 @@ def fake_container_factory(
     fake_candidate_retriever: InMemoryCandidateRetriever,
     fake_ranking_log_publisher: InMemoryRankingLogPublisher,
     fake_feedback_recorder: InMemoryFeedbackRecorder,
+    fake_event_writer: InMemoryEventWriter,
     fake_retrain_queries: StubRetrainQueries,
     fake_retrain_publisher: MockPredictionPublisher,
 ) -> Callable[..., Container]:
@@ -170,6 +178,9 @@ def fake_container_factory(
             "popularity_scorer": None,
             "ranking_log_publisher": fake_ranking_log_publisher,
             "feedback_recorder": fake_feedback_recorder,
+            "event_writer": fake_event_writer,
+            "event_repository": NoopEventRepository(),
+            "label_repository": NoopLabelRepository(),
             "feature_fetcher": None,  # PR-4 default off — preserves Phase 5 behaviour
         }
         defaults.update(overrides)
@@ -181,6 +192,7 @@ def fake_container_factory(
                 retriever_default=defaults["candidate_retriever"],
                 encoder=defaults["encoder_client"],
                 publisher=defaults["ranking_log_publisher"],
+                event_writer=defaults["event_writer"],
                 reranker=defaults["reranker_client"],
                 popularity_scorer=defaults["popularity_scorer"],
                 feature_fetcher=defaults["feature_fetcher"],
@@ -188,7 +200,10 @@ def fake_container_factory(
         )
         defaults.setdefault(
             "feedback_service",
-            FeedbackService(recorder=defaults["feedback_recorder"]),
+            FeedbackService(
+                recorder=defaults["feedback_recorder"],
+                event_writer=defaults["event_writer"],
+            ),
         )
         defaults.setdefault(
             "model_metrics_service",

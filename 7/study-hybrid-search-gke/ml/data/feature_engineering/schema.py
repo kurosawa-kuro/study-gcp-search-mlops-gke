@@ -32,8 +32,10 @@ RANKER_LABEL_COL: str = "label"
 
 # LambdaRank gain per user action. Higher = stronger positive signal.
 LABEL_GAIN: dict[str, int] = {
-    "inquiry": 3,
-    "favorite": 2,
+    "request_complete": 5,
+    "request_button_click": 4,
+    "favorite": 3,
+    "detail_view": 2,
     "click": 1,
     "none": 0,
 }

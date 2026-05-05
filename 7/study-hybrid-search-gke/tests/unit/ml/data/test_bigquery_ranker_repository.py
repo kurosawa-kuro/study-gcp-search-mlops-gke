@@ -16,7 +16,9 @@ def _make_repo(client: MagicMock) -> BigQueryRankerRepository:
         client=client,
         project_id="mlops-dev-a",
         ranking_log_table="mlops-dev-a.mlops.ranking_log",
-        feedback_events_table="mlops-dev-a.mlops.feedback_events",
+        ranking_labels_table="mlops-dev-a.mlops.ranking_labels",
+        search_impressions_table="mlops-dev-a.mlops.search_impressions",
+        feature_table="mlops-dev-a.feature_mart.property_features_daily",
         training_runs_table="mlops-dev-a.mlops.training_runs",
     )
 
@@ -45,12 +47,11 @@ def test_fetch_training_rows_builds_parameterized_query() -> None:
 
     assert len(df) == 3
     query_str = client.query.call_args.args[0]
-    # Label generation discipline: strongest action wins.
-    assert "COUNTIF(action = 'inquiry')" in query_str
-    assert "COUNTIF(action = 'favorite')" in query_str
-    assert "COUNTIF(action = 'click')" in query_str
+    assert "FROM `mlops-dev-a.mlops.ranking_labels` rl" in query_str
+    assert "JOIN `mlops-dev-a.mlops.search_impressions` si" in query_str
+    assert "FROM `mlops-dev-a.feature_mart.property_features_daily`" in query_str
     # ORDER BY contract — LambdaRank group sizes depend on contiguous request_id ordering.
-    assert "ORDER BY r.request_id, r.lexical_rank" in query_str
+    assert "ORDER BY rl.search_id, si.rank" in query_str
     # Time window parameter is bound, not interpolated.
     job_config = client.query.call_args.kwargs["job_config"]
     params = {p.name: p.value for p in job_config.query_parameters}

@@ -1,11 +1,11 @@
-"""LambdaRank label assignment — strongest action wins."""
+"""LambdaRank label assignment — strongest canonical action wins."""
 
 from ml.evaluation.metrics import assign_label
 
 
-def test_inquiry_beats_favorite_beats_click() -> None:
-    assert assign_label(["click", "favorite", "inquiry"]) == 3
-    assert assign_label(["click", "favorite"]) == 2
+def test_request_complete_beats_favorite_beats_click() -> None:
+    assert assign_label(["click", "favorite", "request_complete"]) == 5
+    assert assign_label(["click", "favorite"]) == 3
     assert assign_label(["click"]) == 1
 
 

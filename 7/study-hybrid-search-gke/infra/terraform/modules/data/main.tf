@@ -95,6 +95,11 @@ resource "google_bigquery_table" "training_runs" {
 #   mlops.ranking_log                    — one row per (request_id, property_id)
 #                                          candidate with features + ranks.
 #   mlops.feedback_events                — click / favorite / inquiry events.
+#   mlops.search_events                  — canonical search session header.
+#   mlops.search_impressions             — canonical per-result exposure log.
+#   mlops.user_actions                   — canonical user behaviour events.
+#   mlops.ranking_labels                 — offline label materialization.
+#   mlops.evaluation_metrics             — offline evaluation artifact sink.
 #
 # Feature parity invariant for ranker:
 #   definitions/features/property_features_daily.sqlx
@@ -264,6 +269,118 @@ resource "google_bigquery_table" "feedback_events" {
     { name = "property_id", type = "STRING", mode = "REQUIRED" },
     { name = "action", type = "STRING", mode = "REQUIRED", description = "click | favorite | inquiry" },
     { name = "ts", type = "TIMESTAMP", mode = "REQUIRED" },
+  ])
+}
+
+resource "google_bigquery_table" "search_events" {
+  dataset_id          = google_bigquery_dataset.mlops.dataset_id
+  table_id            = "search_events"
+  deletion_protection = var.enable_deletion_protection
+
+  time_partitioning {
+    type  = "DAY"
+    field = "timestamp"
+  }
+  clustering = ["search_id"]
+
+  schema = jsonencode([
+    { name = "search_id", type = "STRING", mode = "REQUIRED" },
+    { name = "timestamp", type = "TIMESTAMP", mode = "REQUIRED" },
+    { name = "query", type = "STRING", mode = "REQUIRED" },
+    { name = "filters_json", type = "JSON", mode = "NULLABLE" },
+    { name = "user_id", type = "STRING", mode = "NULLABLE" },
+    { name = "session_id", type = "STRING", mode = "NULLABLE" },
+    { name = "app_version", type = "STRING", mode = "NULLABLE" },
+    { name = "model_version", type = "STRING", mode = "NULLABLE" },
+    { name = "schema_version", type = "INT64", mode = "NULLABLE" },
+  ])
+}
+
+resource "google_bigquery_table" "search_impressions" {
+  dataset_id          = google_bigquery_dataset.mlops.dataset_id
+  table_id            = "search_impressions"
+  deletion_protection = var.enable_deletion_protection
+
+  time_partitioning {
+    type  = "DAY"
+    field = "timestamp"
+  }
+  clustering = ["search_id", "property_id"]
+
+  schema = jsonencode([
+    { name = "search_id", type = "STRING", mode = "REQUIRED" },
+    { name = "property_id", type = "STRING", mode = "REQUIRED" },
+    { name = "rank", type = "INT64", mode = "REQUIRED" },
+    { name = "lexical_rank_orig", type = "INT64", mode = "NULLABLE" },
+    { name = "semantic_rank_orig", type = "INT64", mode = "NULLABLE" },
+    { name = "lexical_score", type = "FLOAT64", mode = "NULLABLE" },
+    { name = "vector_score", type = "FLOAT64", mode = "NULLABLE" },
+    { name = "rrf_score", type = "FLOAT64", mode = "NULLABLE" },
+    { name = "rerank_score", type = "FLOAT64", mode = "NULLABLE" },
+    { name = "timestamp", type = "TIMESTAMP", mode = "REQUIRED" },
+    { name = "schema_version", type = "INT64", mode = "NULLABLE" },
+  ])
+}
+
+resource "google_bigquery_table" "user_actions" {
+  dataset_id          = google_bigquery_dataset.mlops.dataset_id
+  table_id            = "user_actions"
+  deletion_protection = var.enable_deletion_protection
+
+  time_partitioning {
+    type  = "DAY"
+    field = "timestamp"
+  }
+  clustering = ["search_id", "property_id"]
+
+  schema = jsonencode([
+    { name = "search_id", type = "STRING", mode = "REQUIRED" },
+    { name = "property_id", type = "STRING", mode = "REQUIRED" },
+    { name = "action_type", type = "STRING", mode = "REQUIRED", description = "click | detail_view | favorite | request_button_click | request_complete" },
+    { name = "action_value", type = "FLOAT64", mode = "NULLABLE" },
+    { name = "timestamp", type = "TIMESTAMP", mode = "REQUIRED" },
+    { name = "schema_version", type = "INT64", mode = "NULLABLE" },
+  ])
+}
+
+resource "google_bigquery_table" "ranking_labels" {
+  dataset_id          = google_bigquery_dataset.mlops.dataset_id
+  table_id            = "ranking_labels"
+  deletion_protection = var.enable_deletion_protection
+
+  time_partitioning {
+    type  = "DAY"
+    field = "created_at"
+  }
+  clustering = ["search_id", "property_id"]
+
+  schema = jsonencode([
+    { name = "search_id", type = "STRING", mode = "REQUIRED" },
+    { name = "property_id", type = "STRING", mode = "REQUIRED" },
+    { name = "relevance_label", type = "INT64", mode = "REQUIRED" },
+    { name = "label_source", type = "STRING", mode = "REQUIRED" },
+    { name = "created_at", type = "TIMESTAMP", mode = "REQUIRED" },
+  ])
+}
+
+resource "google_bigquery_table" "evaluation_metrics" {
+  dataset_id          = google_bigquery_dataset.mlops.dataset_id
+  table_id            = "evaluation_metrics"
+  deletion_protection = var.enable_deletion_protection
+
+  time_partitioning {
+    type  = "DAY"
+    field = "evaluated_at"
+  }
+  clustering = ["run_id"]
+
+  schema = jsonencode([
+    { name = "run_id", type = "STRING", mode = "REQUIRED" },
+    { name = "dataset_version", type = "STRING", mode = "NULLABLE" },
+    { name = "metric_name", type = "STRING", mode = "REQUIRED" },
+    { name = "metric_value", type = "FLOAT64", mode = "NULLABLE" },
+    { name = "evaluated_at", type = "TIMESTAMP", mode = "REQUIRED" },
+    { name = "payload", type = "JSON", mode = "NULLABLE" },
   ])
 }
 

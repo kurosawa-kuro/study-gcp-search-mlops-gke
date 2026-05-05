@@ -2,7 +2,7 @@ config {
   type: "table",
   schema: "feature_mart",
   name: "property_features_daily",
-  description: "Daily ranker features: rent / walk_min / age_years / area_m2 (property basics) plus ctr / fav_rate / inquiry_rate (28-day behavioral aggregates) and popularity_score (fallback when booster unavailable). Serving parity: common/src/common/feature_engineering.py::build_ranker_features.",
+  description: "Daily ranker features: rent / walk_min / age_years / area_m2 (property basics) plus ctr / fav_rate / inquiry_rate (28-day behavioral aggregates from search_impressions + user_actions) and popularity_score (fallback when booster unavailable). Serving parity: common/src/common/feature_engineering.py::build_ranker_features.",
   tags: ["properties", "feature", "ranker"],
   bigquery: {
     partitionBy: "event_date",
@@ -18,22 +18,20 @@ WITH window_bounds AS (
 ),
 impressions AS (
   SELECT
-    pid AS property_id,
+    property_id,
     COUNT(*) AS impression_count
-  FROM ${ref("search_logs")} sl,
-    UNNEST(sl.result_property_ids) AS pid,
-    window_bounds
-  WHERE sl.ts >= window_bounds.window_start
-  GROUP BY pid
+  FROM ${ref("search_impressions")} si, window_bounds
+  WHERE si.timestamp >= window_bounds.window_start
+  GROUP BY property_id
 ),
 actions AS (
   SELECT
     property_id,
-    COUNTIF(action = "click")    AS click_count,
-    COUNTIF(action = "favorite") AS favorite_count,
-    COUNTIF(action = "inquiry")  AS inquiry_count
-  FROM ${ref("feedback_events")} fe, window_bounds
-  WHERE fe.ts >= window_bounds.window_start
+    COUNTIF(action_type = "click")                AS click_count,
+    COUNTIF(action_type = "favorite")             AS favorite_count,
+    COUNTIF(action_type = "request_complete")     AS inquiry_count
+  FROM ${ref("user_actions")} ua, window_bounds
+  WHERE ua.timestamp >= window_bounds.window_start
   GROUP BY property_id
 ),
 property_basics AS (

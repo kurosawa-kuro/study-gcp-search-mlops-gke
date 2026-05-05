@@ -23,6 +23,8 @@ class BigQueryDataCatalogReader(DataCatalogReader):
         features_table: str,
         embeddings_table: str,
         ranking_log_table: str,
+        user_actions_table: str,
+        ranking_labels_table: str,
         training_runs_table: str,
     ) -> None:
         self._client = client
@@ -30,6 +32,8 @@ class BigQueryDataCatalogReader(DataCatalogReader):
         self._features_table = features_table
         self._embeddings_table = embeddings_table
         self._ranking_log_table = ranking_log_table
+        self._user_actions_table = user_actions_table
+        self._ranking_labels_table = ranking_labels_table
         self._training_runs_table = training_runs_table
 
     def read_snapshot(self) -> DataCatalogSnapshot:
@@ -39,6 +43,8 @@ class BigQueryDataCatalogReader(DataCatalogReader):
                 self._features_preview(),
                 self._embeddings_preview(),
                 self._ranking_log_preview(),
+                self._user_actions_preview(),
+                self._ranking_labels_preview(),
                 self._training_runs_preview(),
             ]
         )
@@ -234,6 +240,72 @@ class BigQueryDataCatalogReader(DataCatalogReader):
                 "dataset_version",
                 "ndcg_at_10",
                 "recall_at_20",
+            ],
+            rows=rows,
+        )
+
+    def _user_actions_preview(self) -> DataCatalogTablePreview:
+        latest = self._scalar(
+            f"SELECT CAST(MAX(timestamp) AS STRING) FROM `{self._user_actions_table}`"
+        )
+        rows = self._query(
+            f"""
+            SELECT
+              CAST(timestamp AS STRING) AS timestamp,
+              search_id,
+              property_id,
+              action_type,
+              action_value
+            FROM `{self._user_actions_table}`
+            ORDER BY timestamp DESC
+            LIMIT 12
+            """
+        )
+        return DataCatalogTablePreview(
+            key="user_actions",
+            title="行動ログ",
+            description="click/detail/favorite/request の canonical 行動イベントです。",
+            table_fqn=self._user_actions_table,
+            latest_marker=latest,
+            columns=[
+                "timestamp",
+                "search_id",
+                "property_id",
+                "action_type",
+                "action_value",
+            ],
+            rows=rows,
+        )
+
+    def _ranking_labels_preview(self) -> DataCatalogTablePreview:
+        latest = self._scalar(
+            f"SELECT CAST(MAX(created_at) AS STRING) FROM `{self._ranking_labels_table}`"
+        )
+        rows = self._query(
+            f"""
+            SELECT
+              CAST(created_at AS STRING) AS created_at,
+              search_id,
+              property_id,
+              relevance_label,
+              label_source
+            FROM `{self._ranking_labels_table}`
+            ORDER BY created_at DESC
+            LIMIT 12
+            """
+        )
+        return DataCatalogTablePreview(
+            key="ranking_labels",
+            title="正解データ",
+            description="offline 学習に渡す relevance label の materialized table です。",
+            table_fqn=self._ranking_labels_table,
+            latest_marker=latest,
+            columns=[
+                "created_at",
+                "search_id",
+                "property_id",
+                "relevance_label",
+                "label_source",
             ],
             rows=rows,
         )

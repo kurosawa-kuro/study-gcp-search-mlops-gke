@@ -24,7 +24,7 @@ NA_TARGETS := \
 
 include ../../mk/base.mk
 
-.PHONY: help doctor sync build build-api build-jobs up migrate-db seed train label build-training-dataset evaluate serve serve-bg api-dev test check check-layers \
+.PHONY: help doctor sync build build-api build-jobs up migrate-db warm-model seed train label build-training-dataset evaluate serve serve-bg api-dev test check check-layers \
 	wait-db wait-api verify-contracts verify-pipeline verify-app verify-ml verify-all-core run-all-core run-all verify-all down clean
 
 help: ## Show this help
@@ -75,6 +75,10 @@ wait-db: ## postgres healthcheck PASS まで待つ
 seed: ## synthetic 不動産データ + 同義語辞書 を全 backend に投入
 	$(COMPOSE) run --rm seed
 	$(MAKE) seed-synonyms
+
+warm-model: ## multilingual-e5 を共有 hf_cache に事前取得
+	$(MAKE) build-jobs
+	$(COMPOSE) run --rm model-warmup
 
 seed-synonyms: ## 同義語辞書 → Redis SET (lexical query expansion 用)
 	$(COMPOSE) run --rm seed-synonyms

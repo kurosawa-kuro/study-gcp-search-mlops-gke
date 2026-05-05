@@ -31,6 +31,26 @@ output "feedback_events_table" {
   value = "${var.project_id}.${module.data.mlops_dataset.dataset_id}.${module.data.feedback_events_table.table_id}"
 }
 
+output "search_events_table" {
+  value = "${var.project_id}.${module.data.mlops_dataset.dataset_id}.${module.data.search_events_table.table_id}"
+}
+
+output "search_impressions_table" {
+  value = "${var.project_id}.${module.data.mlops_dataset.dataset_id}.${module.data.search_impressions_table.table_id}"
+}
+
+output "user_actions_table" {
+  value = "${var.project_id}.${module.data.mlops_dataset.dataset_id}.${module.data.user_actions_table.table_id}"
+}
+
+output "ranking_labels_table" {
+  value = "${var.project_id}.${module.data.mlops_dataset.dataset_id}.${module.data.ranking_labels_table.table_id}"
+}
+
+output "evaluation_metrics_table" {
+  value = "${var.project_id}.${module.data.mlops_dataset.dataset_id}.${module.data.evaluation_metrics_table.table_id}"
+}
+
 output "model_monitoring_alerts_table" {
   description = "BigQuery sink for Vertex model monitoring alerts"
   value       = "${var.project_id}.${module.data.mlops_dataset.dataset_id}.${module.data.model_monitoring_alerts_table.table_id}"

@@ -12,10 +12,13 @@ Phase D-1 lifted the orchestration that was inlined in
 
 from __future__ import annotations
 
+import json
+
 from app.domain.candidate import RankedCandidate
 from app.domain.search import SearchFilters, SearchInput, SearchOutput, SearchResultItem
 from app.services.protocols.candidate_retriever import CandidateRetriever
 from app.services.protocols.encoder_client import EncoderClient
+from app.services.protocols.event_writer import EventWriter
 from app.services.protocols.feature_fetcher import FeatureFetcher
 from app.services.protocols.popularity_scorer import PopularityScorer
 from app.services.protocols.ranking_log_publisher import RankingLogPublisher
@@ -48,6 +51,7 @@ class SearchService:
         retriever_default: CandidateRetriever | None,
         encoder: EncoderClient | None,
         publisher: RankingLogPublisher,
+        event_writer: EventWriter | None = None,
         reranker: RerankerClient | None = None,
         popularity_scorer: PopularityScorer | None = None,
         feature_fetcher: FeatureFetcher | None = None,
@@ -56,6 +60,11 @@ class SearchService:
         self._retriever_default = retriever_default
         self._encoder = encoder
         self._publisher = publisher
+        if event_writer is None:
+            from app.services.noop_adapters.noop_event_writer import NoopEventWriter
+
+            event_writer = NoopEventWriter()
+        self._event_writer = event_writer
         self._reranker = reranker
         self._popularity_scorer = popularity_scorer
         # Phase 7 PR-4 — opt-in fresh feature fetch (e.g. Vertex AI Feature
@@ -83,6 +92,12 @@ class SearchService:
             raise SearchServiceUnavailable(
                 "/search disabled (enable_search=False or encoder missing)"
             )
+        self._event_writer.emit_search_event(
+            search_id=request_id,
+            query=input.query,
+            filters_json=json.dumps(input.filters, ensure_ascii=False, sort_keys=True),
+            model_version=self.reranker_model_path,
+        )
 
         # Encoder runs on the original query — embedding model already
         # captures synonymy, expansion would dilute the vector.
@@ -108,6 +123,18 @@ class SearchService:
             want_explanations=input.explain,
             feature_fetcher=self._feature_fetcher,
         )
+        for item in ranked:
+            self._event_writer.emit_impression(
+                search_id=request_id,
+                property_id=item.candidate.property_id,
+                rank=item.final_rank,
+                lexical_rank_orig=item.candidate.lexical_rank or None,
+                semantic_rank_orig=item.candidate.semantic_rank or None,
+                lexical_score=None,
+                vector_score=item.candidate.me5_score,
+                rrf_score=None,
+                rerank_score=item.score,
+            )
 
         # Phase 6 T1 — BQML auxiliary popularity scoring (opt-in).
         popularity_map: dict[str, float] = {}

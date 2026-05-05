@@ -12,6 +12,9 @@ from typing import Any, Protocol
 
 from app.services.adapters import (
     BigQueryDataCatalogReader,
+    BigQueryEventRepository,
+    BigQueryLabelRepository,
+    CloudLoggingEventWriter,
     BigQueryRetrainQueries,
     PubSubFeedbackRecorder,
     PubSubPublisher,
@@ -20,14 +23,20 @@ from app.services.adapters import (
 from app.services.adapters.redis_synonym_expander import RedisSynonymExpander
 from app.services.noop_adapters import (
     NoopDataCatalogReader,
+    NoopEventRepository,
+    NoopEventWriter,
     NoopFeedbackRecorder,
+    NoopLabelRepository,
     NoopRankingLogPublisher,
     NoopRetrainQueries,
 )
 from app.services.noop_adapters.noop_synonym_expander import NoopSynonymExpander
 from app.services.protocols import (
     DataCatalogReader,
+    EventRepository,
+    EventWriter,
     FeedbackRecorder,
+    LabelRepository,
     PredictionPublisher,
     RankingLogPublisher,
     SynonymExpanderPort,
@@ -52,6 +61,9 @@ class InfraComponents:
     data_catalog_reader: DataCatalogReader
     ranking_log_publisher: RankingLogPublisher
     feedback_recorder: FeedbackRecorder
+    event_writer: EventWriter
+    event_repository: EventRepository
+    label_repository: LabelRepository
     training_runs_table: str
     synonym_expander: SynonymExpanderPort
 
@@ -76,6 +88,9 @@ class InfraBuilder:
                 data_catalog_reader=NoopDataCatalogReader(),
                 ranking_log_publisher=NoopRankingLogPublisher(),
                 feedback_recorder=NoopFeedbackRecorder(),
+                event_writer=NoopEventWriter(),
+                event_repository=NoopEventRepository(),
+                label_repository=NoopLabelRepository(),
                 training_runs_table=training_runs_table,
                 synonym_expander=NoopSynonymExpander(),
             )
@@ -92,6 +107,12 @@ class InfraBuilder:
             f"{settings.bq_table_property_embeddings}"
         )
         ranking_log_table = f"{settings.project_id}.{settings.bq_dataset_mlops}.ranking_log"
+        search_events_table = f"{settings.project_id}.{settings.bq_dataset_mlops}.search_events"
+        search_impressions_table = (
+            f"{settings.project_id}.{settings.bq_dataset_mlops}.search_impressions"
+        )
+        user_actions_table = f"{settings.project_id}.{settings.bq_dataset_mlops}.user_actions"
+        ranking_labels_table = f"{settings.project_id}.{settings.bq_dataset_mlops}.ranking_labels"
         return InfraComponents(
             retrain_trigger_publisher=self.build_retrain_publisher(),
             retrain_queries=BigQueryRetrainQueries(
@@ -104,10 +125,23 @@ class InfraBuilder:
                 features_table=features_table,
                 embeddings_table=embeddings_table,
                 ranking_log_table=ranking_log_table,
+                user_actions_table=user_actions_table,
+                ranking_labels_table=ranking_labels_table,
                 training_runs_table=training_runs_table,
             ),
             ranking_log_publisher=self.build_ranking_log_publisher(),
             feedback_recorder=self.build_feedback_recorder(),
+            event_writer=self.build_event_writer(),
+            event_repository=BigQueryEventRepository(
+                client=self._context._bigquery(),
+                search_events_table=search_events_table,
+                search_impressions_table=search_impressions_table,
+                user_actions_table=user_actions_table,
+            ),
+            label_repository=BigQueryLabelRepository(
+                client=self._context._bigquery(),
+                ranking_labels_table=ranking_labels_table,
+            ),
             training_runs_table=training_runs_table,
             synonym_expander=self.build_synonym_expander(),
         )
@@ -144,6 +178,12 @@ class InfraBuilder:
             project_id=settings.project_id,
             topic=messaging.feedback_topic,
         )
+
+    def build_event_writer(self) -> EventWriter:
+        settings = self._settings
+        if not settings.enable_search:
+            return NoopEventWriter()
+        return CloudLoggingEventWriter()
 
     def build_synonym_expander(self) -> SynonymExpanderPort:
         """Phase 7 SYN-1 — wire Redis-backed synonym dictionary.

@@ -18,7 +18,7 @@ from __future__ import annotations
 from typing import Literal
 
 from app.services.protocols.encoder_client import EncoderClient
-from ml.common import get_logger
+from ml.common import get_logger, resolve_sentence_transformer_source
 
 
 class LocalE5Encoder(EncoderClient):
@@ -35,7 +35,8 @@ class LocalE5Encoder(EncoderClient):
         from sentence_transformers import SentenceTransformer
 
         self._logger = get_logger("app.adapters.local_e5_encoder")
-        self._model = SentenceTransformer(model_name)
+        source = resolve_sentence_transformer_source(model_name)
+        self._model = SentenceTransformer(source)
         self._model.max_seq_length = max_seq_length
         self._model_name = model_name
 

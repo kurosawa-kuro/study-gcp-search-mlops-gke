@@ -1,4 +1,4 @@
-"""Generate a small batch of feedback events (click / favorite / inquiry)
+"""Generate a small batch of behaviour events (click / detail / request)
 against the deployed /search → /feedback path. Use to bootstrap training-side
 label distribution before the first real users arrive.
 
@@ -14,7 +14,13 @@ import time
 
 from scripts._common import fail, resolve_api_target
 
-ACTIONS = ("click", "favorite", "inquiry")
+ACTIONS = (
+    "click",
+    "detail_view",
+    "favorite",
+    "request_button_click",
+    "request_complete",
+)
 
 
 def main() -> int:

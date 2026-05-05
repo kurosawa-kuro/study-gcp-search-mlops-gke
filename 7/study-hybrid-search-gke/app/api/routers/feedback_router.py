@@ -1,4 +1,4 @@
-"""``POST /feedback`` — record click / favorite / inquiry events."""
+"""``POST /feedback`` — record canonical user behaviour events."""
 
 from __future__ import annotations
 

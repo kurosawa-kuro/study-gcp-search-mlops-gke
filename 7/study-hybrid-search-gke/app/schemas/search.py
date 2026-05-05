@@ -7,6 +7,8 @@ HTTP contract and ``FEATURE_COLS_RANKER`` / ``ranking_log.features``.
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -65,7 +67,13 @@ class SearchResponse(BaseModel):
 class FeedbackRequest(BaseModel):
     request_id: str
     property_id: str
-    action: str = Field(..., pattern=r"^(click|favorite|inquiry)$")
+    action: Literal[
+        "click",
+        "detail_view",
+        "favorite",
+        "request_button_click",
+        "request_complete",
+    ]
 
 
 class FeedbackResponse(BaseModel):

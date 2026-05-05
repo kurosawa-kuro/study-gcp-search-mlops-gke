@@ -1,0 +1,7 @@
+config {
+  type: "declaration",
+  database: "mlops-dev-a",
+  schema: "mlops",
+  name: "user_actions",
+  description: "Infra-owned canonical user-action table. Used by property_features_daily and ranking label generation."
+}

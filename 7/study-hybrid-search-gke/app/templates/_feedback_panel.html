@@ -3,9 +3,9 @@
   <div class="admin-section-heading">
     <div>
       <p class="eyebrow">Feedback</p>
-      <h2>クリックフィードバック</h2>
+      <h2>行動フィードバック</h2>
     </div>
-    <p class="section-copy">検索結果から property_id を選び、`/feedback` の疎通とランキングログ連携を確認します。</p>
+    <p class="section-copy">検索結果から property_id を選び、`/feedback` の疎通と canonical user_actions 連携を確認します。</p>
   </div>
   <form id="feedback-form" onsubmit="event.preventDefault();">
     <div class="grid">
@@ -17,8 +17,10 @@
         action
         <select id="fb-action">
           <option value="click" selected>click</option>
+          <option value="detail_view">detail_view</option>
           <option value="favorite">favorite</option>
-          <option value="inquiry">inquiry</option>
+          <option value="request_button_click">request_button_click</option>
+          <option value="request_complete">request_complete</option>
         </select>
       </label>
     </div>

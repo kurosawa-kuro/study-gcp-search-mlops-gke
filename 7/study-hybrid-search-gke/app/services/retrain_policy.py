@@ -1,7 +1,7 @@
 """Retrain-trigger evaluator (pure policy logic).
 
 Ranker branch (post-Phase 10b):
-    (a) new ``mlops.feedback_events`` rows since last run >
+    (a) new ``mlops.user_actions`` rows since last run >
         ``NEW_FEEDBACK_ROWS_THRESHOLD``
     (b) recent NDCG@10 dropped by ``NDCG_DEGRADATION`` absolute vs 7 days ago
 
@@ -54,7 +54,7 @@ def evaluate(
     last = queries.last_run_finished_at()
     reasons: list[str] = []
 
-    # --- (a) new feedback rows -----------------------------------------------
+    # --- (a) new behaviour rows ----------------------------------------------
     since = last or (now - timedelta(days=30))
     feedback_rows = queries.feedback_rows_since(since)
     if feedback_rows is not None and feedback_rows > thresholds.new_feedback_rows_threshold:

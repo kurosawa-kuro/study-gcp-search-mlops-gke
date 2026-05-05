@@ -55,7 +55,7 @@ export PROJECT_ID REGION API_SERVICE ARTIFACT_REPO VERTEX_LOCATION PIPELINE_ROOT
         deploy-all deploy-all-direct run-all destroy-all seed-test seed-test-clean \
 	verify-deploy-all verify-destroy-all verify-live-acceptance verify-full-recreate \
         sync-meili sync-synonyms \
-        train-smoke train-smoke-persist api-dev api-dev-hybrid clean \
+        label-build build-training-dataset train-smoke train-smoke-persist api-dev api-dev-hybrid clean \
         docker-auth deploy-api deploy-api-local deploy-kserve-models kube-creds \
         composer-deploy-dags build-composer-runner ops-composer-trigger ops-composer-list-runs ops-composer-task-states \
 		ops-deploy-monitor \
@@ -309,6 +309,12 @@ sync-meili: ## Sync feature_mart.properties_cleaned -> Meilisearch (run-all-core
 
 # ----- App / Job smoke commands (local) -----
 
+label-build: ## Materialize ranking_labels from search_impressions + user_actions
+	uv run python -m pipeline.labeling_job.main
+
+build-training-dataset: ## Export ranking_labels-based training dataset CSV under dist/training_datasets
+	uv run python -m pipeline.training_dataset_job.main
+
 train-smoke: ## Dry-run the ranker training job locally (synthetic data, no GCS/BQ)
 	uv run rank-train --dry-run
 
@@ -444,7 +450,7 @@ ops-ranking: ## POST /search and inspect lexical_rank / final_rank / score / me5
 ops-feedback: ## /search → /feedback round-trip (publisher path smoke)
 	uv run python -m scripts.ops.feedback
 
-ops-label-seed: ## Seed feedback events (click/favorite/inquiry) against /search
+ops-label-seed: ## Seed canonical user actions against /search
 	uv run python -m scripts.ops.label_seed
 
 ops-check-retrain: ## POST /jobs/check-retrain with OIDC; pipe to jq
