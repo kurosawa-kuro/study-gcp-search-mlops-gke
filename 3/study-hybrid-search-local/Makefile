@@ -28,7 +28,7 @@ include ../../mk/base.mk
 	wait-db wait-api verify-pipeline verify-app verify-ml verify-all-core run-all-core run-all verify-all down clean
 
 help: ## Show this help
-	@echo "Phase 3 (Local hybrid search) — quick start: make build && make up && make seed && make train && make serve"
+	@echo "Phase 3 (Local hybrid search) — quick start: make build && make up && make seed && make train && make serve-bg && make wait-api"
 	@echo "Full verification: make verify-all"
 	@echo ""
 	@awk 'BEGIN {FS = ":.*##"; printf "Targets:\n"} \

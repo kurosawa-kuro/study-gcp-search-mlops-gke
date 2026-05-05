@@ -5,7 +5,9 @@ from pathlib import Path
 from app.domain.labeling import RankingLabel
 from ml.labeling.synthetic_injector import inject_synthetic_labels
 
-FIXTURE = Path(__file__).resolve().parents[3] / "definitions" / "labeling" / "synthetic_actions.yaml"
+FIXTURE = (
+    Path(__file__).resolve().parents[3] / "definitions" / "labeling" / "synthetic_actions.yaml"
+)
 
 
 def test_synthetic_injector_is_deterministic() -> None:

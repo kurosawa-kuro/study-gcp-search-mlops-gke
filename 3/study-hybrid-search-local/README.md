@@ -14,7 +14,7 @@ Phase 3 は、不動産ハイブリッド検索を **ローカル完結で学ぶ
 
 ## 動作イメージ
 
-`make build && make up && make seed && make train && docker compose up -d search-api` の後、
+`make build && make up && make seed && make train && make serve-bg && make wait-api` の後、
 ブラウザで http://localhost:8000/ にアクセス (自動で `/ui/` に redirect)。
 
 ![ハイブリッド検索アプリ デモ](docs/images/ハイブリッド検索アプリ_960w_12fps.gif)
@@ -53,4 +53,11 @@ Phase 3 は、不動産ハイブリッド検索を **ローカル完結で学ぶ
 - [docs/architecture/01_仕様と設計.md](docs/architecture/01_仕様と設計.md): 実装配置
 - [docs/architecture/03_実装カタログ.md](docs/architecture/03_実装カタログ.md): 実装棚卸し
 - [docs/runbook/05_運用.md](docs/runbook/05_運用.md): 運用手順
+- [docs/runbook/04_検証.md](docs/runbook/04_検証.md): app / ML の OK 判定
 - [CLAUDE.md](CLAUDE.md): 作業ガイド
+
+## 検証コマンド
+
+- `make verify-app`: `/health` `/readyz` `/search` `/feedback` `/ui/` `/ui/dev/model/metrics` `/ui/dev/data`
+- `make verify-ml`: `label` → `build-training-dataset` → `train` → `evaluate` と ML artifact 確認
+- `make verify-all`: 静的検証 + Docker Compose + app + ML をまとめて実行
