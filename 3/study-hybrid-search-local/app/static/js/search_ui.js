@@ -63,6 +63,11 @@
     const title = escapeHtml(result.title || result.property_id);
     const propertyId = escapeHtml(result.property_id);
     const location = escapeHtml([result.city, result.ward].filter(Boolean).join(" ") || "所在地未設定");
+    const requestId = typeof window.__lastSearchRequestId === "string" ? window.__lastSearchRequestId : "";
+    const detailHref =
+      "/ui/property/" +
+      encodeURIComponent(result.property_id) +
+      (requestId ? "?search_id=" + encodeURIComponent(requestId) : "");
     const specs = [
       escapeHtml(result.layout || "間取り不明"),
       typeof result.area_m2 === "number" ? escapeHtml(result.area_m2.toFixed(1) + "m2") : "面積不明",
@@ -94,6 +99,11 @@
       "<p>" +
       escapeHtml(boolBadge(result.pet_ok)) +
       "</p>" +
+      '<p><a class="property-detail-link" data-property-id="' +
+      propertyId +
+      '" href="' +
+      escapeHtml(detailHref) +
+      '">物件詳細を見る</a></p>' +
       "</article>"
     );
   }
@@ -189,6 +199,7 @@
         const body = await res.json();
         const results = body.results || [];
         lastRequestId = body.request_id || null;
+        window.__lastSearchRequestId = lastRequestId;
         resultCard.hidden = false;
         meta.textContent =
           "request_id=" +
@@ -208,6 +219,25 @@
           card.addEventListener("click", function () {
             const fbPid = root.querySelector("#fb-pid");
             if (fbPid) fbPid.value = result.property_id;
+          });
+          const detailLink = card.querySelector(".property-detail-link");
+          detailLink?.addEventListener("click", function () {
+            if (!lastRequestId) return;
+            const payload = JSON.stringify({
+              request_id: lastRequestId,
+              property_id: result.property_id,
+              action: "click",
+            });
+            if (navigator.sendBeacon) {
+              navigator.sendBeacon("/feedback", new Blob([payload], { type: "application/json" }));
+              return;
+            }
+            void fetch("/feedback", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: payload,
+              keepalive: true,
+            });
           });
           cards.appendChild(card);
         });

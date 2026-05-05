@@ -21,9 +21,13 @@ Phase 7 にあった以下の Port は Phase 3 では除外 (引き算):
 
 from .candidate_retriever import CandidateRetriever
 from .encoder_client import EncoderClient
+from .event_repository import EventRepository
+from .event_writer import EventWriter
 from .feature_fetcher import FeatureFetcher, FeatureRow
 from .feedback_recorder import FeedbackRecorder
+from .label_repository import LabelRepository
 from .lexical_search import LexicalSearchPort
+from .property_repository import PropertyRepository
 from .ranking_log_publisher import RankingLogPublisher
 from .reranker_client import RerankerClient, RerankerExplainer
 from .search_cache import SearchCachePort
@@ -33,10 +37,14 @@ from .synonym_expander import SynonymExpanderPort
 __all__ = [
     "CandidateRetriever",
     "EncoderClient",
+    "EventRepository",
+    "EventWriter",
     "FeatureFetcher",
     "FeatureRow",
     "FeedbackRecorder",
+    "LabelRepository",
     "LexicalSearchPort",
+    "PropertyRepository",
     "RankingLogPublisher",
     "RerankerClient",
     "RerankerExplainer",

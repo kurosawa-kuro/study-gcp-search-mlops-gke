@@ -10,6 +10,7 @@ Conventions:
 """
 
 from .in_memory_candidate_retriever import InMemoryCandidateRetriever
+from .in_memory_event_writer import InMemoryEventWriter
 from .in_memory_feature_fetcher import InMemoryFeatureFetcher
 from .in_memory_feedback_recorder import InMemoryFeedbackRecorder
 from .in_memory_lexical_search import InMemoryLexicalSearch
@@ -20,6 +21,7 @@ from .stub_encoder_client import StubEncoderClient
 
 __all__ = [
     "InMemoryCandidateRetriever",
+    "InMemoryEventWriter",
     "InMemoryFeatureFetcher",
     "InMemoryFeedbackRecorder",
     "InMemoryLexicalSearch",

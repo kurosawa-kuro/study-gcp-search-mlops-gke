@@ -10,8 +10,12 @@ from .local_e5_encoder import LocalE5Encoder
 from .local_lightgbm_reranker import LocalLightGBMReranker
 from .meilisearch_lexical_search import MeilisearchLexicalSearch
 from .pgvector_semantic_search import PgVectorSemanticSearch
+from .postgres_event_repository import PostgresEventRepository
+from .postgres_event_writer import PostgresEventWriter
 from .postgres_feature_fetcher import PostgresFeatureFetcher
 from .postgres_feedback_recorder import PostgresFeedbackRecorder
+from .postgres_label_repository import PostgresLabelRepository
+from .postgres_property_repository import PostgresPropertyRepository
 from .postgres_ranking_log_publisher import PostgresRankingLogPublisher
 
 __all__ = [
@@ -20,7 +24,11 @@ __all__ = [
     "LocalLightGBMReranker",
     "MeilisearchLexicalSearch",
     "PgVectorSemanticSearch",
+    "PostgresEventRepository",
+    "PostgresEventWriter",
     "PostgresFeatureFetcher",
     "PostgresFeedbackRecorder",
+    "PostgresLabelRepository",
+    "PostgresPropertyRepository",
     "PostgresRankingLogPublisher",
 ]

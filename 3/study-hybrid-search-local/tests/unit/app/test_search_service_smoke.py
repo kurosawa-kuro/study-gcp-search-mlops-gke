@@ -8,6 +8,7 @@ from app.services.protocols.search_cache import SearchCachePort
 from app.services.protocols.synonym_expander import SynonymExpanderPort
 from app.services.search_service import SearchService
 from tests._fakes.in_memory_candidate_retriever import InMemoryCandidateRetriever
+from tests._fakes.in_memory_event_writer import InMemoryEventWriter
 from tests._fakes.in_memory_ranking_log_publisher import InMemoryRankingLogPublisher
 from tests._fakes.stub_encoder_client import StubEncoderClient
 
@@ -27,11 +28,13 @@ def test_search_service_returns_top_k_with_fallback() -> None:
     retriever = InMemoryCandidateRetriever(candidates=candidates)
     encoder = StubEncoderClient(embedding_dim=8)
     publisher = InMemoryRankingLogPublisher()
+    event_writer = InMemoryEventWriter()
 
     svc = SearchService(
         retriever_default=retriever,
         encoder=encoder,
         publisher=publisher,
+        event_writer=event_writer,
         reranker=None,
         feature_fetcher=None,
     )
@@ -70,10 +73,12 @@ def test_search_service_routes_expanded_query_to_lexical_only() -> None:
     )
     encoder = StubEncoderClient(embedding_dim=4)
     publisher = InMemoryRankingLogPublisher()
+    event_writer = InMemoryEventWriter()
     svc = SearchService(
         retriever_default=retriever,
         encoder=encoder,
         publisher=publisher,
+        event_writer=event_writer,
         reranker=None,
         feature_fetcher=None,
         synonym_expander=_StaticSynonymExpander("駅近 駅徒歩 アクセス良好"),
@@ -104,10 +109,12 @@ def test_search_service_without_expander_passes_query_unchanged() -> None:
     )
     encoder = StubEncoderClient(embedding_dim=4)
     publisher = InMemoryRankingLogPublisher()
+    event_writer = InMemoryEventWriter()
     svc = SearchService(
         retriever_default=retriever,
         encoder=encoder,
         publisher=publisher,
+        event_writer=event_writer,
         reranker=None,
         feature_fetcher=None,
     )
@@ -157,10 +164,12 @@ def test_search_service_miss_runs_pipeline_and_writes_cache() -> None:
     encoder = StubEncoderClient(embedding_dim=4)
     publisher = InMemoryRankingLogPublisher()
     cache = _RecordingSearchCache()
+    event_writer = InMemoryEventWriter()
     svc = SearchService(
         retriever_default=retriever,
         encoder=encoder,
         publisher=publisher,
+        event_writer=event_writer,
         reranker=None,
         feature_fetcher=None,
         search_cache=cache,
@@ -183,6 +192,7 @@ def test_search_service_hit_short_circuits_pipeline_and_skips_publisher() -> Non
     retriever = InMemoryCandidateRetriever(candidates=_fixture_candidates())
     encoder = StubEncoderClient(embedding_dim=4)
     publisher = InMemoryRankingLogPublisher()
+    event_writer = InMemoryEventWriter()
 
     # First call populates the cache (MISS path).
     cache = _RecordingSearchCache()
@@ -190,6 +200,7 @@ def test_search_service_hit_short_circuits_pipeline_and_skips_publisher() -> Non
         retriever_default=retriever,
         encoder=encoder,
         publisher=publisher,
+        event_writer=event_writer,
         reranker=None,
         feature_fetcher=None,
         search_cache=cache,
@@ -217,10 +228,12 @@ def test_search_service_with_no_cache_runs_live_every_time() -> None:
     retriever = InMemoryCandidateRetriever(candidates=_fixture_candidates())
     encoder = StubEncoderClient(embedding_dim=4)
     publisher = InMemoryRankingLogPublisher()
+    event_writer = InMemoryEventWriter()
     svc = SearchService(
         retriever_default=retriever,
         encoder=encoder,
         publisher=publisher,
+        event_writer=event_writer,
         reranker=None,
         feature_fetcher=None,
     )

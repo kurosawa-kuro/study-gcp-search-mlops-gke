@@ -116,6 +116,35 @@ services:
         condition: service_completed_successfully
     command: ["python", "-m", "pipeline.training_job.main"]
 
+  labeler:
+    build:
+      context: .
+      dockerfile: infra/run/jobs/pipeline/Dockerfile
+    container_name: phase3-labeler
+    environment:
+      POSTGRES_DSN: postgresql://admin:${POSTGRES_PASSWORD:-password}@postgres:5432/hybrid_search
+    volumes:
+      - ./definitions/labeling:/app/definitions/labeling:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["python", "-m", "pipeline.labeling_job.main"]
+
+  training-dataset-builder:
+    build:
+      context: .
+      dockerfile: infra/run/jobs/pipeline/Dockerfile
+    container_name: phase3-training-dataset-builder
+    environment:
+      POSTGRES_DSN: postgresql://admin:${POSTGRES_PASSWORD:-password}@postgres:5432/hybrid_search
+      MODEL_ARTIFACTS_ROOT: /app/ml/registry/artifacts
+    volumes:
+      - ./ml/registry/artifacts:/app/ml/registry/artifacts
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["python", "-m", "pipeline.training_dataset_job.main"]
+
   evaluator:
     build:
       context: .

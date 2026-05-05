@@ -14,6 +14,9 @@ no Property entity. Add only when a concrete reuse forces it.
 """
 
 from app.domain.candidate import Candidate, RankedCandidate
+from app.domain.event import ActionType, Impression, SearchEvent, UserAction
+from app.domain.labeling import RankingLabel
+from app.domain.property import Property
 from app.domain.retrieval import LexicalResult, SemanticResult
 from app.domain.search import (
     SearchFilters,
@@ -23,12 +26,18 @@ from app.domain.search import (
 )
 
 __all__ = [
+    "ActionType",
     "Candidate",
+    "Impression",
     "LexicalResult",
     "RankedCandidate",
+    "RankingLabel",
     "SearchFilters",
+    "SearchEvent",
     "SearchInput",
     "SearchOutput",
     "SearchResultItem",
     "SemanticResult",
+    "Property",
+    "UserAction",
 ]

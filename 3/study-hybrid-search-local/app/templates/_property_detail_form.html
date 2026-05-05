@@ -1,0 +1,20 @@
+<form id="request-form" hidden>
+  <div class="grid">
+    <label>
+      お名前
+      <input id="request-name" type="text" placeholder="山田 太郎">
+    </label>
+    <label>
+      メール
+      <input id="request-email" type="email" placeholder="taro@example.com">
+    </label>
+  </div>
+  <label>
+    メッセージ
+    <textarea id="request-message" rows="4" placeholder="見学希望日時など"></textarea>
+  </label>
+  <div class="action-row">
+    <button type="submit">資料請求を送信</button>
+    <p class="search-state">外部送信は行わず、ローカル DB に request_complete を記録します。</p>
+  </div>
+</form>

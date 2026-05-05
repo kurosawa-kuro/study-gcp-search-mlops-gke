@@ -12,10 +12,13 @@ Phase D-1 lifted the orchestration that was inlined in
 
 from __future__ import annotations
 
+import json
+
 from app.domain.candidate import RankedCandidate
 from app.domain.search import SearchFilters, SearchInput, SearchOutput, SearchResultItem
 from app.services.protocols.candidate_retriever import CandidateRetriever
 from app.services.protocols.encoder_client import EncoderClient
+from app.services.protocols.event_writer import EventWriter
 from app.services.protocols.feature_fetcher import FeatureFetcher
 from app.services.protocols.ranking_log_publisher import RankingLogPublisher
 from app.services.protocols.reranker_client import RerankerClient
@@ -50,6 +53,7 @@ class SearchService:
         retriever_default: CandidateRetriever | None,
         encoder: EncoderClient | None,
         publisher: RankingLogPublisher,
+        event_writer: EventWriter,
         reranker: RerankerClient | None = None,
         feature_fetcher: FeatureFetcher | None = None,
         synonym_expander: SynonymExpanderPort | None = None,
@@ -58,6 +62,7 @@ class SearchService:
         self._retriever_default = retriever_default
         self._encoder = encoder
         self._publisher = publisher
+        self._event_writer = event_writer
         self._reranker = reranker
         # Phase 3: Postgres feature_mart_property_features_daily を直接 SELECT する
         # ``PostgresFeatureFetcher`` を渡す想定。``None`` で disabled。
@@ -101,6 +106,12 @@ class SearchService:
             raise SearchServiceUnavailable(
                 "/search disabled (enable_search=False or encoder missing)"
             )
+        self._event_writer.emit_search_event(
+            search_id=request_id,
+            query=input.query,
+            filters_json=json.dumps(input.filters, ensure_ascii=False, sort_keys=True),
+            model_version=self.reranker_model_path,
+        )
 
         # Phase 3 SYN-2 — cache lookup. HIT short-circuits the rest of /search.
         if self._search_cache is not None:
@@ -138,6 +149,18 @@ class SearchService:
             want_explanations=input.explain,
             feature_fetcher=self._feature_fetcher,
         )
+        for item in ranked:
+            self._event_writer.emit_impression(
+                search_id=request_id,
+                property_id=item.candidate.property_id,
+                rank=item.final_rank,
+                lexical_rank_orig=item.candidate.lexical_rank or None,
+                semantic_rank_orig=item.candidate.semantic_rank or None,
+                lexical_score=None,
+                vector_score=item.candidate.me5_score,
+                rrf_score=None,
+                rerank_score=item.score,
+            )
 
         # Phase 3: BQML popularity scorer は除外 (Phase 6 / 7 の責務)。
         # SearchResultItem.popularity_score は常に None。

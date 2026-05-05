@@ -52,6 +52,7 @@ from pathlib import Path
 
 from ml.common import get_logger
 from ml.common.config import TrainSettings
+from ml.data.loaders import PostgresRankerRepository
 from ml.training.trainer import HyperParams, run
 
 logger = get_logger("pipeline.training_job")
@@ -76,9 +77,13 @@ def main() -> None:
         hp.num_boost_round,
     )
 
-    # Phase 3 初期は ranking_log が空 / 浅いので合成 fallback で確実に学習を一周させる。
-    # Phase 4 以降で Postgres / BQ ranking_log を loader 経由で渡す。
-    result = run(artifacts_root=artifacts_root, df=None, hp=hp)
+    repo = PostgresRankerRepository(dsn=settings.postgres_dsn)
+    df = repo.read_training_data()
+    if df.empty:
+        logger.warning("ranking_labels empty; falling back to synthetic. Run `make label` first.")
+        result = run(artifacts_root=artifacts_root, df=None, hp=hp)
+    else:
+        result = run(artifacts_root=artifacts_root, df=df, hp=hp)
 
     logger.info(
         "Phase 3 training_job done: run_id=%s metrics=%s train_rows=%d eval_rows=%d",

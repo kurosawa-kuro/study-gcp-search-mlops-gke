@@ -1,4 +1,4 @@
-"""``POST /feedback`` — record click / favorite / inquiry events."""
+"""``POST /feedback`` — record app-visible user actions."""
 
 from __future__ import annotations
 
@@ -22,5 +22,6 @@ def feedback(
         request_id=req.request_id,
         property_id=req.property_id,
         action=req.action,
+        action_value=req.action_value,
     )
     return FeedbackResponse(accepted=accepted)

@@ -24,7 +24,7 @@ NA_TARGETS := \
 
 include ../../mk/base.mk
 
-.PHONY: help doctor sync build seed train evaluate serve api-dev test check check-layers \
+.PHONY: help doctor sync build seed train label build-training-dataset evaluate serve api-dev test check check-layers \
 	verify-pipeline run-all-core run-all verify-all down clean wait-db
 
 help: ## Show this help
@@ -68,6 +68,12 @@ seed-synonyms: ## 同義語辞書 → Redis SET (lexical query expansion 用)
 
 train: ## LightGBM LambdaRank 学習 → ml/registry/artifacts/{run_id}/model.lgb
 	$(COMPOSE) run --rm trainer
+
+label: ## search_impressions × user_actions → ranking_labels
+	$(COMPOSE) run --rm labeler
+
+build-training-dataset: ## ranking_labels 由来の training dataset CSV を出力
+	$(COMPOSE) run --rm training-dataset-builder
 
 evaluate: ## NDCG@10 / MAP / Recall@20 の hold-out 評価 → metrics.json
 	$(COMPOSE) run --rm evaluator

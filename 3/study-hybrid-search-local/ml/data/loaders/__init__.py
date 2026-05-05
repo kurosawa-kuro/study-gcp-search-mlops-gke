@@ -1,1 +1,5 @@
-"""Phase 3 — ml.data.loaders package (将来の Postgres / BQ loader 用)."""
+"""Phase 3 — ml.data.loaders package."""
+
+from .postgres_ranker_repository import PostgresRankerRepository
+
+__all__ = ["PostgresRankerRepository"]

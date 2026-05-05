@@ -95,7 +95,7 @@ def train(
         "num_leaves": hp.num_leaves,
         "learning_rate": hp.learning_rate,
         "verbose": -1,
-        "label_gain": [0, 1, 3, 7],  # 0..3 のラベルに対する LambdaRank gain
+        "label_gain": list(range(0, 11)),
     }
     booster = lgb.train(
         params=params,

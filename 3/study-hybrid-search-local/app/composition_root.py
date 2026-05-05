@@ -19,21 +19,33 @@ from app.services.adapters.local_e5_encoder import LocalE5Encoder
 from app.services.adapters.local_lightgbm_reranker import LocalLightGBMReranker
 from app.services.adapters.meilisearch_lexical_search import MeilisearchLexicalSearch
 from app.services.adapters.pgvector_semantic_search import PgVectorSemanticSearch
+from app.services.adapters.postgres_event_repository import PostgresEventRepository
+from app.services.adapters.postgres_event_writer import PostgresEventWriter
 from app.services.adapters.postgres_feature_fetcher import PostgresFeatureFetcher
 from app.services.adapters.postgres_feedback_recorder import PostgresFeedbackRecorder
+from app.services.adapters.postgres_property_repository import PostgresPropertyRepository
 from app.services.adapters.postgres_ranking_log_publisher import PostgresRankingLogPublisher
 from app.services.adapters.redis_search_cache import RedisSearchCache
 from app.services.adapters.redis_synonym_expander import RedisSynonymExpander
 from app.services.feedback_service import FeedbackService
-from app.services.noop_adapters import NoopFeedbackRecorder, NoopRankingLogPublisher
+from app.services.noop_adapters import (
+    NoopEventRepository,
+    NoopEventWriter,
+    NoopFeedbackRecorder,
+    NoopPropertyRepository,
+    NoopRankingLogPublisher,
+)
 from app.services.noop_adapters.noop_search_cache import NoopSearchCache
 from app.services.noop_adapters.noop_synonym_expander import NoopSynonymExpander
 from app.services.protocols import (
     CandidateRetriever,
     EncoderClient,
+    EventRepository,
+    EventWriter,
     FeatureFetcher,
     FeedbackRecorder,
     LexicalSearchPort,
+    PropertyRepository,
     RankingLogPublisher,
     RerankerClient,
     SearchCachePort,
@@ -64,6 +76,9 @@ class Container:
     feature_fetcher: FeatureFetcher | None
     ranking_log_publisher: RankingLogPublisher
     feedback_recorder: FeedbackRecorder
+    event_writer: EventWriter
+    event_repository: EventRepository
+    property_repository: PropertyRepository
     synonym_expander: SynonymExpanderPort
     search_cache: SearchCachePort
 
@@ -147,12 +162,21 @@ class ContainerBuilder:
         # --- Publishers / Recorders (PostgreSQL) ---
         publisher: RankingLogPublisher
         feedback_recorder: FeedbackRecorder
+        event_writer: EventWriter
+        event_repository: EventRepository
+        property_repository: PropertyRepository
         if s.postgres_dsn:
             publisher = PostgresRankingLogPublisher(dsn=s.postgres_dsn)
             feedback_recorder = PostgresFeedbackRecorder(dsn=s.postgres_dsn)
+            event_writer = PostgresEventWriter(dsn=s.postgres_dsn)
+            event_repository = PostgresEventRepository(dsn=s.postgres_dsn)
+            property_repository = PostgresPropertyRepository(dsn=s.postgres_dsn)
         else:
             publisher = NoopRankingLogPublisher()
             feedback_recorder = NoopFeedbackRecorder()
+            event_writer = NoopEventWriter()
+            event_repository = NoopEventRepository()
+            property_repository = NoopPropertyRepository()
 
         # --- Redis client (shared by Synonym + SearchCache adapters) ---
         # Redis 1 接続を 2 つの Port adapter で共有する。Phase 3 SYN-1 と
@@ -198,10 +222,14 @@ class ContainerBuilder:
             publisher=publisher,
             reranker=reranker_client,
             feature_fetcher=feature_fetcher,
+            event_writer=event_writer,
             synonym_expander=synonym_expander,
             search_cache=search_cache,
         )
-        feedback_service = FeedbackService(recorder=feedback_recorder)
+        feedback_service = FeedbackService(
+            recorder=feedback_recorder,
+            event_writer=event_writer,
+        )
 
         self._logger.info(
             "Phase 3 startup: enable_search=%s reranker=%s model_path=%s",
@@ -220,6 +248,9 @@ class ContainerBuilder:
             feature_fetcher=feature_fetcher,
             ranking_log_publisher=publisher,
             feedback_recorder=feedback_recorder,
+            event_writer=event_writer,
+            event_repository=event_repository,
+            property_repository=property_repository,
             synonym_expander=synonym_expander,
             search_cache=search_cache,
             model_path=model_path,
