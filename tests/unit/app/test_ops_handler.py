@@ -2,13 +2,21 @@ from __future__ import annotations
 
 import importlib
 
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI
 from fastapi.testclient import TestClient
 
 from app.api.routers import ops_router
 from scripts.ops.destroy_check import Finding
 
 ops_router_module = importlib.import_module("app.api.routers.ops_router")
+
+
+def _build_test_app() -> FastAPI:
+    app = FastAPI()
+    ops = APIRouter(prefix="/ops")
+    ops.include_router(ops_router)
+    app.include_router(ops)
+    return app
 
 
 def test_destroy_check_returns_summary(monkeypatch) -> None:  # type: ignore[no-untyped-def]
@@ -23,9 +31,7 @@ def test_destroy_check_returns_summary(monkeypatch) -> None:  # type: ignore[no-
             Finding(label="Cloud Run services", severity="FAIL", items=("meili-search",)),
         ],
     )
-    app = FastAPI()
-    app.include_router(ops_router)
-    client = TestClient(app)
+    client = TestClient(_build_test_app())
 
     res = client.get("/ops/destroy-check")
 
@@ -48,9 +54,7 @@ def test_search_volume_returns_summary(monkeypatch) -> None:  # type: ignore[no-
             }
         ],
     )
-    app = FastAPI()
-    app.include_router(ops_router)
-    client = TestClient(app)
+    client = TestClient(_build_test_app())
 
     res = client.get("/ops/search-volume")
 
@@ -73,9 +77,7 @@ def test_runs_recent_returns_rows(monkeypatch) -> None:  # type: ignore[no-untyp
             }
         ],
     )
-    app = FastAPI()
-    app.include_router(ops_router)
-    client = TestClient(app)
+    client = TestClient(_build_test_app())
 
     res = client.get("/ops/runs-recent")
 
@@ -91,9 +93,7 @@ def test_search_volume_returns_503_with_json_detail_on_bq_error(monkeypatch) -> 
         "_run_bq_query",
         lambda project_id, sql_path: (_ for _ in ()).throw(RuntimeError("dataset missing")),
     )
-    app = FastAPI()
-    app.include_router(ops_router)
-    client = TestClient(app)
+    client = TestClient(_build_test_app())
 
     res = client.get("/ops/search-volume")
 
@@ -107,9 +107,7 @@ def test_runs_recent_returns_503_with_json_detail_on_bq_error(monkeypatch) -> No
         "_run_bq_query",
         lambda project_id, sql_path: (_ for _ in ()).throw(RuntimeError("dataset missing")),
     )
-    app = FastAPI()
-    app.include_router(ops_router)
-    client = TestClient(app)
+    client = TestClient(_build_test_app())
 
     res = client.get("/ops/runs-recent")
 

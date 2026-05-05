@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from app.domain.candidate import Candidate
+from app.domain.search import SearchFilters
 from app.services.protocols.candidate_retriever import CandidateRetriever
 
 
@@ -25,7 +24,7 @@ class InMemoryCandidateRetriever(CandidateRetriever):
         *,
         query_text: str,
         query_vector: list[float],
-        filters: dict[str, Any],
+        filters: SearchFilters,
         top_k: int,
     ) -> list[Candidate]:
         self.calls.append(
@@ -47,7 +46,7 @@ class _RetrieveCall:
         *,
         query_text: str,
         query_vector: list[float],
-        filters: dict[str, Any],
+        filters: SearchFilters,
         top_k: int,
     ) -> None:
         self.query_text = query_text

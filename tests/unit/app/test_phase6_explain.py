@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from app.domain.candidate import Candidate
+from app.domain.search import SearchFilters
 from app.services.ranking import run_search
 
 
@@ -23,7 +24,7 @@ class _FakeRetriever:
         *,
         query_text: str,
         query_vector: list[float],
-        filters: dict[str, Any],
+        filters: SearchFilters,
         top_k: int,
     ) -> list[Candidate]:
         return list(self.candidates)

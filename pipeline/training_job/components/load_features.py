@@ -1,8 +1,8 @@
 """KFP component: fetch the LambdaRank training frame from BigQuery.
 
 Wave 4 死守ライン (canonical 死守):
-    本 component は **BigQuery を実際にクエリする**。`ranking_labels` ×
-    `search_impressions` × latest `feature_mart.property_features_daily` を
+    本 component は **BigQuery を実際にクエリする**。`ranking_labels` x
+    `search_impressions` x latest `feature_mart.property_features_daily` を
     join した training frame を Parquet に書き出し、下流の `train_reranker`
     に渡す。stub だった旧版 (JSON metadata のみ書き出し) を撤去。
 
@@ -127,7 +127,7 @@ def load_features(
         # training frame is the Parquet payload above — metadata は補足のみ。
         training_frame.metadata.update(
             {
-                "rows": int(len(df)),
+                "rows": len(df),
                 "columns": list(df.columns),
                 "window_days": int(window_days),
                 "split_strategy": "FARM_FINGERPRINT(request_id) % 10 < 8",

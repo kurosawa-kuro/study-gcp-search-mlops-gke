@@ -3,25 +3,25 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
 
 import pytest
 
 from app.domain.candidate import Candidate
+from app.domain.search import SearchFilters
 from app.services.ranking import run_search
 
 
 @dataclass
 class _FakeRetriever:
     candidates: list[Candidate]
-    calls: list[dict] = field(default_factory=list)
+    calls: list[dict[str, object]] = field(default_factory=list)
 
     def retrieve(
         self,
         *,
         query_text: str,
         query_vector: list[float],
-        filters: dict[str, Any],
+        filters: SearchFilters,
         top_k: int,
     ) -> list[Candidate]:
         self.calls.append({"query_text": query_text, "filters": filters, "top_k": top_k})
@@ -30,7 +30,7 @@ class _FakeRetriever:
 
 @dataclass
 class _FakePublisher:
-    calls: list[dict] = field(default_factory=list)
+    calls: list[dict[str, object]] = field(default_factory=list)
 
     def publish_candidates(
         self,

@@ -30,6 +30,10 @@ _GROUPS: list[list[str]] = [
         "vertex_feature_view_id",
         "vertex_feature_online_store_endpoint",
     ],
+    [
+        "synonym_backend",
+        "synonym_redis_url",
+    ],
 ]
 
 # Default value applied when generate_configmap_data() is not overridden.
@@ -42,6 +46,8 @@ _DEFAULTS: dict[str, str] = {
     "vertex_feature_online_store_id": "",
     "vertex_feature_view_id": "",
     "vertex_feature_online_store_endpoint": "",
+    "synonym_backend": "none",
+    "synonym_redis_url": "",
 }
 
 CONFIGMAP_KEYS: list[str] = [k for group in _GROUPS for k in group]
@@ -57,6 +63,8 @@ def generate_configmap_data(
     vertex_feature_online_store_id: str = "",
     vertex_feature_view_id: str = "",
     vertex_feature_online_store_endpoint: str = "",
+    synonym_backend: str = "none",
+    synonym_redis_url: str = "",
 ) -> dict[str, str]:
     """Build the search-api ConfigMap `data` mapping.
 
@@ -78,6 +86,8 @@ def generate_configmap_data(
     data["vertex_feature_online_store_id"] = vertex_feature_online_store_id
     data["vertex_feature_view_id"] = vertex_feature_view_id
     data["vertex_feature_online_store_endpoint"] = vertex_feature_online_store_endpoint
+    data["synonym_backend"] = synonym_backend
+    data["synonym_redis_url"] = synonym_redis_url
     return data
 
 

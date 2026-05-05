@@ -22,3 +22,6 @@ data:
   vertex_feature_online_store_id: ""
   vertex_feature_view_id: ""
   vertex_feature_online_store_endpoint: ""
+
+  synonym_backend: "none"
+  synonym_redis_url: ""

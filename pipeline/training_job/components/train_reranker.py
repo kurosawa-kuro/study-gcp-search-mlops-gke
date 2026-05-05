@@ -88,7 +88,7 @@ def train_reranker(
             )
 
         # 80/20 split by request_id (FARM_FINGERPRINT 相当を Python 側で再現)。
-        # contiguous な group を維持するため、df は既に request_id × rank 順に sort 済の前提。
+        # contiguous な group を維持するため、df は既に request_id x rank 順に sort 済の前提。
         _log("STEP 3 — train/test split by request_id")
         unique_ids = df[group_col].unique()
         rng = np.random.default_rng(seed=42)

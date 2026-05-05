@@ -9,8 +9,8 @@ Wave 4 死守ライン (canonical 死守、2026-05-06 完了):
     本 pipeline の training data 経路は **実 BigQuery ``mlops.ranking_labels``
     から流れる**:
 
-    1. ``components/load_features.py`` が ``mlops.ranking_labels`` ×
-       ``mlops.search_impressions`` × latest ``feature_mart.property_features_daily``
+    1. ``components/load_features.py`` が ``mlops.ranking_labels`` x
+       ``mlops.search_impressions`` x latest ``feature_mart.property_features_daily``
        を JOIN し、``training_frame`` を Parquet で書き出す。
     2. ``components/train_reranker.py`` が Parquet を読み込み LightGBM
        LambdaRank を訓練し、``model.txt`` + ``metrics.json`` を出力する。

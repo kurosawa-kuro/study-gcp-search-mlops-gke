@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from app.domain.retrieval import SemanticResult
+from app.domain.search import SearchFilters
 from app.services.protocols.semantic_search import SemanticSearchPort
 
 
@@ -29,7 +28,7 @@ class InMemorySemanticSearch(SemanticSearchPort):
         self,
         *,
         query_vector: list[float],
-        filters: dict[str, Any],
+        filters: SearchFilters,
         top_k: int,
     ) -> list[SemanticResult]:
         self.calls.append(
@@ -45,7 +44,7 @@ class InMemorySemanticSearch(SemanticSearchPort):
 class _SemanticCall:
     __slots__ = ("filters", "query_vector", "top_k")
 
-    def __init__(self, *, query_vector: list[float], filters: dict[str, Any], top_k: int) -> None:
+    def __init__(self, *, query_vector: list[float], filters: SearchFilters, top_k: int) -> None:
         self.query_vector = query_vector
         self.filters = filters
         self.top_k = top_k

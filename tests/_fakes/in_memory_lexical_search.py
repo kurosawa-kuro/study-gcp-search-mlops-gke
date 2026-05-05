@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from app.domain.retrieval import LexicalResult
+from app.domain.search import SearchFilters
 from app.services.protocols.lexical_search import LexicalSearchPort
 
 
@@ -24,7 +23,7 @@ class InMemoryLexicalSearch(LexicalSearchPort):
         self,
         *,
         query: str,
-        filters: dict[str, Any],
+        filters: SearchFilters,
         top_k: int,
     ) -> list[LexicalResult]:
         self.calls.append(_LexicalCall(query=query, filters=dict(filters), top_k=top_k))
@@ -37,7 +36,7 @@ class InMemoryLexicalSearch(LexicalSearchPort):
 class _LexicalCall:
     __slots__ = ("filters", "query", "top_k")
 
-    def __init__(self, *, query: str, filters: dict[str, Any], top_k: int) -> None:
+    def __init__(self, *, query: str, filters: SearchFilters, top_k: int) -> None:
         self.query = query
         self.filters = filters
         self.top_k = top_k

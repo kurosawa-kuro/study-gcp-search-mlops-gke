@@ -11,13 +11,13 @@ from app.services.protocols.training_dataset_repository import TrainingDatasetRe
 class NoopTrainingDatasetRepository(TrainingDatasetRepository):
     """Returns no-ops; used when the GCS bucket is not configured."""
 
-    def write_training_dataset(self, ref: TrainingDatasetRef) -> None:  # noqa: ARG002
+    def write_training_dataset(self, ref: TrainingDatasetRef) -> None:
         return None
 
     def read_training_dataset(
         self,
         *,
-        since: datetime | None = None,  # noqa: ARG002
+        since: datetime | None = None,
     ) -> list[TrainingDatasetRef]:
         return []
 

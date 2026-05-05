@@ -11,6 +11,7 @@ Kept free of GCP SDK imports so pipeline components can re-use it.
 from __future__ import annotations
 
 import hashlib
+from collections.abc import Sequence
 from datetime import datetime, timezone
 from typing import Protocol
 
@@ -20,11 +21,16 @@ from ml.data.loaders.embedding_store import (
     PropertyText,
     PropertyTextRepository,
 )
-from ml.serving.encoder import E5Encoder
 
 
 class _Logger(Protocol):
     def info(self, msg: str, *args: object) -> None: ...
+
+
+class _Encoder(Protocol):
+    model_name: str
+
+    def encode_passages(self, passages: list[str]) -> Sequence[Sequence[float]]: ...
 
 
 def _text_for_embedding(p: PropertyText) -> str:
@@ -45,7 +51,7 @@ def run_embedding_batch(
     *,
     repository: PropertyTextRepository,
     store: EmbeddingStore,
-    encoder: E5Encoder,
+    encoder: _Encoder,
     logger: _Logger,
     batch_size: int = 64,
     now: datetime | None = None,
