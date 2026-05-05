@@ -127,16 +127,81 @@
 
 ## 8. いまの結論
 
-- **今すぐ着手すべきは Wave 1-2**
-- 具体的には、まず **README / CLAUDE / docs の正本宣言** を先にやる
-- その後に **構造移行の実ファイル移動** を行う
+- **Wave 1-2 の文書導線整理は先行着手済み**
+- 具体的には、root `README.md` / `CLAUDE.md` / `docs/README.md` / `docs/{tasks,runbook,architecture,phases}/README.md` を
+  **Phase 7 正本 + 旧 Phase 補助入口** の構図へ寄せた
+- 追加で、root `AGENTS.md` / `docs/tasks/02_移行ロードマップ.md` / `docs/conventions/フォルダ-ファイル.md` /
+  `tools/generate_makefile_md.sh` も Phase 7 正本前提へ同期した
+- 次の主戦場は **Wave 3 の影響一覧固定と構造移行の実ファイル移動**
 - Meilisearch 廃止は、この作業と混ぜない
 
 ---
 
-## 9. 次アクション
+## 9. Wave 3 影響一覧
 
-1. ルート `README.md` / `CLAUDE.md` の Phase 7 正本化差分を作る
-2. `7/study-hybrid-search-gke` の local 導線を canonical として宣言する
-3. path 変更の影響一覧を docs に起こす
+### A. root 直下の入口
+
+- `README.md`
+- `CLAUDE.md`
+- `AGENTS.md`
+- `docs/README.md`
+
+### B. root docs の canonical link 群
+
+- `docs/architecture/01_仕様と設計.md`
+- `docs/architecture/03_実装カタログ.md`
+- `docs/runbook/04_検証.md`
+- `docs/runbook/05_運用.md`
+- `docs/tasks/02_移行ロードマップ.md`
+- `docs/教育資料/02_移行ロードマップ.md`
+- `docs/conventions/フォルダ-ファイル.md`
+
+### C. 旧 Phase docs からの Phase 7 参照
+
+- `2/**/docs/architecture/01_仕様と設計.md`
+- `3/**/docs/tasks/TASKS.md`
+- `3/**/docs/tasks/02_移行ロードマップ.md`
+- `4/**/docs/architecture/01_仕様と設計.md`
+- `4/**/docs/tasks/02_移行ロードマップ.md`
+- `5/**/docs/architecture/01_仕様と設計.md`
+- `5/**/docs/tasks/02_移行ロードマップ.md`
+- `6/**/docs/architecture/01_仕様と設計.md`
+- `6/**/docs/tasks/02_移行ロードマップ.md`
+
+### D. root 補助ファイル
+
+- `tools/generate_makefile_md.sh`
+- `.claude/hooks/show-tasks.sh`
+- `.claude/hooks/check-layers.sh`
+- `.github/agents/gcp-mlops-theme-research.agent.md`
+- `.github/skills/phase-doc-sync/SKILL.md`
+
+### E. Phase 7 内で root 昇格時に崩れる絶対パス / 相対パス
+
+- `7/study-hybrid-search-gke/docs/tasks/TASKS.md`
+- `7/study-hybrid-search-gke/docs/runbook/05_運用.md`
+- `7/study-hybrid-search-gke/tests/e2e/test_phase7_full_recreate_gate.py`
+- `7/study-hybrid-search-gke/CLAUDE.md`
+
+### F. workflow / CI / deploy path
+
+- `7/study-hybrid-search-gke/.github/workflows/*.yml`
+- `7/study-hybrid-search-gke/Makefile`
+- `7/study-hybrid-search-gke/scripts/**`
+
+### G. 物理移動時の優先順位
+
+1. `README.md` / `CLAUDE.md` / `AGENTS.md`
+2. root `docs/` ハブ
+3. `7/study-hybrid-search-gke/.github/workflows`
+4. `7/study-hybrid-search-gke/Makefile` / `scripts/` / `tests/`
+5. 旧 Phase docs の canonical link 置換
+
+---
+
+## 10. 次アクション
+
+1. root 昇格で壊れる path の inventory をこの文書で固定
+2. `7/study-hybrid-search-gke` 内の絶対パス / `cd 7/study-hybrid-search-gke` 記述を洗う
+3. workflow / Makefile / scripts の root 移動差分を先に機械的に出す
 4. その後に物理移動 PR を切る

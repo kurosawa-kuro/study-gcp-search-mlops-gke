@@ -32,6 +32,7 @@ This file is the **Cursor / Codex-style project charter** for agents (parallel t
 
 ## Repository Shape
 
+- The active canonical implementation is `7/study-hybrid-search-gke/`.
 - This repository contains independent phases under `1/` through `7/`.
 - Do not share implementation code across phases unless explicitly requested.
 - Keep changes scoped to one phase whenever possible.
@@ -40,6 +41,9 @@ Primary navigation:
 - [README.md](README.md)
 - [CLAUDE.md](CLAUDE.md)
 - [docs/README.md](docs/README.md)
+- [7/study-hybrid-search-gke/README.md](7/study-hybrid-search-gke/README.md)
+- [7/study-hybrid-search-gke/CLAUDE.md](7/study-hybrid-search-gke/CLAUDE.md)
+- [7/study-hybrid-search-gke/docs/tasks/TASKS.md](7/study-hybrid-search-gke/docs/tasks/TASKS.md)
 
 ## First Step For Any Task
 

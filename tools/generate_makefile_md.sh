@@ -24,7 +24,7 @@ PHASE_LABELS=(
   "P7"
 )
 
-canonical_phase="6/study-hybrid-search-pmle"
+canonical_phase="7/study-hybrid-search-gke"
 mapfile -t CANONICAL_TARGETS < <(
   cd "$ROOT_DIR/$canonical_phase"
   make -s print-canonical-targets 2>/dev/null
