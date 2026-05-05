@@ -2,9 +2,9 @@
 
 リポ全体の運用ハブ。  
 ただし **現役の運用 / 検証の正本は Phase 7** の
-[`../../7/study-hybrid-search-gke/docs/runbook/05_運用.md`](../../7/study-hybrid-search-gke/docs/runbook/05_運用.md)
+[`05_運用.md`](05_運用.md)
 と
-[`../../7/study-hybrid-search-gke/docs/runbook/04_検証.md`](../../7/study-hybrid-search-gke/docs/runbook/04_検証.md)
+[`04_検証.md`](04_検証.md)
 を優先する。
 
 ## 収録ファイル
@@ -19,7 +19,7 @@
 | Phase | パス | 内容 |
 |---|---|---|
 | 1-6 | `<phase>/docs/runbook/04_検証.md` + `<phase>/docs/runbook/05_運用.md` | 各 Phase の検証 / 運用 |
-| 7 | [`../../7/study-hybrid-search-gke/docs/runbook/04_検証.md`](../../7/study-hybrid-search-gke/docs/runbook/04_検証.md) + [`../../7/study-hybrid-search-gke/docs/runbook/05_運用.md`](../../7/study-hybrid-search-gke/docs/runbook/05_運用.md) | **現役正本** |
+| 7 | [`04_検証.md`](04_検証.md) + [`05_運用.md`](05_運用.md) | **現役正本** |
 
 ## 関連
 

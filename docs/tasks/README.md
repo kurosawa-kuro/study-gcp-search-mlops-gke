@@ -2,9 +2,9 @@
 
 リポ全体の移行メモ置き場。  
 ただし **current sprint の正本は Phase 7** の
-[`../7/study-hybrid-search-gke/docs/tasks/TASKS.md`](../../7/study-hybrid-search-gke/docs/tasks/TASKS.md)
+[`../../7/study-hybrid-search-gke/docs/tasks/TASKS.md`](../../7/study-hybrid-search-gke/docs/tasks/TASKS.md)
 と
-[`../7/study-hybrid-search-gke/docs/tasks/TASKS_ROADMAP.md`](../../7/study-hybrid-search-gke/docs/tasks/TASKS_ROADMAP.md)
+[`../../7/study-hybrid-search-gke/docs/tasks/TASKS_ROADMAP.md`](../../7/study-hybrid-search-gke/docs/tasks/TASKS_ROADMAP.md)
 を優先する。
 
 ## 収録ファイル

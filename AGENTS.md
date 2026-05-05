@@ -32,7 +32,7 @@ This file is the **Cursor / Codex-style project charter** for agents (parallel t
 
 ## Repository Shape
 
-- The active canonical implementation is `7/study-hybrid-search-gke/`.
+- The active canonical implementation is the repository root.
 - This repository contains independent phases under `1/` through `7/`.
 - Do not share implementation code across phases unless explicitly requested.
 - Keep changes scoped to one phase whenever possible.
@@ -41,8 +41,8 @@ Primary navigation:
 - [README.md](README.md)
 - [CLAUDE.md](CLAUDE.md)
 - [docs/README.md](docs/README.md)
-- [7/study-hybrid-search-gke/README.md](7/study-hybrid-search-gke/README.md)
-- [7/study-hybrid-search-gke/CLAUDE.md](7/study-hybrid-search-gke/CLAUDE.md)
+- [README.md](README.md)
+- [CLAUDE.md](CLAUDE.md)
 - [7/study-hybrid-search-gke/docs/tasks/TASKS.md](7/study-hybrid-search-gke/docs/tasks/TASKS.md)
 
 ## First Step For Any Task
@@ -58,7 +58,7 @@ Phase-local guides:
 - [4/study-hybrid-search-gcp/CLAUDE.md](4/study-hybrid-search-gcp/CLAUDE.md)
 - [5/study-hybrid-search-vertex/CLAUDE.md](5/study-hybrid-search-vertex/CLAUDE.md)
 - [6/study-hybrid-search-pmle/CLAUDE.md](6/study-hybrid-search-pmle/CLAUDE.md)
-- [7/study-hybrid-search-gke/CLAUDE.md](7/study-hybrid-search-gke/CLAUDE.md)
+- [CLAUDE.md](CLAUDE.md)
 
 ## Command Conventions
 

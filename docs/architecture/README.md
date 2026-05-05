@@ -2,9 +2,9 @@
 
 リポ全体の仕様 / 実装カタログの案内ハブ。  
 ただし **現役の canonical 仕様 / 実装カタログは Phase 7** の
-[`../../7/study-hybrid-search-gke/docs/architecture/01_仕様と設計.md`](../../7/study-hybrid-search-gke/docs/architecture/01_仕様と設計.md)
+[`01_仕様と設計.md`](01_仕様と設計.md)
 と
-[`../../7/study-hybrid-search-gke/docs/architecture/03_実装カタログ.md`](../../7/study-hybrid-search-gke/docs/architecture/03_実装カタログ.md)
+[`03_実装カタログ.md`](03_実装カタログ.md)
 を優先する。
 
 ## 収録ファイル

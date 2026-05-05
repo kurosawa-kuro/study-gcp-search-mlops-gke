@@ -53,13 +53,13 @@
 | 4 | `4/study-hybrid-search-gcp/` | **GCP MLOps の土台 + 検索ログ正解データパイプライン** (Phase 3 からの足し算で構築、独立コード) | **コード化対象** | Cloud Run, Cloud Run Jobs, GCS, BigQuery (`raw_events` / curated / `ranking_labels` / `training_dataset` / `evaluation_metrics`), Cloud Logging structured log, **Secret Manager**, Eventarc, Cloud Scheduler, Cloud Function, Artifact Registry, Cloud Build, Terraform, WIF, IAM, LightGBM reranker retrain Job, GCS model artifact | uv + クラウド実行基盤 |
 | 5 | `5/study-hybrid-search-vertex/` | Vertex AI MLOps 化の技術境界 | **論理 Phase (個別コード保守なし、Phase 7 完成版を参照)** | (Phase 7 配下) Vertex AI Pipelines, Vertex AI Endpoint / KServe, Vertex AI Model Registry, Vertex AI Model Monitoring, **Vertex AI Feature Store (Feature Group / Feature View / Feature Online Store)**, **Vertex Vector Search**, Dataform | (実装なし) |
 | 6 | `6/study-hybrid-search-pmle/` | PMLE 追加技術 + Composer 本線化の論理境界 | **論理 Phase (個別コード保守なし、Phase 7 完成版を参照)** | (Phase 7 配下) BQML, Dataflow Flex Template, **Cloud Composer / Managed Airflow Gen 3**, Monitoring SLO + burn-rate alert, TreeSHAP / Explainability, **Composer-managed BigQuery monitoring query** | (実装なし) |
-| 7 | `7/study-hybrid-search-gke/` | **教材コード完成版 / canonical 起点 / 到達ゴール / 継続改善 MLOps サイクル** | **コード化対象** | GKE Autopilot, KServe, Cloud Composer / Managed Airflow Gen 3 (3 DAG: `daily_feature_refresh` / `retrain_orchestration` / `monitoring_validation`), Vertex AI Pipelines, Vertex AI Feature Store, Vertex Vector Search, Vertex Model Registry, BigQuery, Meilisearch, BQML, Dataflow, TreeSHAP, Monitoring SLO, Gateway API + HTTPRoute, External Secrets Operator, Workload Identity, GMP (PodMonitoring), HPA, IAP (GCPBackendPolicy), NetworkPolicy, Helm provider | uv + GKE Autopilot/KServe + Composer |
+| 7 | `repo root (旧 7/study-hybrid-search-gke)` | **教材コード完成版 / canonical 起点 / 到達ゴール / 継続改善 MLOps サイクル** | **コード化対象** | GKE Autopilot, KServe, Cloud Composer / Managed Airflow Gen 3 (3 DAG: `daily_feature_refresh` / `retrain_orchestration` / `monitoring_validation`), Vertex AI Pipelines, Vertex AI Feature Store, Vertex Vector Search, Vertex Model Registry, BigQuery, Meilisearch, BQML, Dataflow, TreeSHAP, Monitoring SLO, Gateway API + HTTPRoute, External Secrets Operator, Workload Identity, GMP (PodMonitoring), HPA, IAP (GCPBackendPolicy), NetworkPolicy, Helm provider | uv + GKE Autopilot/KServe + Composer |
 
 ---
 
 ## 3. 教育フェーズ設計の補助図
 
-> 本 README は **教育フェーズ設計** (どの Phase で何を学ぶか / コード化方針 / 学習順) の正本。**ハイブリッド検索の実装詳細図** (アプリ構成 / シーケンス / モデル関係 / ストレージ関係) は Phase 7 [`docs/architecture/01_仕様と設計.md` §2](7/study-hybrid-search-gke/docs/architecture/01_仕様と設計.md) が canonical。
+> 本 README は **教育フェーズ設計** (どの Phase で何を学ぶか / コード化方針 / 学習順) の正本。**ハイブリッド検索の実装詳細図** (アプリ構成 / シーケンス / モデル関係 / ストレージ関係) は [`docs/architecture/01_仕様と設計.md` §2](docs/architecture/01_仕様と設計.md) が canonical。
 
 ### 図1. Phase 段差図 (コード化方針と教育上の位置づけ)
 
@@ -144,7 +144,7 @@ flowchart LR
     class P7 gke
 ```
 
-各技術の役割 / 上下関係 (Composer × Vertex Pipelines) / 配線は Phase 7 [`docs/architecture/01_仕様と設計.md` §2 / §3](7/study-hybrid-search-gke/docs/architecture/01_仕様と設計.md) が canonical。
+各技術の役割 / 上下関係 (Composer × Vertex Pipelines) / 配線は [`docs/architecture/01_仕様と設計.md` §2 / §3](docs/architecture/01_仕様と設計.md) が canonical。
 
 ---
 
@@ -170,11 +170,11 @@ flowchart LR
 Phase 5 / 6 のスライド・ドキュメントでは、Phase 7 配下のどのコードを参照するかを必ず明示する:
 
 ```text
-Composer DAG: 7/study-hybrid-search-gke/pipeline/dags/
-Vertex Pipeline: 7/study-hybrid-search-gke/pipeline/training_job/
-Feature Store: 7/study-hybrid-search-gke/infra/terraform/modules/vertex/
-Vector Search: 7/study-hybrid-search-gke/infra/terraform/modules/vector_search/
-GKE / KServe: 7/study-hybrid-search-gke/infra/manifests/, 7/study-hybrid-search-gke/infra/terraform/modules/gke/, kserve/
+Composer DAG: pipeline/dags/
+Vertex Pipeline: pipeline/training_job/
+Feature Store: infra/terraform/modules/vertex/
+Vector Search: infra/terraform/modules/vector_search/
+GKE / KServe: infra/manifests/, infra/terraform/modules/gke/, kserve/
 ```
 
 ### 4.3 旧「引き算戦略」との関係
@@ -219,7 +219,7 @@ study-gcp-mlops/
 ├── 4/study-hybrid-search-gcp/       # コード化対象 (Phase 3 からの足し算)
 ├── 5/study-hybrid-search-vertex/    # 論理 Phase (docs のみ)
 ├── 6/study-hybrid-search-pmle/      # 論理 Phase (docs のみ)
-├── 7/study-hybrid-search-gke/       # 到達ゴール / canonical 起点
+├── app/ ml/ pipeline/ infra/ ...    # 到達ゴール / canonical 起点 (旧 7/study-hybrid-search-gke を昇格)
 └── docs/
 ```
 
@@ -294,7 +294,7 @@ Phase 表には各 Phase で**新規に登場する**技術を載せる。下記
 | 6 (論理 Phase: PMLE + Composer) | Phase 5 継承 (Phase 7 配下) | Phase 5 継承 (Phase 7 配下) | (Phase 7 配下) Composer-managed BQ monitoring query + SLO + burn-rate | Phase 5 継承 (Phase 7 配下では Composer DAG が labeling / training dataset / metrics を駆動) | Phase 5 継承 | Phase 5 継承 |
 | 7 (GKE + KServe = canonical / 継続改善 MLOps サイクル) | Vertex Model Registry | Vertex Pipelines Metadata | Cloud Monitoring + Vertex Model Monitoring + GMP (PodMonitoring) + Composer-managed BQ monitoring query + SLO + burn-rate | **Composer DAG 駆動** (`daily_feature_refresh` = Feature Store + Vector Search index 更新 / `retrain_orchestration` = `search_events` / `search_impressions` / `user_actions` / `ranking_labels` → training dataset → Vertex Pipelines retrain → Model Registry / `monitoring_validation` = `evaluation_metrics` + skew/drift + deployment gate) | Phase 4 + Composer + Vertex 一式 | Secret Manager + **External Secrets Operator** (Secret Manager → K8s Secret 自動同期) |
 
-Phase 7 で本実装する **Vertex AI Feature Store** (Feature Group / Feature View / Feature Online Store、training-serving skew 防止) と **Vertex Vector Search** (ME5 ベクトルの本番 serving index、BQ は embedding 履歴正本) は §2 Phase 一覧と Phase 7 [`docs/architecture/01_仕様と設計.md`](7/study-hybrid-search-gke/docs/architecture/01_仕様と設計.md) §2 を参照。
+Phase 7 で本実装する **Vertex AI Feature Store** (Feature Group / Feature View / Feature Online Store、training-serving skew 防止) と **Vertex Vector Search** (ME5 ベクトルの本番 serving index、BQ は embedding 履歴正本) は §2 Phase 一覧と [`docs/architecture/01_仕様と設計.md`](docs/architecture/01_仕様と設計.md) §2 を参照。
 
 ### 運用ルール (共通)
 
@@ -343,8 +343,8 @@ Phase 1 → 2 → 3 → 4 → 5 (資料) → 6 (資料) → 7 の番号順。
 - `docs/phases/phase1/README.md` 〜 `docs/phases/phase5/README.md`
 - `6/study-hybrid-search-pmle/README.md` (論理 Phase)
 - `6/study-hybrid-search-pmle/docs/architecture/01_仕様と設計.md` (論理 Phase の技術習得主眼)
-- `7/study-hybrid-search-gke/docs/architecture/01_仕様と設計.md` (canonical)
-- `7/study-hybrid-search-gke/docs/tasks/TASKS_ROADMAP.md` (到達ゴール: GKE + KServe)
+- `docs/architecture/01_仕様と設計.md` (canonical)
+- `7/study-hybrid-search-gke/docs/tasks/TASKS_ROADMAP.md` (移行中の到達ゴール管理)
 
 ### 過去の設計判断ログ (archive)
 

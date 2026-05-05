@@ -1,20 +1,20 @@
 # docs
 
 ルート `docs/` は、**Phase 7 を canonical とした補助ハブ**です。  
-現役コードの正本は [7/study-hybrid-search-gke/docs](../7/study-hybrid-search-gke/docs/README.md) にあり、ここには phase 横断の整理メモ・導線・規約を置きます。
+現役コードの正本は **repo ルート** にあり、ここには phase 横断の整理メモ・導線・規約を置きます。
 
 トップ入口:
 
 - ルート: [`../README.md`](../README.md)
-- 現役正本: [`../7/study-hybrid-search-gke/docs/README.md`](../7/study-hybrid-search-gke/docs/README.md)
+- 現役正本: [README.md](README.md)
 
 ## まず読むファイル
 
 - [`../7/study-hybrid-search-gke/docs/tasks/TASKS.md`](../7/study-hybrid-search-gke/docs/tasks/TASKS.md)
   - 現在の sprint / 実装進捗の正本
-- [`../7/study-hybrid-search-gke/docs/architecture/01_仕様と設計.md`](../7/study-hybrid-search-gke/docs/architecture/01_仕様と設計.md)
+- [`architecture/01_仕様と設計.md`](architecture/01_仕様と設計.md)
   - 現役の仕様と設計
-- [`../7/study-hybrid-search-gke/docs/runbook/05_運用.md`](../7/study-hybrid-search-gke/docs/runbook/05_運用.md)
+- [`runbook/05_運用.md`](runbook/05_運用.md)
   - 現役の運用と local / live 検証導線
 - [`conventions/`](conventions/README.md) — 規約・配置・命名の正本セット (5 ファイル + 索引 README)
   - `conventions/命名規約.md` — フォルダ名・ファイル名・役割の共通規約
