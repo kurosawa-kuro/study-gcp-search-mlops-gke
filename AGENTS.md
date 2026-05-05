@@ -17,6 +17,17 @@ Agent operating guide for this personal MLOps learning project. Use this file as
 | MCP | External systems | Configured in Cursor **MCP** settings (per user/env) |
 | Review rules | Reviewer policy, bug patterns | [`.cursor/rules/`](.cursor/rules/) + team review / Bugbot if enabled |
 
+### Codex mapping (this repo)
+
+| Need | Codex equivalent |
+| --- | --- |
+| Always-loaded repo charter | [`AGENTS.md`](AGENTS.md) |
+| Deep constraint text / historical rationale | [`CLAUDE.md`](CLAUDE.md) |
+| Repo-local Codex notes / handoff memos | [`.codex/README.md`](.codex/README.md), [`.codex/playbooks.md`](.codex/playbooks.md) |
+| Claude hook behavior to emulate manually | [`.codex/playbooks.md`](.codex/playbooks.md) |
+
+Important: Codex does **not** consume `.claude/hooks/` or `.claude/settings.json` directly. If a Claude Code workflow is still useful, document the intent in `AGENTS.md` / `.codex/*` and enforce it via normal repo commands (`make check-layers`, `make check`, targeted pytest, etc.).
+
 ### Tool surface mapping (where each concern lives)
 
 | Concern | Claude Code | Cursor (this repo) |
@@ -95,6 +106,7 @@ make destroy-all               # no-prompt 4-stage teardown
 - Cursor command: [`.cursor/commands/check-parity.md`](.cursor/commands/check-parity.md) (alias intent of [`.claude/commands/check-parity.md`](.claude/commands/check-parity.md))
 - Claude Code agents: [`.claude/agents/`](.claude/agents/) (use as **prompt references** in Cursor)
 - Claude Code skills: [`.claude/skills/`](.claude/skills/)
+- Codex repo-local notes: [`.codex/`](.codex/)
 - GitHub: [.github/agents/gcp-mlops-theme-research.agent.md](.github/agents/gcp-mlops-theme-research.agent.md)
 
 Use them when tasks match their scope; otherwise follow this AGENTS guide and `CLAUDE.md`.
