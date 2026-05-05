@@ -389,6 +389,7 @@ Phase 1 → 2 → 3 → 4 → 5 (資料) → 6 (資料) → 7 の番号順。
 
 - **アプリ emit 5 種** (Phase 3-7 全フェーズ共通の UI / Pydantic / EventWriter Port で実装): `click` / `detail_view` / `favorite` / `request_button_click` / `request_complete`
 - **アプリから取得不可な 4 種 (= synthetic 注入専用)**: 長時間滞在 / `inquiry_complete` / `contract` / `bounce`
+  - ※ **長時間滞在は `action_type` enum 値ではなく `action_value` 修飾子の概念** (`detail_view` の dwell time として `action_value` 列に入る予約)。enum 8 種にカウントされず、`ranking_labels.label_source` への注入のみで使う。詳細は Phase 3 [`docs/02_移行ロードマップ.md` §2.1](3/study-hybrid-search-local/docs/02_移行ロードマップ.md) (canonical)
   - 全フェーズで **UI / JS / Pydantic / EventWriter Port / `user_actions` テーブルへの INSERT 経路は実装しない**
   - dwell tracking / 問い合わせフォーム / CRM 連携 / bounce 検出は **Phase 3-7 全フェーズで実装しない** (= 「アプリからログとれない」前提が canonical)
   - **labeling_job が `definitions/labeling/synthetic_actions.yaml` に基づき `ranking_labels.label_source='synthetic_*'` で擬似正解データを書き込む** (Phase 3 PostgreSQL labeling_job、Phase 4 BigQuery labeling SQL、Phase 7 Composer DAG `retrain_orchestration` のいずれも同 YAML fixture を流用)
