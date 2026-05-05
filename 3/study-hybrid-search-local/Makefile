@@ -24,8 +24,8 @@ NA_TARGETS := \
 
 include ../../mk/base.mk
 
-.PHONY: help doctor sync build up seed train label build-training-dataset evaluate serve serve-bg api-dev test check check-layers \
-	wait-db wait-api verify-pipeline verify-app verify-ml verify-all-core run-all-core run-all verify-all down clean
+.PHONY: help doctor sync build build-api build-jobs up migrate-db seed train label build-training-dataset evaluate serve serve-bg api-dev test check check-layers \
+	wait-db wait-api verify-contracts verify-pipeline verify-app verify-ml verify-all-core run-all-core run-all verify-all down clean
 
 help: ## Show this help
 	@echo "Phase 3 (Local hybrid search) — quick start: make build && make up && make seed && make train && make serve-bg && make wait-api"
@@ -43,12 +43,24 @@ doctor: ## Verify prerequisite tools (uv / docker / make)
 sync: ## uv workspace + dev group 同期
 	uv sync --all-extras --dev
 
-build: ## Build Docker images (postgres+pgvector / meilisearch / redis / search-api)
-	$(COMPOSE) build
+build: ## Build all app/job Docker images
+	$(MAKE) build-jobs
+	$(MAKE) build-api
 
-up: ## docker compose up -d (postgres / meilisearch / redis のみ起動)
+build-jobs: ## Build shared pipeline job image once (seed / trainer / labeler / evaluator)
+	$(COMPOSE) build seed
+
+build-api: ## Build search-api image
+	$(COMPOSE) build search-api
+
+up: ## docker compose up -d (postgres / meilisearch / redis のみ起動 + idempotent migration)
 	$(COMPOSE) up -d postgres meilisearch redis
 	@$(MAKE) wait-db
+	@$(MAKE) migrate-db
+
+migrate-db: ## postgres migration を既存 volume に再適用 (idempotent)
+	@echo "Applying postgres migrations"
+	@$(COMPOSE) exec -T postgres sh -lc 'set -eu; for f in $$(ls /docker-entrypoint-initdb.d/*.sql | sort); do echo "  -> $$f"; psql -U admin -d hybrid_search -v ON_ERROR_STOP=1 -f "$$f"; done'
 
 wait-db: ## postgres healthcheck PASS まで待つ
 	@printf "Waiting postgres "
@@ -110,6 +122,9 @@ check: ## ローカル CI 同等 (ruff + ruff format --check + mypy + pytest)
 check-layers: ## Port-Adapter 境界の AST 検査
 	uv run python -m scripts.ci.layers
 
+verify-contracts: ## Makefile / docs / artifact path の workflow contract 検証
+	uv run pytest tests/integration/workflow -q
+
 verify-pipeline: ## seed → train → serve の integration E2E (docker compose 立ち上げ済前提)
 	uv run pytest tests/integration -q
 
@@ -128,6 +143,7 @@ verify-ml: ## feedback → labeling → dataset → retrain → evaluate の ML 
 verify-all-core: ## 静的検証 + local stack + app + ML 経路を 1 コマンドで
 	$(MAKE) check
 	$(MAKE) check-layers
+	$(MAKE) verify-contracts
 	$(MAKE) build
 	$(MAKE) up
 	$(MAKE) seed

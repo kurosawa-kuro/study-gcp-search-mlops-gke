@@ -1,19 +1,24 @@
+# syntax=docker/dockerfile:1.7
+
 FROM python:3.12-slim
 
 WORKDIR /app
 
 # libgomp1 = LightGBM の OpenMP runtime。curl = healthcheck で使用。
-RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 curl \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends libgomp1 curl \
     && rm -rf /var/lib/apt/lists/*
 
 # uv をインストール。Phase 3-7 共通で uv を使う (pip / poetry 不可)。
-RUN pip install --no-cache-dir uv
+RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
+    pip install uv
 
-COPY pyproject.toml ./
+COPY pyproject.toml uv.lock ./
 
 # 依存だけ先に解決してキャッシュ性を上げる (project 自体は app/ml/pipeline COPY 後に PYTHONPATH で読む)。
-RUN uv sync --no-dev --no-install-project --frozen 2>/dev/null \
-    || uv sync --no-dev --no-install-project
+RUN --mount=type=cache,target=/root/.cache/uv,sharing=locked \
+    uv sync --no-dev --no-install-project --frozen
 
 # multilingual-e5 model は **image に焼き込まない**。
 # 理由: image size 削減 (470MB 削減) + build キャッシュ無効化を避ける。

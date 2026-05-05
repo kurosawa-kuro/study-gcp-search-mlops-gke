@@ -1,5 +1,17 @@
 name: study-hybrid-search-local
 
+x-pipeline-build: &pipeline-build
+  context: .
+  dockerfile: infra/run/jobs/pipeline/Dockerfile
+
+x-pipeline-image: &pipeline-image phase3-pipeline:dev
+
+x-api-build: &api-build
+  context: .
+  dockerfile: infra/run/services/api/Dockerfile
+
+x-api-image: &api-image phase3-search-api:dev
+
 services:
   postgres:
     image: pgvector/pgvector:pg16
@@ -54,9 +66,8 @@ services:
       retries: 20
 
   seed:
-    build:
-      context: .
-      dockerfile: infra/run/jobs/pipeline/Dockerfile
+    image: *pipeline-image
+    build: *pipeline-build
     container_name: phase3-seed
     environment:
       POSTGRES_DSN: postgresql://admin:${POSTGRES_PASSWORD:-password}@postgres:5432/hybrid_search
@@ -78,9 +89,8 @@ services:
   # ``make seed`` の延長で実行 (postgres / meili 投入の後)。redis container は
   # 永続 volume を持たないので、container 再起動の度に流し直す前提。
   seed-synonyms:
-    build:
-      context: .
-      dockerfile: infra/run/jobs/pipeline/Dockerfile
+    image: *pipeline-image
+    build: *pipeline-build
     container_name: phase3-seed-synonyms
     environment:
       REDIS_URL: redis://redis:6379/0
@@ -100,9 +110,8 @@ services:
       - "definitions/synonyms/real_estate_ja.yaml"
 
   trainer:
-    build:
-      context: .
-      dockerfile: infra/run/jobs/pipeline/Dockerfile
+    image: *pipeline-image
+    build: *pipeline-build
     container_name: phase3-trainer
     environment:
       POSTGRES_DSN: postgresql://admin:${POSTGRES_PASSWORD:-password}@postgres:5432/hybrid_search
@@ -117,9 +126,8 @@ services:
     command: ["python", "-m", "pipeline.training_job.main"]
 
   labeler:
-    build:
-      context: .
-      dockerfile: infra/run/jobs/pipeline/Dockerfile
+    image: *pipeline-image
+    build: *pipeline-build
     container_name: phase3-labeler
     environment:
       POSTGRES_DSN: postgresql://admin:${POSTGRES_PASSWORD:-password}@postgres:5432/hybrid_search
@@ -131,9 +139,8 @@ services:
     command: ["python", "-m", "pipeline.labeling_job.main"]
 
   training-dataset-builder:
-    build:
-      context: .
-      dockerfile: infra/run/jobs/pipeline/Dockerfile
+    image: *pipeline-image
+    build: *pipeline-build
     container_name: phase3-training-dataset-builder
     environment:
       POSTGRES_DSN: postgresql://admin:${POSTGRES_PASSWORD:-password}@postgres:5432/hybrid_search
@@ -146,9 +153,8 @@ services:
     command: ["python", "-m", "pipeline.training_dataset_job.main"]
 
   evaluator:
-    build:
-      context: .
-      dockerfile: infra/run/jobs/pipeline/Dockerfile
+    image: *pipeline-image
+    build: *pipeline-build
     container_name: phase3-evaluator
     environment:
       POSTGRES_DSN: postgresql://admin:${POSTGRES_PASSWORD:-password}@postgres:5432/hybrid_search
@@ -161,9 +167,8 @@ services:
     command: ["python", "-m", "pipeline.evaluation_job.main"]
 
   search-api:
-    build:
-      context: .
-      dockerfile: infra/run/services/api/Dockerfile
+    image: *api-image
+    build: *api-build
     container_name: phase3-search-api
     environment:
       POSTGRES_DSN: postgresql://admin:${POSTGRES_PASSWORD:-password}@postgres:5432/hybrid_search

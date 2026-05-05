@@ -1,17 +1,22 @@
+# syntax=docker/dockerfile:1.7
+
 FROM python:3.12-slim
 
 WORKDIR /app
 
 # libgomp1 = LightGBM。
-RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir uv
+RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
+    pip install uv
 
-COPY pyproject.toml ./
+COPY pyproject.toml uv.lock ./
 
-RUN uv sync --no-dev --no-install-project --frozen 2>/dev/null \
-    || uv sync --no-dev --no-install-project
+RUN --mount=type=cache,target=/root/.cache/uv,sharing=locked \
+    uv sync --no-dev --no-install-project --frozen
 
 # multilingual-e5 model は **image に焼き込まない**。
 # 初回 docker compose run 時に download → `hf_cache` volume で永続化、2 回目以降高速。
