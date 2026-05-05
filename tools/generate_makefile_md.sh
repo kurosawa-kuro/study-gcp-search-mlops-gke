@@ -5,13 +5,13 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 OUT_FILE="$ROOT_DIR/docs/conventions/Makefile規約.md"
 
 PHASE_DIRS=(
-  "1/study-ml-foundations"
-  "2/study-ml-app-pipeline"
-  "3/study-hybrid-search-local"
-  "4/study-hybrid-search-gcp"
-  "5/study-hybrid-search-vertex"
-  "6/study-hybrid-search-pmle"
-  "7/study-hybrid-search-gke"
+  "archive/1/study-ml-foundations"
+  "archive/2/study-ml-app-pipeline"
+  "archive/3/study-hybrid-search-local"
+  "archive/4/study-hybrid-search-gcp"
+  "archive/5/study-hybrid-search-vertex"
+  "archive/6/study-hybrid-search-pmle"
+  "."
 )
 
 PHASE_LABELS=(
@@ -24,7 +24,7 @@ PHASE_LABELS=(
   "P7"
 )
 
-canonical_phase="7/study-hybrid-search-gke"
+canonical_phase="."
 mapfile -t CANONICAL_TARGETS < <(
   cd "$ROOT_DIR/$canonical_phase"
   make -s print-canonical-targets 2>/dev/null

@@ -2,9 +2,9 @@
 
 リポ全体の移行メモ置き場。  
 ただし **current sprint の正本は Phase 7** の
-[`../../7/study-hybrid-search-gke/docs/tasks/TASKS.md`](../../7/study-hybrid-search-gke/docs/tasks/TASKS.md)
+[`../../archive/7/study-hybrid-search-gke/docs/tasks/TASKS.md`](../../archive/7/study-hybrid-search-gke/docs/tasks/TASKS.md)
 と
-[`../../7/study-hybrid-search-gke/docs/tasks/TASKS_ROADMAP.md`](../../7/study-hybrid-search-gke/docs/tasks/TASKS_ROADMAP.md)
+[`../../archive/7/study-hybrid-search-gke/docs/tasks/TASKS_ROADMAP.md`](../../archive/7/study-hybrid-search-gke/docs/tasks/TASKS_ROADMAP.md)
 を優先する。
 
 ## 収録ファイル
@@ -23,7 +23,7 @@
 | 4 | [`4/study-hybrid-search-gcp/docs/tasks/TASKS.md`](../../4/study-hybrid-search-gcp/docs/tasks/TASKS.md) |
 | 5 | [`5/study-hybrid-search-vertex/docs/tasks/TASKS.md`](../../5/study-hybrid-search-vertex/docs/tasks/TASKS.md) |
 | 6 | [`6/study-hybrid-search-pmle/docs/tasks/TASKS.md`](../../6/study-hybrid-search-pmle/docs/tasks/TASKS.md) |
-| 7 | [`7/study-hybrid-search-gke/docs/tasks/TASKS.md`](../../7/study-hybrid-search-gke/docs/tasks/TASKS.md) ← **現役正本** |
+| 7 | [`archive/7/study-hybrid-search-gke/docs/tasks/TASKS.md`](../../archive/7/study-hybrid-search-gke/docs/tasks/TASKS.md) ← **旧 Phase 7 docs** |
 
 ## 関連
 

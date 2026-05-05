@@ -41,9 +41,7 @@ Primary navigation:
 - [README.md](README.md)
 - [CLAUDE.md](CLAUDE.md)
 - [docs/README.md](docs/README.md)
-- [README.md](README.md)
-- [CLAUDE.md](CLAUDE.md)
-- [7/study-hybrid-search-gke/docs/tasks/TASKS.md](7/study-hybrid-search-gke/docs/tasks/TASKS.md)
+- [archive/7/study-hybrid-search-gke/docs/tasks/TASKS.md](archive/7/study-hybrid-search-gke/docs/tasks/TASKS.md)
 
 ## First Step For Any Task
 

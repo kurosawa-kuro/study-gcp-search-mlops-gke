@@ -5,13 +5,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## このディレクトリの性質
 
 MLOps 学習用の親ディレクトリ。  
-**現役の canonical 実装は repo ルート** で、他 phase は比較教材 / 学習履歴 / 補助的な独立実装として扱う。旧 `7/study-hybrid-search-gke/` は docs と移行メモが残る暫定互換パス。
+**現役の canonical 実装は repo ルート** で、他 phase は比較教材 / 学習履歴 / 補助的な独立実装として扱う。旧 Phase 7 の docs / 移行メモは `archive/7/study-hybrid-search-gke/` に退避してある。
 
 root で迷ったら、まず次を読む:
 
 - [README.md](/home/ubuntu/repos/study-gcp-search-mlops-gke/README.md)
 - [CLAUDE.md](/home/ubuntu/repos/study-gcp-search-mlops-gke/CLAUDE.md)
-- [7/study-hybrid-search-gke/docs/tasks/TASKS.md](/home/ubuntu/repos/study-gcp-search-mlops-gke/7/study-hybrid-search-gke/docs/tasks/TASKS.md)
+- [archive/7/study-hybrid-search-gke/docs/tasks/TASKS.md](/home/ubuntu/repos/study-gcp-search-mlops-gke/archive/7/study-hybrid-search-gke/docs/tasks/TASKS.md)
 
 全 phase を単一の親 Git リポジトリで管理するが、フェーズを跨ぐ共通ビルド / テストは持たず、作業は常に各 phase 配下で完結する。
 

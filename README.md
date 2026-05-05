@@ -9,7 +9,7 @@
 > 最初の入口:
 > [README.md](/home/ubuntu/repos/study-gcp-search-mlops-gke/README.md)  
 > [CLAUDE.md](/home/ubuntu/repos/study-gcp-search-mlops-gke/CLAUDE.md)  
-> [7/study-hybrid-search-gke/docs/tasks/TASKS.md](/home/ubuntu/repos/study-gcp-search-mlops-gke/7/study-hybrid-search-gke/docs/tasks/TASKS.md)
+> [archive/7/study-hybrid-search-gke/docs/tasks/TASKS.md](/home/ubuntu/repos/study-gcp-search-mlops-gke/archive/7/study-hybrid-search-gke/docs/tasks/TASKS.md)
 
 以下は「なぜこういう構成になっているか」を理解するための全体ナビゲーションです。
 
@@ -344,7 +344,7 @@ Phase 1 → 2 → 3 → 4 → 5 (資料) → 6 (資料) → 7 の番号順。
 - `6/study-hybrid-search-pmle/README.md` (論理 Phase)
 - `6/study-hybrid-search-pmle/docs/architecture/01_仕様と設計.md` (論理 Phase の技術習得主眼)
 - `docs/architecture/01_仕様と設計.md` (canonical)
-- `7/study-hybrid-search-gke/docs/tasks/TASKS_ROADMAP.md` (移行中の到達ゴール管理)
+- `archive/7/study-hybrid-search-gke/docs/tasks/TASKS_ROADMAP.md` (移行中の到達ゴール管理)
 
 ### 過去の設計判断ログ (archive)
 

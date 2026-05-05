@@ -10,7 +10,7 @@
 
 ## まず読むファイル
 
-- [`../7/study-hybrid-search-gke/docs/tasks/TASKS.md`](../7/study-hybrid-search-gke/docs/tasks/TASKS.md)
+- [`../archive/7/study-hybrid-search-gke/docs/tasks/TASKS.md`](../archive/7/study-hybrid-search-gke/docs/tasks/TASKS.md)
   - 現在の sprint / 実装進捗の正本
 - [`architecture/01_仕様と設計.md`](architecture/01_仕様と設計.md)
   - 現役の仕様と設計
