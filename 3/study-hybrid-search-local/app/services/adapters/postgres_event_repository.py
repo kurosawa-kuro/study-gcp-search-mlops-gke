@@ -19,10 +19,11 @@ class PostgresEventRepository(EventRepository):
         sql = """
             SELECT search_id, query, filters_json::text, user_id, session_id, app_version, model_version, timestamp
             FROM search_events
-            WHERE (%s IS NULL OR timestamp >= %s)
-            ORDER BY timestamp ASC
         """
-        rows = self._fetchall(sql, (since, since))
+        sql, params = _append_conditions(
+            sql, [("timestamp >= %s", since)], order_by="timestamp ASC"
+        )
+        rows = self._fetchall(sql, params)
         return [
             SearchEvent(
                 search_id=str(row[0]),
@@ -47,11 +48,16 @@ class PostgresEventRepository(EventRepository):
             SELECT search_id, property_id, rank, lexical_rank_orig, semantic_rank_orig,
                    lexical_score, vector_score, rrf_score, rerank_score, timestamp
             FROM search_impressions
-            WHERE (%s IS NULL OR search_id = %s)
-              AND (%s IS NULL OR timestamp >= %s)
-            ORDER BY timestamp ASC, rank ASC
         """
-        rows = self._fetchall(sql, (search_id, search_id, since, since))
+        sql, params = _append_conditions(
+            sql,
+            [
+                ("search_id = %s", search_id),
+                ("timestamp >= %s", since),
+            ],
+            order_by="timestamp ASC, rank ASC",
+        )
+        rows = self._fetchall(sql, params)
         return [_impression_from_row(row) for row in rows]
 
     def read_impression(self, *, search_id: str, property_id: str) -> Impression | None:
@@ -77,12 +83,17 @@ class PostgresEventRepository(EventRepository):
         sql = """
             SELECT search_id, property_id, action_type::text, action_value, timestamp
             FROM user_actions
-            WHERE (%s IS NULL OR search_id = %s)
-              AND (%s IS NULL OR action_type::text = %s)
-              AND (%s IS NULL OR timestamp >= %s)
-            ORDER BY timestamp ASC
         """
-        rows = self._fetchall(sql, (search_id, search_id, action_type, action_type, since, since))
+        sql, params = _append_conditions(
+            sql,
+            [
+                ("search_id = %s", search_id),
+                ("action_type::text = %s", action_type),
+                ("timestamp >= %s", since),
+            ],
+            order_by="timestamp ASC",
+        )
+        rows = self._fetchall(sql, params)
         return [
             UserAction(
                 search_id=str(row[0]),
@@ -102,6 +113,20 @@ class PostgresEventRepository(EventRepository):
         except Exception:
             self._logger.exception("event repository query failed")
             return []
+
+
+def _append_conditions(
+    sql: str,
+    conditions: list[tuple[str, object | None]],
+    *,
+    order_by: str,
+) -> tuple[str, tuple[object, ...]]:
+    active_conditions = [fragment for fragment, value in conditions if value is not None]
+    params = tuple(value for _, value in conditions if value is not None)
+    if active_conditions:
+        sql += "\nWHERE " + "\n  AND ".join(active_conditions)
+    sql += f"\nORDER BY {order_by}"
+    return sql, params
 
 
 def _impression_from_row(row: tuple[object, ...]) -> Impression:

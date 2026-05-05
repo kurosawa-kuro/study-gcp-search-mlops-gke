@@ -75,7 +75,9 @@ def main() -> None:
     # 既存 metrics.json を更新 (synthetic eval 結果を上書き保存)。
     metrics_json_path = model_path.parent / "metrics.json"
     existing = json.loads(metrics_json_path.read_text()) if metrics_json_path.exists() else {}
-    existing["evaluation_metrics"] = {k: float(v) for k, v in metrics.items()}
+    normalized_metrics = {k: float(v) for k, v in metrics.items()}
+    existing["evaluation_metrics"] = normalized_metrics
+    existing.update(normalized_metrics)
     metrics_json_path.write_text(json.dumps(existing, ensure_ascii=False, indent=2))
 
     logger.info("evaluation_job done: metrics=%s", metrics)

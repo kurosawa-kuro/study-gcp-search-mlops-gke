@@ -40,12 +40,15 @@ class PostgresLabelRepository(LabelRepository):
         sql = """
             SELECT search_id, property_id, relevance_label, label_source, created_at
             FROM ranking_labels
-            WHERE (%s IS NULL OR created_at >= %s)
-            ORDER BY created_at ASC
         """
         try:
             with psycopg.connect(self._dsn) as conn, conn.cursor() as cur:
-                cur.execute(sql, (since, since))
+                params: tuple[datetime, ...] = ()
+                if since is not None:
+                    sql += "\nWHERE created_at >= %s"
+                    params = (since,)
+                sql += "\nORDER BY created_at ASC"
+                cur.execute(sql, params)
                 rows = cur.fetchall()
         except Exception:
             self._logger.exception("read_ranking_labels failed")

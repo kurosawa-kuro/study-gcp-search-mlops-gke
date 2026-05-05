@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import cast
 
 import pandas as pd
 import psycopg
@@ -37,18 +36,18 @@ class PostgresRankerRepository:
               ON p.property_id = rl.property_id
             LEFT JOIN feature_mart_property_features_daily AS fm
               ON fm.property_id = rl.property_id
-            WHERE (%s IS NULL OR rl.created_at >= %s)
-            ORDER BY rl.search_id ASC, si.rank ASC
         """
-        with psycopg.connect(self._dsn) as conn:
-            df = cast(
-                pd.DataFrame,
-                pd.read_sql_query(
-                    sql,
-                    conn,
-                    params=(since, since),  # type: ignore[call-overload]
-                ),
-            )
+        params: tuple[datetime, ...] = ()
+        if since is not None:
+            sql += "\nWHERE rl.created_at >= %s"
+            params = (since,)
+        sql += "\nORDER BY rl.search_id ASC, si.rank ASC"
+
+        with psycopg.connect(self._dsn) as conn, conn.cursor() as cur:
+            cur.execute(sql, params)
+            rows = cur.fetchall()
+            columns = [desc.name for desc in cur.description or ()]
+        df = pd.DataFrame(rows, columns=columns)
         if df.empty:
             return df
         df["label"] = df["label"].astype(int)

@@ -14,6 +14,8 @@ def main() -> None:
     settings = TrainSettings()
     repo = PostgresRankerRepository(dsn=settings.postgres_dsn)
     df = repo.read_training_data()
+    if "label" in df.columns:
+        df = df.rename(columns={"label": "relevance_label"})
     run_id = generate_run_id()
     root = Path(settings.model_artifacts_root)
     output_dir = root / "datasets" / run_id
