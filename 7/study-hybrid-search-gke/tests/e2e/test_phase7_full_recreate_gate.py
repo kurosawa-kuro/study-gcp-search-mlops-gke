@@ -11,7 +11,7 @@ routine V6 verification.
 
 Run (long-running; tee + monitor):
 
-    cd 7/study-hybrid-search-gke
+    cd <phase7-canonical-root>
     make verify-full-recreate
 
 Monitor (another terminal):

@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Phase 7 (`7/study-hybrid-search-gke`) で作業する Claude Code 向けガイド。**到達ゴール = 教材コード完成版の canonical 起点**。引き算で Phase 6 / 5 を派生させる戦略 (親 README §4) のため、本 phase に **PMLE 4 技術 + Cloud Composer 本線 orchestration + Phase 5 必須の Feature Store / Vertex Vector Search を本実装** し、Serving 層は Vertex AI Endpoint → GKE + KServe InferenceService。中核 (不動産ハイブリッド検索) は不変、推論を cluster-local HTTP に委譲。Phase 7 固有: KServe → Feature Online Store を **Feature View 経由で** opt-in 参照、TreeSHAP 用 explain 専用 Pod を独立 deploy。
+Phase 7（現時点の実在パスは `7/study-hybrid-search-gke`）で作業する Claude Code 向けガイド。**到達ゴール = 教材コード完成版の canonical 起点**。引き算で Phase 6 / 5 を派生させる戦略 (親 README §4) のため、本 phase に **PMLE 4 技術 + Cloud Composer 本線 orchestration + Phase 5 必須の Feature Store / Vertex Vector Search を本実装** し、Serving 層は Vertex AI Endpoint → GKE + KServe InferenceService。中核 (不動産ハイブリッド検索) は不変、推論を cluster-local HTTP に委譲。Phase 7 固有: KServe → Feature Online Store を **Feature View 経由で** opt-in 参照、TreeSHAP 用 explain 専用 Pod を独立 deploy。
 
 詳細仕様は [`docs/architecture/01_仕様と設計.md`](docs/architecture/01_仕様と設計.md) (§3 で Composer canonical) と [`docs/tasks/TASKS_ROADMAP.md`](docs/tasks/TASKS_ROADMAP.md)。本 CLAUDE.md はそれらに従属。
 

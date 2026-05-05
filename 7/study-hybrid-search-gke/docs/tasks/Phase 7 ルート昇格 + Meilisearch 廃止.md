@@ -132,6 +132,8 @@
   **Phase 7 正本 + 旧 Phase 補助入口** の構図へ寄せた
 - 追加で、root `AGENTS.md` / `docs/tasks/02_移行ロードマップ.md` / `docs/conventions/フォルダ-ファイル.md` /
   `tools/generate_makefile_md.sh` も Phase 7 正本前提へ同期した
+- Phase 7 内部でも、`docs/tasks/TASKS.md` / `docs/runbook/05_運用.md` / `tests/e2e/test_phase7_full_recreate_gate.py` /
+  `CLAUDE.md` / `docs/architecture/01_仕様と設計.md` の **絶対パス・昇格前 path 依存** を一部相対化した
 - 次の主戦場は **Wave 3 の影響一覧固定と構造移行の実ファイル移動**
 - Meilisearch 廃止は、この作業と混ぜない
 
@@ -202,6 +204,6 @@
 ## 10. 次アクション
 
 1. root 昇格で壊れる path の inventory をこの文書で固定
-2. `7/study-hybrid-search-gke` 内の絶対パス / `cd 7/study-hybrid-search-gke` 記述を洗う
-3. workflow / Makefile / scripts の root 移動差分を先に機械的に出す
+2. workflow / Makefile / scripts の root 移動差分を先に機械的に出す
+3. `.github/workflows` / `scripts/**` / `Makefile` の昇格前提 path を root 互換へ寄せる
 4. その後に物理移動 PR を切る

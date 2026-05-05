@@ -8,7 +8,7 @@
 
 優先して達成する検証は次の **固定セット**。ツール名（Cursor / Claude Code 等）やエージェントの都合で **別の「できた」にすり替えない**。
 
-| 優先 | コマンド（リポルート `7/study-hybrid-search-gke/`） | destroy |
+| 優先 | コマンド（Phase 7 canonical root） | destroy |
 |------|-----------------------------------------------------|---------|
 | **V6（通常）** | `make verify-live-acceptance` | **含まない** |
 | **Full recreate（別ゲート・フレークし得る）** | `make verify-full-recreate` | **含む**（`destroy-all` → `deploy-all` → 上と同一チェック） |
@@ -24,12 +24,12 @@
 
 ```bash
 # make deploy-all をファイルへリダイレクトしたとき
-tail -f /home/ubuntu/repos/study-gcp-search-mlops-gke/7/study-hybrid-search-gke/logs/verification/deploy-all.latest.log
+tail -f logs/verification/deploy-all.latest.log
 ```
 
 ```bash
 # full recreate ゲートを tee しているとき（destroy → deploy → pytest 全体）
-tail -f /home/ubuntu/repos/study-gcp-search-mlops-gke/7/study-hybrid-search-gke/logs/verification/full-recreate.latest.log
+tail -f logs/verification/full-recreate.latest.log
 ```
 
 （実際のファイル名が違えばそのパスに読み替える。`step N/15` や Terraform の行が増え続ければ進行中。）
