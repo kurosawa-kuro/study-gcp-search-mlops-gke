@@ -290,6 +290,8 @@ composer-deploy-dags: ## Upload pipeline/dags/*.py to Composer DAG GCS bucket (P
 build-composer-runner: ## Cloud Build composer-runner image (DAG KubernetesPodOperator runner、V5 fix)
 	uv run python -m scripts.deploy.composer_runner
 
+# Canonical backend remains `gcloud composer environments run ...` wrapped by
+# Python modules so Make targets stay one-line and contract-testable.
 ops-composer-trigger: ## Trigger a Composer DAG manually (DAG=retrain_orchestration etc.)
 	DAG=$(DAG) uv run python -m scripts.ops.composer_dag trigger
 

@@ -264,6 +264,18 @@ Composer = 上位 orchestrator、Vertex Pipelines = 下位 ML executor。`train/
 | Wave 7 (Makefile 整理) を Wave 1-6 と同時に走らせ、検証経路が壊れる | 仕様・API・実装方針が固まる Wave 6 完了後にのみ着手 |
 | deployed_index 残置による Vertex Vector Search 課金事故 (1 replica = ¥1,460/日) | `make destroy-all` で能動 undeploy + Cloud Scheduler 自動 undeploy (backlog) + Billing Budget Alert (backlog) |
 
+### 4.9 Vertex Vector Search 永続化 lessons learned
+
+2026-05-03 incident では Terraform destroy 中に `Instance cannot be destroyed` が発生し、Index / Endpoint の保護に `prevent_destroy` を使う設計が本線 teardown と衝突した。以後は **`prevent_destroy` を採用しない**。
+
+採用した置換パターン:
+
+- `destroy-all` で永続化したい VVS リソースは `state rm` で tfstate から外す
+- 次回 `deploy-all` では必要に応じて `terraform import` で state 復帰する
+- bare `state rm` を乱用せず、runbook に従って `state-recover` と対で扱う
+
+この方針で `destroy-all` の no-prompt 性を守りつつ、GCP 側に残したい Index / Endpoint を扱う。将来さらに保護を強める backlog としては **Stack 分離**、**Cloud Scheduler 自動 undeploy**、Billing Alert、health check 強化を残す。
+
 ---
 
 ## §5. マイルストーン
