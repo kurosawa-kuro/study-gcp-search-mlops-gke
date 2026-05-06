@@ -1,4 +1,10 @@
-ウェブアプリに対して、GCPでドメイン購入してhttps dns対応する
+頻発バグメモ（search-api ダミーイメージ混入）:
+- 症状: `search-api` が `gcr.io/cloudrun/hello` で起動し、`ops-search` / `ops-search-components` が誤検知または失敗する。
+- 直接原因: `infra/manifests/search-api/deployment.yaml` のダミー `image` が、想定外の apply 手順で再適用される。
+- 恒久回避:
+  - `infra/manifests/search-api/deployment.yaml` の `image: gcr.io/cloudrun/hello` に「placeholder / 本番適用禁止」のコメントを維持する。
+  - `scripts/deploy/api_gke.py` / `make deploy-api` を canonical 手順として固定し、apply 後は `kubectl -n search get deploy/search-api -o jsonpath='{.spec.template.spec.containers[0].image}'` を必ず確認する。
+  - スモーク前チェックに上記 image 検証を追加し、`gcr.io/cloudrun/hello` の場合は即 fail-fast する。
 
 # TASKS_ROADMAP
 
@@ -40,12 +46,13 @@ Meilisearch を廃止し、**Elasticsearch を採用** する。ただし Elasti
 | 3 | 検索基盤の変更 (Meilisearch → Elasticsearch on GKE) | [`Elasticsearch-GCP稼働先比較.md`](Elasticsearch-GCP稼働先比較.md) | LexicalSearchPort の adapter 差し替え + GKE 上 ES 稼働 |
 | 4 | API エンドポイントの整理 (試行錯誤でつぎはぎ) | [`APIエンドポイント再設計案.md`](APIエンドポイント再設計案.md) | `/api/v1/` `/ops/` `/ui/` `/` 4 軸分離 |
 | 5 | Makefile / 実行系の破綻 (「コード直書き禁止」違反) | [`Makefile-多行禁止違反メモ.md`](Makefile-多行禁止違反メモ.md) | 危険箇所の止血のみ先行、本格整理は仕様確定後 |
+| 6 | Web アプリ公開基盤の不足 (独自ドメイン + HTTPS + DNS) | [`docs/runbook/05_運用.md`](../runbook/05_運用.md) | GCP でドメイン購入、証明書発行、DNS 委任、Gateway/HTTPRoute 反映 |
 
 ---
 
 ## §2. Wave 構成 (実施順)
 
-仕様・API・実装方針を **正しい順序で固める** ことを優先する。Wave 0 は guardrail (止血)、Wave 1-5 は仕様 → アプリ → モデル → サイクル統合、Wave 6-8 はインフラ刷新と整理。
+仕様・API・実装方針を **正しい順序で固める** ことを優先する。Wave 0 は guardrail (止血)、Wave 1-5 は仕様 → アプリ → モデル → サイクル統合、Wave 6-8 はインフラ刷新と整理、Wave 9 は外部公開基盤の仕上げ。
 
 ### Wave 0 — Makefile 止血 (guardrail、Wave 1 着手前)
 
@@ -172,7 +179,17 @@ search-api → event logs → BigQuery curated → Composer (retrain_orchestrati
 
 **目的**: Meilisearch を廃止し、GKE 上で Elasticsearch を稼働させる。Cloud Run / Elastic Cloud / Cloud Build 案は不採用 (詳細は [`Elasticsearch-GCP稼働先比較.md`](Elasticsearch-GCP稼働先比較.md))。
 
-**進捗 (2026-05-06)**: **実装前進**。ECK module / ECK manifest 群は追加済み、`module.elasticsearch` apply も完了。現時点の残件は ECK Elasticsearch Pod の起動安定化（`BindTransportException` 調査中）と `01_仕様と設計.md` の ES 完全同期。
+**進捗 (2026-05-06 18:55 JST)**: **コーディング/配線は前進、live 収束は未完**。
+- ✅ 完了済み（この数時間）:
+  - `search-api` を `gcr.io/cloudrun/hello` から Artifact Registry の本番イメージへ再デプロイ
+  - `sync_elasticsearch` 実行で `synced_documents=5` を確認
+  - `search-api` の ES 接続設定（URL / username / password / TLS verify）を反映
+  - `search-api` NetworkPolicy を ECK pod label に合わせて修正
+  - [`docs/architecture/01_仕様と設計.md`](../architecture/01_仕様と設計.md) の §1/§3 を ES canonical 文脈へ更新
+- ⚠️ 未完ブロッカー（いま止まっている点）:
+  - ECK Elasticsearch が `Ready` 未達（CR: `ApplyingChanges`）
+  - `service/elasticsearch` の Endpoints が空のタイミングがあり、`search-api -> ES` が timeout
+  - その結果、`ops-search-components` は lexical lane が `0` で FAIL
 
 **作業**:
 - [x] ECK (Elastic Cloud on Kubernetes) Operator を `infra/terraform/modules/elasticsearch/` で導入 (Helm provider)
@@ -213,7 +230,23 @@ search-api → event logs → BigQuery curated → Composer (retrain_orchestrati
 - [ ] [`docs/runbook/04_検証.md`](../runbook/04_検証.md) の検証ゲートを継続改善サイクル完走基準で更新
 - [ ] [`継続改善サイクル設計.md`](継続改善サイクル設計.md) / [`正解データ反映計画.md`](正解データ反映計画.md) / [`APIエンドポイント再設計案.md`](APIエンドポイント再設計案.md) / [`Elasticsearch-GCP稼働先比較.md`](Elasticsearch-GCP稼働先比較.md) は **設計メモとして archive** (実装が canonical に取り込まれた時点で本 docs ディレクトリから外す or `docs/decisions/` 経由で ADR 化)
 
-**完了条件**: `tasks/TASKS_ROADMAP.md` の「今の課題」5 件がすべて解消され、本 doc の記述と canonical docs (01 / 03 / runbook) が一致。
+**完了条件**: `tasks/TASKS_ROADMAP.md` の「今の課題」6 件がすべて解消され、本 doc の記述と canonical docs (01 / 03 / runbook) が一致。
+
+---
+
+### Wave 9 — Web 公開基盤 (独自ドメイン + HTTPS + DNS)
+
+**目的**: Web アプリを GCP 上で独自ドメイン配信し、HTTPS/TLS と DNS を canonical 手順で固定する。
+
+**作業**:
+- [ ] GCP (Cloud Domains もしくは同等手段) で公開用ドメインを購入
+- [ ] Cloud DNS Public Zone を作成し、購入ドメインの NS を委任
+- [ ] Gateway のリスナーに独自ドメイン host を追加し、`HTTPRoute` の `hostnames` を一致させる
+- [ ] Google-managed certificate (または Certificate Manager) を作成し、Gateway にバインド
+- [ ] `A/AAAA` (必要に応じて `CNAME`) を Gateway 外部IPへ向ける
+- [ ] `curl -I https://<domain>` / `openssl s_client` / `make ops-search` で証明書と疎通を検証
+
+**完了条件**: 独自ドメイン経由で `/api/v1/search` が HTTPS 200 を返し、証明書が有効で自動更新される。
 
 ---
 
@@ -292,7 +325,7 @@ Composer = 上位 orchestrator、Vertex Pipelines = 下位 ML executor。`train/
 | M-Wave3 | アプリ側 正解データログ実装 | ⏳ | EventWriter Port + Cloud Logging adapter |
 | M-Wave4 | LightGBM 接続死守ライン | ⏳ | `pipeline/training_job/main.py` 配線実装 |
 | M-Wave5 | 継続改善サイクル MVP | 🟡 進行中 | 学習 pipeline は復旧し、`ENABLE_RERANK=true` のまま `ops-accuracy-report` で `ndcg_at_10=1.0` を達成。残件は verify-live-acceptance 一式の最終通し |
-| M-Wave6 | Elasticsearch 移行 (GKE 上) | 🟡 コーディング済み（検証前） | 実装反映済。`make check` / live 検証待ち |
+| M-Wave6 | Elasticsearch 移行 (GKE 上) | 🟡 実装・同期済み（live 収束待ち） | `search-api` 本番イメージ化 / `sync_elasticsearch` 成功 / ES 配線更新までは完了。残件は ECK Ready 収束と `ops-search-components` lexical PASS |
 | M-Wave7 | Makefile 本格整理 | ⏳ | 仕様確定後の構造的整理 |
 | M-Wave8 | ドキュメント再統合 | ⏳ | canonical docs と Wave 成果の同期 |
 

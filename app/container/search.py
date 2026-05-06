@@ -207,6 +207,9 @@ class SearchBuilder:
                 base_url=settings.elasticsearch_url.strip(),
                 index_name=settings.elasticsearch_index or "properties",
                 api_key=settings.elasticsearch_api_key,
+                username=settings.elasticsearch_username,
+                password=settings.elasticsearch_password,
+                verify_tls=settings.elasticsearch_verify_tls,
             )
         if settings.enable_search:
             raise RuntimeError(

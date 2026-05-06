@@ -57,6 +57,15 @@ spec:
             # often has security disabled — leave empty.
             - name: ELASTICSEARCH_API_KEY
               value: ""
+            - name: ELASTICSEARCH_USERNAME
+              value: "elastic"
+            - name: ELASTICSEARCH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: elasticsearch-es-elastic-user
+                  key: elastic
+            - name: ELASTICSEARCH_VERIFY_TLS
+              value: "false"
             - name: RANKING_LOG_TOPIC
               value: "ranking-log"
             - name: FEEDBACK_TOPIC

@@ -59,7 +59,7 @@ spec:
     - to:
         - podSelector:
             matchLabels:
-              app.kubernetes.io/name: elasticsearch
+              common.k8s.elastic.co/type: elasticsearch
       ports:
         - protocol: TCP
           port: 9200

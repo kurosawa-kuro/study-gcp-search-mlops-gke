@@ -101,7 +101,7 @@ def main() -> int:
 
     es_url = env(
         "ELASTICSEARCH_URL",
-        "http://elasticsearch.search.svc.cluster.local:9200",
+        "https://elasticsearch.search.svc.cluster.local:9200",
     )
     es_index = env("ELASTICSEARCH_INDEX", "properties")
     print(f"[info] elasticsearch_url={es_url} index={es_index}")

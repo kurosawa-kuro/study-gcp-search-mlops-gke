@@ -15,6 +15,7 @@ import argparse
 import contextlib
 import json
 import os
+import socket
 import subprocess
 import sys
 import time
@@ -112,6 +113,8 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     p.add_argument("--es-url", default=os.environ.get("ELASTICSEARCH_URL", "").strip())
     p.add_argument("--index", default=os.environ.get("ELASTICSEARCH_INDEX", "properties"))
     p.add_argument("--api-key", default=os.environ.get("ELASTICSEARCH_API_KEY", ""))
+    p.add_argument("--username", default=os.environ.get("ELASTICSEARCH_USERNAME", ""))
+    p.add_argument("--password", default=os.environ.get("ELASTICSEARCH_PASSWORD", ""))
     p.add_argument("--batch-size", type=int, default=200)
     return p.parse_args(argv)
 
@@ -148,12 +151,10 @@ def _maybe_port_forward_for_cluster_dns(es_url: str):
             if proc.poll() is not None:
                 break
             try:
-                with httpx.Client(timeout=2.0) as client:
-                    ping = client.get(f"{forwarded_url.rstrip('/')}/")
-                if ping.status_code < 500:
+                with socket.create_connection(("127.0.0.1", local_port), timeout=1.0):
                     ready = True
                     break
-            except Exception:
+            except OSError:
                 time.sleep(0.5)
         if not ready:
             raise RuntimeError("kubectl port-forward for Elasticsearch did not become ready")
@@ -197,11 +198,16 @@ def _run_sync_with_count(argv: list[str] | None) -> tuple[int, int]:
 
     base = args.es_url.rstrip("/")
     hdrs = _headers(api_key=args.api_key)
+    auth: tuple[str, str] | None = None
+    if not args.api_key and args.username and args.password:
+        auth = (args.username, args.password)
 
     _log(f"STEP 2 — bulk upsert index={args.index} rows={len(rows)} url={base}")
     with _maybe_port_forward_for_cluster_dns(base) as resolved_base:
         _log(f"STEP 2.1 — resolved Elasticsearch url={resolved_base}")
-        with httpx.Client(timeout=120.0) as client:
+        host = urlparse(resolved_base).hostname or ""
+        verify_tls = host not in {"127.0.0.1", "localhost"}
+        with httpx.Client(timeout=120.0, verify=verify_tls, auth=auth) as client:
             _ensure_index(client=client, base=resolved_base, index=args.index, headers=hdrs)
             _bulk_upsert(
                 client=client,

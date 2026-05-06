@@ -54,6 +54,9 @@ class ApiSettings(BaseAppSettings):
     elasticsearch_url: str = ""
     elasticsearch_index: str = "properties"
     elasticsearch_api_key: str = ""
+    elasticsearch_username: str = ""
+    elasticsearch_password: str = ""
+    elasticsearch_verify_tls: bool = False
 
     # --- Vertex AI location (used by Model Registry / Pipelines) -------------
     vertex_location: str = "asia-northeast1"

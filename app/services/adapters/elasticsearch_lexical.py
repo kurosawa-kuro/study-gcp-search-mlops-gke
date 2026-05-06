@@ -22,11 +22,17 @@ class ElasticsearchLexical(LexicalSearchPort):
         index_name: str = "properties",
         timeout_seconds: float = 3.0,
         api_key: str = "",
+        username: str = "",
+        password: str = "",
+        verify_tls: bool = True,
     ) -> None:
         self._base_url = base_url.rstrip("/")
         self._index_name = index_name
         self._timeout_seconds = timeout_seconds
         self._api_key = api_key.strip()
+        self._username = username.strip()
+        self._password = password
+        self._verify_tls = verify_tls
         self._logger = get_logger("app.adapters.elasticsearch_lexical")
 
     def _headers(self) -> dict[str, str]:
@@ -65,7 +71,14 @@ class ElasticsearchLexical(LexicalSearchPort):
 
         url = f"{self._base_url}/{self._index_name}/_search"
         try:
-            with httpx.Client(timeout=self._timeout_seconds) as client:
+            auth = None
+            if self._username and self._password:
+                auth = (self._username, self._password)
+            with httpx.Client(
+                timeout=self._timeout_seconds,
+                auth=auth,
+                verify=self._verify_tls,
+            ) as client:
                 resp = client.post(url, json=body, headers=self._headers())
                 resp.raise_for_status()
                 data = resp.json()
