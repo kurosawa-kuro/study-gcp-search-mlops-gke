@@ -99,7 +99,7 @@ def load_features(
           ON r.request_id = rl.search_id
          AND r.property_id = rl.property_id
         LEFT JOIN latest_features f
-          USING (property_id)
+          ON f.property_id = rl.property_id
         WHERE rl.created_at >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL {window_days} DAY)
         ORDER BY rl.search_id, si.rank
         """.strip()

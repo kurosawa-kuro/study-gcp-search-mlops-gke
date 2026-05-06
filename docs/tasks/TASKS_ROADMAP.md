@@ -170,15 +170,15 @@ search-api → event logs → BigQuery curated → Composer (retrain_orchestrati
 
 **目的**: Meilisearch を廃止し、GKE 上で Elasticsearch を稼働させる。Cloud Run / Elastic Cloud / Cloud Build 案は不採用 (詳細は [`Elasticsearch-GCP稼働先比較.md`](Elasticsearch-GCP稼働先比較.md))。
 
-**進捗 (2026-05-06)**: **コーディング済み・検証前**。`make check` / live 検証で最終確定する。
+**進捗 (2026-05-06)**: **部分完了（live 検証で ES 経路は稼働確認済み）**。ECK 化・Meilisearch 完全撤去・doc 完全同期が残件。
 
 **作業**:
 - [ ] ECK (Elastic Cloud on Kubernetes) Operator を `infra/terraform/modules/elasticsearch/` で導入 (Helm provider)
 - [ ] `infra/manifests/elasticsearch/` に `Elasticsearch` CR + `Kibana` CR + PVC + NetworkPolicy
-- [ ] `app/services/adapters/elasticsearch_lexical.py::ElasticsearchLexical` 実装 (`LexicalSearchPort` を satisfy、フィルタは structured DSL に翻訳)
-- [ ] `composition_root.py` で `MeilisearchAdapter` → `ElasticsearchAdapter` 切替 (env flag で段階移行)
+- [x] `app/services/adapters/elasticsearch_lexical.py::ElasticsearchLexical` 実装 (`LexicalSearchPort` を satisfy、フィルタは structured DSL に翻訳)
+- [x] `composition_root.py` で `MeilisearchAdapter` → `ElasticsearchAdapter` 切替 (env flag で段階移行)
 - [ ] Redis 同義語辞書 (`SynonymExpanderPort`) は ES 経路でも継続使用 (BM25 投入直前の query expansion は変えない)
-- [ ] `scripts/ops/sync_elasticsearch.py` 新設 (`feature_mart.properties_cleaned` → ES index 同期)
+- [x] `scripts/ops/sync_elasticsearch.py` 新設 (`feature_mart.properties_cleaned` → ES index 同期)
 - [ ] Meilisearch 関連リソース (`infra/terraform/modules/meilisearch/` + Cloud Run service + GCS FUSE bucket) を撤去
 - [ ] [`docs/architecture/01_仕様と設計.md §1`](../architecture/01_仕様と設計.md) と §3 を ES に書き換え
 

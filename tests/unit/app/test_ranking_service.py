@@ -268,3 +268,57 @@ def test_run_search_rerank_with_higher_score_wins() -> None:
     )
     assert out[0].candidate.property_id == "P-001"
     assert out[0].final_rank == 1
+
+
+def test_run_search_rerank_tie_breaks_by_lexical_then_semantic_rank() -> None:
+    class _TieReranker:
+        def predict(self, instances: list[list[float]]) -> list[float]:
+            return [0.5 for _ in instances]
+
+    retriever = _FakeRetriever(
+        candidates=[
+            Candidate(
+                property_id="A",
+                lexical_rank=2,
+                semantic_rank=1,
+                me5_score=0.3,
+                property_features={
+                    "rent": 100000,
+                    "walk_min": 5,
+                    "age_years": 10,
+                    "area_m2": 30.0,
+                    "ctr": 0.1,
+                    "fav_rate": 0.02,
+                    "inquiry_rate": 0.01,
+                },
+            ),
+            Candidate(
+                property_id="B",
+                lexical_rank=1,
+                semantic_rank=3,
+                me5_score=0.3,
+                property_features={
+                    "rent": 100000,
+                    "walk_min": 5,
+                    "age_years": 10,
+                    "area_m2": 30.0,
+                    "ctr": 0.1,
+                    "fav_rate": 0.02,
+                    "inquiry_rate": 0.01,
+                },
+            ),
+        ]
+    )
+    publisher = _FakePublisher()
+    out = run_search(
+        retriever=retriever,
+        publisher=publisher,
+        request_id="req-tie",
+        query_text="駅近",
+        query_vector=[0.0],
+        filters={},
+        top_k=2,
+        reranker=_TieReranker(),
+        model_path="projects/p/locations/l/endpoints/tie",
+    )
+    assert [item.candidate.property_id for item in out] == ["B", "A"]

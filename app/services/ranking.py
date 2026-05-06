@@ -217,9 +217,16 @@ def run_search(
             )
         else:
             scores = _score_candidates(candidates, reranker)
-        # Stable descending sort; higher score wins. Ties preserve lexical order
-        # because ``sorted`` is stable and candidates are already lexically ordered.
-        order = sorted(range(len(candidates)), key=lambda i: -scores[i])
+        # Descending by reranker score; for tied scores prefer stronger lexical
+        # and semantic priors so deterministic seed cases stay stable.
+        order = sorted(
+            range(len(candidates)),
+            key=lambda i: (
+                -scores[i],
+                candidates[i].lexical_rank,
+                candidates[i].semantic_rank,
+            ),
+        )
         final_rank_by_index = {i: rank + 1 for rank, i in enumerate(order)}
         # publish in lexical (original) order so ranking_log matches the
         # candidates' `lexical_rank` column 1:1.
