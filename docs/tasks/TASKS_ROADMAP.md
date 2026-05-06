@@ -179,17 +179,16 @@ search-api → event logs → BigQuery curated → Composer (retrain_orchestrati
 
 **目的**: Meilisearch を廃止し、GKE 上で Elasticsearch を稼働させる。Cloud Run / Elastic Cloud / Cloud Build 案は不採用 (詳細は [`Elasticsearch-GCP稼働先比較.md`](Elasticsearch-GCP稼働先比較.md))。
 
-**進捗 (2026-05-06 18:55 JST)**: **コーディング/配線は前進、live 収束は未完**。
+**進捗 (2026-05-06 19:30 JST)**: **live 収束まで到達**。
 - ✅ 完了済み（この数時間）:
   - `search-api` を `gcr.io/cloudrun/hello` から Artifact Registry の本番イメージへ再デプロイ
   - `sync_elasticsearch` 実行で `synced_documents=5` を確認
   - `search-api` の ES 接続設定（URL / username / password / TLS verify）を反映
   - `search-api` NetworkPolicy を ECK pod label に合わせて修正
+  - ECK Elasticsearch の `ResourcesAwareManagement=False`（memory request/limit 不一致）を修正
+  - `service/elasticsearch` / `service/elasticsearch-es-http` Endpoints 復帰を確認
+  - `ops-search` / `ops-search-components` を再実行し、`lexical=4 / semantic=3 / rerank=5` で PASS
   - [`docs/architecture/01_仕様と設計.md`](../architecture/01_仕様と設計.md) の §1/§3 を ES canonical 文脈へ更新
-- ⚠️ 未完ブロッカー（いま止まっている点）:
-  - ECK Elasticsearch が `Ready` 未達（CR: `ApplyingChanges`）
-  - `service/elasticsearch` の Endpoints が空のタイミングがあり、`search-api -> ES` が timeout
-  - その結果、`ops-search-components` は lexical lane が `0` で FAIL
 
 **作業**:
 - [x] ECK (Elastic Cloud on Kubernetes) Operator を `infra/terraform/modules/elasticsearch/` で導入 (Helm provider)
@@ -325,7 +324,7 @@ Composer = 上位 orchestrator、Vertex Pipelines = 下位 ML executor。`train/
 | M-Wave3 | アプリ側 正解データログ実装 | ⏳ | EventWriter Port + Cloud Logging adapter |
 | M-Wave4 | LightGBM 接続死守ライン | ⏳ | `pipeline/training_job/main.py` 配線実装 |
 | M-Wave5 | 継続改善サイクル MVP | 🟡 進行中 | 学習 pipeline は復旧し、`ENABLE_RERANK=true` のまま `ops-accuracy-report` で `ndcg_at_10=1.0` を達成。残件は verify-live-acceptance 一式の最終通し |
-| M-Wave6 | Elasticsearch 移行 (GKE 上) | 🟡 実装・同期済み（live 収束待ち） | `search-api` 本番イメージ化 / `sync_elasticsearch` 成功 / ES 配線更新までは完了。残件は ECK Ready 収束と `ops-search-components` lexical PASS |
+| M-Wave6 | Elasticsearch 移行 (GKE 上) | ✅ | `search-api` 本番イメージ化 / `sync_elasticsearch` 成功 / ECK endpoint 復帰 / `ops-search-components` で lexical+semantic+rerank all non-zero を確認 |
 | M-Wave7 | Makefile 本格整理 | ⏳ | 仕様確定後の構造的整理 |
 | M-Wave8 | ドキュメント再統合 | ⏳ | canonical docs と Wave 成果の同期 |
 

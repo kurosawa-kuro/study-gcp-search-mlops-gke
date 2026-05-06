@@ -10,6 +10,7 @@ spec:
       count: 1
       config:
         node.store.allow_mmap: false
+        readiness.port: 9200
       podTemplate:
         spec:
           containers:
@@ -17,10 +18,16 @@ spec:
               resources:
                 requests:
                   cpu: "250m"
-                  memory: "512Mi"
+                  memory: "1Gi"
                 limits:
                   cpu: "1"
                   memory: "1Gi"
+              readinessProbe:
+                tcpSocket:
+                  port: 9200
+                initialDelaySeconds: 10
+                periodSeconds: 5
+                failureThreshold: 12
       volumeClaimTemplates:
         - metadata:
             name: elasticsearch-data
