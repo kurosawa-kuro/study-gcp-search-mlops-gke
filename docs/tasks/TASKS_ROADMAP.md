@@ -96,10 +96,10 @@ Meilisearch を廃止し、**Elasticsearch を採用** する。ただし Elasti
 - 重み付き relevance label: `click`=1, `detail_view`=2, `favorite`=3, `request_button_click`=4, `request_complete`=5, `inquiry_complete`=7, `contract`=10, `no_action`=0, `bounce`=0/-1
 
 **作業**:
-- [ ] `definitions/labeling/synthetic_actions.yaml` を canonical fixture として固定
-- [ ] BigQuery `search_events` / `search_impressions` / `user_actions` / `ranking_labels` / `training_dataset` / `evaluation_metrics` のスキーマを Terraform `infra/terraform/modules/data/` で宣言
-- [ ] Pydantic `FeedbackRequest.action` を Literal 5 種に絞り、4 種をアプリ経路で弾く
-- [ ] `tests/integration/parity/` に Event schema 整合性 contract を追加 (Python ↔ Terraform ↔ YAML ↔ Pydantic の lock-step)
+- [x] `definitions/labeling/synthetic_actions.yaml` を canonical fixture として固定
+- [x] BigQuery `search_events` / `search_impressions` / `user_actions` / `ranking_labels` / `training_dataset` / `evaluation_metrics` のスキーマを Terraform `infra/terraform/modules/data/` で宣言
+- [x] Pydantic `FeedbackRequest.action` を Literal 5 種に絞り、4 種をアプリ経路で弾く
+- [x] `tests/integration/parity/` に Event schema 整合性 contract を追加 (Python ↔ Terraform ↔ YAML ↔ Pydantic の lock-step)
 
 **完了条件**: 6 つの canonical 場所 (Pydantic / Terraform / labeling YAML / labeling SQL / EventWriter Port / `ranking_labels` 書き込み) で `action_type` enum と weight が一致。
 
@@ -116,11 +116,11 @@ Meilisearch を廃止し、**Elasticsearch を採用** する。ただし Elasti
 - 物件詳細ページの最小 UI 導線 (`detail_view` / `favorite` / `request_button_click` / `request_complete` を emit)
 
 **作業**:
-- [ ] `app/services/protocols/event_writer.py` 新設 + `app/services/adapters/cloud_logging_event_writer.py`
-- [ ] `app/services/protocols/event_repository.py` 新設 + `app/services/adapters/bigquery_event_repository.py`
-- [ ] `app/api/routers/feedback_router.py` を Wave 1 の新 prefix (`/api/v1/feedback`) に合わせる
-- [ ] `composition_root.py` で DI 配線 + `tests/_fakes/` に InMemory 版
-- [ ] `scripts/ci/layers.py` の RULES に新 Port を追加
+- [x] `app/services/protocols/event_writer.py` 新設 + `app/services/adapters/cloud_logging_event_writer.py`
+- [x] `app/services/protocols/event_repository.py` 新設 + `app/services/adapters/bigquery_event_repository.py`
+- [x] `app/api/routers/feedback_router.py` を Wave 1 の新 prefix (`/api/v1/feedback`) に合わせる
+- [x] `composition_root.py` で DI 配線 + `tests/_fakes/` に InMemory 版
+- [x] `scripts/ci/layers.py` の RULES に新 Port を追加
 
 **完了条件**: `/api/v1/feedback` 呼び出しが Cloud Logging → BQ Subscription → BigQuery `mlops.user_actions` まで到達することを `make ops-feedback` smoke で確認。
 
@@ -132,13 +132,11 @@ Meilisearch を廃止し、**Elasticsearch を採用** する。ただし Elasti
 
 **指針** ([`正解データ反映計画.md` §3.3-§3.4](正解データ反映計画.md)):
 
-現状 `pipeline/training_job/main.py` は `synthetic_ranking_frames(seed=42)` で乱数学習しており、`ranking_labels` 未接続。Composer DAG が幾ら trigger しても、配線実装が完了しない限り **正解データは Vertex Pipelines retrain に届かない** (= Composer 本線化の意義が根幹で破綻)。
+**実装状況 (2026-05-06)**: KFP パイプラインは `load_features` → `train_reranker` コンポーネントで **`mlops.ranking_labels` 等から結合した Parquet** を学習に使用（`pipeline/training_job/main.py` 先頭 docstring 参照）。旧 synthetic-only stub は撤去済み。
 
 **作業**:
-- [ ] `pipeline/training_job/main.py` で `ranker_repository.read_training_data(...)` を呼んで実 df を取得
-- [ ] `trainer.run(df=df)` に渡す配線実装。`run(df=None)` 経路 (synthetic) は CI 専用に分離
-- [ ] `LabelRepository` Port + `bigquery_label_repository` adapter (Composer DAG `retrain_orchestration` が labeling SQL → `ranking_labels` を作成)
-- [ ] `TrainingDatasetRepository` Port + `gcs_training_dataset_repository` adapter
+- [x] `pipeline/training_job/main.py` で実 BigQuery 由来の training frame を KFP コンポーネント経由で取得・学習
+- [x] Label / training dataset / metrics の Repository Port + BigQuery / GCS adapter（`app/container/infra.py` 配線）
 
 **完了条件**: 実 BigQuery `ranking_labels` 由来の training dataset で LightGBM が学習し、新 model version が Vertex Model Registry に登録されること。
 
@@ -159,10 +157,10 @@ search-api → event logs → BigQuery curated → Composer (retrain_orchestrati
 ```
 
 **作業**:
-- [ ] Composer DAG `retrain_orchestration` で Wave 4 配線実装を経由した実 retrain を 1 周走らせる
-- [ ] `monitoring_validation` DAG で `evaluation_metrics` を計算 + deployment gate 判定
-- [ ] `MetricsRepository` Port + `bigquery_metrics_repository` adapter
-- [ ] [`継続改善サイクル設計.md` §9](継続改善サイクル設計.md) の `/admin/mlops` 1 ページを Wave 1 の `/ops/admin/mlops` 配下に追加 (ログ件数 / label 作成状況 / dataset 作成状況 / 評価指標 / deployment gate 結果 / 現行モデル情報)
+- [ ] Composer DAG `retrain_orchestration` で Wave 4 配線実装を経由した実 retrain を 1 周走らせる（**GCP 上の live 検証**）
+- [ ] `monitoring_validation` DAG で `evaluation_metrics` を計算 + deployment gate 判定（**GCP live**）
+- [x] `MetricsRepository` Port + `bigquery_metrics_repository` adapter
+- [x] [`継続改善サイクル設計.md` §9](継続改善サイクル設計.md) の `/admin/mlops` 1 ページを Wave 1 の `/ops/admin/mlops` 配下に追加 (ログ件数 / label 作成状況 / dataset 作成状況 / 評価指標 / deployment gate 結果 / 現行モデル情報)
 
 **完了条件**: `make verify-live-acceptance` が継続改善サイクル完走を含めて PASS する。3 系統 all non-zero + Vertex Vector Search 実検索 + Feature View 経由 fetch + KServe 経由 rerank + deployment gate promote 判定 + KServe storageUri 反映までが 1 本線で動く。
 
@@ -283,6 +281,7 @@ Composer = 上位 orchestrator、Vertex Pipelines = 下位 ML executor。`train/
 | ID | フェーズ | 状態 | メモ |
 |---|---|---|---|
 | M-Pivot | Phase 形式廃止 + docs 撤去 | ✅ | README / CLAUDE / AGENTS / docs/architecture/01,03 から Phase 概念撤去完了 (2026-05-06) |
+| M-RunbookLocal | `04_検証.md` §2 相当（`verify-local-*` + search-api イメージ L2–L4） | ✅ | 2026-05-06 実施。Cloud ゲート（§3 / V1–V2）は `deploy-all` 完走後 — 手順とログは [`TASKS.md`](TASKS.md) |
 | M-Wave0 | Makefile 止血 | ⏳ | 多行 shell ブロックの scripts/ 移送 |
 | M-Wave1 | API 4 軸再設計 | ⏳ | `/api/v1/` `/ops/` `/ui/` `/` |
 | M-Wave2 | 正解データ仕様確定 | ⏳ | Event schema + 重み付き label + synthetic |

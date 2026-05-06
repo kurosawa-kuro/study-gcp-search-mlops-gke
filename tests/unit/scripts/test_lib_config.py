@@ -1,7 +1,8 @@
 """Pin scripts/lib/config.py — single source for ConfigMap schema.
 
-W2-8 で互換レイヤを撤去後、ConfigMap は Vertex Vector Search / Feature
-Online Store の resource ID + endpoint だけを持つ (8 keys)。本 test は:
+W2-8 で互換レイヤを撤去後、ConfigMap は Vertex + Feature Online Store
+の resource ID / endpoint に加え同義語用 `synonym_backend` /
+`synonym_redis_url` を持つ。本 test は:
 
 1. CONFIGMAP_KEYS が deployment.yaml が要求する全キーを覆う
 2. generate_configmap_data() の出力が all-string で必須 3 引数を埋める
@@ -26,6 +27,8 @@ EXPECTED_KEYS = (
     "vertex_feature_online_store_id",
     "vertex_feature_view_id",
     "vertex_feature_online_store_endpoint",
+    "synonym_backend",
+    "synonym_redis_url",
 )
 
 
@@ -54,6 +57,8 @@ def test_committed_example_defaults_are_empty_for_vertex_resources() -> None:
         "vertex_feature_online_store_endpoint",
     ):
         assert data[k] == ""
+    assert data["synonym_backend"] == "none"
+    assert data["synonym_redis_url"] == ""
 
 
 def test_generate_configmap_data_passes_through_live_vertex_outputs() -> None:

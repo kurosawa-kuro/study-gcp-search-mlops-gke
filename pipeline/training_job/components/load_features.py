@@ -131,9 +131,7 @@ def load_features(
                 "columns": list(df.columns),
                 "window_days": int(window_days),
                 "split_strategy": "FARM_FINGERPRINT(request_id) % 10 < 8",
-                "ranking_labels_table": (
-                    f"{project_id}.{mlops_dataset_id}.{ranking_labels_table}"
-                ),
+                "ranking_labels_table": (f"{project_id}.{mlops_dataset_id}.{ranking_labels_table}"),
             }
         )
         _log("DONE")

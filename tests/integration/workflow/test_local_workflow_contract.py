@@ -126,3 +126,31 @@ def test_readme_documents_local_verification_entrypoints() -> None:
         "make destroy-all",
     ):
         assert required in readme, f"README lost workflow entrypoint: {required}"
+
+
+def test_runbook_pins_local_hybrid_required_env_exports() -> None:
+    """`make api-dev-hybrid` の前提 env が runbook から消えないよう固定する。
+
+    `ENABLE_SEARCH=true` で local app を起動する契約上、search container は
+    Vertex Vector Search + Feature Online Store の 5 key が必須。ここを曖昧に
+    すると、起動時 RuntimeError (config incomplete) を再発させる。
+    """
+    runbook = _read("docs/runbook/04_検証.md")
+    for required in (
+        "make api-dev-hybrid",
+        "VERTEX_VECTOR_SEARCH_INDEX_ENDPOINT_ID",
+        "VERTEX_VECTOR_SEARCH_DEPLOYED_INDEX_ID",
+        "VERTEX_FEATURE_ONLINE_STORE_ID",
+        "VERTEX_FEATURE_VIEW_ID",
+        "VERTEX_FEATURE_ONLINE_STORE_ENDPOINT",
+        "terraform -chdir=infra/terraform/environments/dev output -raw",
+    ):
+        assert required in runbook, (
+            f"runbook local hybrid contract drifted; missing required env bootstrap: {required}"
+        )
+    assert "workflow contract" in runbook and "テストコード" in runbook, (
+        "runbook prompt block drifted (expected verification prompt with test-code mention)"
+    )
+    assert "PASS/FAIL" in runbook, (
+        "runbook prompt block drifted (expected PASS/FAIL reporting line)"
+    )
