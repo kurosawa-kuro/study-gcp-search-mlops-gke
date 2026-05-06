@@ -28,12 +28,12 @@
 
 以前は正解データを度外視した設計だった。現在は **正解データとモデル品質改善サイクルを大前提とする仕様** に変更している。
 
-- 行動ログ → 正解データ → 再学習 → 評価 → deployment gate → KServe 反映 を 1 本の継続改善サイクルとして実装する (詳細は [`継続改善サイクル設計.md`](継続改善サイクル設計.md))
+- 行動ログ → 正解データ → 再学習 → 評価 → deployment gate → KServe 反映 を 1 本の継続改善サイクルとして実装する (詳細は本書 Wave 2-5)
 - アプリ側 (EventWriter Port + structured log) とモデル側 (`pipeline/training_job/main.py` の Repository 配線) の両方で正解データ対応が必要
 
 ### §0.3 検索基盤の変更 (Meilisearch → Elasticsearch on GKE)
 
-Meilisearch を廃止し、**Elasticsearch を採用** する。ただし Elastic Cloud は利用せず、**GKE 上で Elasticsearch を稼働** させる (詳細は [`Elasticsearch-GCP稼働先比較.md`](Elasticsearch-GCP稼働先比較.md))。
+Meilisearch を廃止し、**Elasticsearch を採用** する。ただし Elastic Cloud は利用せず、**GKE 上で Elasticsearch を稼働** させる (詳細は本書 Wave 6)。
 
 ---
 
@@ -42,10 +42,10 @@ Meilisearch を廃止し、**Elasticsearch を採用** する。ただし Elasti
 | # | 課題 | 関連 doc | スコープ |
 |---|---|---|---|
 | 1 | プロジェクト方針の変更 (Phase 形式廃止) | — | ✅ ピボット完了 (本 sprint) |
-| 2 | 仕様の大幅変更 (正解データ + 継続改善サイクル前提) | [`継続改善サイクル設計.md`](継続改善サイクル設計.md) / [`正解データ反映計画.md`](正解データ反映計画.md) | アプリ側 + モデル側の両方で正解データ対応 |
-| 3 | 検索基盤の変更 (Meilisearch → Elasticsearch on GKE) | [`Elasticsearch-GCP稼働先比較.md`](Elasticsearch-GCP稼働先比較.md) | LexicalSearchPort の adapter 差し替え + GKE 上 ES 稼働 |
-| 4 | API エンドポイントの整理 (試行錯誤でつぎはぎ) | [`APIエンドポイント再設計案.md`](APIエンドポイント再設計案.md) | `/api/v1/` `/ops/` `/ui/` `/` 4 軸分離 |
-| 5 | Makefile / 実行系の破綻 (「コード直書き禁止」違反) | [`Makefile-多行禁止違反メモ.md`](Makefile-多行禁止違反メモ.md) | 危険箇所の止血のみ先行、本格整理は仕様確定後 |
+| 2 | 仕様の大幅変更 (正解データ + 継続改善サイクル前提) | 本書 Wave 2-5 | アプリ側 + モデル側の両方で正解データ対応 |
+| 3 | 検索基盤の変更 (Meilisearch → Elasticsearch on GKE) | 本書 Wave 6 | LexicalSearchPort の adapter 差し替え + GKE 上 ES 稼働 |
+| 4 | API エンドポイントの整理 (試行錯誤でつぎはぎ) | 本書 Wave 1 | `/api/v1/` `/ops/` `/ui/` `/` 4 軸分離 |
+| 5 | Makefile / 実行系の破綻 (「コード直書き禁止」違反) | 本書 Wave 0 / 7 | 危険箇所の止血のみ先行、本格整理は仕様確定後 |
 | 6 | Web アプリ公開基盤の不足 (独自ドメイン + HTTPS + DNS) | [`docs/runbook/05_運用.md`](../runbook/05_運用.md) | GCP でドメイン購入、証明書発行、DNS 委任、Gateway/HTTPRoute 反映 |
 
 ---
@@ -59,7 +59,7 @@ Meilisearch を廃止し、**Elasticsearch を採用** する。ただし Elasti
 **目的**: Makefile に直書きされた多行 shell ブロックを scripts/ 経由に寄せる (危険箇所のみ)。Makefile 全体の本格整理は Wave 7。
 
 **作業**:
-- [ ] [`Makefile-多行禁止違反メモ.md`](Makefile-多行禁止違反メモ.md) で指摘された違反箇所を grep で全件抽出
+- [ ] 本書に集約した違反観点 (Wave 0) で多行 shell 箇所を全件抽出
 - [ ] 多行 shell が混入している target (`verify-deploy-all` / `verify-destroy-all` / `verify-live-acceptance` / `verify-full-recreate` / `ops-deploy-monitor` / `ops-run-all-monitor` 等) を `scripts/setup/verify_*.py` / `scripts/ops/*_monitor.py` に移送
 - [ ] Makefile target は `uv run python -m scripts.<folder>.<module>` の 1 行 wrapper に統一
 - [ ] 既存 contract test (`tests/integration/workflow/`) を破らないこと
@@ -73,7 +73,7 @@ Meilisearch を廃止し、**Elasticsearch を採用** する。ただし Elasti
 
 **目的**: 正解データ / イベントログ / 再学習 / 評価 / Elasticsearch 連携を実装する **前に**、API 境界を 4 軸分離で一斉整理する。
 
-**指針** ([`APIエンドポイント再設計案.md` §1](APIエンドポイント再設計案.md)):
+**指針** (本書 Wave 1):
 
 ```
 /api/v1/*      公開 API (エンドユーザー、契約・認証境界、バージョニング必須)
@@ -98,7 +98,7 @@ Meilisearch を廃止し、**Elasticsearch を採用** する。ただし Elasti
 
 **目的**: Event schema / 重み付き relevance label / synthetic 注入の仕様を **コード・docs・YAML fixture で完全一致** させる。
 
-**指針** ([`継続改善サイクル設計.md` §5-§6](継続改善サイクル設計.md) + [`正解データ反映計画.md` §2-§3](正解データ反映計画.md)):
+**指針** (本書 Wave 2-5):
 
 - Event schema 共通契約: `search_events` / `search_impressions` / `user_actions` の 3 テーブル
 - `action_type` enum 8 種: アプリ emit 5 種 (`click` / `detail_view` / `favorite` / `request_button_click` / `request_complete`) + synthetic 注入専用 3 種 (`inquiry_complete` / `contract` / `bounce`)
@@ -118,7 +118,7 @@ Meilisearch を廃止し、**Elasticsearch を採用** する。ただし Elasti
 
 **目的**: search-api が Event schema 共通契約に従って構造化ログを Cloud Logging に流し、BQ Subscription 経由で BigQuery curated tables に着地する経路を完成させる。
 
-**指針** ([`正解データ反映計画.md` §3.1-§3.2](正解データ反映計画.md)):
+**指針** (本書 Wave 2-5):
 
 - `EventWriter` Port + `cloud_logging_event_writer` adapter (search-api on GKE 用)
 - `EventRepository` Port + `bigquery_event_repository` adapter (Composer DAG が呼ぶ)
@@ -139,7 +139,7 @@ Meilisearch を廃止し、**Elasticsearch を採用** する。ただし Elasti
 
 **目的**: ⚠️ **canonical 死守ライン** — `pipeline/training_job/main.py` から `ml/data/loaders/ranker_repository.py` (BigQuery loader、実装済) を呼ぶ配線実装を完了させる。
 
-**指針** ([`正解データ反映計画.md` §3.3-§3.4](正解データ反映計画.md)):
+**指針** (本書 Wave 2-5):
 
 **実装状況 (2026-05-06)**: KFP パイプラインは `load_features` → `train_reranker` コンポーネントで **`mlops.ranking_labels` 等から結合した Parquet** を学習に使用（`pipeline/training_job/main.py` 先頭 docstring 参照）。旧 synthetic-only stub は撤去済み。
 
@@ -155,7 +155,7 @@ Meilisearch を廃止し、**Elasticsearch を採用** する。ただし Elasti
 
 **目的**: Composer DAG 3 本 (`daily_feature_refresh` / `retrain_orchestration` / `monitoring_validation`) が継続改善サイクルを駆動し、deployment gate 評価で promote 判定が出て KServe storageUri が新 model artifact を指すまでを完走させる。
 
-**指針** ([`継続改善サイクル設計.md` §11](継続改善サイクル設計.md) + [`正解データ反映計画.md` §3.4-§3.5](正解データ反映計画.md)):
+**指針** (本書 Wave 5):
 
 ```
 search-api → event logs → BigQuery curated → Composer (retrain_orchestration)
@@ -169,7 +169,7 @@ search-api → event logs → BigQuery curated → Composer (retrain_orchestrati
 - [x] Composer DAG 相当の live retrain を 1 周実施（`ops-train-now`→`ops-train-wait` で **GCP 上の実行成功**）
 - [x] `evaluation_metrics` / deployment gate の live 判定を実施（`ops-accuracy-report` で `ndcg_at_10=1.0` 到達）
 - [x] `MetricsRepository` Port + `bigquery_metrics_repository` adapter
-- [x] [`継続改善サイクル設計.md` §9](継続改善サイクル設計.md) の `/admin/mlops` 1 ページを Wave 1 の `/ops/admin/mlops` 配下に追加 (ログ件数 / label 作成状況 / dataset 作成状況 / 評価指標 / deployment gate 結果 / 現行モデル情報)
+- [x] `/admin/mlops` 1 ページを Wave 1 の `/ops/admin/mlops` 配下に追加 (ログ件数 / label 作成状況 / dataset 作成状況 / 評価指標 / deployment gate 結果 / 現行モデル情報)
 
 **完了条件**: `make verify-live-acceptance` が継続改善サイクル完走を含めて PASS する。3 系統 all non-zero + Vertex Vector Search 実検索 + Feature View 経由 fetch + KServe 経由 rerank + deployment gate promote 判定 + KServe storageUri 反映までが 1 本線で動く。
 
@@ -177,7 +177,7 @@ search-api → event logs → BigQuery curated → Composer (retrain_orchestrati
 
 ### Wave 6 — Elasticsearch 移行 (GKE 上)
 
-**目的**: Meilisearch を廃止し、GKE 上で Elasticsearch を稼働させる。Cloud Run / Elastic Cloud / Cloud Build 案は不採用 (詳細は [`Elasticsearch-GCP稼働先比較.md`](Elasticsearch-GCP稼働先比較.md))。
+**目的**: Meilisearch を廃止し、GKE 上で Elasticsearch を稼働させる。Cloud Run / Elastic Cloud / Cloud Build 案は不採用。
 
 **進捗 (2026-05-06 19:30 JST)**: **live 収束まで到達**。
 - ✅ 完了済み（この数時間）:
@@ -198,7 +198,7 @@ search-api → event logs → BigQuery curated → Composer (retrain_orchestrati
 - [x] Redis 同義語辞書 (`SynonymExpanderPort`) は ES 経路でも継続使用 (BM25 投入直前の query expansion は変えない)
 - [x] `scripts/ops/sync_elasticsearch.py` 新設 (`feature_mart.properties_cleaned` → ES index 同期)
 - [x] Meilisearch 関連リソース (`infra/terraform/modules/meilisearch/` + Cloud Run service + GCS FUSE bucket) を撤去
-- [ ] [`docs/architecture/01_仕様と設計.md §1`](../architecture/01_仕様と設計.md) と §3 を ES に書き換え
+- [x] [`docs/architecture/01_仕様と設計.md §1`](../architecture/01_仕様と設計.md) と §3 を ES に書き換え
 
 **完了条件**: `/api/v1/search` の lexical 経路が ES 由来で動作し、3 系統 all non-zero が ES + VVS + KServe で成立。Meilisearch リソースが Terraform / manifests から削除済。
 
@@ -227,7 +227,7 @@ search-api → event logs → BigQuery curated → Composer (retrain_orchestrati
 - [ ] [`docs/architecture/03_実装カタログ.md`](../architecture/03_実装カタログ.md) を Elasticsearch / 4 軸 API / 新 Port / 配線実装で更新
 - [ ] [`docs/runbook/05_運用.md`](../runbook/05_運用.md) を新 PDCA 本線で書き直し
 - [ ] [`docs/runbook/04_検証.md`](../runbook/04_検証.md) の検証ゲートを継続改善サイクル完走基準で更新
-- [ ] [`継続改善サイクル設計.md`](継続改善サイクル設計.md) / [`正解データ反映計画.md`](正解データ反映計画.md) / [`APIエンドポイント再設計案.md`](APIエンドポイント再設計案.md) / [`Elasticsearch-GCP稼働先比較.md`](Elasticsearch-GCP稼働先比較.md) は **設計メモとして archive** (実装が canonical に取り込まれた時点で本 docs ディレクトリから外す or `docs/decisions/` 経由で ADR 化)
+- [x] 設計メモ群を `TASKS_ROADMAP.md` / `TASKS.md` に集約し、個別メモファイルを削除
 
 **完了条件**: `tasks/TASKS_ROADMAP.md` の「今の課題」6 件がすべて解消され、本 doc の記述と canonical docs (01 / 03 / runbook) が一致。
 
@@ -332,14 +332,10 @@ Composer = 上位 orchestrator、Vertex Pipelines = 下位 ML executor。`train/
 
 ## §6. 関連ドキュメント
 
-### §6.1 設計メモ (Wave で消化される)
+### §6.1 設計メモ統合
 
-- [`継続改善サイクル設計.md`](継続改善サイクル設計.md) — 行動ログ → 正解データ → 継続改善サイクルの全体方針 (Wave 2-5 の母艦)
-- [`正解データ反映計画.md`](正解データ反映計画.md) — 正解データ + 再学習を canonical に反映する計画 (Wave 3-5 の詳細)
-- [`APIエンドポイント再設計案.md`](APIエンドポイント再設計案.md) — `/api/v1` `/ops` `/ui` 4 軸分離の再設計案 (Wave 1 の詳細)
-- [`Elasticsearch-GCP稼働先比較.md`](Elasticsearch-GCP稼働先比較.md) — Cloud Run vs GKE Autopilot vs ECK の比較 (Wave 6 の判断材料)
-- [`Makefile-多行禁止違反メモ.md`](Makefile-多行禁止違反メモ.md) — Makefile 内多行禁止の指摘メモ (Wave 0 / Wave 7 の起点)
-- [`ルート昇格-実行メモ.md`](ルート昇格-実行メモ.md) — repo ルート昇格の実行メモ (M-Pivot で消化済、参考のみ)
+- 2026-05-06 に、設計メモ群は `TASKS_ROADMAP.md` / `TASKS.md` へ集約済み。
+- 今後の作業・判断・履歴は本ファイルと `TASKS.md` を正本とする。
 
 ### §6.2 canonical docs
 
@@ -356,51 +352,3 @@ Composer = 上位 orchestrator、Vertex Pipelines = 下位 ML executor。`train/
 - [`../../README.md`](../../README.md) — プロジェクト概要 + 技術スタック + 非負制約
 - [`../../CLAUDE.md`](../../CLAUDE.md) — Claude Code 向けガイド
 - [`../../AGENTS.md`](../../AGENTS.md) — Cursor / Codex 向け charter
-
-
-Findings
-
-
-make check が現在通りません。Makefile の check は test を含み、その test は repo 全体の uv run pytest を実行しますが、実際には 8 件失敗しています。特に ops 系 unit test と config drift/parity test が落ちています。根拠は Makefile (line 94) と test_ops_handler.py (line 27)、test_configmap_drift.py (line 72)、test_manifests_structure.py (line 321)、test_destroy_all_table_parity.py (line 123) です。
-
-
-
-ConfigMap 生成と Deployment 参照がずれています。deployment.yaml は synonym_backend と synonym_redis_url を configMapKeyRef で参照していますが、ConfigMap の生成元と example YAML にはそのキーがありません。将来 Redis 同義語辞書を有効化しても overlay/generator が値を出せず、設定導線が壊れやすい状態です。根拠は deployment.yaml (line 133), config.py (line 22), configmap.example.yaml (line 14) です。
-
-
-
-ops ルータの unit test が現在の実装契約とずれています。実装側は ops_router 自体に prefix を持たせず、親側で /ops を付与する設計ですが、テストは ops_router をそのまま mount して /ops/... を叩いているため 404 になります。実ランタイムの不具合というより、prefix-axis 再設計後にテストが追従できていません。根拠は ops_router.py (line 22), app/main.py (line 126), test_ops_handler.py (line 27) です。
-
-
-
-destroy-all の protected target baseline contract が古いままです。実装は 16 target を持っていますが、テストは 11 の前提で固定されています。これは destroy_all.py を更新したのに incident/contract 側の baseline 更新が漏れている状態で、destroy 系の safety net が赤いままです。根拠は destroy_all.py (line 79) と test_destroy_all_table_parity.py (line 123) です。
-
-
-
-lint が赤いです。未使用 noqa と曖昧 Unicode で ruff check . が失敗します。機能バグではありませんが、check 系を止めるので放置コストが高いです。根拠は noop_metrics_repository.py (line 14), noop_training_dataset_repository.py (line 14), load_features.py (line 4) です。
-
-
-
-repo 全体の型健全性は崩れています。make check 相当の mypy app ml pipeline は通りますが、repo 全体で見ると scripts/tests/fakes に多数の型崩れがあります。特に fake が protocol の SearchFilters 契約を守っておらず、今後 interface 変更の検知が鈍ります。根拠は in_memory_semantic_search.py (line 28), in_memory_lexical_search.py (line 23), in_memory_candidate_retriever.py (line 23), semantic_search.py (line 28), search.py (line 20) です。
-
-
-
-確認
-
-
-uv run ruff check . → 失敗
-
-uv run mypy app ml pipeline → 成功
-
-uv run mypy app ml pipeline scripts tests → 失敗
-
-uv run pytest -q → 8 failed, 755 passed, 2 skipped
-
-
-必要なら次に、この順で直します。
-
-ConfigMap drift 修正
-ops handler test 追従
-destroy-all baseline contract 更新
-lint 赤の掃除
-fake/protocol の型契約修正

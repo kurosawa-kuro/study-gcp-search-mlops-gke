@@ -17,12 +17,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 非負制約
 
-- **中核 5 要素を必須**: **Meilisearch BM25 + multilingual-e5 + Vertex AI Vector Search + RRF + LightGBM LambdaRank**。削除・置換・無効化は明示的な user 合意がない限り実施しない
+- **中核 5 要素を必須**: **Elasticsearch BM25 + multilingual-e5 + Vertex AI Vector Search + RRF + LightGBM LambdaRank**。削除・置換・無効化は明示的な user 合意がない限り実施しない
 - **Vertex Vector Search の役割**: ME5 ベクトル検索の本番 serving index。embedding 生成履歴・メタデータの正本は BigQuery 側 (data lake / serving index の二層構造)
 - **Feature Store**: Vertex AI Feature Store (Feature Group / Feature View / Feature Online Store) により training-serving skew を防ぐ。Online Store を使う実務では **Feature View が serving 接続点**。KServe から Feature Online Store を Feature View 経由で opt-in 参照
 - **Cloud Composer (本線 orchestration)**: Managed Airflow Gen 3 を本線オーケストレーターとして本実装 (`infra/terraform/modules/composer/` + `pipeline/dags/` の 3 DAG: `daily_feature_refresh` / `retrain_orchestration` / `monitoring_validation`)。本線 retrain schedule は Composer DAG。**Vertex `PipelineJobSchedule` は完全撤去** (同一 PipelineJob 二重起動禁止)。**Cloud Scheduler / Eventarc / Cloud Function trigger は軽量代替・smoke / manual trigger 用途として残す** (本線 retrain と同じ job を別系統で起動しないこと = 二重起動禁止)
-  - ⚠️ **Composer DAG `retrain_orchestration` の LightGBM 接続前提**: Composer DAG が `retrain_orchestration` で「ranking_labels → training_dataset → Vertex AI Pipelines retrain」を駆動すると spec で書かれているが、**`pipeline/training_job/main.py` が `ml/data/loaders/ranker_repository.py` (BigQuery loader、実装済) を呼ばずに `synthetic_ranking_frames` で乱数学習している配線忘れがある**。Composer DAG が幾ら trigger しても、`training_job/main.py` の配線実装まで未接続のままだと **正解データは Vertex Pipelines retrain に届かない**。canonical 死守ライン
-- **実案件 reference architecture**: Elasticsearch + Redis 同義語辞書 + ME5 + Vertex Vector Search + LightGBM。本リポは Meilisearch + Redis cache を **学習用 substitute** として据え置く。Port/Adapter で `MeilisearchAdapter` ↔ `ElasticsearchAdapter` の差し替えで到達可能な構造を維持。**Meilisearch を Elasticsearch に置換するのは user 合意必須**
+- **実案件 reference architecture**: Elasticsearch + Redis 同義語辞書 + ME5 + Vertex Vector Search + LightGBM。本リポも lexical lane は Elasticsearch を canonical とする
 - **Event schema 共通契約**: 検索 MLOps の継続改善サイクル (行動ログ → 正解データ → 再学習 → 評価 → deployment gate) を維持するため、以下の 3 テーブル + `action_type` enum + 重み付き relevance label を保つ:
   - `search_events` (`event_id` / `search_id` / `user_id` / `session_id` / `query` / `filters_json` / `timestamp` / `app_version` / `model_version`)
   - `search_impressions` (`event_id` / `search_id` / `property_id` / `rank` / `lexical_score` / `vector_score` / `rrf_score` / `rerank_score` / `timestamp`)
@@ -31,7 +30,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - 重み付き relevance label: `click`=1, `detail_view`=2, `favorite`=3, `request_button_click`=4, `request_complete`=5, `inquiry_complete`=7, `contract`=10, `no_action`=0, `bounce`=0/-1
   - **クリックは「完全な正解」ではなく弱教師信号**として扱う。複合ラベルで LightGBM LambdaRank 用 relevance label に変換するのが canonical
   - synthetic 注入は `definitions/labeling/synthetic_actions.yaml` から `ranking_labels.label_source='synthetic_*'` で擬似正解データを書き込む。`ml/labeling/` は psycopg / google.cloud import 禁止で純粋ロジック維持
-  - ⚠️ **canonical 死守ライン (LightGBM 接続)**: 上記 `ranking_labels` を集めても、**`pipeline/training_job/main.py` から Repository 経由で trainer に届く配線実装が完了していない限り LightGBM 学習に流れない**
+- ⚠️ **canonical 死守ライン (LightGBM 接続)**: `pipeline/training_job/main.py` から Repository 経由で実データを trainer に渡す配線を維持し、synthetic-only 学習へ退行させない
 
 ## 中核コードの不変ライン
 
@@ -58,7 +57,7 @@ make verify-local-ml           # ML / pipeline 単体 + smoke train
 make verify-local-hybrid       # workflow contract + 上記 2 つ
 
 # Cloud canonical (実 GCP)
-make deploy-all                # 15 step (tf-bootstrap → 2 段階 apply → seed → meili-sync → composer-deploy-dags → deploy-api)
+make deploy-all                # 15 step (tf-bootstrap → 2 段階 apply → seed → sync-elasticsearch → composer-deploy-dags → deploy-api)
 make run-all                   # canonical validation 12 step
 make destroy-all               # no-prompt teardown (4 段)
 ```
@@ -101,4 +100,4 @@ docs/
 ## Claude Code に任せる作業 vs 人間判断
 
 - **任せる**: Port/adapter/fake の boilerplate 提案、6 ファイル parity 同期、doc 同期、テスト雛形、`scripts/ci/layers.py` の `RULES` 追記提案、`mlops-dev-a` への `terraform apply` / `make deploy-all` (事前承認範囲)
-- **人間判断**: 中核コード変更 (`search_service.py` / `ranking.py` / `build_ranker_features`)、hybrid-search 5 要素の変更、Composer 二重起動判定、Meilisearch → Elasticsearch 等の置換、ADR 起案、`git push --force` / 共有 main への push、別 project への波及
+- **人間判断**: 中核コード変更 (`search_service.py` / `ranking.py` / `build_ranker_features`)、hybrid-search 5 要素の変更、Composer 二重起動判定、Elasticsearch 基盤構成の大幅変更、ADR 起案、`git push --force` / 共有 main への push、別 project への波及

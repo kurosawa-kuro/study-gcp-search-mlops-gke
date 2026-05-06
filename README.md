@@ -132,7 +132,7 @@ KServe storageUri patch (新 model artifact 反映)
 │   ├── workflow/              # KFP compile + Cloud Function trigger
 │   └── dags/                  # Composer DAG 3 本 + _pod.py helper
 ├── infra/
-│   ├── terraform/             # 11 modules (iam / data / messaging / monitoring / vertex / slo / streaming / vector_search / gke / kserve / composer)
+│   ├── terraform/             # 12 modules (iam / data / messaging / monitoring / vertex / slo / streaming / vector_search / gke / kserve / composer / elasticsearch)
 │   ├── manifests/             # K8s manifests (`kubectl apply -k`)
 │   ├── sql/                   # monitoring SQL (skew / drift)
 │   └── run/services/          # Cloud Build 定義 + Dockerfile (svc ごとに co-located)
@@ -192,7 +192,7 @@ make destroy-all               # no-prompt teardown (4 段)
 |---|---|
 | [`docs/architecture/`](docs/architecture/) | 仕様 + 実装カタログ |
 | [`docs/runbook/`](docs/runbook/) | 検証ゲート + 運用手順 |
-| [`docs/tasks/`](docs/tasks/) | current sprint + 長期 backlog + 設計メモ |
+| [`docs/tasks/`](docs/tasks/) | current sprint + 長期 backlog |
 | [`docs/decisions/`](docs/decisions/) | ADR (恒久対処ギャップの記録、0001〜0008) |
 | [`docs/conventions/`](docs/conventions/) | 命名 / 配置 / Make / Docker の規約セット |
 

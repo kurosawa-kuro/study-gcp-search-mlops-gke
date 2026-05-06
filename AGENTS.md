@@ -40,7 +40,7 @@ Important: Codex does **not** consume `.claude/hooks/` or `.claude/settings.json
 
 ## Repo Charter
 
-This is a personal technical learning project: 不動産ハイブリッド検索 + 継続改善 MLOps サイクル. Stack: **Cloud Composer (本線 orchestration) + Vertex AI Pipelines / Feature Store / Vector Search / Model Registry + GKE Deployment + KServe InferenceService + PMLE 統合技術**. Real-world reference architecture in design docs only: Elasticsearch + Redis 同義語辞書 + ME5 + Vertex AI Vector Search + LightGBM (the repo intentionally substitutes Meilisearch + Redis cache for learning-friendliness).
+This is a personal technical learning project: 不動産ハイブリッド検索 + 継続改善 MLOps サイクル. Stack: **Cloud Composer (本線 orchestration) + Vertex AI Pipelines / Feature Store / Vector Search / Model Registry + GKE Deployment + KServe InferenceService + PMLE 統合技術**. Real-world reference architecture and this repo canonical lexical path are Elasticsearch + Redis 同義語辞書 + ME5 + Vertex AI Vector Search + LightGBM.
 
 Primary navigation:
 
@@ -51,13 +51,12 @@ Primary navigation:
 
 ## Non-Negotiable Constraints
 
-- Keep the hybrid-search **5-element core** intact: **Meilisearch BM25 + multilingual-e5 + Vertex AI Vector Search + RRF + LightGBM LambdaRank**. Removal/replacement requires explicit user approval.
+- Keep the hybrid-search **5-element core** intact: **Elasticsearch BM25 + multilingual-e5 + Vertex AI Vector Search + RRF + LightGBM LambdaRank**. Removal/replacement requires explicit user approval.
 - **Vertex AI Feature Store (Feature Group / Feature View / Feature Online Store)** is mandatory (training-serving skew prevention). KServe references the Feature Online Store via Feature View opt-in.
 - **Cloud Composer (Managed Airflow Gen 3)** is the canonical orchestrator with 3 DAGs (`daily_feature_refresh` / `retrain_orchestration` / `monitoring_validation`). Vertex `PipelineJobSchedule` must stay removed (no double-trigger). Cloud Scheduler / Eventarc / Cloud Function triggers remain only as smoke / manual / lightweight alternatives — never running the same retrain job through two paths.
 - **Vertex Vector Search** is the production serving index for ME5 vector search. Canonical embedding history / metadata stays in BigQuery (data lake + serving index two-layer model).
 - **Event schema common contract**: `search_events` / `search_impressions` / `user_actions` (3 tables) + `action_type` enum 8 values (app emit 5: `click` / `detail_view` / `favorite` / `request_button_click` / `request_complete`; synthetic-only 3: `inquiry_complete` / `contract` / `bounce`) + weighted relevance label (`click`=1, `detail_view`=2, `favorite`=3, `request_button_click`=4, `request_complete`=5, `inquiry_complete`=7, `contract`=10, `no_action`=0, `bounce`=0/-1). Synthetic injection writes `ranking_labels.label_source='synthetic_*'` from `definitions/labeling/synthetic_actions.yaml`. `ml/labeling/` must remain pure (no psycopg / google.cloud imports).
-- ⚠️ **canonical death line (LightGBM wiring)**: `pipeline/training_job/main.py` must call `ml/data/loaders/ranker_repository.py` (BigQuery loader); without that wire-up, real `ranking_labels` never reach LightGBM training (current state: trainer uses `synthetic_ranking_frames`).
-- Meilisearch is a learning-friendly substitute for Elasticsearch; swap requires explicit user approval.
+- ⚠️ **canonical death line (LightGBM wiring)**: `pipeline/training_job/main.py` must call `ml/data/loaders/ranker_repository.py` (BigQuery loader) and keep real `ranking_labels` wired to LightGBM training (do not regress to synthetic-only training).
 
 Canonical references:
 
@@ -83,7 +82,7 @@ make verify-local-app          # FastAPI boot + DI + API contract
 make verify-local-ml           # ML / pipeline unit + smoke train
 make verify-local-hybrid       # workflow contract + the above
 
-make deploy-all                # 15-step deploy (tf-bootstrap → 2-stage apply → seed → meili-sync → composer-deploy-dags → deploy-api)
+make deploy-all                # 15-step deploy (tf-bootstrap → 2-stage apply → seed → sync-elasticsearch → composer-deploy-dags → deploy-api)
 make run-all                   # 12-step canonical validation
 make destroy-all               # no-prompt 4-stage teardown
 ```
@@ -98,7 +97,7 @@ make destroy-all               # no-prompt 4-stage teardown
 
 - Do not perform broad refactors by default; keep changes scoped to the task at hand.
 - The 5-element core, Composer × Vertex Pipelines hierarchy, and Event schema contract require explicit user approval to alter.
-- Force-pushes to main, ADR creation, and replacement of Meilisearch with Elasticsearch require human judgment, not agent autonomy.
+- Force-pushes to main and ADR creation require human judgment, not agent autonomy.
 
 ## Existing Chat Customizations
 
