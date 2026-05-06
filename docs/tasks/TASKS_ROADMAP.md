@@ -222,14 +222,43 @@ search-api → event logs → BigQuery curated → Composer (retrain_orchestrati
 
 **目的**: Wave 1-7 の成果を canonical docs に反映し、新しい仕様・実装で `01_仕様と設計.md` / `03_実装カタログ.md` / `runbook/05_運用.md` / `runbook/04_検証.md` が drift なく揃った状態にする。
 
+**現在地 (2026-05-06 21:00 JST)**: `make check` は **772 passed / 2 skipped / 7 failed**。実装成熟度は高いが、canonical 契約の drift が残っているため Wave 8 を最優先で収束させる。
+
 **作業**:
 - [ ] [`docs/architecture/01_仕様と設計.md`](../architecture/01_仕様と設計.md) を Wave 1-6 の最終仕様に追従
 - [ ] [`docs/architecture/03_実装カタログ.md`](../architecture/03_実装カタログ.md) を Elasticsearch / 4 軸 API / 新 Port / 配線実装で更新
 - [ ] [`docs/runbook/05_運用.md`](../runbook/05_運用.md) を新 PDCA 本線で書き直し
 - [ ] [`docs/runbook/04_検証.md`](../runbook/04_検証.md) の検証ゲートを継続改善サイクル完走基準で更新
+- [ ] `infra/terraform/modules/elasticsearch/` に `outputs.tf` / `versions.tf` を追加し module 4 ファイル契約を回復
+- [ ] `scripts/deploy/configmap_overlay.py` の ES URL 既定値と workflow contract の期待値 (`http://...`) を一致させる
+- [ ] `docs/architecture/01_仕様と設計.md` に workflow contract 必須文言 (見出し + Composer canonical wording) を復元
+- [ ] `docs/architecture/03_実装カタログ.md` に `sync-elasticsearch` canonical 表記を追加
+- [ ] `infra/run/services/reranker/Dockerfile` に apt cache mount (`--mount=type=cache,target=/var/cache/apt,sharing=locked`) を反映
 - [x] 設計メモ群を `TASKS_ROADMAP.md` / `TASKS.md` に集約し、個別メモファイルを削除
 
 **完了条件**: `tasks/TASKS_ROADMAP.md` の「今の課題」6 件がすべて解消され、本 doc の記述と canonical docs (01 / 03 / runbook) が一致。
+
+#### Wave 8 収束トリオ（2026-05-06 時点）
+
+1) Terraform module structure
+- 症状: `tests/integration/infra/test_terraform_module_structure.py` で `elasticsearch` module が fail
+- 直接原因: `infra/terraform/modules/elasticsearch/` に `outputs.tf` / `versions.tf` が欠落
+- 是正アクション: 2 ファイルを最小構成で追加し、`make check` 再実行で契約復帰を確認
+
+2) deploy-all workflow contract
+- 症状: `test_configmap_overlay_injects_live_vertex_outputs` が fail
+- 直接原因: `scripts/deploy/configmap_overlay.py` の `ELASTICSEARCH_URL` 既定値が `https://...` でテスト期待値 `http://...` と不一致
+- 是正アクション: canonical を `http://elasticsearch.search.svc.cluster.local:9200` に統一し、runbook 側の表記も整合
+
+3) docs canonical contract
+- 症状: `test_docs_canonical_contract.py` と `test_elasticsearch_workflow_contract.py` が fail
+- 直接原因: `docs/architecture/01_仕様と設計.md` の pin 文言欠落、および `03_実装カタログ.md` で `sync-elasticsearch` 表記が不足
+- 是正アクション: 必須見出し/文言を復元し、`03_実装カタログ.md` に canonical キーワードを明示追記
+
+4) ground truth contract (reranker image)
+- 症状: `test_kserve_dockerfiles_use_split_ml_extras` が fail
+- 直接原因: `infra/run/services/reranker/Dockerfile` に apt cache mount 行が欠落
+- 是正アクション: Dockerfile を contract 準拠に修正し、build 速度改善と再現性を同時に確保
 
 ---
 
