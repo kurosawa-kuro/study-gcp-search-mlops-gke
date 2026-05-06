@@ -283,13 +283,13 @@ Composer = 上位 orchestrator、Vertex Pipelines = 下位 ML executor。`train/
 | ID | フェーズ | 状態 | メモ |
 |---|---|---|---|
 | M-Pivot | Phase 形式廃止 + docs 撤去 | ✅ | README / CLAUDE / AGENTS / docs/architecture/01,03 から Phase 概念撤去完了 (2026-05-06) |
-| M-RunbookLocal | `04_検証.md` §2 相当（`verify-local-*` + search-api イメージ L2–L4） | ✅ | 2026-05-06 実施。Cloud ゲート（§3 / V1–V2）は `deploy-all` 完走後 — 手順とログは [`TASKS.md`](TASKS.md) |
+| M-RunbookLocal | `04_検証.md` §2 相当（`verify-local-*` + search-api イメージ L2–L4） | ✅ | 2026-05-06 実施。Cloud 復旧は逐次実行で `ops-search-components` / VVS / Feature Group まで PASS（詳細は [`TASKS.md`](TASKS.md)） |
 | M-Wave0 | Makefile 止血 | ⏳ | 多行 shell ブロックの scripts/ 移送 |
 | M-Wave1 | API 4 軸再設計 | ⏳ | `/api/v1/` `/ops/` `/ui/` `/` |
 | M-Wave2 | 正解データ仕様確定 | ⏳ | Event schema + 重み付き label + synthetic |
 | M-Wave3 | アプリ側 正解データログ実装 | ⏳ | EventWriter Port + Cloud Logging adapter |
 | M-Wave4 | LightGBM 接続死守ライン | ⏳ | `pipeline/training_job/main.py` 配線実装 |
-| M-Wave5 | 継続改善サイクル MVP | ⏳ | Composer DAG 3 本完走 + KServe 反映 |
+| M-Wave5 | 継続改善サイクル MVP | 🟡 進行中 | KServe 反映と serving path は復旧済み。残件は精度ゲート（`ops-accuracy-report` で `ndcg_at_10=1.0`） |
 | M-Wave6 | Elasticsearch 移行 (GKE 上) | 🟡 コーディング済み（検証前） | 実装反映済。`make check` / live 検証待ち |
 | M-Wave7 | Makefile 本格整理 | ⏳ | 仕様確定後の構造的整理 |
 | M-Wave8 | ドキュメント再統合 | ⏳ | canonical docs と Wave 成果の同期 |

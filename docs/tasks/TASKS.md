@@ -33,18 +33,26 @@
 
 **テスト追加**: 今回の実行分では不整合なし（未改修）。
 
-### Cloud — **中止**（実装優先のため中断）
+### Cloud — 逐次復旧（2026-05-06 16:45 JST）
 
 | Step | Result | メモ |
 |------|--------|------|
-| `make deploy-api`（初回） | FAIL | GKE `hybrid-search` 未存在（404） |
-| `make deploy-all` | **ABORT**（SIGINT） | **step 6 `tf-apply` 中**に `KeyboardInterrupt`。ログ: `make ... Error 130`。Terraform 論理エラーではなく中断。途中適用分は GCP に残る。 |
-| `make deploy-api`（再試行） | PARTIAL | Cloud Build SUCCESS → rollout で FAIL（当時 `namespace search` 未作成） |
-| `deploy_all --from-step 12` | FAIL | 単独実行は namespace / CRD 未準備のため不可だった |
+| Terraform stage1 (`module.iam/data/vector_search/vertex/gke/messaging/monitoring/slo/composer`) | PASS | `oncall_email` 対話入力待ちは `-var` 明示で解消。既存 Composer は `terraform import` 後に apply 成功 |
+| Terraform `-target=module.kserve` | PASS | `search` / `kserve-inference` namespace と CRD（KServe/ExternalSecret）を作成 |
+| `make apply-manifests` | PASS | 先行失敗（namespace/CRD不足）は解消 |
+| `make deploy-kserve-images` | PASS | encoder/reranker の Cloud Build 成功 + patch 成功 |
+| `make seed-lgbm-model` | PASS | `gs://mlops-dev-a-models/lgbm/latest/model.bst` を生成・配置 |
+| `make deploy-kserve-models` | PASS | `property-reranker` Ready 化（初回は storageUri 実体なしで FailedToLoad） |
+| `uv run python -m scripts.deploy.configmap_overlay` | PASS | `ELASTICSEARCH_URL` を ConfigMap に注入 |
+| `make deploy-api` + `make ops-livez` | PASS | rollout 成功、`{"status":"ok"}` |
+| `ops-search-components` | PASS | `lexical=4 semantic=3 rerank=5`（all non-zero） |
+| `ops-vertex-vector-search-smoke` | PASS | 5 neighbors 返却 |
+| `ops-vertex-feature-group` | PASS | `property_id='p001'` で 7 features 取得 |
+| `ops-accuracy-report` | **FAIL (gate未達)** | `ndcg_at_10=0.75`（target 1.0） |
 
-**再開するとき**: 状態確認後に `make deploy-all` をやり直す（冪等）。異常時は runbook / `state_recovery`。[`04_検証.md` §3](../runbook/04_検証.md)、[`05_運用.md` §1.6](../runbook/05_運用.md)。
+**次アクション（進行中）**: `seed-test → sync_elasticsearch → ops-train-now → ops-train-wait → ops-accuracy-report` を 1 ステップずつ実行し、`ndcg_at_10=1.0` 到達まで詰める。
 
-**いまの優先**: **ローカル実装を進める**。Cloud 検証は別セッション。
+**いまの優先**: Cloud 精度ゲートの達成（`ndcg_at_10=1.0`）。
 
 ---
 
