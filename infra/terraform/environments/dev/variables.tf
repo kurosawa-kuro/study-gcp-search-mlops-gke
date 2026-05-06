@@ -237,3 +237,25 @@ variable "redis_synonym_vpc_network" {
   type        = string
   default     = ""
 }
+
+# =========================================================================
+# Wave 6 — Elasticsearch on ECK
+# =========================================================================
+
+variable "enable_elasticsearch_eck" {
+  description = "Install Elastic Cloud on Kubernetes (ECK) operator via Helm and enable ECK-native Elasticsearch/Kibana manifests."
+  type        = bool
+  default     = true
+}
+
+variable "elastic_system_namespace" {
+  description = "Namespace used by the ECK operator release."
+  type        = string
+  default     = "elastic-system"
+}
+
+variable "eck_chart_version" {
+  description = "Optional pinned ECK Helm chart version. Empty uses latest chart."
+  type        = string
+  default     = ""
+}

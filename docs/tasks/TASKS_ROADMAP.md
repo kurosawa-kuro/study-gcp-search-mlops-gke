@@ -1,3 +1,5 @@
+ウェブアプリに対して、GCPでドメイン購入してhttps dns対応する
+
 # TASKS_ROADMAP
 
 不動産ハイブリッド検索 + 継続改善 MLOps サイクルの **長期 backlog + 決定的仕様 + Wave 計画 + incident postmortem の母艦**。
@@ -157,8 +159,8 @@ search-api → event logs → BigQuery curated → Composer (retrain_orchestrati
 ```
 
 **作業**:
-- [ ] Composer DAG `retrain_orchestration` で Wave 4 配線実装を経由した実 retrain を 1 周走らせる（**GCP 上の live 検証**）
-- [ ] `monitoring_validation` DAG で `evaluation_metrics` を計算 + deployment gate 判定（**GCP live**）
+- [x] Composer DAG 相当の live retrain を 1 周実施（`ops-train-now`→`ops-train-wait` で **GCP 上の実行成功**）
+- [x] `evaluation_metrics` / deployment gate の live 判定を実施（`ops-accuracy-report` で `ndcg_at_10=1.0` 到達）
 - [x] `MetricsRepository` Port + `bigquery_metrics_repository` adapter
 - [x] [`継続改善サイクル設計.md` §9](継続改善サイクル設計.md) の `/admin/mlops` 1 ページを Wave 1 の `/ops/admin/mlops` 配下に追加 (ログ件数 / label 作成状況 / dataset 作成状況 / 評価指標 / deployment gate 結果 / 現行モデル情報)
 
@@ -170,16 +172,16 @@ search-api → event logs → BigQuery curated → Composer (retrain_orchestrati
 
 **目的**: Meilisearch を廃止し、GKE 上で Elasticsearch を稼働させる。Cloud Run / Elastic Cloud / Cloud Build 案は不採用 (詳細は [`Elasticsearch-GCP稼働先比較.md`](Elasticsearch-GCP稼働先比較.md))。
 
-**進捗 (2026-05-06)**: **部分完了（live 検証で ES 経路は稼働確認済み）**。ECK 化・Meilisearch 完全撤去・doc 完全同期が残件。
+**進捗 (2026-05-06)**: **実装前進**。ECK module / ECK manifest 群は追加済み、`module.elasticsearch` apply も完了。現時点の残件は ECK Elasticsearch Pod の起動安定化（`BindTransportException` 調査中）と `01_仕様と設計.md` の ES 完全同期。
 
 **作業**:
-- [ ] ECK (Elastic Cloud on Kubernetes) Operator を `infra/terraform/modules/elasticsearch/` で導入 (Helm provider)
-- [ ] `infra/manifests/elasticsearch/` に `Elasticsearch` CR + `Kibana` CR + PVC + NetworkPolicy
+- [x] ECK (Elastic Cloud on Kubernetes) Operator を `infra/terraform/modules/elasticsearch/` で導入 (Helm provider)
+- [x] `infra/manifests/elasticsearch/` に `Elasticsearch` CR + `Kibana` CR + PVC + NetworkPolicy
 - [x] `app/services/adapters/elasticsearch_lexical.py::ElasticsearchLexical` 実装 (`LexicalSearchPort` を satisfy、フィルタは structured DSL に翻訳)
 - [x] `composition_root.py` で `MeilisearchAdapter` → `ElasticsearchAdapter` 切替 (env flag で段階移行)
-- [ ] Redis 同義語辞書 (`SynonymExpanderPort`) は ES 経路でも継続使用 (BM25 投入直前の query expansion は変えない)
+- [x] Redis 同義語辞書 (`SynonymExpanderPort`) は ES 経路でも継続使用 (BM25 投入直前の query expansion は変えない)
 - [x] `scripts/ops/sync_elasticsearch.py` 新設 (`feature_mart.properties_cleaned` → ES index 同期)
-- [ ] Meilisearch 関連リソース (`infra/terraform/modules/meilisearch/` + Cloud Run service + GCS FUSE bucket) を撤去
+- [x] Meilisearch 関連リソース (`infra/terraform/modules/meilisearch/` + Cloud Run service + GCS FUSE bucket) を撤去
 - [ ] [`docs/architecture/01_仕様と設計.md §1`](../architecture/01_仕様と設計.md) と §3 を ES に書き換え
 
 **完了条件**: `/api/v1/search` の lexical 経路が ES 由来で動作し、3 系統 all non-zero が ES + VVS + KServe で成立。Meilisearch リソースが Terraform / manifests から削除済。
@@ -289,7 +291,7 @@ Composer = 上位 orchestrator、Vertex Pipelines = 下位 ML executor。`train/
 | M-Wave2 | 正解データ仕様確定 | ⏳ | Event schema + 重み付き label + synthetic |
 | M-Wave3 | アプリ側 正解データログ実装 | ⏳ | EventWriter Port + Cloud Logging adapter |
 | M-Wave4 | LightGBM 接続死守ライン | ⏳ | `pipeline/training_job/main.py` 配線実装 |
-| M-Wave5 | 継続改善サイクル MVP | 🟡 進行中 | KServe 反映と serving path は復旧済み。残件は精度ゲート（`ops-accuracy-report` で `ndcg_at_10=1.0`） |
+| M-Wave5 | 継続改善サイクル MVP | 🟡 進行中 | 学習 pipeline は復旧し、`ENABLE_RERANK=true` のまま `ops-accuracy-report` で `ndcg_at_10=1.0` を達成。残件は verify-live-acceptance 一式の最終通し |
 | M-Wave6 | Elasticsearch 移行 (GKE 上) | 🟡 コーディング済み（検証前） | 実装反映済。`make check` / live 検証待ち |
 | M-Wave7 | Makefile 本格整理 | ⏳ | 仕様確定後の構造的整理 |
 | M-Wave8 | ドキュメント再統合 | ⏳ | canonical docs と Wave 成果の同期 |

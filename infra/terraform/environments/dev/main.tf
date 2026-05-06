@@ -143,6 +143,18 @@ module "kserve" {
   ]
 }
 
+module "elasticsearch" {
+  count  = var.enable_elasticsearch_eck ? 1 : 0
+  source = "../../modules/elasticsearch"
+
+  elastic_system_namespace = var.elastic_system_namespace
+  eck_chart_version        = var.eck_chart_version
+
+  depends_on = [
+    module.gke,
+  ]
+}
+
 module "messaging" {
   source = "../../modules/messaging"
 

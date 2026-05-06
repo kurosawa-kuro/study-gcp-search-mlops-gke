@@ -9,7 +9,11 @@ resources:
   - search-api/healthcheckpolicy.yaml
   - search-api/podmonitoring.yaml
   - search-api/configmap.example.yaml
-  - elasticsearch/elasticsearch-single-node.yaml
+  - elasticsearch/elasticsearch.yaml
+  - elasticsearch/kibana.yaml
+  - elasticsearch/kibana-pvc.yaml
+  - elasticsearch/networkpolicy.yaml
+  - elasticsearch/service.yaml
   - search-api/secretstore.yaml
   - search-api/synonym-redis-auth-externalsecret.yaml
   - search-api/iap-oauth-client-secret-externalsecret.yaml
