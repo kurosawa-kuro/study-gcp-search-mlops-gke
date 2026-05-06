@@ -105,10 +105,7 @@ Meilisearch を廃止し、**Elasticsearch を採用** する。ただし Elasti
 - 重み付き relevance label: `click`=1, `detail_view`=2, `favorite`=3, `request_button_click`=4, `request_complete`=5, `inquiry_complete`=7, `contract`=10, `no_action`=0, `bounce`=0/-1
 
 **作業**:
-- [x] `definitions/labeling/synthetic_actions.yaml` を canonical fixture として固定
-- [x] BigQuery `search_events` / `search_impressions` / `user_actions` / `ranking_labels` / `training_dataset` / `evaluation_metrics` のスキーマを Terraform `infra/terraform/modules/data/` で宣言
-- [x] Pydantic `FeedbackRequest.action` を Literal 5 種に絞り、4 種をアプリ経路で弾く
-- [x] `tests/integration/parity/` に Event schema 整合性 contract を追加 (Python ↔ Terraform ↔ YAML ↔ Pydantic の lock-step)
+- [x] 実装・検証完了（詳細ログは [`../architecture/03_実装カタログ.md`](../architecture/03_実装カタログ.md)）
 
 **完了条件**: 6 つの canonical 場所 (Pydantic / Terraform / labeling YAML / labeling SQL / EventWriter Port / `ranking_labels` 書き込み) で `action_type` enum と weight が一致。
 
@@ -125,11 +122,7 @@ Meilisearch を廃止し、**Elasticsearch を採用** する。ただし Elasti
 - 物件詳細ページの最小 UI 導線 (`detail_view` / `favorite` / `request_button_click` / `request_complete` を emit)
 
 **作業**:
-- [x] `app/services/protocols/event_writer.py` 新設 + `app/services/adapters/cloud_logging_event_writer.py`
-- [x] `app/services/protocols/event_repository.py` 新設 + `app/services/adapters/bigquery_event_repository.py`
-- [x] `app/api/routers/feedback_router.py` を Wave 1 の新 prefix (`/api/v1/feedback`) に合わせる
-- [x] `composition_root.py` で DI 配線 + `tests/_fakes/` に InMemory 版
-- [x] `scripts/ci/layers.py` の RULES に新 Port を追加
+- [x] 実装・検証完了（詳細ログは [`../architecture/03_実装カタログ.md`](../architecture/03_実装カタログ.md)）
 
 **完了条件**: `/api/v1/feedback` 呼び出しが Cloud Logging → BQ Subscription → BigQuery `mlops.user_actions` まで到達することを `make ops-feedback` smoke で確認。
 
@@ -141,11 +134,8 @@ Meilisearch を廃止し、**Elasticsearch を採用** する。ただし Elasti
 
 **指針** (本書 Wave 2-5):
 
-**実装状況 (2026-05-06)**: KFP パイプラインは `load_features` → `train_reranker` コンポーネントで **`mlops.ranking_labels` 等から結合した Parquet** を学習に使用（`pipeline/training_job/main.py` 先頭 docstring 参照）。旧 synthetic-only stub は撤去済み。
-
 **作業**:
-- [x] `pipeline/training_job/main.py` で実 BigQuery 由来の training frame を KFP コンポーネント経由で取得・学習
-- [x] Label / training dataset / metrics の Repository Port + BigQuery / GCS adapter（`app/container/infra.py` 配線）
+- [x] 実装・検証完了（詳細ログは [`../architecture/03_実装カタログ.md`](../architecture/03_実装カタログ.md)）
 
 **完了条件**: 実 BigQuery `ranking_labels` 由来の training dataset で LightGBM が学習し、新 model version が Vertex Model Registry に登録されること。
 
@@ -166,10 +156,7 @@ search-api → event logs → BigQuery curated → Composer (retrain_orchestrati
 ```
 
 **作業**:
-- [x] Composer DAG 相当の live retrain を 1 周実施（`ops-train-now`→`ops-train-wait` で **GCP 上の実行成功**）
-- [x] `evaluation_metrics` / deployment gate の live 判定を実施（`ops-accuracy-report` で `ndcg_at_10=1.0` 到達）
-- [x] `MetricsRepository` Port + `bigquery_metrics_repository` adapter
-- [x] `/admin/mlops` 1 ページを Wave 1 の `/ops/admin/mlops` 配下に追加 (ログ件数 / label 作成状況 / dataset 作成状況 / 評価指標 / deployment gate 結果 / 現行モデル情報)
+- [x] 実装・検証完了（詳細ログは [`../architecture/03_実装カタログ.md`](../architecture/03_実装カタログ.md)）
 
 **完了条件**: `make verify-live-acceptance` が継続改善サイクル完走を含めて PASS する。3 系統 all non-zero + Vertex Vector Search 実検索 + Feature View 経由 fetch + KServe 経由 rerank + deployment gate promote 判定 + KServe storageUri 反映までが 1 本線で動く。
 
@@ -179,26 +166,7 @@ search-api → event logs → BigQuery curated → Composer (retrain_orchestrati
 
 **目的**: Meilisearch を廃止し、GKE 上で Elasticsearch を稼働させる。Cloud Run / Elastic Cloud / Cloud Build 案は不採用。
 
-**進捗 (2026-05-06 19:30 JST)**: **live 収束まで到達**。
-- ✅ 完了済み（この数時間）:
-  - `search-api` を `gcr.io/cloudrun/hello` から Artifact Registry の本番イメージへ再デプロイ
-  - `sync_elasticsearch` 実行で `synced_documents=5` を確認
-  - `search-api` の ES 接続設定（URL / username / password / TLS verify）を反映
-  - `search-api` NetworkPolicy を ECK pod label に合わせて修正
-  - ECK Elasticsearch の `ResourcesAwareManagement=False`（memory request/limit 不一致）を修正
-  - `service/elasticsearch` / `service/elasticsearch-es-http` Endpoints 復帰を確認
-  - `ops-search` / `ops-search-components` を再実行し、`lexical=4 / semantic=3 / rerank=5` で PASS
-  - [`docs/architecture/01_仕様と設計.md`](../architecture/01_仕様と設計.md) の §1/§3 を ES canonical 文脈へ更新
-
-**作業**:
-- [x] ECK (Elastic Cloud on Kubernetes) Operator を `infra/terraform/modules/elasticsearch/` で導入 (Helm provider)
-- [x] `infra/manifests/elasticsearch/` に `Elasticsearch` CR + `Kibana` CR + PVC + NetworkPolicy
-- [x] `app/services/adapters/elasticsearch_lexical.py::ElasticsearchLexical` 実装 (`LexicalSearchPort` を satisfy、フィルタは structured DSL に翻訳)
-- [x] `composition_root.py` で `MeilisearchAdapter` → `ElasticsearchAdapter` 切替 (env flag で段階移行)
-- [x] Redis 同義語辞書 (`SynonymExpanderPort`) は ES 経路でも継続使用 (BM25 投入直前の query expansion は変えない)
-- [x] `scripts/ops/sync_elasticsearch.py` 新設 (`feature_mart.properties_cleaned` → ES index 同期)
-- [x] Meilisearch 関連リソース (`infra/terraform/modules/meilisearch/` + Cloud Run service + GCS FUSE bucket) を撤去
-- [x] [`docs/architecture/01_仕様と設計.md §1`](../architecture/01_仕様と設計.md) と §3 を ES に書き換え
+**進捗**: **実装・検証完了**（詳細ログは [`../architecture/03_実装カタログ.md`](../architecture/03_実装カタログ.md)）。
 
 **完了条件**: `/api/v1/search` の lexical 経路が ES 由来で動作し、3 系統 all non-zero が ES + VVS + KServe で成立。Meilisearch リソースが Terraform / manifests から削除済。
 
@@ -222,7 +190,7 @@ search-api → event logs → BigQuery curated → Composer (retrain_orchestrati
 
 **目的**: Wave 1-7 の成果を canonical docs に反映し、新しい仕様・実装で `01_仕様と設計.md` / `03_実装カタログ.md` / `runbook/05_運用.md` / `runbook/04_検証.md` が drift なく揃った状態にする。
 
-**現在地 (2026-05-06 21:00 JST)**: `make check` は **772 passed / 2 skipped / 7 failed**。実装成熟度は高いが、canonical 契約の drift が残っているため Wave 8 を最優先で収束させる。
+**現在地 (2026-05-06 21:12 JST)**: `make check` は **779 passed / 2 skipped / 0 failed**。残件は runbook 2 本の最終同期と live acceptance 最終通し。
 
 **作業**:
 - [x] [`docs/architecture/01_仕様と設計.md`](../architecture/01_仕様と設計.md) を Wave 1-6 の最終仕様に追従
@@ -243,22 +211,22 @@ search-api → event logs → BigQuery curated → Composer (retrain_orchestrati
 1) Terraform module structure
 - 症状: `tests/integration/infra/test_terraform_module_structure.py` で `elasticsearch` module が fail
 - 直接原因: `infra/terraform/modules/elasticsearch/` に `outputs.tf` / `versions.tf` が欠落
-- 是正アクション: 2 ファイルを最小構成で追加し、`make check` 再実行で契約復帰を確認
+- 是正アクション: 2 ファイルを最小構成で追加し、`make check` で契約復帰を確認（完了）
 
 2) deploy-all workflow contract
 - 症状: `test_configmap_overlay_injects_live_vertex_outputs` が fail
 - 直接原因: `scripts/deploy/configmap_overlay.py` の `ELASTICSEARCH_URL` 既定値が `https://...` でテスト期待値 `http://...` と不一致
-- 是正アクション: canonical を `http://elasticsearch.search.svc.cluster.local:9200` に統一し、runbook 側の表記も整合
+- 是正アクション: canonical を `http://elasticsearch.search.svc.cluster.local:9200` に統一（完了）
 
 3) docs canonical contract
 - 症状: `test_docs_canonical_contract.py` と `test_elasticsearch_workflow_contract.py` が fail
 - 直接原因: `docs/architecture/01_仕様と設計.md` の pin 文言欠落、および `03_実装カタログ.md` で `sync-elasticsearch` 表記が不足
-- 是正アクション: 必須見出し/文言を復元し、`03_実装カタログ.md` に canonical キーワードを明示追記
+- 是正アクション: 必須見出し/文言を復元し、`03_実装カタログ.md` に canonical キーワードを明示追記（完了）
 
 4) ground truth contract (reranker image)
 - 症状: `test_kserve_dockerfiles_use_split_ml_extras` が fail
 - 直接原因: `infra/run/services/reranker/Dockerfile` に apt cache mount 行が欠落
-- 是正アクション: Dockerfile を contract 準拠に修正し、build 速度改善と再現性を同時に確保
+- 是正アクション: Dockerfile を contract 準拠に修正（完了）
 
 ---
 
