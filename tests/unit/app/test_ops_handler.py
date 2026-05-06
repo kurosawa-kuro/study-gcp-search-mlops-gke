@@ -28,7 +28,7 @@ def test_destroy_check_returns_summary(monkeypatch) -> None:  # type: ignore[no-
             Finding(
                 label="Managed residual buckets", severity="WARN", items=("mlops-dev-a-tfstate",)
             ),
-            Finding(label="Cloud Run services", severity="FAIL", items=("meili-search",)),
+            Finding(label="Cloud Run services", severity="FAIL", items=("legacy-example-service",)),
         ],
     )
     client = TestClient(_build_test_app())

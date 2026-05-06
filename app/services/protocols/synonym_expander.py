@@ -2,7 +2,7 @@
 
 Phase 7 architecture diagram (`docs/architecture/01_仕様と設計.md` §2.2.1)
 shows ``Syn[Redis 同義語辞書 (query expansion)]`` feeding the lexical
-side before Meilisearch BM25. Implementations expand the user query with
+side before Elasticsearch BM25. Implementations expand the user query with
 synonyms (e.g. ``マンション`` → ``マンション アパート 共同住宅``) so BM25
 recall improves without changing the semantic-side embedding.
 

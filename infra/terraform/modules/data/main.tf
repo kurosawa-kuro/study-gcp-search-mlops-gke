@@ -227,7 +227,7 @@ resource "google_bigquery_table" "ranking_log" {
     { name = "ts", type = "TIMESTAMP", mode = "REQUIRED" },
     { name = "property_id", type = "STRING", mode = "REQUIRED" },
     { name = "schema_version", type = "INT64", mode = "NULLABLE", description = "Ranking log schema version. v2 introduces separated lexical/semantic ranks." },
-    { name = "lexical_rank", type = "INT64", mode = "REQUIRED", description = "Initial rank from lexical retrieval (Meilisearch BM25)" },
+    { name = "lexical_rank", type = "INT64", mode = "REQUIRED", description = "Initial rank from lexical retrieval (Elasticsearch BM25; legacy Meilisearch)" },
     { name = "semantic_rank", type = "INT64", mode = "NULLABLE", description = "Initial rank from BigQuery VECTOR_SEARCH" },
     { name = "rrf_rank", type = "INT64", mode = "NULLABLE", description = "Rank after RRF fusion before LambdaRank rerank" },
     { name = "final_rank", type = "INT64", mode = "NULLABLE", description = "Post-rerank rank. Equals lexical_rank until Phase 6 wires the booster." },
@@ -521,39 +521,8 @@ resource "google_artifact_registry_repository" "mlops" {
 }
 
 # =========================================================================
-# Secret Manager — Meilisearch master key
+# Secret Manager — IAP OAuth client (dev placeholder; real value out-of-band)
 # =========================================================================
-#
-# 値は Terraform で `random_password` を生成して `secret_version` に流し込む。
-# 旧運用は「値を out-of-band で `gcloud secrets versions add` する」だったが、
-# Phase 7 PDCA loop (`destroy-all → deploy-all → run-all`) では destroy で
-# secret resource ごと消えるため毎回手で再投入が必要になり、deploy-all が
-# 一発で完走しない (meili-search Cloud Run が `secret has no enabled
-# version` で起動失敗 → search-api → Meilisearch が DNS 失敗で 404)。
-# `random_password` で TF が値を所有することで、destroy 後の deploy で
-# 自動的に新しいキーが生成され、関連する Cloud Run / ExternalSecret が
-# 共通の `latest` を参照する。
-#
-# Production 化時の切替: `random_password.meili_master_key` を削除し、
-# `secret_data` を `gcloud secrets versions add` か Vault などの外部値で
-# 上書きする overlay を `environments/prod/` に置く。
-resource "random_password" "meili_master_key" {
-  length  = 64
-  special = false
-}
-
-resource "google_secret_manager_secret" "meili_master_key" {
-  secret_id = "meili-master-key"
-  replication {
-    auto {}
-  }
-}
-
-resource "google_secret_manager_secret_version" "meili_master_key" {
-  secret      = google_secret_manager_secret.meili_master_key.id
-  secret_data = random_password.meili_master_key.result
-}
-
 resource "google_secret_manager_secret" "search_api_iap_oauth_client_secret" {
   secret_id = "search-api-iap-oauth-client-secret"
   replication {
@@ -604,18 +573,6 @@ resource "google_storage_bucket_iam_member" "api_models_read" {
   member = "serviceAccount:${var.service_accounts.api.email}"
 }
 
-resource "google_secret_manager_secret_iam_member" "api_meili_master_key_access" {
-  secret_id = google_secret_manager_secret.meili_master_key.id
-  role      = "roles/secretmanager.secretAccessor"
-  member    = "serviceAccount:${var.service_accounts.api.email}"
-}
-
-resource "google_secret_manager_secret_iam_member" "external_secrets_meili_master_key_access" {
-  secret_id = google_secret_manager_secret.meili_master_key.id
-  role      = "roles/secretmanager.secretAccessor"
-  member    = "serviceAccount:${var.service_accounts.external_secrets.email}"
-}
-
 resource "google_secret_manager_secret_iam_member" "external_secrets_search_api_iap_oauth_client_secret_access" {
   secret_id = google_secret_manager_secret.search_api_iap_oauth_client_secret.id
   role      = "roles/secretmanager.secretAccessor"
@@ -645,12 +602,6 @@ resource "google_storage_bucket_iam_member" "train_pipeline_root_admin" {
   bucket = google_storage_bucket.pipeline_root.name
   role   = "roles/storage.objectAdmin"
   member = "serviceAccount:${var.service_accounts.job_train.email}"
-}
-
-resource "google_secret_manager_secret_iam_member" "job_train_meili_master_key_access" {
-  secret_id = google_secret_manager_secret.meili_master_key.id
-  role      = "roles/secretmanager.secretAccessor"
-  member    = "serviceAccount:${var.service_accounts.job_train.email}"
 }
 
 # sa-job-embed: read raw.properties via feature_mart.properties_cleaned view +

@@ -89,11 +89,9 @@ resource "google_service_account_iam_member" "github_wif_binding" {
 # ---------------------------------------------------------------------------
 # Admin user → sa-api TokenCreator (local-ops impersonation).
 #
-# Meilisearch の初期 document sync は sa-api identity (audience = meili-search
-# Cloud Run URL) での OIDC token が必須。開発者 user account が
-# `gcloud auth print-identity-token --impersonate-service-account=sa-api
-# --audiences=...` を叩くには TokenCreator 権限が要る。Phase 5 の実運用で
-# ここが漏れて 2 時間ハマった教訓を Terraform 化して自動化する。
+# Some local tooling calls APIs as sa-api via
+# `gcloud auth print-identity-token --impersonate-service-account=sa-api`;
+# user accounts need TokenCreator on sa-api for that path.
 #
 # admin_user_emails は `env/config/setting.yaml` 経由で渡す想定 (empty list
 # なら binding 無し)。

@@ -54,9 +54,9 @@ export PROJECT_ID REGION API_SERVICE ARTIFACT_REPO VERTEX_LOCATION PIPELINE_ROOT
         apply-manifests \
         deploy-all deploy-all-direct run-all destroy-all seed-test seed-test-clean \
 	verify-deploy-all verify-destroy-all verify-live-acceptance verify-full-recreate \
-        sync-meili sync-synonyms \
+        sync-elasticsearch sync-synonyms \
         label-build build-training-dataset train-smoke train-smoke-persist api-dev api-dev-hybrid \
-        verify-local-app verify-local-ml verify-local-hybrid clean \
+        verify-local-parity verify-local-app verify-local-ml verify-local-hybrid clean \
         docker-auth build-ml-base-local deploy-api deploy-api-local deploy-kserve-images deploy-kserve-images-local deploy-kserve-models kube-creds \
         composer-deploy-dags build-composer-runner ops-composer-trigger ops-composer-list-runs ops-composer-task-states \
 		ops-deploy-monitor \
@@ -168,7 +168,7 @@ run-all: ## End-to-end validation flow after deploy (layer check → seed → tr
 run-all-core: ## Core validation flow after deploy (no monitor wrapper)
 	$(MAKE) check-layers
 	$(MAKE) seed-test
-	$(MAKE) sync-meili
+	$(MAKE) sync-elasticsearch
 	$(MAKE) ops-train-now
 	$(MAKE) ops-train-wait
 	$(MAKE) ops-livez
@@ -216,8 +216,8 @@ seed-test-clean: ## Drop the test seed data (benign if absent)
 sync-synonyms: ## Sync synonym dictionary YAML -> Cloud Memorystore for Redis (skips when Memorystore not provisioned)
 	uv run python -m scripts.ops.sync_synonyms
 
-sync-meili: ## Sync feature_mart.properties_cleaned -> Meilisearch (run-all-core 用、PDCA dev 想定)
-	uv run python -m scripts.ops.sync_meili --require-identity-token
+sync-elasticsearch: ## Sync feature_mart.properties_cleaned -> Elasticsearch (canonical lexical lane)
+	uv run python -m scripts.ops.sync_elasticsearch
 
 # ----- App / Job smoke commands (local) -----
 
@@ -236,8 +236,11 @@ train-smoke-persist: ## Dry-run ranker trainer and copy the model to $(MODEL_PAT
 api-dev: ## Start uvicorn locally (rerank-free /search requires ENABLE_SEARCH=1 + BQ creds)
 	ENABLE_SEARCH=false uv run uvicorn app.main:app --reload
 
-api-dev-hybrid: ## Start local-first hybrid stack (app + local encoder/reranker + local Meili if present)
+api-dev-hybrid: ## Start local-first hybrid stack (app + local encoder/reranker + Elasticsearch if reachable)
 	env UV_CACHE_DIR=/tmp/uv-cache uv run --extra ml-encoder --extra ml-reranker python -m scripts.setup.local_hybrid
+
+verify-local-parity: ## Offline parity + codebase invariants (no GCP; catches doc/spec drift in CI)
+	uv run pytest tests/integration/parity -q
 
 verify-local-app: ## Fast local app loop (layer check + app/script unit tests, no live GCP)
 	$(MAKE) check-layers
@@ -253,7 +256,8 @@ verify-local-ml: ## Fast local ML loop (ML/pipeline unit tests + smoke train, no
 	uv run --extra ml-train --extra pipelines pytest tests/unit/ml tests/unit/pipeline -q
 	$(MAKE) train-smoke
 
-verify-local-hybrid: ## Local hybrid loop (contract + app + ML; avoids deploy-all/run-all live steps)
+verify-local-hybrid: ## Local hybrid loop (parity + contract + app + ML; avoids deploy-all/run-all live steps)
+	$(MAKE) verify-local-parity
 	uv run pytest tests/integration/workflow/test_ground_truth_contract.py -q
 	$(MAKE) verify-local-app
 	$(MAKE) verify-local-ml

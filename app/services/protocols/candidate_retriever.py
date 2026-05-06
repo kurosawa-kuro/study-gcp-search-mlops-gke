@@ -1,7 +1,7 @@
 """``CandidateRetriever`` Port — hybrid lexical + semantic candidate retrieval.
 
 Implementations: ``BigQueryCandidateRetriever`` (production; runs
-Meilisearch for BM25, BigQuery ``VECTOR_SEARCH`` for semantic, then
+Elasticsearch for BM25, BigQuery ``VECTOR_SEARCH`` for semantic, then
 RRF-fuses and enriches with property features from BigQuery).
 
 Failure semantics: implementations raise on transient backend failures

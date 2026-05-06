@@ -85,7 +85,7 @@ def fake_settings() -> ApiSettings:
         ranking_log_topic="",
         feedback_topic="",
         retrain_topic="",
-        meili_base_url="",
+        elasticsearch_url="http://elasticsearch.search.svc.cluster.local:9200",
         kserve_encoder_url="",
         kserve_reranker_url="",
     )

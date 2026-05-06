@@ -25,10 +25,12 @@ from typing import Any
 import pytest
 
 from app.container.search import SearchBuilder
+from app.services.adapters.elasticsearch_lexical import ElasticsearchLexical
 from app.services.adapters.feature_online_store_fetcher import FeatureOnlineStoreFetcher
 from app.services.adapters.vertex_vector_search_semantic_search import (
     VertexVectorSearchSemanticSearch,
 )
+from app.services.noop_adapters import NoopLexicalSearch
 from app.settings import ApiSettings
 
 
@@ -51,7 +53,6 @@ def _settings(**overrides: object) -> ApiSettings:
         "vertex_feature_online_store_id": "property_features_store",
         "vertex_feature_view_id": "property_features_view",
         "vertex_feature_online_store_endpoint": "abc.asia-northeast1-fos.googleapis.com",
-        "meili_base_url": "",
         "kserve_encoder_url": "",
         "kserve_reranker_url": "",
         "ranking_log_topic": "",
@@ -138,3 +139,30 @@ def test_resolve_feature_fetcher_fails_loud_when_endpoint_missing() -> None:
     builder = _builder(_settings(vertex_feature_online_store_endpoint=""))
     with pytest.raises(RuntimeError, match="Feature Online Store config is incomplete"):
         builder.resolve_feature_fetcher()
+
+
+# ----------------------------------------------------------------------------
+# Lexical backend (Elasticsearch BM25)
+# ----------------------------------------------------------------------------
+
+
+def test_resolve_lexical_returns_elasticsearch_when_url_configured() -> None:
+    lex = _builder(
+        _settings(
+            elasticsearch_url="http://elasticsearch.search.svc.cluster.local:9200",
+        )
+    )._resolve_lexical_search(override_lexical=None)
+    assert isinstance(lex, ElasticsearchLexical)
+
+
+def test_resolve_lexical_fails_loud_when_es_backend_enable_search_no_lexical_url() -> None:
+    builder = _builder(_settings(enable_search=True, elasticsearch_url=""))
+    with pytest.raises(RuntimeError, match="ELASTICSEARCH_URL is empty"):
+        builder._resolve_lexical_search(override_lexical=None)
+
+
+def test_resolve_lexical_noop_when_search_disabled_and_no_lexical_urls() -> None:
+    lex = _builder(
+        _settings(enable_search=False, elasticsearch_url=""),
+    )._resolve_lexical_search(override_lexical=None)
+    assert isinstance(lex, NoopLexicalSearch)

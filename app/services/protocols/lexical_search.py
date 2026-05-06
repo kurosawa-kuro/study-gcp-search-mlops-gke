@@ -18,8 +18,8 @@ from app.domain.search import SearchFilters
 class LexicalSearchPort(Protocol):
     """Returns lexical rank list as ``(property_id, rank)`` named tuples.
 
-    Implementations: ``MeilisearchLexical`` (Cloud Run BM25) /
-    ``NoopLexicalSearch`` (when ``MEILI_BASE_URL`` is empty).
+    Implementations: ``ElasticsearchLexical`` (cluster BM25) /
+    ``NoopLexicalSearch`` (``ENABLE_SEARCH=false`` or empty ``ELASTICSEARCH_URL``).
     """
 
     def search(

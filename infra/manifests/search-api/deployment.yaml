@@ -43,20 +43,20 @@ spec:
                 configMapKeyRef:
                   name: search-api-config
                   key: models_bucket
-            - name: MEILI_BASE_URL
+            - name: ELASTICSEARCH_URL
               valueFrom:
                 configMapKeyRef:
                   name: search-api-config
-                  key: meili_base_url
-            # `meili-master-key` Secret は External Secrets Operator が
-            # GCP Secret Manager (`meili-master-key`) から `search`
-            # namespace に同期する。Pod は生成済み K8s Secret を読むだけに
-            # 留め、Secret Manager SDK を直接持たない。
-            - name: MEILI_MASTER_KEY
+                  key: elasticsearch_url
+            - name: ELASTICSEARCH_INDEX
               valueFrom:
-                secretKeyRef:
-                  name: meili-master-key
-                  key: MEILI_MASTER_KEY
+                configMapKeyRef:
+                  name: search-api-config
+                  key: elasticsearch_index
+            # Optional API key (Elastic Cloud / secured cluster). Dev single-node ES
+            # often has security disabled — leave empty.
+            - name: ELASTICSEARCH_API_KEY
+              value: ""
             - name: RANKING_LOG_TOPIC
               value: "ranking-log"
             - name: FEEDBACK_TOPIC

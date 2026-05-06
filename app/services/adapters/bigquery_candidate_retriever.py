@@ -1,6 +1,6 @@
 """``CandidateRetriever`` adapter — Phase 7 canonical hybrid retrieval.
 
-Lexical (Meilisearch) + semantic (Vertex AI Vector Search) → RRF fusion →
+Lexical (Elasticsearch BM25) + semantic (Vertex AI Vector Search) → RRF fusion →
 property feature enrichment via BigQuery joins on ``properties_cleaned`` +
 ``property_features_daily``.
 
@@ -26,7 +26,7 @@ class BigQueryCandidateRetriever:
 
     Args:
         project_id: GCP project.
-        lexical: lexical search adapter (Meilisearch).
+        lexical: lexical search adapter (Elasticsearch BM25).
         semantic: Vertex Vector Search adapter (canonical Phase 7 path).
         embeddings_table: fully-qualified ``project.dataset.table`` for
             ``feature_mart.property_embeddings`` — kept as the embedding

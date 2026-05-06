@@ -29,7 +29,7 @@ class Candidate:
     """
 
     property_id: str
-    # BM25-side rank from lexical retrieval (Meilisearch).
+    # BM25-side rank from lexical retrieval (Elasticsearch).
     lexical_rank: int
     # VECTOR_SEARCH-side rank from semantic retrieval (BigQuery).
     semantic_rank: int

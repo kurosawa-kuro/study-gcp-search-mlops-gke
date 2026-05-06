@@ -22,6 +22,7 @@ MANIFESTS_DIR = REPO_ROOT / "infra" / "manifests"
 SEARCH_API_DIR = MANIFESTS_DIR / "search-api"
 KSERVE_DIR = MANIFESTS_DIR / "kserve"
 POLICIES_DIR = MANIFESTS_DIR / "policies"
+ELASTICSEARCH_DIR = MANIFESTS_DIR / "elasticsearch"
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -41,7 +42,7 @@ def test_kustomization_lists_every_yaml_under_manifests() -> None:
     listed = {entry for entry in kust.get("resources", [])}
     # Every non-kustomization yaml under infra/manifests/**/*.yaml must be listed
     on_disk: set[str] = set()
-    for subdir in (SEARCH_API_DIR, KSERVE_DIR, POLICIES_DIR):
+    for subdir in (SEARCH_API_DIR, KSERVE_DIR, POLICIES_DIR, ELASTICSEARCH_DIR):
         for yml in sorted(subdir.glob("*.yaml")):
             on_disk.add(f"{subdir.name}/{yml.name}")
     missing = on_disk - listed
@@ -122,23 +123,6 @@ def test_search_api_secretstore_uses_gcpsm_provider() -> None:
     assert store["kind"] == "SecretStore"
     assert store["metadata"]["namespace"] == "search"
     assert "gcpsm" in store["spec"]["provider"]
-
-
-def test_search_api_external_secret_syncs_meili_master_key() -> None:
-    ext = _load(SEARCH_API_DIR / "meili-master-key-externalsecret.yaml")
-    assert ext["apiVersion"].startswith("external-secrets.io/")
-    assert ext["kind"] == "ExternalSecret"
-    assert ext["metadata"]["name"] == "meili-master-key"
-    assert ext["metadata"]["namespace"] == "search"
-    assert ext["spec"]["secretStoreRef"] == {"name": "gcp-secretmanager", "kind": "SecretStore"}
-    assert ext["spec"]["target"]["name"] == "meili-master-key"
-    data = ext["spec"]["data"]
-    assert data == [
-        {
-            "secretKey": "MEILI_MASTER_KEY",
-            "remoteRef": {"key": "meili-master-key"},
-        }
-    ]
 
 
 def test_search_api_external_secret_syncs_iap_client_secret() -> None:

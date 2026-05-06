@@ -12,9 +12,8 @@ VERTEX_ENDPOINTS: list[str] = [
     "property-reranker-endpoint",
 ]
 
-BUCKET_SUFFIXES: list[str] = ["models", "artifacts", "pipeline-root", "meili-data"]
+BUCKET_SUFFIXES: list[str] = ["models", "artifacts", "pipeline-root"]
 
 GKE_CLUSTER_NAME_DEFAULT = "hybrid-search"
-MEILI_SERVICE_NAME_DEFAULT = "meili-search"
 
 VERTEX_MODEL_NAMES: list[str] = ["property-encoder", "property-reranker"]

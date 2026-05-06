@@ -24,12 +24,6 @@ variable "pipeline_root_bucket_name" {
   default     = "mlops-dev-a-pipeline-root"
 }
 
-variable "meili_data_bucket_name" {
-  description = "GCS bucket name mounted by meili-search"
-  type        = string
-  default     = "mlops-dev-a-meili-data"
-}
-
 variable "artifacts_bucket_name" {
   type    = string
   default = "mlops-dev-a-artifacts"
@@ -42,7 +36,7 @@ variable "github_repo" {
 }
 
 variable "admin_user_emails" {
-  description = "Developer user account emails that need to impersonate sa-api for local one-off ops (e.g. Meilisearch document sync that requires OIDC token with audience=meili-search URL). Empty list disables the binding. Forwarded to module.iam."
+  description = "Developer user account emails that need TokenCreator on sa-api for local one-off ops (OIDC impersonation). Empty list disables the binding. Forwarded to module.iam."
   type        = list(string)
   default     = []
 }

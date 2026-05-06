@@ -97,7 +97,6 @@ def test_wipe_all_iterates_bucket_suffixes(monkeypatch) -> None:
         "gs://p-models/**",
         "gs://p-artifacts/**",
         "gs://p-pipeline-root/**",
-        "gs://p-meili-data/**",
     ]
 
 

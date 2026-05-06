@@ -24,16 +24,13 @@
 #                  top-level の flat `key: value` と block-style list のみ対応
 #
 # （繰り返し）クレデンシャル実体は **ここに置かない**。`env/secret/credential.yaml`
-# または Secret Manager。参照 ID（例: meili_master_key_secret_id）は非秘密としてここ可。
+# または Secret Manager。参照 ID は非秘密としてここ可。
 
 project_id: mlops-dev-a
 region: asia-northeast1
 api_service: search-api
 artifact_repo: mlops
 vertex_location: asia-northeast1
-meili_service: meili-search
-meili_master_key_secret_id: meili-master-key
-meili_impersonate_service_account: sa-api@mlops-dev-a.iam.gserviceaccount.com
 local_api_port: 8000
 local_encoder_port: 18081
 local_reranker_port: 18082

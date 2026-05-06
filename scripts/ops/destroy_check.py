@@ -22,7 +22,7 @@ from dataclasses import dataclass
 
 from scripts._common import env, fail
 
-HIGH_COST_BUCKET_SUFFIXES = ("models", "artifacts", "pipeline-root", "meili-data")
+HIGH_COST_BUCKET_SUFFIXES = ("models", "artifacts", "pipeline-root")
 HIGH_COST_DATASETS = ("feature_mart", "mlops", "predictions")
 ALLOWED_BUCKET_NAMES = ("tfstate", "vertex")
 ALLOWED_BUCKET_PREFIXES = ("gcf-v2-sources-", "cloud-ai-platform-")

@@ -5,7 +5,7 @@
   state list 全件を `state rm` で消すレシピがあった
 - これは GCP 側で **本当に消えた resources** のための clean-up だが、`gcloud delete --async`
   で Composer / GKE / Cloud Run しか消していない場合、IAM SA / BigQuery / Pub/Sub /
-  Cloud Function / Eventarc / Cloud Run (Meilisearch) などは GCP に残置
+  Cloud Function / Eventarc などは GCP に残置
 - 全件 state rm 後に `make deploy-all` を走らせると、stage1 tf-apply で
   `Error: alreadyExists` で多数の resource create が fail
 - 特に IAM SA は soft-delete 30 日 window があるため、gcloud delete → 即 terraform
@@ -104,7 +104,7 @@ EVENTARC_TRIGGERS = (
 )
 
 # Cloud Run services: (gcp_service_name, module_name, terraform_resource_name)
-CLOUD_RUN_SERVICES = (("meili-search", "meilisearch", "meili_search"),)
+CLOUD_RUN_SERVICES = ()
 
 # Artifact Registry repositories: (gcp_repo_id, module_name, terraform_resource_name)
 # `var.artifact_repo_id` default = "mlops" (`environments/dev/variables.tf`)。
@@ -112,7 +112,6 @@ ARTIFACT_REGISTRY_REPOS = (("mlops", "data", "mlops"),)
 
 # Secret Manager secrets: (gcp_secret_id, module_name, terraform_resource_name)
 SECRET_MANAGER_SECRETS = (
-    ("meili-master-key", "data", "meili_master_key"),
     ("search-api-iap-oauth-client-secret", "data", "search_api_iap_oauth_client_secret"),
 )
 
@@ -127,7 +126,6 @@ GCS_BUCKETS = (
     ("mlops-dev-a-models", "data", "models"),
     ("mlops-dev-a-artifacts", "data", "artifacts"),
     ("mlops-dev-a-pipeline-root", "data", "pipeline_root"),
-    ("mlops-dev-a-meili-data", "meilisearch", "meili_data"),
 )
 
 # Vertex AI Feature Store: (gcp_id, module_name, terraform_resource_name)
@@ -449,7 +447,7 @@ def _recover_secret_manager(infra_dir: Path, project_id: str, var_args: list[str
 def _recover_gcs_buckets(infra_dir: Path, project_id: str, var_args: list[str]) -> int:
     """GCS buckets — `gcloud storage buckets list` で existing を取得し import。
 
-    bucket は `var.{name}_bucket_name` で `mlops-dev-a-{models,artifacts,pipeline-root,meili-data}`。
+    bucket は `var.{name}_bucket_name` で `mlops-dev-a-{models,artifacts,pipeline-root}`。
     tfstate bucket (`mlops-dev-a-tfstate`) は terraform 管理外のため除外。
     """
     imported = 0

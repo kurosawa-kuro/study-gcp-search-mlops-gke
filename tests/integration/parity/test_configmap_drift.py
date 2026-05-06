@@ -90,7 +90,8 @@ def test_generated_configmap_keeps_deployment_referenced_keys() -> None:
     for required in (
         "project_id:",
         "models_bucket:",
-        "meili_base_url:",
+        "elasticsearch_url:",
+        "elasticsearch_index:",
         "vertex_vector_search_index_endpoint_id:",
         "vertex_vector_search_deployed_index_id:",
         "vertex_feature_online_store_id:",

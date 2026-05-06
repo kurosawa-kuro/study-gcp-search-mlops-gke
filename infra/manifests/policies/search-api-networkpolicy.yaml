@@ -55,6 +55,14 @@ spec:
       ports:
         - protocol: TCP
           port: 80
+    # Elasticsearch lexical lane (same namespace).
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: elasticsearch
+      ports:
+        - protocol: TCP
+          port: 9200
     # Phase 7 SYN-1: Cloud Memorystore for Redis (synonym dictionary).
     # Memorystore primaries sit in the project's Private Service Access
     # range (10.0.0.0/8 RFC1918). This rule scopes egress to the Redis

@@ -170,6 +170,8 @@ search-api → event logs → BigQuery curated → Composer (retrain_orchestrati
 
 **目的**: Meilisearch を廃止し、GKE 上で Elasticsearch を稼働させる。Cloud Run / Elastic Cloud / Cloud Build 案は不採用 (詳細は [`Elasticsearch-GCP稼働先比較.md`](Elasticsearch-GCP稼働先比較.md))。
 
+**進捗 (2026-05-06)**: **コーディング済み・検証前**。`make check` / live 検証で最終確定する。
+
 **作業**:
 - [ ] ECK (Elastic Cloud on Kubernetes) Operator を `infra/terraform/modules/elasticsearch/` で導入 (Helm provider)
 - [ ] `infra/manifests/elasticsearch/` に `Elasticsearch` CR + `Kibana` CR + PVC + NetworkPolicy
@@ -288,7 +290,7 @@ Composer = 上位 orchestrator、Vertex Pipelines = 下位 ML executor。`train/
 | M-Wave3 | アプリ側 正解データログ実装 | ⏳ | EventWriter Port + Cloud Logging adapter |
 | M-Wave4 | LightGBM 接続死守ライン | ⏳ | `pipeline/training_job/main.py` 配線実装 |
 | M-Wave5 | 継続改善サイクル MVP | ⏳ | Composer DAG 3 本完走 + KServe 反映 |
-| M-Wave6 | Elasticsearch 移行 (GKE 上) | ⏳ | ECK + LexicalSearchPort adapter swap |
+| M-Wave6 | Elasticsearch 移行 (GKE 上) | 🟡 コーディング済み（検証前） | 実装反映済。`make check` / live 検証待ち |
 | M-Wave7 | Makefile 本格整理 | ⏳ | 仕様確定後の構造的整理 |
 | M-Wave8 | ドキュメント再統合 | ⏳ | canonical docs と Wave 成果の同期 |
 

@@ -12,10 +12,10 @@ from typing import Any, Protocol
 
 from app.services.adapters import (
     BigQueryCandidateRetriever,
+    ElasticsearchLexical,
     FeatureOnlineStoreFetcher,
     KServeEncoder,
     KServeReranker,
-    MeilisearchLexical,
     VertexVectorSearchSemanticSearch,
 )
 from app.services.noop_adapters import NoopLexicalSearch
@@ -202,15 +202,16 @@ class SearchBuilder:
         settings = self._settings
         if override_lexical is not None:
             return override_lexical
-        if settings.meili_base_url:
-            meili_key = settings.meili_master_key.get_secret_value() or settings.meili_api_key
-            return MeilisearchLexical(
-                base_url=settings.meili_base_url,
-                index_name=settings.meili_index_name,
-                api_key=meili_key,
-                require_identity_token=settings.meili_require_identity_token,
-                impersonate_service_account=settings.meili_impersonate_service_account,
-                token_audience=settings.meili_token_audience,
+        if settings.elasticsearch_url.strip():
+            return ElasticsearchLexical(
+                base_url=settings.elasticsearch_url.strip(),
+                index_name=settings.elasticsearch_index or "properties",
+                api_key=settings.elasticsearch_api_key,
+            )
+        if settings.enable_search:
+            raise RuntimeError(
+                "ELASTICSEARCH_URL is empty (enable_search=true). Set ELASTICSEARCH_URL "
+                "(e.g. http://elasticsearch.search.svc.cluster.local:9200)."
             )
         return NoopLexicalSearch()
 

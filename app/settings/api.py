@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from functools import cached_property
 
-from pydantic import BaseModel, SecretStr
+from pydantic import BaseModel
 
 from ml.common.config import BaseAppSettings
 
@@ -49,14 +49,11 @@ class ApiSettings(BaseAppSettings):
     bq_table_property_embeddings: str = "property_embeddings"
     bq_table_property_features_daily: str = "property_features_daily"
     bq_table_properties_cleaned: str = "properties_cleaned"
-    meili_base_url: str = ""
-    meili_service: str = "meili-search"
-    meili_index_name: str = "properties"
-    meili_api_key: str = ""
-    meili_master_key: SecretStr = SecretStr("")  # Secret Manager: meili-master-key
-    meili_require_identity_token: bool = True
-    meili_impersonate_service_account: str = ""
-    meili_token_audience: str = ""
+
+    # --- Lexical lane (Elasticsearch BM25 on GKE) -----------------------------
+    elasticsearch_url: str = ""
+    elasticsearch_index: str = "properties"
+    elasticsearch_api_key: str = ""
 
     # --- Vertex AI location (used by Model Registry / Pipelines) -------------
     vertex_location: str = "asia-northeast1"
@@ -92,11 +89,11 @@ class ApiSettings(BaseAppSettings):
     bqml_popularity_model_fqn: str = ""
 
     # --- Phase 7 SYN-1 — Redis synonym dictionary (lexical query expansion) -
-    # Architecture (`docs/architecture/01_仕様と設計.md` §2.2.1) places
-    # Redis as the synonym dictionary feeding Meilisearch BM25. Default
-    # ``synonym_backend="none"`` preserves Phase 5 / 6 behaviour; flip to
-    # ``"redis"`` and supply ``synonym_redis_url`` (Cloud Memorystore URI)
-    # via ConfigMap to enable lexical query expansion.
+    # Architecture (`docs/architecture/01_仕様と設計.md` §2.2.1) places Redis as the
+    # synonym dictionary feeding lexical BM25 (Elasticsearch).
+    # Default ``synonym_backend="none"`` preserves Phase 5 / 6 behaviour; flip to
+    # ``"redis"`` and supply ``synonym_redis_url`` (Cloud Memorystore URI) via
+    # ConfigMap to enable lexical query expansion.
     synonym_backend: str = "none"
     synonym_redis_url: str = ""
     synonym_redis_password_env: str = "REDIS_AUTH"

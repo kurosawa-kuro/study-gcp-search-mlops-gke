@@ -17,10 +17,10 @@ from __future__ import annotations
 
 # Group ordering preserves blank-line layout in the committed
 # `infra/manifests/search-api/configmap.example.yaml`. Groups separate
-# environment-specific values (project / bucket / meili URL) from Vertex
-# resource identifiers (vector search / feature online store).
+# environment-specific values (project / bucket) from Vertex resource identifiers.
 _GROUPS: list[list[str]] = [
-    ["project_id", "models_bucket", "meili_base_url"],
+    ["project_id", "models_bucket"],
+    ["elasticsearch_url", "elasticsearch_index"],
     [
         "vertex_vector_search_index_endpoint_id",
         "vertex_vector_search_deployed_index_id",
@@ -41,6 +41,8 @@ _GROUPS: list[list[str]] = [
 # is checked in before live `terraform apply`. `make deploy-all` resolves
 # Terraform outputs and overlays the live values via configmap_overlay.
 _DEFAULTS: dict[str, str] = {
+    "elasticsearch_url": "",
+    "elasticsearch_index": "properties",
     "vertex_vector_search_index_endpoint_id": "",
     "vertex_vector_search_deployed_index_id": "",
     "vertex_feature_online_store_id": "",
@@ -56,8 +58,9 @@ CONFIGMAP_KEYS: list[str] = [k for group in _GROUPS for k in group]
 def generate_configmap_data(
     project_id: str,
     models_bucket: str,
-    meili_base_url: str,
     *,
+    elasticsearch_url: str = "",
+    elasticsearch_index: str = "properties",
     vertex_vector_search_index_endpoint_id: str = "",
     vertex_vector_search_deployed_index_id: str = "",
     vertex_feature_online_store_id: str = "",
@@ -68,19 +71,20 @@ def generate_configmap_data(
 ) -> dict[str, str]:
     """Build the search-api ConfigMap `data` mapping.
 
-    Caller-supplied values: ``project_id``, ``models_bucket``,
-    ``meili_base_url`` (environment-specific, resolved at runtime by
-    deploy_all overlay). Vertex resource IDs / endpoints come from
-    ``terraform output`` and pass through verbatim. Empty values render as
-    YAML ``""`` so the committed example stays apply-able pre-live.
+    Caller-supplied values: ``project_id``, ``models_bucket``. Elasticsearch
+    URLs resolve at overlay time (cluster-local ES Service DNS). Vertex resource
+    IDs / endpoints come from ``terraform output`` and pass through verbatim.
+    Empty values render as YAML ``""`` so the committed example stays apply-able
+    pre-live.
     """
     data: dict[str, str] = {
         "project_id": project_id,
         "models_bucket": models_bucket,
-        "meili_base_url": meili_base_url,
     }
     for k, v in _DEFAULTS.items():
         data[k] = v
+    data["elasticsearch_url"] = elasticsearch_url
+    data["elasticsearch_index"] = elasticsearch_index
     data["vertex_vector_search_index_endpoint_id"] = vertex_vector_search_index_endpoint_id
     data["vertex_vector_search_deployed_index_id"] = vertex_vector_search_deployed_index_id
     data["vertex_feature_online_store_id"] = vertex_feature_online_store_id
@@ -107,8 +111,7 @@ def render_configmap_yaml(data: dict[str, str], *, with_header: bool = False) ->
         parts.append(
             "# AUTO-GENERATED from env/config/setting.yaml — do NOT edit by hand.\n"
             "# Run `make sync-configmap` to regenerate after changing setting.yaml.\n"
-            "# `meili_base_url` is environment-specific (Cloud Run URL) — overlay\n"
-            "# the real value before `make apply-manifests`.\n"
+            "# `elasticsearch_url` is cluster-local DNS by default — overlay before apply.\n"
             "#\n"
             "# Phase 7 W2-8 完了後 ConfigMap は Vertex Vector Search / Feature\n"
             "# Online Store の resource ID / endpoint だけを持つ。`semantic_backend`\n"

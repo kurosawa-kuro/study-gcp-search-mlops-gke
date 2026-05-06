@@ -6,9 +6,8 @@ Why a generator instead of hand-editing:
 - ``models_bucket`` follows the convention ``<project_id>-models`` set in
   ``ml/common/config/base.py::BaseAppSettings.gcs_models_bucket`` default.
   Hardcoding it in the manifest is a drift trap.
-- ``meili_base_url`` is environment-specific (Cloud Run URL set per
-  deploy) so we keep a placeholder constant. The expectation is documented
-  inline so operators know what to overlay before ``make apply-manifests``.
+- ``elasticsearch_url`` is cluster-specific — overlay via ``configmap_overlay``
+  (defaults to in-cluster Elasticsearch Service DNS).
 
 Pair with ``tests/integration/infra/test_configmap_drift.py`` which fails
 CI if the generator output drifts from the committed file.
@@ -35,11 +34,6 @@ OUTPUT = (
     / "configmap.example.yaml"
 )
 
-# Placeholder kept in the example file. Operators overlay the real Cloud
-# Run URL via env-specific kustomization or `kubectl create configmap
-# --from-literal` before applying.
-MEILI_BASE_URL_PLACEHOLDER = "https://meili-search-XXXXX-an.a.run.app"
-
 
 def render() -> str:
     project_id = DEFAULTS.get("PROJECT_ID")
@@ -49,7 +43,6 @@ def render() -> str:
     data = generate_configmap_data(
         project_id=project_id,
         models_bucket=models_bucket,
-        meili_base_url=MEILI_BASE_URL_PLACEHOLDER,
     )
     return render_configmap_yaml(data, with_header=True)
 

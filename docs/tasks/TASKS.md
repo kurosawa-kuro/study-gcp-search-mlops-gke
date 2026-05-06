@@ -10,6 +10,16 @@
 
 **ROADMAP**: [`TASKS_ROADMAP.md`](TASKS_ROADMAP.md) §5 に `M-RunbookLocal`（ローカルゲート到達）を追記済み。短周期のコマンド表は本書が canonical。
 
+### 進捗更新（2026-05-06 14:34 JST）
+
+- **コーディング済み（検証前）**:
+  - Meilisearch 撤去（Terraform / scripts / docs の主要導線）
+  - Elasticsearch workflow contract 追加
+  - runbook / README / 実装カタログの Elasticsearch canonical 追従
+- **これから検証**:
+  - `make check`
+  - 必要に応じて live 側 (`make deploy-all` → `make run-all`)
+
 ### ローカル — 成功
 
 | Step | Command | Result |
@@ -40,6 +50,6 @@
 
 ## メモ（未整理）
 
-- 最新コードと仕様ドキュメントの乖離への不安。
-- 「ローカルでビルドできるものはローカル、Cloud 負担と総時間を抑える」設計思想になっているか → **現状は Phase 7 本線が GCP/cluster 依存のため、ローカル完結は runbook §2 の範囲に限定される**（詳細は `04_検証.md` §2.1 / §3）。
-- 仕様とコードの乖離は `tests/integration/parity/` 等で一部ロック。全体は [`TASKS_ROADMAP.md`](TASKS_ROADMAP.md) Findings / `make check` で追う。
+- **コード ↔ 仕様の機械的ロック**: `tests/integration/parity/test_codebase_invariants.py` が runbook §2 **L1''**（W2-8 残骸）と **Elasticsearch-only lexical** を `app` / manifests / `Makefile` / `pyproject` で CI 検証。補足は [`tests/integration/parity/README.md`](../../tests/integration/parity/README.md)。
+- **ローカル優先ゲート**: `make verify-local-parity`（parity のみ）→ `make verify-local-hybrid` がその後に app/ML を続ける。Phase 7 本線は GCP/cluster 依存のため **ローカル完結は runbook §2 の範囲**（`04_検証.md` §2.1 / §3）。
+- **全体ゲート**: `make check`（フルテスト）+ [`TASKS_ROADMAP.md`](TASKS_ROADMAP.md) Findings。

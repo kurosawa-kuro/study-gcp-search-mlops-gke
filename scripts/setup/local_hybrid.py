@@ -4,7 +4,7 @@ What this does:
 
 1. resolve non-secret config from ``env/config/setting.yaml``
 2. resolve local secrets from ``env/secret/credential.yaml`` (fallback:
-   Secret Manager via gcloud)
+   env vars)
 3. ensure a synthetic LightGBM model exists for the local reranker
 4. boot:
    - local encoder server
@@ -14,6 +14,11 @@ What this does:
 This keeps the local startup path aligned with the production app contract:
 the app still talks to KServe-like HTTP endpoints, but the endpoints are
 provided by local dev servers instead of cluster-local Services.
+
+Lexical lane uses **Elasticsearch** only. Point ``ELASTICSEARCH_URL`` at a local
+or tunneled cluster ES instance; if none is reachable and no URL is set,
+``ENABLE_SEARCH`` is forced off so the stack still boots (encoder + reranker
+only).
 """
 
 from __future__ import annotations
@@ -25,25 +30,12 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from urllib.parse import urlparse
 
-from scripts._common import env, gcloud, run, secret
-from scripts.lib.gcp_resources import MEILI_SERVICE_NAME_DEFAULT
+from scripts._common import env, run, secret
 
 
 def _log(msg: str) -> None:
     print(f"==> {msg}", flush=True)
-
-
-def _require(name: str, value: str) -> str:
-    if not value.strip():
-        raise SystemExit(f"[error] required value {name} is empty")
-    return value.strip()
-
-
-def _is_local_url(url: str) -> bool:
-    host = urlparse(url).hostname or ""
-    return host in {"127.0.0.1", "localhost"}
 
 
 def _http_available(url: str, *, timeout_sec: float = 1.5) -> bool:
@@ -61,54 +53,28 @@ def _http_available(url: str, *, timeout_sec: float = 1.5) -> bool:
     return False
 
 
-def _resolve_meili_base_url() -> str:
-    explicit = env("MEILI_BASE_URL")
+def _resolve_elasticsearch_url() -> str:
+    explicit = env("ELASTICSEARCH_URL")
     if explicit:
         return explicit.rstrip("/")
-    local_url = env("LOCAL_MEILI_BASE_URL", "http://127.0.0.1:7700").rstrip("/")
-    if _is_local_url(local_url) and _http_available(f"{local_url}/health"):
-        _log(f"use local Meilisearch {local_url}")
+    local_url = env("LOCAL_ELASTICSEARCH_URL", "http://127.0.0.1:9200").rstrip("/")
+    if _http_available(f"{local_url}/"):
+        _log(f"use local Elasticsearch {local_url}")
         return local_url
-    if env("LOCAL_HYBRID_ALLOW_GCP_FALLBACK", "false").lower() not in {"1", "true", "yes"}:
-        _log("local Meilisearch not found; continue with lexical disabled")
-        return ""
-    service = env("MEILI_SERVICE", MEILI_SERVICE_NAME_DEFAULT)
-    return _require(
-        "MEILI_BASE_URL",
-        gcloud(
-            "run",
-            "services",
-            "describe",
-            service,
-            f"--project={env('PROJECT_ID')}",
-            f"--region={env('REGION')}",
-            "--format=value(status.url)",
-            capture=True,
-        ),
-    ).rstrip("/")
-
-
-def _resolve_meili_master_key(*, meili_base_url: str) -> str:
-    if not meili_base_url:
-        return ""
-    local_value = secret("MEILI_MASTER_KEY")
-    if local_value:
-        return local_value
-    if _is_local_url(meili_base_url):
-        return env("MEILI_API_KEY", "")
-    secret_id = env("MEILI_MASTER_KEY_SECRET_ID", "meili-master-key")
-    return _require(
-        "MEILI_MASTER_KEY",
-        gcloud(
-            "secrets",
-            "versions",
-            "access",
-            "latest",
-            f"--secret={secret_id}",
-            f"--project={env('PROJECT_ID')}",
-            capture=True,
-        ),
+    _log(
+        "Elasticsearch not reachable; set ELASTICSEARCH_URL or run ES locally "
+        "(ENABLE_SEARCH will be disabled for this session)."
     )
+    return ""
+
+
+def _resolve_elasticsearch_api_key(*, elasticsearch_url: str) -> str:
+    if not elasticsearch_url:
+        return ""
+    preset = secret("ELASTICSEARCH_API_KEY")
+    if preset:
+        return preset
+    return env("ELASTICSEARCH_API_KEY", "")
 
 
 def _ensure_local_reranker_model(model_path: Path) -> None:
@@ -149,19 +115,15 @@ def _spawn(cmd: list[str], *, child_env: dict[str, str]) -> subprocess.Popen[byt
 
 
 def main() -> int:
-    project_id = env("PROJECT_ID")
     encoder_port = env("LOCAL_ENCODER_PORT", "18081")
     reranker_port = env("LOCAL_RERANKER_PORT", "18082")
     app_port = env("LOCAL_API_PORT", "8000")
-    meili_base_url = _resolve_meili_base_url()
-    meili_master_key = _resolve_meili_master_key(meili_base_url=meili_base_url)
+    es_url = _resolve_elasticsearch_url()
+    es_api_key = _resolve_elasticsearch_api_key(elasticsearch_url=es_url)
+    enable_search = "true" if es_url else "false"
     model_path = Path(
         env("LOCAL_RERANKER_MODEL_PATH", "/tmp/hybrid-search-cloud-smoke-model.txt")
     ).expanduser()
-    impersonate_sa = env(
-        "MEILI_IMPERSONATE_SERVICE_ACCOUNT",
-        f"sa-api@{project_id}.iam.gserviceaccount.com" if project_id else "",
-    ).strip()
 
     for label, port_str in (
         ("encoder", encoder_port),
@@ -190,15 +152,13 @@ def main() -> int:
         "LOCAL_RERANKER_MODEL_PATH": str(model_path),
     }
     app_env = base_env | {
-        "ENABLE_SEARCH": "true",
+        "ENABLE_SEARCH": enable_search,
         "ENABLE_RERANK": "true",
         "KSERVE_ENCODER_URL": f"http://127.0.0.1:{encoder_port}/predict",
         "KSERVE_RERANKER_URL": f"http://127.0.0.1:{reranker_port}/predict",
         "KSERVE_RERANKER_EXPLAIN_URL": f"http://127.0.0.1:{reranker_port}/explain",
-        "MEILI_BASE_URL": meili_base_url,
-        "MEILI_MASTER_KEY": meili_master_key,
-        "MEILI_REQUIRE_IDENTITY_TOKEN": "false" if _is_local_url(meili_base_url) else "true",
-        "MEILI_IMPERSONATE_SERVICE_ACCOUNT": impersonate_sa,
+        "ELASTICSEARCH_URL": es_url,
+        "ELASTICSEARCH_API_KEY": es_api_key,
     }
 
     processes: list[subprocess.Popen[bytes]] = []

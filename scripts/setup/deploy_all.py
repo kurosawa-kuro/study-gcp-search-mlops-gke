@@ -17,10 +17,10 @@
    model. No model found in gs://...`` で CrashLoopBackOff に陥る)。
 8. `seed-test` — `feature_mart.property_features_daily` など smoke に必要な
    最小 row を seed。Feature View manual sync の source row をここで作る。
-9. `sync-meili` — `feature_mart.properties_cleaned` を Meilisearch `properties`
-   index へ upsert する。lexical lane が空だと `ops-search-components` が
-   `lexical=0` で fail するため、canonical lexical path の一部として
-   本線に組み込む。
+9. `sync-elasticsearch` — `feature_mart.properties_cleaned` を Elasticsearch
+   `properties` index へ bulk upsert する。
+   lexical lane が空だと `ops-search-components` が `lexical=0` で fail
+   するため、canonical lexical path の一部として本線に組み込む。
 10. `backfill-vvs` — `feature_mart.property_embeddings` から Vertex Vector Search
    index へ初回 datapoint を upsert する。endpoint / deployed index だけを作っても
    中身が空だと `ops-vertex-vector-search-smoke` が 0 neighbors で fail するため、
@@ -30,8 +30,9 @@
 12. `apply-manifests` — `kubectl apply -k infra/manifests/` (Phase 7 Run 2:
    旧運用は手で `make apply-manifests` を叩く前提だったが、PDCA loop で
    毎回手作業を要求すると `destroy-all → deploy-all` が成立しない)。
-13. `overlay-configmap` — search-api ConfigMap の `meili_base_url`
-   placeholder を実 URL で上書き。実装は `scripts/deploy/configmap_overlay.py`
+13. `overlay-configmap` — search-api ConfigMap に Elasticsearch URL /
+   Terraform の Vertex / Feature Store 出力を流し込む。実装は
+   `scripts/deploy/configmap_overlay.py`
    で、ConfigMap schema は `scripts/lib/config.py` に集約 (Phase 7 W2-5 で
    `_run_overlay_configmap` と `sync_configmap.py` が独立にキー列を手書き
    していて drift した教訓 — 構造的に防止)。
@@ -55,13 +56,12 @@ moment infra is created. See CLAUDE.md non-negotiables.
 from __future__ import annotations
 
 import argparse
-import os
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from scripts._common import cloud_run_url, env, run, terraform_var_args
+from scripts._common import env, run, terraform_var_args
 from scripts.ci.sync_dataform import main as sync_dataform_main
 from scripts.deploy.api_gke import main as deploy_api_main
 from scripts.deploy.composer_deploy_dags import main as composer_deploy_dags_main
@@ -79,8 +79,8 @@ from scripts.infra.terraform_stage_apply import (
 from scripts.infra.vertex_cleanup import wait_for_deployed_index_absent
 from scripts.infra.vertex_feature_store_wait import wait_until_feature_store_names_released
 from scripts.infra.vertex_import import import_persistent_vvs_resources
-from scripts.lib.gcp_resources import GKE_CLUSTER_NAME_DEFAULT, MEILI_SERVICE_NAME_DEFAULT
-from scripts.ops.sync_meili import run as sync_meili_run
+from scripts.lib.gcp_resources import GKE_CLUSTER_NAME_DEFAULT
+from scripts.ops.sync_elasticsearch import run as sync_elasticsearch_run
 from scripts.setup.backfill_vector_search_index import main as backfill_vector_search_main
 from scripts.setup.recover_wif import main as recover_wif_main
 from scripts.setup.seed_minimal import main as seed_minimal_main
@@ -175,7 +175,7 @@ def _run_tf_apply() -> int:
     # 2026-05-03 incident postmortem (`docs/tasks/TASKS_ROADMAP.md §4.10`):
     # 緊急 cleanup で `gcloud delete --async` で Composer/GKE/Cloud Run しか消さなかった
     # 後に runbook §1.4-emergency の `state rm` で全 state を消すと、IAM SA / BQ /
-    # Pub/Sub / Cloud Function / Eventarc / Cloud Run (Meilisearch) などが GCP 残置
+    # Pub/Sub / Cloud Function / Eventarc などが GCP 残置
     # かつ state 不在で、tf-apply stage1 が `Error: alreadyExists` で fail する。
     # IAM SA は soft-delete 30 日 window があるため gcloud delete → 即 terraform create
     # も fail する罠あり。本 helper は existing GCP resources を type ごとに list して
@@ -237,43 +237,19 @@ def _run_seed_test() -> int:
     return seed_minimal_main()
 
 
-def _run_sync_meili() -> int:
+def _run_sync_elasticsearch() -> int:
     project_id = env("PROJECT_ID")
-    meili_service = env("MEILI_SERVICE", MEILI_SERVICE_NAME_DEFAULT)
-    meili_base_url = cloud_run_url(meili_service)
-    identity_token = run(["gcloud", "auth", "print-identity-token"], capture=True).stdout or ""
-    api_key = (
-        run(
-            [
-                "gcloud",
-                "secrets",
-                "versions",
-                "access",
-                "latest",
-                "--secret=meili-master-key",
-                f"--project={project_id}",
-            ],
-            capture=True,
-        ).stdout
-        or ""
+    es_url = env(
+        "ELASTICSEARCH_URL",
+        "http://elasticsearch.search.svc.cluster.local:9200",
     )
-    previous_token = os.environ.get("MEILI_PRESIGNED_ID_TOKEN")
-    os.environ["MEILI_PRESIGNED_ID_TOKEN"] = identity_token.strip()
-    try:
-        synced = sync_meili_run(
-            [
-                f"--project-id={project_id}",
-                f"--meili-base-url={meili_base_url}",
-                "--require-identity-token",
-                f"--api-key={api_key.strip()}",
-            ]
-        )
-    finally:
-        if previous_token is None:
-            os.environ.pop("MEILI_PRESIGNED_ID_TOKEN", None)
-        else:
-            os.environ["MEILI_PRESIGNED_ID_TOKEN"] = previous_token
-    return 0 if synced >= 0 else 1
+    # sync_elasticsearch.run returns a shell exit code (0 = ok, non-zero = failure).
+    return sync_elasticsearch_run(
+        [
+            f"--project-id={project_id}",
+            f"--es-url={es_url}",
+        ]
+    )
 
 
 def _run_trigger_feature_view_sync() -> int:
@@ -350,9 +326,9 @@ def _steps() -> list[DeployStep]:
         ),
         DeployStep(
             9,
-            "sync-meili",
-            "sync Meilisearch from feature_mart.properties_cleaned (canonical lexical path)",
-            _run_sync_meili,
+            "sync-elasticsearch",
+            "sync Elasticsearch from feature_mart.properties_cleaned (canonical lexical path)",
+            _run_sync_elasticsearch,
         ),
         DeployStep(
             10,
@@ -375,7 +351,7 @@ def _steps() -> list[DeployStep]:
         DeployStep(
             13,
             "overlay-configmap",
-            "overlay search-api-config (resolve real meili_base_url + VVS/FOS outputs)",
+            "overlay search-api-config (Elasticsearch URL + VVS/FOS outputs)",
             _run_overlay_configmap,
         ),
         DeployStep(
@@ -405,7 +381,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--to-step",
         default="15",
-        help="Stop after this step number or name (e.g. 9, sync-meili, deploy-api).",
+        help="Stop after this step number or name (e.g. 9, sync-elasticsearch, deploy-api).",
     )
     return parser.parse_args()
 

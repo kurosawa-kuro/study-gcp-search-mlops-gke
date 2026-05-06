@@ -1,7 +1,7 @@
 """GCS bucket cleanup helpers for destroy-all.
 
-Terraform-managed buckets (`*-models` / `*-artifacts` / `*-pipeline-root` /
-`*-meili-data`) は `force_destroy = false` で作成されているので、object が
+Terraform-managed buckets (`*-models` / `*-artifacts` / `*-pipeline-root`) は
+`force_destroy = false` で作成されているので、object が
 残ったままだと `terraform destroy` が
 ``Error trying to delete bucket ... containing objects without 'force_destroy'
 set to true`` で fail する。本 module で `gcloud storage rm --recursive`

@@ -36,7 +36,7 @@ resource "google_redis_instance" "synonym" {
 }
 
 # AUTH string mirrored into Secret Manager so the search-api KSA can pull
-# it via External Secrets Operator (same pattern as ``meili-master-key``).
+# it via External Secrets Operator (same pattern as ``search-api-iap-oauth-client-secret``).
 resource "google_secret_manager_secret" "redis_auth" {
   count     = var.auth_enabled ? 1 : 0
   project   = var.project_id

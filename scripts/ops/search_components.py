@@ -90,7 +90,7 @@ def main() -> int:
     if lexical_hits <= 0:
         return fail(
             "component-check failed: lexical contribution is zero "
-            "(hint: Meilisearch index may be empty — run the meili sync step and retry)"
+            "(hint: Elasticsearch lexical index may be empty — run `make sync-elasticsearch`)"
         )
     if semantic_hits <= 0:
         reason = _diagnose_semantic_zero(typed_results, readyz_payload=readyz_payload)

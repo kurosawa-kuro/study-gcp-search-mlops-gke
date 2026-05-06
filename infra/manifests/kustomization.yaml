@@ -9,8 +9,8 @@ resources:
   - search-api/healthcheckpolicy.yaml
   - search-api/podmonitoring.yaml
   - search-api/configmap.example.yaml
+  - elasticsearch/elasticsearch-single-node.yaml
   - search-api/secretstore.yaml
-  - search-api/meili-master-key-externalsecret.yaml
   - search-api/synonym-redis-auth-externalsecret.yaml
   - search-api/iap-oauth-client-secret-externalsecret.yaml
   # KServe InferenceService

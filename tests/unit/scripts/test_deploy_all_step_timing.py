@@ -194,57 +194,29 @@ def test_run_tf_apply_uses_staged_apply_and_waits_for_readiness() -> None:
     assert all(not arg.startswith("-target=") for arg in second), second
 
 
-def test_run_sync_meili_resolves_url_and_restores_env() -> None:
-    class _Proc:
-        def __init__(self, stdout: str) -> None:
-            self.stdout = stdout
-
-    calls: list[list[str]] = []
-
-    def _fake_run(cmd: list[str], **_: object):
-        calls.append(cmd)
-        if cmd[:4] == ["gcloud", "auth", "print-identity-token"]:
-            return _Proc("oidc-token\n")
-        if cmd[:4] == ["gcloud", "secrets", "versions", "access"]:
-            return _Proc("meili-key\n")
-        raise AssertionError(f"unexpected command: {cmd}")
-
+def test_run_sync_elasticsearch_uses_project_and_default_cluster_url() -> None:
     with (
         patch.dict(
             "os.environ",
-            {
-                "PROJECT_ID": "mlops-test",
-                "MEILI_SERVICE": "meili-search",
-                "MEILI_PRESIGNED_ID_TOKEN": "previous-token",
-            },
+            {"PROJECT_ID": "mlops-test"},
             clear=False,
         ),
-        patch(
-            "scripts.setup.deploy_all.cloud_run_url", return_value="https://meili.example.run.app"
-        ),
-        patch("scripts.setup.deploy_all.run", side_effect=_fake_run),
-        patch("scripts.setup.deploy_all.sync_meili_run", return_value=5) as sync_mock,
+        patch("scripts.setup.deploy_all.sync_elasticsearch_run", return_value=0) as sync_mock,
     ):
-        assert dall._run_sync_meili() == 0
-        assert dall.os.environ["MEILI_PRESIGNED_ID_TOKEN"] == "previous-token"
+        assert dall._run_sync_elasticsearch() == 0
 
     sync_mock.assert_called_once_with(
         [
             "--project-id=mlops-test",
-            "--meili-base-url=https://meili.example.run.app",
-            "--require-identity-token",
-            "--api-key=meili-key",
+            "--es-url=http://elasticsearch.search.svc.cluster.local:9200",
         ]
     )
-    assert calls == [
-        ["gcloud", "auth", "print-identity-token"],
-        [
-            "gcloud",
-            "secrets",
-            "versions",
-            "access",
-            "latest",
-            "--secret=meili-master-key",
-            "--project=mlops-test",
-        ],
-    ]
+
+
+def test_run_sync_elasticsearch_propagates_nonzero_exit() -> None:
+    """sync_elasticsearch.run returns shell-style codes; deploy-all must fail the step."""
+    with (
+        patch.dict("os.environ", {"PROJECT_ID": "mlops-test"}, clear=False),
+        patch("scripts.setup.deploy_all.sync_elasticsearch_run", return_value=1),
+    ):
+        assert dall._run_sync_elasticsearch() == 1

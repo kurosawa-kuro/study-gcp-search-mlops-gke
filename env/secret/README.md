@@ -8,7 +8,7 @@
 
 | ファイル | 用途 | 参照箇所 |
 |---|---|---|
-| `credential.yaml` | flat YAML でローカル用シークレットを集約（`meili_master_key` など） | `ml.common.config.BaseAppSettings` と local dev helper が読む |
+| `credential.yaml` | flat YAML でローカル用シークレットを集約 | `ml.common.config.BaseAppSettings` と local dev helper が読む |
 
 非クレデンシャル設定（project_id, region, secret ID, service 名, local port 等）は `env/config/setting.yaml`。
 
@@ -16,22 +16,21 @@
 
 本番は **Secret Manager** を正本とする。
 
-- Cloud Run `meili-search`: Secret Manager を直接参照
-- GKE `search-api`: External Secrets Operator が Secret Manager から K8s Secret `meili-master-key` を自動生成
+- GKE `search-api`: External Secrets Operator が Secret Manager から K8s Secret を自動生成
 
 `credential.yaml` はローカル開発でのみ使われる。
 
 役割分担:
 
 - **Secret Manager**: 本番の正本。実値を持つ
-- **`env/config/setting.yaml`**: 非秘密の参照情報。`meili_master_key_secret_id` のような secret ID もここ
+- **`env/config/setting.yaml`**: 非秘密の参照情報。secret ID の参照情報もここ
 - **`env/secret/credential.yaml`**: ローカル override。開発者が手元で実値を置きたい場合のみ使う
 
 ## 形式
 
 ```yaml
 # flat key: value のみ。ネスト・リスト非対応。
-meili_master_key: "<your-meilisearch-master-key>"
+search_api_iap_oauth_client_secret: "<your-iap-oauth-client-secret>"
 ```
 
 値は `BaseAppSettings` の対応フィールド名と **小文字キーで一致** させる

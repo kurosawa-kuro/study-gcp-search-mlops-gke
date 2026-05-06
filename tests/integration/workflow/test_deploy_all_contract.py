@@ -36,7 +36,7 @@ def test_deploy_all_step_sequence_pins_one_shot_pdca_contract() -> None:
         "tf-apply",
         "seed-lgbm-model",
         "seed-test",
-        "sync-meili",
+        "sync-elasticsearch",
         "backfill-vvs",
         "trigger-fv-sync",
         "apply-manifests",
@@ -58,7 +58,7 @@ def test_deploy_all_seed_test_runs_before_feature_view_sync() -> None:
     assert names.index("seed-test") < names.index("backfill-vvs"), (
         "seed-test must run before backfill-vvs (otherwise VVS index is empty)"
     )
-    assert names.index("sync-meili") < names.index("backfill-vvs")
+    assert names.index("sync-elasticsearch") < names.index("backfill-vvs")
     assert names.index("backfill-vvs") < names.index("trigger-fv-sync")
     assert names.index("trigger-fv-sync") < names.index("apply-manifests")
 
@@ -79,19 +79,13 @@ def test_configmap_overlay_injects_live_vertex_outputs(monkeypatch) -> None:
 
     captured: dict[str, str] = {}
 
-    def _fake_generate(*, project_id: str, models_bucket: str, meili_base_url: str, **kwargs: str):
+    def _fake_generate(*, project_id: str, models_bucket: str, **kwargs: str):
         captured["project_id"] = project_id
         captured["models_bucket"] = models_bucket
-        captured["meili_base_url"] = meili_base_url
         captured.update(kwargs)
         return {"project_id": project_id}
 
     with (
-        patch.object(
-            configmap_overlay,
-            "_resolve_meili_url",
-            return_value="https://meili.example.run.app",
-        ),
         patch.object(
             configmap_overlay,
             "_terraform_output_map",
@@ -116,7 +110,8 @@ def test_configmap_overlay_injects_live_vertex_outputs(monkeypatch) -> None:
     assert captured == {
         "project_id": "mlops-test",
         "models_bucket": "mlops-test-models",
-        "meili_base_url": "https://meili.example.run.app",
+        "elasticsearch_url": "http://elasticsearch.search.svc.cluster.local:9200",
+        "elasticsearch_index": "properties",
         "vertex_vector_search_index_endpoint_id": "projects/x/locations/r/indexEndpoints/123",
         "vertex_vector_search_deployed_index_id": "property_embeddings_v3",
         "vertex_feature_online_store_id": "store-a",
@@ -135,16 +130,11 @@ def test_configmap_overlay_fills_fos_endpoint_from_api_when_terraform_empty(monk
 
     captured: dict[str, str] = {}
 
-    def _fake_generate(*, project_id: str, models_bucket: str, meili_base_url: str, **kwargs: str):
+    def _fake_generate(*, project_id: str, models_bucket: str, **kwargs: str):
         captured.update(kwargs)
         return {"project_id": project_id}
 
     with (
-        patch.object(
-            configmap_overlay,
-            "_resolve_meili_url",
-            return_value="https://meili.example.run.app",
-        ),
         patch.object(
             configmap_overlay,
             "_terraform_output_map",
@@ -208,7 +198,7 @@ def test_run_all_core_recipe_pins_canonical_validation_path() -> None:
     expected_lines = [
         "$(MAKE) check-layers",
         "$(MAKE) seed-test",
-        "$(MAKE) sync-meili",
+        "$(MAKE) sync-elasticsearch",
         "$(MAKE) ops-train-now",
         "$(MAKE) ops-train-wait",
         "$(MAKE) ops-livez",

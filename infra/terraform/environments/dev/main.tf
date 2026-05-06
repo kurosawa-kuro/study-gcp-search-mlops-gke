@@ -6,7 +6,6 @@
 #   gke          → GKE Autopilot cluster + Workload Identity bindings
 #   kserve       → KServe + cert-manager + 3 KSA (api / encoder / reranker)
 #   messaging    → Pub/Sub + BQ subscription + Cloud Scheduler (Cloud Run Service を持たない)
-#   meilisearch  → Cloud Run Service (BM25 lexical retrieval、Phase 5 継承)
 #   monitoring   → log-based metrics / alert policies / mean-drift Scheduled Query
 #   streaming    → Phase 6 T2: Dataflow streaming job scaffold
 #   slo          → Phase 6 T5: formal SLOs + burn-rate alerts
@@ -159,18 +158,6 @@ module "messaging" {
     google_project_service.enabled,
     module.data,
   ]
-}
-
-module "meilisearch" {
-  source = "../../modules/meilisearch"
-
-  project_id                 = var.project_id
-  region                     = var.region
-  service_accounts           = module.iam.service_accounts
-  meili_data_bucket_name     = var.meili_data_bucket_name
-  meili_master_key_secret_id = module.data.secrets.meili_master_key.secret_id
-
-  depends_on = [google_project_service.enabled, module.data]
 }
 
 # Phase 7 SYN-1 — Redis-backed synonym dictionary (lexical query expansion).

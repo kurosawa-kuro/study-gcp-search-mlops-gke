@@ -72,7 +72,6 @@ pipelines = [
 [project.scripts]
 rank-train = "ml.training.trainer:main"
 embed = "pipeline.data_job.main:main"
-meili-sync = "scripts.ops.sync_meili:main"
 
 [build-system]
 requires = ["hatchling"]

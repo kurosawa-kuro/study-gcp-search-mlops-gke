@@ -1,7 +1,8 @@
 """Null ``LexicalSearchPort`` — returns empty result list.
 
-Selected when ``MEILI_BASE_URL`` is empty. Hybrid retrieval still runs the
-semantic side; the RRF fusion falls back to semantic-only ordering.
+Selected when ``ENABLE_SEARCH=false`` or ``ELASTICSEARCH_URL`` is empty.
+Hybrid retrieval still runs the semantic side; the RRF fusion falls back to
+semantic-only ordering.
 """
 
 from __future__ import annotations

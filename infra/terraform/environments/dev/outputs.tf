@@ -178,16 +178,6 @@ output "dataform_repository_name" {
   value       = module.data.dataform_repository.name
 }
 
-output "meili_base_url" {
-  description = "Cloud Run URL of meili-search service"
-  value       = module.meilisearch.meili_base_url
-}
-
-output "meili_data_bucket" {
-  description = "GCS bucket mounted by meili-search"
-  value       = module.meilisearch.meili_data_bucket.name
-}
-
 output "gke_cluster_name" {
   description = "GKE Autopilot cluster name"
   value       = module.gke.cluster_name

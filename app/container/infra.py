@@ -185,7 +185,7 @@ class InfraBuilder:
         if not bucket:
             return NoopTrainingDatasetRepository()
         try:
-            from google.cloud import storage
+            from google.cloud import storage  # type: ignore[attr-defined]
         except ImportError:
             logger.warning("google-cloud-storage unavailable; training dataset repo disabled")
             return NoopTrainingDatasetRepository()

@@ -1,4 +1,4 @@
-"""Data loaders (BigQuery / Meilisearch / ...)."""
+"""Data loaders (BigQuery / Elasticsearch lexical stats / ...)."""
 
 from .embedding_store import (
     BigQueryEmbeddingStore,

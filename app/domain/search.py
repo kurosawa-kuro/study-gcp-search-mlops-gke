@@ -25,7 +25,7 @@ class SearchFilters(TypedDict, total=False):
     Adding a new filter:
     1. Add the key here
     2. Update ``app/schemas/search.SearchFilters``
-    3. Update the BigQuery / Meilisearch adapter SQL/parameter handling
+    3. Update the BigQuery / Elasticsearch adapter SQL/parameter handling
     """
 
     max_rent: int

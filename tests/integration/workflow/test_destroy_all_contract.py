@@ -264,7 +264,7 @@ def test_deploy_all_invokes_state_recovery_before_tf_apply() -> None:
     `runbook §1.4-emergency` の「全件 state rm」レシピは GCP 側で本当に削除された
     resources のみを対象にすべきだが、`gcloud delete --async` で Composer/GKE/Cloud Run
     しか消していない場合に全件 state rm すると、IAM SA / BQ / Pub/Sub / Cloud Function /
-    Eventarc / Cloud Run (Meilisearch) などが GCP 残置 + state 不在になり、tf-apply
+    Eventarc / Cloud Run などが GCP 残置 + state 不在になり、tf-apply
     stage1 で `Error: alreadyExists` が大量発生して deploy-all が止まる。
 
     本契約は以下を pin する:

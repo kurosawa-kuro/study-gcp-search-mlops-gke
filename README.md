@@ -42,7 +42,7 @@ KServe storageUri patch (新 model artifact 反映)
 
 ### 1.2 設計思想
 
-- **中核 5 要素 (不変)**: Meilisearch BM25 + multilingual-e5 + Vertex AI Vector Search + RRF + LightGBM LambdaRank
+- **中核 5 要素 (不変)**: Elasticsearch BM25 + multilingual-e5 + Vertex AI Vector Search + RRF + LightGBM LambdaRank
 - **Port/Adapter / `core → ports ← adapters` の依存方向**: adapter 実装だけ差し替えで Local 検証 / Cloud canonical / 実案件 reference (Elasticsearch + Redis 同義語 + ME5 + Vertex Vector Search + LightGBM) に到達できる構造を維持
 - **Composer × Vertex Pipelines は上下関係**: Composer = 上位 orchestrator、Vertex Pipelines = 下位 ML executor。`train/evaluate/register` を Composer 側に書かない (カニバリ禁止)
 
@@ -59,7 +59,7 @@ KServe storageUri patch (新 model artifact 反映)
 
 | 層 | 採用技術 |
 |---|---|
-| Lexical 検索 | Meilisearch (Cloud Run) + Redis 同義語辞書 (Cloud Memorystore、`SynonymExpanderPort` + `RedisSynonymExpander`) |
+| Lexical 検索 | Elasticsearch + Redis 同義語辞書 (Cloud Memorystore、`SynonymExpanderPort` + `RedisSynonymExpander`) |
 | Semantic 検索 | multilingual-e5 (KServe InferenceService) + Vertex AI Vector Search (serving index) |
 | 候補融合 | RRF (Reciprocal Rank Fusion) |
 | Rerank | LightGBM LambdaRank (KServe InferenceService、MLServer runtime) |
@@ -93,7 +93,7 @@ KServe storageUri patch (新 model artifact 反映)
   - `action_type` enum 8 種: アプリ emit 5 種 (`click`=1, `detail_view`=2, `favorite`=3, `request_button_click`=4, `request_complete`=5) + synthetic 注入専用 3 種 (`inquiry_complete`=7, `contract`=10, `bounce`=0/-1)
   - synthetic 注入は `definitions/labeling/synthetic_actions.yaml` から `ranking_labels.label_source='synthetic_*'` で擬似正解データを書き込む。`ml/labeling/` は psycopg / google.cloud import 禁止で純粋ロジック維持
 - **LightGBM 接続前提**: `ranking_labels` を集めても、`pipeline/training_job/main.py` から `ml/data/loaders/ranker_repository.py` (BigQuery loader) を呼ぶ配線実装が完了していない限り LightGBM 学習に流れない。**canonical 死守ライン** (詳細は [`docs/architecture/01_仕様と設計.md §8`](docs/architecture/01_仕様と設計.md))
-- **実案件 reference architecture**: Elasticsearch + Redis 同義語辞書 + ME5 + Vertex Vector Search + LightGBM。本リポは Meilisearch + Redis cache を学習用 substitute として据え置き、`MeilisearchAdapter` ↔ `ElasticsearchAdapter` の差し替えで到達可能な構造を維持
+- **実案件 reference architecture**: Elasticsearch + Redis 同義語辞書 + ME5 + Vertex Vector Search + LightGBM。教材構成も lexical lane は Elasticsearch を canonical とする
 
 ---
 
@@ -132,7 +132,7 @@ KServe storageUri patch (新 model artifact 反映)
 │   ├── workflow/              # KFP compile + Cloud Function trigger
 │   └── dags/                  # Composer DAG 3 本 + _pod.py helper
 ├── infra/
-│   ├── terraform/             # 12 modules (iam / data / messaging / meilisearch / monitoring / vertex / slo / streaming / vector_search / gke / kserve / composer)
+│   ├── terraform/             # 11 modules (iam / data / messaging / monitoring / vertex / slo / streaming / vector_search / gke / kserve / composer)
 │   ├── manifests/             # K8s manifests (`kubectl apply -k`)
 │   ├── sql/                   # monitoring SQL (skew / drift)
 │   └── run/services/          # Cloud Build 定義 + Dockerfile (svc ごとに co-located)
@@ -177,7 +177,7 @@ make verify-local-hybrid       # workflow contract + 上記 2 つ
 ### Cloud canonical (実 GCP)
 
 ```bash
-make deploy-all                # 15 step (tf-bootstrap → 2 段階 apply → seed → meili-sync → composer-deploy-dags → deploy-api)
+make deploy-all                # 15 step (tf-bootstrap → 2 段階 apply → seed → elasticsearch-sync → composer-deploy-dags → deploy-api)
 make run-all                   # canonical validation 12 step
 make destroy-all               # no-prompt teardown (4 段)
 ```
@@ -204,7 +204,7 @@ make destroy-all               # no-prompt teardown (4 段)
 
 - `env/config/setting.yaml` = 単一の設定正本 (非秘密値のみ、`project_id` / `region` / `api_service` / Vertex location 等)
 - `env/secret/credential.yaml` = ローカル用の秘密値 (gitignore 対象)
-- 本番 secret は GCP Secret Manager 正本 (`meili-master-key` / `search-api-iap-oauth-client-secret`)、External Secrets Operator が K8s Secret に自動同期
+- 本番 secret は GCP Secret Manager 正本 (`search-api-iap-oauth-client-secret`)、External Secrets Operator が K8s Secret に自動同期
 
 `pydantic-settings` で `env > setting.yaml` の優先順で読む。
 

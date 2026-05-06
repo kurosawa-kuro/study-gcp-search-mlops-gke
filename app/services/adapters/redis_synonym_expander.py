@@ -9,7 +9,7 @@ Implements ``SynonymExpanderPort`` against a Redis SET-of-synonyms layout:
 Lookup strategy:
 
 1. Tokenize ``query`` on whitespace. CJK characters stay grouped — the
-   downstream Meilisearch BM25 applies its own tokenizer.
+   downstream Elasticsearch BM25 applies its own tokenizer.
 2. For each token ``t`` fetch ``SMEMBERS syn:{t}``.
 3. Concatenate the original tokens plus all unique synonym members,
    joined with single spaces.

@@ -19,9 +19,9 @@ Filter pushdown:
 Distance metric:
     Assumes the deployed index uses ``COSINE_DISTANCE`` (matches the BigQuery
     ``VECTOR_SEARCH(..., distance_type => 'COSINE')`` contract used in
-    ``BigQuerySemanticSearch``). Similarity is reported as ``1.0 - distance``
-    so values land in ``[0, 1]`` with higher = more similar, identical to
-    the Phase 5 BigQuery adapter.
+    the legacy BigQuery ``VECTOR_SEARCH`` semantic adapter). Similarity is
+    reported as ``1.0 - distance`` so values land in ``[0, 1]`` with higher =
+    more similar, identical to the Phase 5 BigQuery semantic path.
 """
 
 from __future__ import annotations

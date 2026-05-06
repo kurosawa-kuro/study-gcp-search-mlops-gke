@@ -25,7 +25,6 @@ TF_APPLY_STAGE1_TARGETS = (
     "module.vertex",
     "module.gke",
     "module.messaging",
-    "module.meilisearch",
     "module.monitoring",
     "module.slo",
     "module.composer",

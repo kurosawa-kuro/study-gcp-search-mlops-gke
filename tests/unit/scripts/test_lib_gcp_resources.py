@@ -10,7 +10,6 @@ from __future__ import annotations
 from scripts.lib.gcp_resources import (
     BUCKET_SUFFIXES,
     GKE_CLUSTER_NAME_DEFAULT,
-    MEILI_SERVICE_NAME_DEFAULT,
     VERTEX_ENDPOINTS,
     VERTEX_MODEL_NAMES,
 )
@@ -24,12 +23,11 @@ def test_vertex_endpoints_pin() -> None:
 
 
 def test_bucket_suffixes_pin() -> None:
-    assert BUCKET_SUFFIXES == ["models", "artifacts", "pipeline-root", "meili-data"]
+    assert BUCKET_SUFFIXES == ["models", "artifacts", "pipeline-root"]
 
 
 def test_default_names_pin() -> None:
     assert GKE_CLUSTER_NAME_DEFAULT == "hybrid-search"
-    assert MEILI_SERVICE_NAME_DEFAULT == "meili-search"
 
 
 def test_vertex_model_names_pin() -> None:
