@@ -14,8 +14,7 @@ ENV UV_LINK_MODE=copy \
 WORKDIR /src
 
 COPY pyproject.toml uv.lock* ./
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev --extra ml-encoder --no-install-project
+RUN uv sync --frozen --no-dev --extra ml-encoder --no-install-project
 
 
 FROM python:3.12-slim-bookworm AS runtime

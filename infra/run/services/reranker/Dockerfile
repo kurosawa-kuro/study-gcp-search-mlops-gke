@@ -14,15 +14,12 @@ ENV UV_LINK_MODE=copy \
 WORKDIR /src
 
 COPY pyproject.toml uv.lock* ./
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev --extra ml-reranker --no-install-project
+RUN uv sync --frozen --no-dev --extra ml-reranker --no-install-project
 
 
 FROM python:3.12-slim-bookworm AS runtime
 
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update \
+RUN apt-get update \
     && apt-get install -y --no-install-recommends libgomp1 \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --system --uid 1001 --home-dir /home/app app \

@@ -42,7 +42,7 @@ def test_deploy_all_sync_elasticsearch_step_wiring_stays_canonical() -> None:
     assert (
         "from scripts.ops.sync_elasticsearch import run as sync_elasticsearch_run" in deploy_all_py
     )
-    assert 'DeployStep(\n            9,\n            "sync-elasticsearch",' in deploy_all_py
+    assert 'DeployStep(\n            10,\n            "sync-elasticsearch",' in deploy_all_py
     assert "canonical lexical path" in deploy_all_py
     assert '"http://elasticsearch.search.svc.cluster.local:9200"' in deploy_all_py
     assert 'f"--project-id={project_id}"' in deploy_all_py

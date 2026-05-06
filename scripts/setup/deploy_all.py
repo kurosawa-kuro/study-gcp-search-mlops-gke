@@ -326,27 +326,27 @@ def _steps() -> list[DeployStep]:
         ),
         DeployStep(
             9,
+            "apply-manifests",
+            "kubectl apply -k infra/manifests/ (Gateway / Deployment / ISVC / policies)",
+            _run_apply_manifests,
+        ),
+        DeployStep(
+            10,
             "sync-elasticsearch",
             "sync Elasticsearch from feature_mart.properties_cleaned (canonical lexical path)",
             _run_sync_elasticsearch,
         ),
         DeployStep(
-            10,
+            11,
             "backfill-vvs",
             "backfill VVS from feature_mart.property_embeddings (canonical semantic path)",
             _run_backfill_vvs,
         ),
         DeployStep(
-            11,
+            12,
             "trigger-fv-sync",
             "trigger Feature View sync and wait for completion (FOS live path)",
             _run_trigger_feature_view_sync,
-        ),
-        DeployStep(
-            12,
-            "apply-manifests",
-            "kubectl apply -k infra/manifests/ (Gateway / Deployment / ISVC / policies)",
-            _run_apply_manifests,
         ),
         DeployStep(
             13,

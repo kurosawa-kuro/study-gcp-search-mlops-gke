@@ -13,7 +13,8 @@ import json
 import os
 from pathlib import Path
 
-from scripts._common import DEFAULTS, _load_list_setting, fail, run
+from scripts._common import DEFAULTS, _load_list_setting, fail
+from scripts.infra.terraform_lock import run_terraform_streaming_with_lock_retry
 
 INFRA = Path(__file__).resolve().parents[2] / "infra" / "terraform" / "environments" / "dev"
 
@@ -40,7 +41,7 @@ def main() -> int:
             f"Got: {github_repo!r}"
         )
 
-    run(
+    run_terraform_streaming_with_lock_retry(
         [
             "terraform",
             f"-chdir={INFRA}",
@@ -49,7 +50,8 @@ def main() -> int:
             f"-var=oncall_email={oncall_email}",
             f"-var=admin_user_emails={json.dumps(admin_user_emails)}",
             "-out=tfplan",
-        ]
+        ],
+        chdir_infra=INFRA,
     )
     print("==> Plan saved to infra/tfplan. Apply with: terraform -chdir=infra apply tfplan")
     return 0

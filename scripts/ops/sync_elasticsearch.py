@@ -12,11 +12,15 @@ Authentication (optional):
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import os
+import subprocess
 import sys
+import time
 import traceback
 from typing import Any
+from urllib.parse import urlparse, urlunparse
 
 import httpx
 from google.cloud import bigquery
@@ -112,6 +116,57 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     return p.parse_args(argv)
 
 
+@contextlib.contextmanager
+def _maybe_port_forward_for_cluster_dns(es_url: str):
+    """Expose cluster-local Elasticsearch via localhost when run outside cluster."""
+    parsed = urlparse(es_url)
+    host = parsed.hostname or ""
+    if not host.endswith(".svc.cluster.local"):
+        yield es_url
+        return
+
+    local_port = 19200
+    forwarded_url = urlunparse(
+        (parsed.scheme or "http", f"127.0.0.1:{local_port}", parsed.path, "", "", "")
+    )
+    cmd = [
+        "kubectl",
+        "port-forward",
+        "--namespace=search",
+        "service/elasticsearch",
+        f"{local_port}:9200",
+    ]
+    _log("cluster-local ES detected; starting kubectl port-forward to localhost:19200")
+    proc = subprocess.Popen(
+        cmd,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    try:
+        ready = False
+        for _ in range(20):
+            if proc.poll() is not None:
+                break
+            try:
+                with httpx.Client(timeout=2.0) as client:
+                    ping = client.get(f"{forwarded_url.rstrip('/')}/")
+                if ping.status_code < 500:
+                    ready = True
+                    break
+            except Exception:
+                time.sleep(0.5)
+        if not ready:
+            raise RuntimeError("kubectl port-forward for Elasticsearch did not become ready")
+        yield forwarded_url
+    finally:
+        if proc.poll() is None:
+            proc.terminate()
+            try:
+                proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+
+
 def _run_sync_with_count(argv: list[str] | None) -> tuple[int, int]:
     """Returns ``(exit_code, synced_document_count)``.
 
@@ -144,16 +199,18 @@ def _run_sync_with_count(argv: list[str] | None) -> tuple[int, int]:
     hdrs = _headers(api_key=args.api_key)
 
     _log(f"STEP 2 — bulk upsert index={args.index} rows={len(rows)} url={base}")
-    with httpx.Client(timeout=120.0) as client:
-        _ensure_index(client=client, base=base, index=args.index, headers=hdrs)
-        _bulk_upsert(
-            client=client,
-            base=base,
-            index=args.index,
-            rows=rows,
-            headers=hdrs,
-            batch_size=args.batch_size,
-        )
+    with _maybe_port_forward_for_cluster_dns(base) as resolved_base:
+        _log(f"STEP 2.1 — resolved Elasticsearch url={resolved_base}")
+        with httpx.Client(timeout=120.0) as client:
+            _ensure_index(client=client, base=resolved_base, index=args.index, headers=hdrs)
+            _bulk_upsert(
+                client=client,
+                base=resolved_base,
+                index=args.index,
+                rows=rows,
+                headers=hdrs,
+                batch_size=args.batch_size,
+            )
 
     _log(f"DONE upserted {len(rows)} documents")
     return (0, len(rows))

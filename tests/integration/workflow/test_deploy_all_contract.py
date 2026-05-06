@@ -36,10 +36,10 @@ def test_deploy_all_step_sequence_pins_one_shot_pdca_contract() -> None:
         "tf-apply",
         "seed-lgbm-model",
         "seed-test",
+        "apply-manifests",
         "sync-elasticsearch",
         "backfill-vvs",
         "trigger-fv-sync",
-        "apply-manifests",
         "overlay-configmap",
         "composer-deploy-dags",
         "deploy-api",
@@ -58,9 +58,11 @@ def test_deploy_all_seed_test_runs_before_feature_view_sync() -> None:
     assert names.index("seed-test") < names.index("backfill-vvs"), (
         "seed-test must run before backfill-vvs (otherwise VVS index is empty)"
     )
+    assert names.index("apply-manifests") < names.index("sync-elasticsearch"), (
+        "sync-elasticsearch needs in-cluster service DNS, so manifests must be applied first"
+    )
     assert names.index("sync-elasticsearch") < names.index("backfill-vvs")
     assert names.index("backfill-vvs") < names.index("trigger-fv-sync")
-    assert names.index("trigger-fv-sync") < names.index("apply-manifests")
 
 
 def test_deploy_all_overlay_configmap_runs_before_deploy_api() -> None:
