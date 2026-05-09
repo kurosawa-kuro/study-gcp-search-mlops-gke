@@ -39,14 +39,14 @@ Meilisearch を廃止し、**Elasticsearch を採用** する。ただし Elasti
 
 ## §1. 今の課題 (Current Challenges)
 
-| # | 課題 | 関連 doc | スコープ |
+| # | 課題 | 関連 doc | 状態 / スコープ |
 |---|---|---|---|
-| 1 | プロジェクト方針の変更 (Phase 形式廃止) | — | ✅ ピボット完了 (本 sprint) |
-| 2 | 仕様の大幅変更 (正解データ + 継続改善サイクル前提) | 本書 Wave 2-5 | アプリ側 + モデル側の両方で正解データ対応 |
-| 3 | 検索基盤の変更 (Meilisearch → Elasticsearch on GKE) | 本書 Wave 6 | LexicalSearchPort の adapter 差し替え + GKE 上 ES 稼働 |
-| 4 | API エンドポイントの整理 (試行錯誤でつぎはぎ) | 本書 Wave 1 | `/api/v1/` `/ops/` `/ui/` `/` 4 軸分離 |
-| 5 | Makefile / 実行系の破綻 (「コード直書き禁止」違反) | 本書 Wave 0 / 7 | 危険箇所の止血のみ先行、本格整理は仕様確定後 |
-| 6 | Web アプリ公開基盤の不足 (独自ドメイン + HTTPS + DNS) | [`docs/runbook/05_運用.md`](../runbook/05_運用.md) | GCP でドメイン購入、証明書発行、DNS 委任、Gateway/HTTPRoute 反映 |
+| 1 | プロジェクト方針の変更 (Phase 形式廃止) | — | ✅ ピボット完了 |
+| 2 | 仕様の大幅変更 (正解データ + 継続改善サイクル前提) | 本書 Wave 2-5 | ✅ 実装完了 / 🟡 Wave 5 live 検証 (`verify-live-acceptance`) 残件 |
+| 3 | 検索基盤の変更 (Meilisearch → Elasticsearch on GKE) | 本書 Wave 6 | ✅ 完了 (`ops-search-components` all non-zero) |
+| 4 | API エンドポイントの整理 (試行錯誤でつぎはぎ) | 本書 Wave 1 | ⏳ 実装済の可能性大 (`app/main.py` 3 prefix 分離 / contract test 存在)、判定固定が残件 (`TASKS.md` T4) |
+| 5 | Makefile / 実行系の破綻 (「コード直書き禁止」違反) | 本書 Wave 0 / 7 | ⏳ 多行 shell block 残存。Wave 0 (止血) → Wave 7 (本格整理) の順 |
+| 6 | Web アプリ公開基盤の不足 (独自ドメイン + HTTPS + DNS) | [`docs/runbook/05_運用.md`](../runbook/05_運用.md) | ⏳ **scope outside (本 sprint)** — Wave 9 に分離。GCP でドメイン購入、証明書発行、DNS 委任、Gateway/HTTPRoute 反映 |
 
 ---
 
@@ -314,16 +314,17 @@ Composer = 上位 orchestrator、Vertex Pipelines = 下位 ML executor。`train/
 | ID | フェーズ | 状態 | メモ |
 |---|---|---|---|
 | M-Pivot | Phase 形式廃止 + docs 撤去 | ✅ | README / CLAUDE / AGENTS / docs/architecture/01,03 から Phase 概念撤去完了 (2026-05-06) |
-| M-RunbookLocal | `04_検証.md` §2 相当（`verify-local-*` + search-api イメージ L2–L4） | ✅ | 2026-05-06 実施。Cloud 復旧は逐次実行で `ops-search-components` / VVS / Feature Group まで PASS（詳細は [`TASKS.md`](TASKS.md)） |
-| M-Wave0 | Makefile 止血 | ⏳ | 多行 shell ブロックの scripts/ 移送 |
-| M-Wave1 | API 4 軸再設計 | ⏳ | `/api/v1/` `/ops/` `/ui/` `/` |
-| M-Wave2 | 正解データ仕様確定 | ⏳ | Event schema + 重み付き label + synthetic |
-| M-Wave3 | アプリ側 正解データログ実装 | ⏳ | EventWriter Port + Cloud Logging adapter |
-| M-Wave4 | LightGBM 接続死守ライン | ⏳ | `pipeline/training_job/main.py` 配線実装 |
-| M-Wave5 | 継続改善サイクル MVP | 🟡 進行中 | 学習 pipeline は復旧し、`ENABLE_RERANK=true` のまま `ops-accuracy-report` で `ndcg_at_10=1.0` を達成。残件は verify-live-acceptance 一式の最終通し |
-| M-Wave6 | Elasticsearch 移行 (GKE 上) | ✅ | `search-api` 本番イメージ化 / `sync_elasticsearch` 成功 / ECK endpoint 復帰 / `ops-search-components` で lexical+semantic+rerank all non-zero を確認 |
-| M-Wave7 | Makefile 本格整理 | ⏳ | 仕様確定後の構造的整理 |
-| M-Wave8 | ドキュメント再統合 | ⏳ | canonical docs と Wave 成果の同期 |
+| M-RunbookLocal | `04_検証.md` §2 相当（`verify-local-*` + search-api イメージ L2–L4） | ✅ | 2026-05-06 実施。Cloud 復旧は逐次実行で `ops-search-components` / VVS / Feature Group まで PASS |
+| M-Wave0 | Makefile 止血 | ⏳ | Makefile に 5 行超 shell block 残存 (継続行 11 件)。完了条件 = 違反 0 件 |
+| M-Wave1 | API 4 軸再設計 | ⏳ → 判定保留 | 実装側は揃う (`app/main.py` で `/api/v1` `/ops` `/ui` 分離 / `tests/integration/parity/test_api_route_prefixes.py` / IAP policy)。contract test 通し確認で ✅ 判定 (`TASKS.md` T4) |
+| M-Wave2 | 正解データ仕様確定 | ✅ | Event schema + 重み付き label + synthetic 注入を 6 canonical 場所で一致 (§2 Wave 2 [x]) |
+| M-Wave3 | アプリ側 正解データログ実装 | ✅ | EventWriter Port + Cloud Logging adapter 配線 + BQ Subscription 経路完成 (§2 Wave 3 [x]) |
+| M-Wave4 | LightGBM 接続死守ライン | ✅ | `pipeline/training_job/main.py` → `ml/data/loaders/ranker_repository.py` 配線済、実 `ranking_labels` で retrain → Vertex Model Registry 登録 (§2 Wave 4 [x]) |
+| M-Wave5 | 継続改善サイクル MVP | 🟡 進行中 | 学習 pipeline 復旧、`ENABLE_RERANK=true` で `ndcg_at_10=1.0` 達成。残件: `make verify-live-acceptance` 最終通し (`TASKS.md` T1) ⚠️ canonical 必須 |
+| M-Wave6 | Elasticsearch 移行 (GKE 上) | ✅ | `search-api` 本番イメージ化 / `sync_elasticsearch` 成功 / ECK endpoint 復帰 / `ops-search-components` で lexical+semantic+rerank all non-zero |
+| M-Wave7 | Makefile 本格整理 | ⏳ | Wave 0 + Wave 1 完了後に着手 |
+| M-Wave8 | ドキュメント再統合 | ⏳ | 残件: runbook 2 本 drift 解消 (`TASKS.md` T2) + §5 表 / §1 表の最新化 (T3 で本コミット反映済) |
+| M-Wave9 | 独自ドメイン + HTTPS + DNS | ⏳ scope outside | 本 sprint 除外 (user 指示)。詳細は §2 Wave 9 |
 
 ---
 
