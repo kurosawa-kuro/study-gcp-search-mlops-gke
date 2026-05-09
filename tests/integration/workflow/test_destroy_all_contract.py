@@ -124,6 +124,82 @@ def test_recover_wif_handles_soft_delete_undelete() -> None:
     )
 
 
+def test_destroy_all_provides_step_slicing_symmetric_with_deploy_all() -> None:
+    """2026-05-09 refactor: destroy-all を step 分離 + slicing 対応にし、deploy-all
+    と対称化した。**deploy 側だけ slicing できる非対称が、step 単位リカバリーを
+    destroy 側で阻む** 設計上の不整合だった。
+
+    本 contract は以下を pin:
+    1. `DestroyStep` dataclass が存在 (deploy_all の `DeployStep` と同型)
+    2. `_steps()` が step list を返す (deploy_all の `_steps()` と同型)
+    3. `--from-step` / `--to-step` の CLI フラグを受ける
+    4. step 名 (`seed-clean`, `flip-deletion-protection`, `destroy-kserve` 等) で
+       slicing できる (`_resolve_step_ref` 経由)
+    5. main() が pre-check (state empty early-return) を保持
+    """
+    destroy_all_py = _read("scripts/setup/destroy_all.py")
+
+    # 1. DestroyStep dataclass
+    assert "@dataclass(frozen=True)" in destroy_all_py
+    assert "class DestroyStep:" in destroy_all_py
+    for field in ("number: int", "name: str", "label: str", "run: Callable[[], int]"):
+        assert field in destroy_all_py, f"DestroyStep must define field: {field}"
+
+    # 2. _steps() function
+    assert "def _steps() -> list[DestroyStep]:" in destroy_all_py
+
+    # 3. CLI slicing flags
+    assert '"--from-step"' in destroy_all_py and '"--to-step"' in destroy_all_py
+    assert "def _parse_args(" in destroy_all_py
+    assert "def _resolve_step_ref(" in destroy_all_py
+
+    # 4. canonical step names が _steps() に含まれる
+    for step_name in (
+        '"seed-clean"',
+        '"undeploy-vertex-endpoints"',
+        '"undeploy-vvs-deployed-indexes"',
+        '"state-rm-persistent-vvs"',
+        '"wipe-gcs-buckets"',
+        '"flip-deletion-protection"',
+        '"destroy-kserve"',
+        '"destroy-main"',
+    ):
+        assert step_name in destroy_all_py, (
+            f"destroy_all._steps() must include canonical step {step_name}"
+        )
+
+    # 5. pre-check (state empty early-return) を保持
+    assert "state_size(INFRA)" in destroy_all_py
+    assert "state list is empty" in destroy_all_py
+
+
+def test_tf_apply_invokes_recover_wif_as_pre_step() -> None:
+    """2026-05-09 incident: `--from-step tf-apply` 単独実行で step 3 (recover-wif)
+    を skip すると、WIF pool / provider が soft-delete + tfstate 不一致で残存し、
+    tf-apply stage1 が `Error 409: Requested entity already exists` で fail する
+    (30+ 分の出戻り)。
+
+    `tf_apply.main()` の冒頭で `recover_wif_main()` を idempotent に呼ぶことで、
+    step slicing 経路 (`--from-step tf-apply`) でも安全に復元する。本 contract が
+    test で pin されているのは、将来「step 3 と重複だから削除」と判断するのを防ぐため。
+
+    2026-05-09 refactor: tf-apply の business logic は `scripts/setup/tf_apply.py`
+    に分離。本 test も新所在を pin。
+    """
+    tf_apply_py = _read("scripts/setup/tf_apply.py")
+
+    # tf_apply.main() で recover_wif_main を import + 呼び出していることを確認
+    assert "from scripts.setup.recover_wif import main as recover_wif_main" in tf_apply_py, (
+        "tf_apply.py must import recover_wif_main"
+    )
+    assert "recover_wif_main()" in tf_apply_py, (
+        "tf_apply.main() must call recover_wif_main() as an idempotent pre-step "
+        "(2026-05-09 incident: --from-step tf-apply skipped step 3 → WIF 409 → "
+        "30+ min lost). 通常の deploy-all では step 3 と本 hook で 2 回呼ばれるが、"
+        "recover_wif_main() は冪等で副作用なし。"
+    )
+
+
 def test_destroy_all_persists_vvs_index_and_endpoint() -> None:
     """**VVS 永続化契約** (2026-05-03、`docs/tasks/TASKS_ROADMAP.md §4.9`):
     Vertex Vector Search の Index と Index Endpoint は **無料で残せる** (replica 0
@@ -145,7 +221,10 @@ def test_destroy_all_persists_vvs_index_and_endpoint() -> None:
     """
     main_tf = _read("infra/terraform/modules/vector_search/main.tf")
     destroy_all_py = _read("scripts/setup/destroy_all.py")
-    deploy_all_py = _read("scripts/setup/deploy_all.py")
+    # 2026-05-09 refactor: deploy_all.py は orchestrator (thin wrappers) に分離され、
+    # tf-apply の business logic (import_persistent_vvs_resources の呼出し含む) は
+    # `scripts/setup/tf_apply.py` へ移動済。pin 対象を新所在へ追従。
+    tf_apply_py = _read("scripts/setup/tf_apply.py")
     vertex_import_py = _read("scripts/infra/vertex_import.py")
 
     # main.tf — Index / Endpoint には prevent_destroy を入れない (state rm pattern)
@@ -170,9 +249,9 @@ def test_destroy_all_persists_vvs_index_and_endpoint() -> None:
     )
     assert "state_rm(INFRA, addr)" in destroy_all_py
 
-    # deploy_all.py の import 呼出し
-    assert "import_persistent_vvs_resources" in deploy_all_py, (
-        "deploy_all must invoke import_persistent_vvs_resources before tf-apply"
+    # tf_apply.py (deploy_all step 6 の business logic 移管先) の import 呼出し
+    assert "import_persistent_vvs_resources" in tf_apply_py, (
+        "tf_apply must invoke import_persistent_vvs_resources before terraform apply"
     )
 
     # vertex_import.py が gcloud で existing resource を確認 + terraform import を発行
@@ -275,17 +354,19 @@ def test_deploy_all_invokes_state_recovery_before_tf_apply() -> None:
        Cloud Function / Eventarc / Cloud Run の 6 種を網羅
     """
     state_recovery_py = _read("scripts/infra/state_recovery.py")
-    deploy_all_py = _read("scripts/setup/deploy_all.py")
+    # 2026-05-09 refactor: tf-apply 内部 logic は `scripts/setup/tf_apply.py` に分離。
+    # state_recovery 呼出しもこちらに移動。
+    tf_apply_py = _read("scripts/setup/tf_apply.py")
     makefile = _read("Makefile")
 
     # 1. state_recovery.py が存在し、entrypoint を export
     assert "def recover_orphan_gcp_resources(" in state_recovery_py, (
         "state_recovery.py must export `recover_orphan_gcp_resources`"
     )
-    # 2. deploy_all.py が tf-apply 前に呼ぶ
-    assert "from scripts.infra.state_recovery import recover_orphan_gcp_resources" in deploy_all_py
-    assert "recover_orphan_gcp_resources(" in deploy_all_py, (
-        "deploy_all.py::_run_tf_apply must call recover_orphan_gcp_resources before tf-apply"
+    # 2. tf_apply.py が terraform apply 前に呼ぶ
+    assert "from scripts.infra.state_recovery import recover_orphan_gcp_resources" in tf_apply_py
+    assert "recover_orphan_gcp_resources(" in tf_apply_py, (
+        "tf_apply.py must call recover_orphan_gcp_resources before terraform apply"
     )
     # 3. Make target
     assert "state-recover:" in makefile, "Makefile must have `state-recover` target"

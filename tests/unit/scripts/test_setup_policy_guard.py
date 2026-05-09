@@ -23,18 +23,20 @@ def test_setup_scripts_use_canonical_and_ci_import_paths() -> None:
 
 
 def test_setup_scripts_target_dev_terraform_environment() -> None:
-    deploy_all = _read("scripts/setup/deploy_all.py")
+    # 2026-05-09 refactor: tf-apply の business logic は scripts/setup/tf_apply.py
+    # に分離 (deploy_all.py は orchestrator のみ)。INFRA 定数の所在も移動。
     destroy_all = _read("scripts/setup/destroy_all.py")
     tf_init = _read("scripts/setup/tf_init.py")
     tf_plan = _read("scripts/setup/tf_plan.py")
+    tf_apply = _read("scripts/setup/tf_apply.py")
 
     expected = (
         'Path(__file__).resolve().parents[2] / "infra" / "terraform" / "environments" / "dev"'
     )
-    assert expected in deploy_all
     assert expected in destroy_all
     assert expected in tf_init
     assert expected in tf_plan
+    assert expected in tf_apply
 
 
 def test_api_deploy_targets_gke_rollout_path() -> None:

@@ -75,8 +75,10 @@ def test_feature_view_online_serving_source_is_direct_bigquery() -> None:
     assert 'entity_id_columns = ["property_id"]' in vertex_tf
     assert "feature_registry_source {" not in vertex_tf
     assert "TF_APPLY_STAGE1_TARGETS" in stage_apply_py
-    assert "wait_for_deployed_index_absent" in deploy_all_py
-    assert "wait_until_api_ready" in deploy_all_py
+    # 2026-05-09 refactor: tf-apply business logic は tf_apply.py に分離
+    tf_apply_py = _read("scripts/setup/tf_apply.py")
+    assert "wait_for_deployed_index_absent" in tf_apply_py
+    assert "wait_until_api_ready" in tf_apply_py
 
 
 def test_legacy_cloud_scheduler_demoted_to_monthly_smoke() -> None:

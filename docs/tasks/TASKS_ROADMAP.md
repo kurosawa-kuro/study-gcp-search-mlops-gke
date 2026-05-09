@@ -203,6 +203,22 @@ search-api → event logs → BigQuery curated → Composer (retrain_orchestrati
 
 ---
 
+### Wave 8.6 — orchestrator のドメイン分離 (クリーンアーキテクチャ整理)
+
+**目的**: 2026-05-09 incident (`--from-step tf-apply` で step 3 skip → WIF 409 → 30+ 分の出戻り) を発端に、`scripts/setup/{deploy_all,destroy_all}.py` の構造再編を進めた。Phase 1 (step 分離 + slicing 対称化、tf_apply.py 切り出し、idempotent 前置き hook、contract test 化) は M-Wave8 内で完了。Phase 2/3 のドメイン分離が残件。
+
+**残件 (Phase 2/3)**:
+- [ ] `scripts/infra/*` を `scripts/domain/{gcp,k8s,terraform,data}/` に再配置 (state_recovery / vertex_cleanup / vertex_import / kubectl_context / terraform_lock 等)
+- [ ] `scripts/lib/*` を `scripts/domain/<topic>/` または `scripts/adapters/` に整理
+- [ ] gcloud / kubectl / terraform subprocess wrapper を `scripts/adapters/` に分離 (mock 容易化)
+- [ ] 影響範囲: `Makefile` / `tests/` / 内部 import ~30+ 箇所の追従更新
+
+**完了条件**: クリーンアーキテクチャ 4 層 (orchestration / domain / adapters / infra-config) が `scripts/` 配下で見える階層化、`make check` PASS、`scripts/setup/{deploy_all,destroy_all}.py` が thin orchestrator のまま。
+
+**前提**: Wave 7 (Makefile 本格整理) と並行可能だが、import path 一斉変更を伴うため別 sprint 推奨。
+
+---
+
 ### Wave 8.5 — Phase 概念の完全撤廃 (canonical wording を Phase 7/6 から固有名へ)
 
 **目的**: 本リポは Phase 分裂教材ではなく、教育用 Phase 1〜6 教材は M-Pivot で撤去済。残った「Phase 7 で本実装、後方派生で Phase 6 へ引き算」(`docs/architecture/01_仕様と設計.md §3` / `tests/integration/workflow/` 15+ ファイル / `docs/runbook/{04,05}.md` 数十箇所) は **Composer 配置設計の上下関係を表す** ためだけに残っている wording。固有名化 (例: 「canonical (= GKE + KServe + Composer 一式)」「Composer なし派生」) で完全撤廃する。
@@ -308,6 +324,7 @@ Composer = 上位 orchestrator、Vertex Pipelines = 下位 ML executor。`train/
 | M-Wave5 | 継続改善サイクル MVP | 🟡 進行中 | `make verify-live-acceptance` 最終通し (`TASKS.md` T1) ⚠️ canonical 必須 |
 | M-Wave7 | Makefile 本格整理 | ⏳ 着手可 | Wave 0 / Wave 1 完了済。Make Command Matrix と Makefile を一致させる |
 | M-Wave8.5 | Phase 概念の完全撤廃 | ⏳ | Wave 8 完了済 (drift 解消は 03_実装カタログ §7.3)。残: 01 §3 / workflow contract test 15+ / runbook の `Phase [0-9]` を固有名 (canonical / Composer なし派生) へ置換。詳細は §2 Wave 8.5 |
+| M-Wave8.6 | orchestrator のドメイン分離 | ⏳ | Phase 1 (step 分離 + tf_apply.py 切り出し + 対称化) 完了 (2026-05-09)。残: `scripts/infra/*` → `scripts/domain/{gcp,k8s,terraform,data}/` 再配置、subprocess wrapper を `scripts/adapters/` に分離。詳細は §2 Wave 8.6 |
 | M-Wave9 | 独自ドメイン + HTTPS + DNS | ⏳ scope outside | 本 sprint 除外 (user 指示)。詳細は §2 Wave 9 |
 
 ---

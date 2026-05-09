@@ -161,20 +161,25 @@ def test_run_tf_apply_uses_staged_apply_and_waits_for_readiness() -> None:
             },
             clear=False,
         ),
+        # 2026-05-09 refactor: tf-apply business logic は scripts.setup.tf_apply に
+        # 分離。helper の mock patch も新所在へ追従する。
         patch(
-            "scripts.setup.deploy_all.terraform_apply_stage1_with_retries",
+            "scripts.setup.tf_apply.terraform_apply_stage1_with_retries",
             side_effect=_fake_stage1,
         ),
         patch(
-            "scripts.setup.deploy_all.run_terraform_streaming_with_lock_retry",
+            "scripts.setup.tf_apply.run_terraform_streaming_with_lock_retry",
             side_effect=_fake_stream,
         ),
-        patch("scripts.setup.deploy_all.wait_for_deployed_index_absent") as wait_vvs,
-        patch("scripts.setup.deploy_all.ensure_kubectl_context") as ensure_ctx,
-        patch("scripts.setup.deploy_all.wait_until_api_ready") as wait_k8s,
-        patch("scripts.setup.deploy_all.recover_orphan_gcp_resources", return_value=0),
-        patch("scripts.setup.deploy_all.import_persistent_vvs_resources", return_value=0),
-        patch("scripts.setup.deploy_all.wait_until_feature_store_names_released"),
+        patch("scripts.setup.tf_apply.wait_for_deployed_index_absent") as wait_vvs,
+        patch("scripts.setup.tf_apply.ensure_kubectl_context") as ensure_ctx,
+        patch("scripts.setup.tf_apply.wait_until_api_ready") as wait_k8s,
+        patch("scripts.setup.tf_apply.recover_orphan_gcp_resources", return_value=0),
+        patch("scripts.setup.tf_apply.import_persistent_vvs_resources", return_value=0),
+        patch("scripts.setup.tf_apply.wait_until_feature_store_names_released"),
+        # 2026-05-09 incident hook: tf_apply 冒頭で recover_wif_main を idempotent
+        # に呼ぶようになった (WIF 409 再発防止)。test 環境では gcloud 呼出しを mock。
+        patch("scripts.setup.tf_apply.recover_wif_main", return_value=0),
     ):
         assert dall._run_tf_apply() == 0
 

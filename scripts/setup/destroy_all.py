@@ -2,30 +2,37 @@
 prompt** — this is a learning / PDCA dev project (`mlops-dev-a`) where fast
 iteration matters. Pair with `deploy-all` for a build-test-destroy loop.
 
-Steps:
+Steps (use `--from-step` / `--to-step` to slice — symmetrical with deploy-all):
 
-1. `seed_minimal_clean` — drop the out-of-Terraform-state table that
+1. `seed-clean` — drop the out-of-Terraform-state table that
    `make seed-test` (`scripts/setup/seed_minimal.py`) creates. It blocks
    `feature_mart` dataset destroy with `resourceInUse` otherwise.
-2. `vertex_cleanup.undeploy_all_endpoint_shells` — undeploy every
-   `deployedModel` from the Terraform-managed Vertex Endpoint shells
-   (server-side mutations not visible to Terraform). Any remaining
-   DeployedModel blocks `terraform destroy` with HTTP 400.
-3. `gcs_cleanup.wipe_all_terraform_managed_buckets` — recursively delete
-   every object in the 4 force_destroy=false buckets so step 6 can
-   remove the bucket resources.
-4. `terraform apply -auto-approve -var=enable_deletion_protection=false
-   -target=<each>` — flip `deletion_protection` to false on every
-   server-side-protected resource currently in state (10 BQ tables + 1
-   GKE cluster, filtered by ``filter_targets_in_state`` so already-
-   destroyed resources are skipped — without that filter ``-target``
-   pulls in the dependency closure and *recreates* the targets, hitting
-   WIF pool soft-delete on re-run. Phase 7 Run 4 fix).
-5. `kube_cleanup.delete_orphan_workloads` + `terraform destroy
-   -target=module.kserve` — K8s/Helm リソースを GKE cluster より先に
+2. `undeploy-vertex-endpoints` — undeploy every `deployedModel` from the
+   Terraform-managed Vertex Endpoint shells (server-side mutations not visible
+   to Terraform). Any remaining DeployedModel blocks `terraform destroy` with
+   HTTP 400.
+3. `undeploy-vvs-deployed-indexes` — undeploy every Vector Search deployed
+   index. PDCA reproducibility guard: 前 cycle で deployed index が残ると次の
+   `deploy-all` が step 6 stage1 apply で 15 min wait timeout になる事故を防ぐ。
+4. `state-rm-persistent-vvs` — `module.vector_search` の Index / Endpoint を
+   **state rm + GCP 残置** に切り替える (`docs/tasks/TASKS_ROADMAP.md §4.9`)。
+   Terraform 側の `lifecycle.prevent_destroy` だけだと依存閉包で touch されて
+   `Instance cannot be destroyed` で全 destroy が止まる事故を 2026-05-03 に観測。
+5. `wipe-gcs-buckets` — `gcs_cleanup.wipe_all_terraform_managed_buckets` で
+   force_destroy=false の 4 buckets を空にする (object 残存だと bucket destroy
+   が失敗)。
+6. `flip-deletion-protection` — `terraform apply -auto-approve
+   -var=enable_deletion_protection=false -target=<each>` で server-side
+   protected resource (10 BQ tables + 1 GKE cluster + online serving view 1) の
+   `deletion_protection` を flip。`filter_targets_in_state` で state にある
+   ものだけに絞ること — そうしないと `-target` が依存閉包を pull して recreate
+   に走る (Phase 7 Run 4 fix)。
+7. `destroy-kserve` — `kube_cleanup.delete_orphan_workloads` + `terraform
+   destroy -target=module.kserve`。K8s/Helm リソースを GKE cluster より先に
    destroy (provider が cluster endpoint に依存)。state に残った場合は
-   ``terraform_state.state_rm`` で fallback。
-6. `terraform destroy -auto-approve` — actually tears infra down.
+   `terraform_state.state_rm` で fallback。
+8. `destroy-main` — `terraform destroy -auto-approve` (永続化 VVS resource は
+   `-target` で除外、`prevent_destroy = true` と二重防御)。
 
 What this does NOT touch (preserved for the next `make deploy-all`):
 - The tfstate bucket (`<PROJECT_ID>-tfstate`).
@@ -38,15 +45,21 @@ session may hold the lock. Terraform commands use ``scripts/infra/terraform_lock
 ``TERRAFORM_STATE_FORCE_UNLOCK=1`` (aliases: ``DESTROY_ALL_FORCE_UNLOCK``,
 ``DEPLOY_ALL_FORCE_UNLOCK``). **Only** if no other Terraform is running.
 
-設計方針 (Phase 7 W3 リファクタ):
+設計方針 (Phase 7 W3 リファクタ + 2026-05-09 step 分離):
 - 本ファイルは **orchestrator のみ**。state query / Vertex Endpoint cleanup /
   K8s finalizer cleanup / GCS bucket wipe は `scripts/infra/*` に委譲し、
-  ここは順序と vars 引き渡しだけを担う。
+  ここは **step 定義 + 順序 + vars 引き渡し + slicing** だけを担う。
+- `_run_*` は対応 module の関数を呼ぶ thin wrapper (drift 源にならないように)。
+- `--from-step` / `--to-step` で step 単位リカバリー可能 (deploy-all と対称)。
 """
 
 from __future__ import annotations
 
+import argparse
 import subprocess
+import time
+from collections.abc import Callable
+from dataclasses import dataclass
 from pathlib import Path
 
 from scripts._common import env, terraform_var_args
@@ -65,7 +78,7 @@ INFRA = Path(__file__).resolve().parents[2] / "infra" / "terraform" / "environme
 
 # Resource addresses that carry **server-side `deletion_protection`** —
 # Terraform refuses to destroy these while the attribute is `true`. Step
-# `[4/6]` runs `terraform apply -var=enable_deletion_protection=false
+# `flip-deletion-protection` runs `terraform apply -var=enable_deletion_protection=false
 # -target=<each>` to flip the attribute server-side **before** the body
 # destroy. Kept in sync with the corresponding Terraform module sources;
 # if a new resource that has its own `deletion_protection` is added,
@@ -121,47 +134,87 @@ PERSISTENT_VVS_RESOURCES = (
 )
 
 
-def main() -> int:
-    project_id = env("PROJECT_ID")
-    region = env("VERTEX_LOCATION") or env("REGION")
+@dataclass(frozen=True)
+class DestroyStep:
+    number: int
+    name: str
+    label: str
+    run: Callable[[], int]
 
-    common_vars = [
+
+# ---- step framework ----------------------------------------------------------
+
+_DESTROY_ALL_STARTED_AT: float | None = None
+_STEP_STARTED_AT: float | None = None
+
+
+def _step(n: int, total: int, label: str) -> None:
+    global _DESTROY_ALL_STARTED_AT, _STEP_STARTED_AT
+    now = time.monotonic()
+    if _DESTROY_ALL_STARTED_AT is None:
+        _DESTROY_ALL_STARTED_AT = now
+    prev_elapsed = now - _STEP_STARTED_AT if _STEP_STARTED_AT is not None else 0.0
+    total_elapsed = now - _DESTROY_ALL_STARTED_AT
+    _STEP_STARTED_AT = now
+    print()
+    print("================================================================")
+    print(f" destroy-all  step {n}/{total}: {label}")
+    if n > 1:
+        print(f" (prev_step_elapsed={prev_elapsed:.0f}s total_elapsed={total_elapsed:.0f}s)")
+    print("================================================================")
+
+
+def _step_done() -> None:
+    """Emit a `step-done` line with elapsed seconds for the step just finished."""
+    if _STEP_STARTED_AT is None:
+        return
+    elapsed = time.monotonic() - _STEP_STARTED_AT
+    print(f" destroy-all  step-done elapsed={elapsed:.0f}s")
+
+
+# ---- common vars (terraform 引数共通化、散防止) -----------------------------
+
+def _common_vars() -> list[str]:
+    return [
         "-var=enable_deletion_protection=false",
         *terraform_var_args("GITHUB_REPO", "ONCALL_EMAIL"),
     ]
 
-    print(f"==> destroy-all on project {project_id!r}")
 
-    # 既に state が空なら destroy は何もすることがない。`-target` apply が
-    # 依存ごと resource を recreate してしまう副作用 (Phase 7 Run 4 で
-    # WIF pool 30 日 soft-delete に再衝突した事故) を避けるため early-return。
-    state_count = state_size(INFRA)
-    if state_count == 0:
-        print("==> state list is empty — nothing to destroy. (前回の destroy-all で完了済)")
-        print("    Re-provision with: make deploy-all")
-        return 0
-    print(f"==> state has {state_count} address(es) — proceeding")
+# ---- _run_* thin wrappers (実装は scripts/infra/* に委譲) -------------------
 
-    print("==> [1/6] seed-test-clean (drop out-of-TF tables that block dataset destroy)")
-    seed_clean_main()
+def _run_seed_clean() -> int:
+    return seed_clean_main()
 
-    print(f"==> [2/6] undeploy Vertex endpoint deployed_models (region={region})")
+
+def _run_undeploy_vertex_endpoints() -> int:
+    project_id = env("PROJECT_ID")
+    region = env("VERTEX_LOCATION") or env("REGION")
+    print(f"==> undeploy Vertex endpoint deployed_models (region={region})")
     vertex_cleanup.undeploy_all_endpoint_shells(project_id, region)
+    return 0
 
-    print(f"==> [2/6+] undeploy Vector Search deployed indexes (region={region})")
+
+def _run_undeploy_vvs_deployed_indexes() -> int:
+    project_id = env("PROJECT_ID")
+    region = env("VERTEX_LOCATION") or env("REGION")
     # PDCA reproducibility guard: 前 cycle で deployed index が残ると次の
     # deploy-all が step 6 stage1 apply で 15 min wait timeout になる事故を
     # 防ぐ。`deploy-all` 側 `wait_for_deployed_index_absent` は wait しか
     # しないので、destroy 側でも能動的に undeploy しておく。
+    print(f"==> undeploy Vector Search deployed indexes (region={region})")
     vertex_cleanup.undeploy_all_vvs_deployed_indexes(project_id, region)
+    return 0
 
+
+def _run_state_rm_persistent_vvs() -> int:
     # 永続化 VVS resource を **state rm で外す** (= GCP には残置)。
     # `lifecycle.prevent_destroy = true` だけでは依存閉包で touch されて
     # `Instance cannot be destroyed` で全 destroy が止まる事故を 2026-05-03
     # に観測したため、state rm pattern に変更。`module.vector_search` 内の
-    # `deployed_index` は GCP 上は [2/6+] で undeploy 済なので、state rm
+    # `deployed_index` は GCP 上は previous step で undeploy 済なので、state rm
     # するだけで OK (terraform は state にないので touch しない)。次回
-    # `deploy-all` は `terraform import` で復元する設計 (`scripts/setup/deploy_all.py`)。
+    # `deploy-all` は `terraform import` で復元する設計。
     persistent_state_addrs = [
         "module.vector_search.google_vertex_ai_index_endpoint_deployed_index.property_embeddings[0]",
         *(f"{p}[0]" for p in PERSISTENT_VVS_RESOURCES),
@@ -173,43 +226,54 @@ def main() -> int:
             rm_count += 1
     if rm_count:
         print(
-            f"==> [2/6++] state rm 永続化 VVS {rm_count} addr (GCP 残置、次回 deploy-all で import)"
+            f"==> state rm 永続化 VVS {rm_count} addr (GCP 残置、次回 deploy-all で import)"
         )
+    return 0
 
-    print("==> [3/6] wipe GCS buckets (force_destroy=false blockers)")
+
+def _run_wipe_gcs_buckets() -> int:
+    project_id = env("PROJECT_ID")
+    print("==> wipe GCS buckets (force_destroy=false blockers)")
     gcs_cleanup.wipe_all_terraform_managed_buckets(project_id)
+    return 0
 
+
+def _run_flip_deletion_protection() -> int:
     # state に実存する PROTECTED_TARGETS のみ flip 対象に。state にないものを
     # `-target` で渡すと Terraform は依存閉包を pull して **recreate** に走る
     # (Phase 7 Run 4 で empty-state の destroy-all 再走 → 12 resources added の
     # 事故)。filter で「flip だけ」に絞る。
     flip_targets = filter_targets_in_state(INFRA, list(PROTECTED_TARGETS))
-    if flip_targets:
+    if not flip_targets:
         print(
-            f"==> [4/6] terraform apply -target=<{len(flip_targets)}/{len(PROTECTED_TARGETS)} "
-            "in-state resources with deletion_protection> "
-            "-var=enable_deletion_protection=false (state-flip only, no recreate)"
-        )
-        targets = [arg for tgt in flip_targets for arg in ("-target", tgt)]
-        run_terraform_streaming_with_lock_retry(
-            [
-                "terraform",
-                f"-chdir={INFRA}",
-                "apply",
-                "-auto-approve",
-                *common_vars,
-                *targets,
-            ],
-            chdir_infra=INFRA,
-        )
-    else:
-        print(
-            f"==> [4/6] state-flip skipped — "
+            "==> state-flip skipped — "
             f"PROTECTED_TARGETS ({len(PROTECTED_TARGETS)}) はいずれも state 不在"
         )
+        return 0
 
     print(
-        "==> [5/6] terraform destroy -target=module.kserve "
+        f"==> terraform apply -target=<{len(flip_targets)}/{len(PROTECTED_TARGETS)} "
+        "in-state resources with deletion_protection> "
+        "-var=enable_deletion_protection=false (state-flip only, no recreate)"
+    )
+    targets = [arg for tgt in flip_targets for arg in ("-target", tgt)]
+    run_terraform_streaming_with_lock_retry(
+        [
+            "terraform",
+            f"-chdir={INFRA}",
+            "apply",
+            "-auto-approve",
+            *_common_vars(),
+            *targets,
+        ],
+        chdir_infra=INFRA,
+    )
+    return 0
+
+
+def _run_destroy_kserve() -> int:
+    print(
+        "==> terraform destroy -target=module.kserve "
         "(K8s/Helm を GKE cluster より先に削除 — provider が cluster endpoint に依存するため)"
     )
     # operator destroy より先に CR を消して finalizer deadlock を避ける。
@@ -222,7 +286,7 @@ def main() -> int:
                 f"-chdir={INFRA}",
                 "destroy",
                 "-auto-approve",
-                *common_vars,
+                *_common_vars(),
                 f"-target={KSERVE_MODULE_TARGET}",
             ],
             chdir_infra=INFRA,
@@ -248,7 +312,10 @@ def main() -> int:
             state_rm(INFRA, KSERVE_MODULE_TARGET)
         else:
             print("    module.kserve in state: empty (nothing to rm)")
+    return 0
 
+
+def _run_destroy_main() -> int:
     # 永続化 VVS resource (Index / Endpoint) は destroy 対象から除外する。
     # 「除外」は terraform に `-target=` で指定したものだけを destroy する仕様
     # を逆手に取り、state list 全 address から永続化対象を引いた集合を全件
@@ -259,13 +326,13 @@ def main() -> int:
     destroy_addrs = [a for a in all_addrs if not a.startswith(persistent_prefixes)]
 
     if not destroy_addrs:
-        print("==> [6/6] state は永続化 VVS resource のみ — 本体 destroy をスキップ")
+        print("==> state は永続化 VVS resource のみ — 本体 destroy をスキップ")
         return 0
 
     excluded = len(all_addrs) - len(destroy_addrs)
     if excluded:
         print(
-            f"==> [6/6] terraform destroy -auto-approve "
+            f"==> terraform destroy -auto-approve "
             f"(本体: {len(destroy_addrs)} addr 対象、永続 VVS {excluded} addr 除外)"
         )
         target_args = [arg for addr in destroy_addrs for arg in ("-target", addr)]
@@ -275,26 +342,174 @@ def main() -> int:
                 f"-chdir={INFRA}",
                 "destroy",
                 "-auto-approve",
-                *common_vars,
+                *_common_vars(),
                 *target_args,
             ],
             chdir_infra=INFRA,
         )
     else:
-        print("==> [6/6] terraform destroy -auto-approve (本体)")
+        print("==> terraform destroy -auto-approve (本体)")
         run_terraform_streaming_with_lock_retry(
             [
                 "terraform",
                 f"-chdir={INFRA}",
                 "destroy",
                 "-auto-approve",
-                *common_vars,
+                *_common_vars(),
             ],
             chdir_infra=INFRA,
         )
+    return 0
 
-    print()
-    print("==> destroy-all complete.")
+
+# ---- step list ---------------------------------------------------------------
+
+def _steps() -> list[DestroyStep]:
+    return [
+        DestroyStep(
+            1,
+            "seed-clean",
+            "seed-test-clean (drop out-of-TF tables that block dataset destroy)",
+            _run_seed_clean,
+        ),
+        DestroyStep(
+            2,
+            "undeploy-vertex-endpoints",
+            "undeploy Vertex endpoint deployed_models (HTTP 400 回避)",
+            _run_undeploy_vertex_endpoints,
+        ),
+        DestroyStep(
+            3,
+            "undeploy-vvs-deployed-indexes",
+            "undeploy Vector Search deployed indexes (PDCA reproducibility guard)",
+            _run_undeploy_vvs_deployed_indexes,
+        ),
+        DestroyStep(
+            4,
+            "state-rm-persistent-vvs",
+            "state rm 永続化 VVS Index/Endpoint (GCP 残置、次回 deploy-all で import)",
+            _run_state_rm_persistent_vvs,
+        ),
+        DestroyStep(
+            5,
+            "wipe-gcs-buckets",
+            "wipe GCS buckets (force_destroy=false blockers)",
+            _run_wipe_gcs_buckets,
+        ),
+        DestroyStep(
+            6,
+            "flip-deletion-protection",
+            "terraform apply -var=enable_deletion_protection=false (state-flip only)",
+            _run_flip_deletion_protection,
+        ),
+        DestroyStep(
+            7,
+            "destroy-kserve",
+            "terraform destroy -target=module.kserve (K8s/Helm を GKE より先に)",
+            _run_destroy_kserve,
+        ),
+        DestroyStep(
+            8,
+            "destroy-main",
+            "terraform destroy 本体 (永続化 VVS 除外)",
+            _run_destroy_main,
+        ),
+    ]
+
+
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Run destroy-all flow with optional step slicing (symmetrical with deploy-all)."
+    )
+    parser.add_argument(
+        "--from-step",
+        default="1",
+        help="Start from this step number or name (e.g. 6, flip-deletion-protection).",
+    )
+    parser.add_argument(
+        "--to-step",
+        default="8",
+        help="Stop after this step number or name (e.g. 7, destroy-kserve).",
+    )
+    return parser.parse_args()
+
+
+def _resolve_step_ref(ref: str, steps: list[DestroyStep]) -> int:
+    raw = ref.strip()
+    if raw.isdigit():
+        step_no = int(raw)
+        if any(step.number == step_no for step in steps):
+            return step_no
+    lowered = raw.lower()
+    for step in steps:
+        if lowered == step.name:
+            return step.number
+    valid = ", ".join([str(step.number) for step in steps] + [step.name for step in steps])
+    raise SystemExit(f"[error] unknown step {ref!r}. valid values: {valid}")
+
+
+# ---- orchestration entrypoint -----------------------------------------------
+
+def main() -> int:
+    global _DESTROY_ALL_STARTED_AT, _STEP_STARTED_AT
+    _DESTROY_ALL_STARTED_AT = None
+    _STEP_STARTED_AT = None
+
+    args = _parse_args()
+    steps = _steps()
+    total = len(steps)
+    from_step = _resolve_step_ref(args.from_step, steps)
+    to_step = _resolve_step_ref(args.to_step, steps)
+    if from_step > to_step:
+        raise SystemExit(f"[error] --from-step ({from_step}) must be <= --to-step ({to_step})")
+
+    project_id = env("PROJECT_ID")
+    print(f"==> destroy-all on project {project_id!r}")
+
+    # Pre-check (slicing 範囲に関わらず必ず走る early-return guard):
+    # state が空なら destroy は何もすることがない。`-target` apply が
+    # 依存ごと resource を recreate してしまう副作用 (Phase 7 Run 4 で
+    # WIF pool 30 日 soft-delete に再衝突した事故) を避けるため early-return。
+    state_count = state_size(INFRA)
+    if state_count == 0:
+        print("==> state list is empty — nothing to destroy. (前回の destroy-all で完了済)")
+        print("    Re-provision with: make deploy-all")
+        return 0
+    print(f"==> state has {state_count} address(es) — proceeding")
+
+    selected = [step for step in steps if from_step <= step.number <= to_step]
+    print(
+        f"==> destroy-all selection: from_step={from_step} to_step={to_step} "
+        f"steps={[step.name for step in selected]}"
+    )
+
+    current_step: DestroyStep | None = None
+    try:
+        for step in selected:
+            current_step = step
+            _step(step.number, total, step.label)
+            rc = step.run()
+            if rc != 0:
+                print(
+                    f"==> destroy-all FAILED at step {step.number} ({step.name}) — see logs above"
+                )
+                return rc
+            _step_done()
+    except BaseException:
+        if current_step is not None:
+            print(
+                f"==> destroy-all FAILED at step {current_step.number} ({current_step.name}) "
+                "— see traceback above"
+            )
+        raise
+
+    if _DESTROY_ALL_STARTED_AT is not None:
+        total_elapsed = time.monotonic() - _DESTROY_ALL_STARTED_AT
+        print()
+        print(f"==> destroy-all complete. total_elapsed={total_elapsed:.0f}s")
+    else:
+        print()
+        print("==> destroy-all complete.")
     print("    tfstate bucket preserved. Re-provision with: make deploy-all")
     return 0
 

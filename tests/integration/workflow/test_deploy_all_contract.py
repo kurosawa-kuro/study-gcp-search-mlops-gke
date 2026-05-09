@@ -242,11 +242,14 @@ def test_wait_for_deployed_index_absent_is_idempotent_on_resume() -> None:
 
 
 def test_deploy_all_waits_vertex_feature_store_and_retries_stage1_on_409() -> None:
-    """Pin destroy→deploy 409 対策: list API 待ち + stage1 apply 再試行。"""
-    deploy_py = _read("scripts/setup/deploy_all.py")
+    """Pin destroy→deploy 409 対策: list API 待ち + stage1 apply 再試行。
+
+    2026-05-09 refactor: tf-apply の business logic は `scripts/setup/tf_apply.py`
+    へ分離 (deploy_all.py は orchestrator only)。pin 対象を新所在へ追従。"""
+    tf_apply_py = _read("scripts/setup/tf_apply.py")
     stage_py = _read("scripts/infra/terraform_stage_apply.py")
-    assert "wait_until_feature_store_names_released" in deploy_py
-    assert "terraform_apply_stage1_with_retries" in deploy_py
+    assert "wait_until_feature_store_names_released" in tf_apply_py
+    assert "terraform_apply_stage1_with_retries" in tf_apply_py
     assert "terraform_apply_stage1_with_retries" in stage_py
 
 

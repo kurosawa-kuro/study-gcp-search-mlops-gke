@@ -91,13 +91,16 @@ def test_all_modules_use_consistent_region_var() -> None:
 
 def test_gke_two_stage_apply_pattern_preserved() -> None:
     """GKE Autopilot + KServe Helm provider race を回避する **2 段 apply** が
-    `deploy_all.py` に維持されていること。
+    維持されていること。
 
-    時間影響: race で全 apply が無効化されると最大 30-40 min の retry コスト。"""
-    deploy_all_py = _read("scripts/setup/deploy_all.py")
-    assert "stage1" in deploy_all_py.lower()
-    assert "ensure_kubectl_context" in deploy_all_py
-    assert "wait_until_api_ready" in deploy_all_py
+    時間影響: race で全 apply が無効化されると最大 30-40 min の retry コスト。
+
+    2026-05-09 refactor: tf-apply の business logic は `scripts/setup/tf_apply.py`
+    へ分離 (deploy_all.py は orchestrator only)。pin 対象を新所在へ追従。"""
+    tf_apply_py = _read("scripts/setup/tf_apply.py")
+    assert "stage1" in tf_apply_py.lower()
+    assert "ensure_kubectl_context" in tf_apply_py
+    assert "wait_until_api_ready" in tf_apply_py
 
 
 def test_search_api_image_lifecycle_ignore_changes_pinned() -> None:
