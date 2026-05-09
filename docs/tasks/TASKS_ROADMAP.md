@@ -10,11 +10,12 @@
 
 ### §0.1 ピボット完了 (Phase 形式 → 個人技術学習プロジェクト)
 
-チームメンバー向けの **Phase 1〜7 形式の学習資料はリリース済みで役目を終えた**。今後はその資産を活かしつつ、個人の技術学習プロジェクトとして、より深く柔軟に学習するため **Phase 形式を廃止**。
+チームメンバー向けの **Phase 1〜7 形式の学習資料はリリース済みで役目を終えた**。今後はその資産を活かしつつ、個人の技術学習プロジェクトとして、より深く柔軟に学習するため **教育用 Phase 形式 (Phase 1〜6 の段階的教材) を廃止**。
 
 - ゴールの Phase 7 (= GKE + KServe + Composer + Vertex AI 一式) は repo ルートに昇格済み
 - `1/` 〜 `6/` ディレクトリ、`docs/phases/`、`docs/教育資料/`、`archive/` は全て撤去済み
-- 主要ドキュメント (README / CLAUDE / AGENTS / docs/architecture/01 / 03) から Phase 概念は撤去済み
+- README / CLAUDE / AGENTS から教育用 Phase 概念 (Phase 1〜6 段階教材) は撤去済み
+- ⚠️ **`docs/architecture/01_仕様と設計.md §3` と `tests/integration/workflow/`** では **「Phase 7 で本実装、後方派生で Phase 6 へ引き算」** の wording が **Composer 配置設計の歴史的経緯名 / canonical 学習プロジェクト最終形態名** として残置 (workflow contract で pin)。これは教材としての段階廃止とは別の意図 (上下関係を表す固有名)、撤去対象ではない
 
 ### §0.2 仕様の大幅変更 (正解データ + 継続改善サイクル前提)
 
@@ -202,6 +203,23 @@ search-api → event logs → BigQuery curated → Composer (retrain_orchestrati
 
 ---
 
+### Wave 8.5 — Phase 概念の完全撤廃 (canonical wording を Phase 7/6 から固有名へ)
+
+**目的**: 本リポは Phase 分裂教材ではなく、教育用 Phase 1〜6 教材は M-Pivot で撤去済。残った「Phase 7 で本実装、後方派生で Phase 6 へ引き算」(`docs/architecture/01_仕様と設計.md §3` / `tests/integration/workflow/` 15+ ファイル / `docs/runbook/{04,05}.md` 数十箇所) は **Composer 配置設計の上下関係を表す** ためだけに残っている wording。固有名化 (例: 「canonical (= GKE + KServe + Composer 一式)」「Composer なし派生」) で完全撤廃する。
+
+**作業**:
+- [ ] `docs/architecture/01_仕様と設計.md §3` の Phase 7/6 wording を canonical / Composer なし派生 等の固有名へ書き換え
+- [ ] `tests/integration/workflow/` 15+ ファイルの docstring + pin assertion から `Phase [0-9]` を撤去 (canonical 意図は別 wording で保持)
+- [ ] `docs/runbook/04_検証.md` / `docs/runbook/05_運用.md` の Phase 表記を canonical wording に置換
+- [ ] `docs/architecture/03_実装カタログ.md` / `docs/tasks/TASKS_ROADMAP.md §0.1` の経緯メモを最終形態に更新
+- [ ] `make check` PASS
+
+**完了条件**: `grep -rE "Phase [0-9]" docs/ tests/integration/workflow/` が **0 件**。canonical 仕様 §3 が「Composer = 上位 orchestrator、Vertex Pipelines = 下位 ML executor」を Phase 表記なしで表現できている。
+
+**前提**: Wave 8 完了 (= 現 sprint の T1/T2 が ✅) 後に着手。本 Wave は意図的に大量 Edit を伴うため、`verify-live-acceptance` PASS 後に 1 sprint 切って実施する。
+
+---
+
 ### Wave 9 — Web 公開基盤 (独自ドメイン + HTTPS + DNS)
 
 **目的**: Web アプリを GCP 上で独自ドメイン配信し、HTTPS/TLS と DNS を canonical 手順で固定する。
@@ -289,7 +307,7 @@ Composer = 上位 orchestrator、Vertex Pipelines = 下位 ML executor。`train/
 |---|---|---|---|
 | M-Wave5 | 継続改善サイクル MVP | 🟡 進行中 | `make verify-live-acceptance` 最終通し (`TASKS.md` T1) ⚠️ canonical 必須 |
 | M-Wave7 | Makefile 本格整理 | ⏳ 着手可 | Wave 0 / Wave 1 完了済。Make Command Matrix と Makefile を一致させる |
-| M-Wave8 | ドキュメント再統合 | ⏳ | runbook 2 本 drift 解消 (`TASKS.md` T2) |
+| M-Wave8.5 | Phase 概念の完全撤廃 | ⏳ | Wave 8 完了済 (drift 解消は 03_実装カタログ §7.3)。残: 01 §3 / workflow contract test 15+ / runbook の `Phase [0-9]` を固有名 (canonical / Composer なし派生) へ置換。詳細は §2 Wave 8.5 |
 | M-Wave9 | 独自ドメイン + HTTPS + DNS | ⏳ scope outside | 本 sprint 除外 (user 指示)。詳細は §2 Wave 9 |
 
 ---
