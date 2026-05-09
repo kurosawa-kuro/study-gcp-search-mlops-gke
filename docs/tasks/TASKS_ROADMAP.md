@@ -1,11 +1,3 @@
-頻発バグメモ（search-api ダミーイメージ混入）:
-- 症状: `search-api` が `gcr.io/cloudrun/hello` で起動し、`ops-search` / `ops-search-components` が誤検知または失敗する。
-- 直接原因: `infra/manifests/search-api/deployment.yaml` のダミー `image` が、想定外の apply 手順で再適用される。
-- 恒久回避:
-  - `infra/manifests/search-api/deployment.yaml` の `image: gcr.io/cloudrun/hello` に「placeholder / 本番適用禁止」のコメントを維持する。
-  - `scripts/deploy/api_gke.py` / `make deploy-api` を canonical 手順として固定し、apply 後は `kubectl -n search get deploy/search-api -o jsonpath='{.spec.template.spec.containers[0].image}'` を必ず確認する。
-  - スモーク前チェックに上記 image 検証を追加し、`gcr.io/cloudrun/hello` の場合は即 fail-fast する。
-
 # TASKS_ROADMAP
 
 不動産ハイブリッド検索 + 継続改善 MLOps サイクルの **長期 backlog + 決定的仕様 + Wave 計画 + incident postmortem の母艦**。
@@ -44,8 +36,8 @@ Meilisearch を廃止し、**Elasticsearch を採用** する。ただし Elasti
 | 1 | プロジェクト方針の変更 (Phase 形式廃止) | — | ✅ ピボット完了 |
 | 2 | 仕様の大幅変更 (正解データ + 継続改善サイクル前提) | 本書 Wave 2-5 | ✅ 実装完了 / 🟡 Wave 5 live 検証 (`verify-live-acceptance`) 残件 |
 | 3 | 検索基盤の変更 (Meilisearch → Elasticsearch on GKE) | 本書 Wave 6 | ✅ 完了 (`ops-search-components` all non-zero) |
-| 4 | API エンドポイントの整理 (試行錯誤でつぎはぎ) | 本書 Wave 1 | ⏳ 実装済の可能性大 (`app/main.py` 3 prefix 分離 / contract test 存在)、判定固定が残件 (`TASKS.md` T4) |
-| 5 | Makefile / 実行系の破綻 (「コード直書き禁止」違反) | 本書 Wave 0 / 7 | ⏳ 多行 shell block 残存。Wave 0 (止血) → Wave 7 (本格整理) の順 |
+| 4 | API エンドポイントの整理 (試行錯誤でつぎはぎ) | 本書 Wave 1 | ✅ 完了 (2026-05-09 contract test 9 件 PASS、03_実装カタログ §7.3) |
+| 5 | Makefile / 実行系の破綻 (「コード直書き禁止」違反) | 本書 Wave 0 / 7 | 🟡 Wave 0 (止血) ✅ 完了 / Wave 7 (本格整理) ⏳ 着手可 |
 | 6 | Web アプリ公開基盤の不足 (独自ドメイン + HTTPS + DNS) | [`docs/runbook/05_運用.md`](../runbook/05_運用.md) | ⏳ **scope outside (本 sprint)** — Wave 9 に分離。GCP でドメイン購入、証明書発行、DNS 委任、Gateway/HTTPRoute 反映 |
 
 ---
@@ -206,27 +198,7 @@ search-api → event logs → BigQuery curated → Composer (retrain_orchestrati
 
 **完了条件**: `tasks/TASKS_ROADMAP.md` の「今の課題」6 件がすべて解消され、本 doc の記述と canonical docs (01 / 03 / runbook) が一致。
 
-#### Wave 8 収束トリオ（2026-05-06 時点）
-
-1) Terraform module structure
-- 症状: `tests/integration/infra/test_terraform_module_structure.py` で `elasticsearch` module が fail
-- 直接原因: `infra/terraform/modules/elasticsearch/` に `outputs.tf` / `versions.tf` が欠落
-- 是正アクション: 2 ファイルを最小構成で追加し、`make check` で契約復帰を確認（完了）
-
-2) deploy-all workflow contract
-- 症状: `test_configmap_overlay_injects_live_vertex_outputs` が fail
-- 直接原因: `scripts/deploy/configmap_overlay.py` の `ELASTICSEARCH_URL` 既定値が `https://...` でテスト期待値 `http://...` と不一致
-- 是正アクション: canonical を `http://elasticsearch.search.svc.cluster.local:9200` に統一（完了）
-
-3) docs canonical contract
-- 症状: `test_docs_canonical_contract.py` と `test_elasticsearch_workflow_contract.py` が fail
-- 直接原因: `docs/architecture/01_仕様と設計.md` の pin 文言欠落、および `03_実装カタログ.md` で `sync-elasticsearch` 表記が不足
-- 是正アクション: 必須見出し/文言を復元し、`03_実装カタログ.md` に canonical キーワードを明示追記（完了）
-
-4) ground truth contract (reranker image)
-- 症状: `test_kserve_dockerfiles_use_split_ml_extras` が fail
-- 直接原因: `infra/run/services/reranker/Dockerfile` に apt cache mount 行が欠落
-- 是正アクション: Dockerfile を contract 準拠に修正（完了）
+> Wave 8 収束トリオ (Terraform module structure / deploy-all workflow contract / docs canonical contract / reranker image) は完了済。詳細は [`../architecture/03_実装カタログ.md`](../architecture/03_実装カタログ.md) §7.2 を正本とする。
 
 ---
 
@@ -311,19 +283,13 @@ Composer = 上位 orchestrator、Vertex Pipelines = 下位 ML executor。`train/
 
 ## §5. マイルストーン
 
-| ID | フェーズ | 状態 | メモ |
+完了済 (M-Pivot / M-RunbookLocal / M-Wave0 / M-Wave1 / M-Wave2 / M-Wave3 / M-Wave4 / M-Wave6) は [`../architecture/03_実装カタログ.md`](../architecture/03_実装カタログ.md) §7.3 を正本とする。本表は **未完了 / 進行中のみ** 残す。
+
+| ID | フェーズ | 状態 | 残件 / 着手リンク |
 |---|---|---|---|
-| M-Pivot | Phase 形式廃止 + docs 撤去 | ✅ | README / CLAUDE / AGENTS / docs/architecture/01,03 から Phase 概念撤去完了 (2026-05-06) |
-| M-RunbookLocal | `04_検証.md` §2 相当（`verify-local-*` + search-api イメージ L2–L4） | ✅ | 2026-05-06 実施。Cloud 復旧は逐次実行で `ops-search-components` / VVS / Feature Group まで PASS |
-| M-Wave0 | Makefile 止血 | ⏳ | Makefile に 5 行超 shell block 残存 (継続行 11 件)。完了条件 = 違反 0 件 |
-| M-Wave1 | API 4 軸再設計 | ⏳ → 判定保留 | 実装側は揃う (`app/main.py` で `/api/v1` `/ops` `/ui` 分離 / `tests/integration/parity/test_api_route_prefixes.py` / IAP policy)。contract test 通し確認で ✅ 判定 (`TASKS.md` T4) |
-| M-Wave2 | 正解データ仕様確定 | ✅ | Event schema + 重み付き label + synthetic 注入を 6 canonical 場所で一致 (§2 Wave 2 [x]) |
-| M-Wave3 | アプリ側 正解データログ実装 | ✅ | EventWriter Port + Cloud Logging adapter 配線 + BQ Subscription 経路完成 (§2 Wave 3 [x]) |
-| M-Wave4 | LightGBM 接続死守ライン | ✅ | `pipeline/training_job/main.py` → `ml/data/loaders/ranker_repository.py` 配線済、実 `ranking_labels` で retrain → Vertex Model Registry 登録 (§2 Wave 4 [x]) |
-| M-Wave5 | 継続改善サイクル MVP | 🟡 進行中 | 学習 pipeline 復旧、`ENABLE_RERANK=true` で `ndcg_at_10=1.0` 達成。残件: `make verify-live-acceptance` 最終通し (`TASKS.md` T1) ⚠️ canonical 必須 |
-| M-Wave6 | Elasticsearch 移行 (GKE 上) | ✅ | `search-api` 本番イメージ化 / `sync_elasticsearch` 成功 / ECK endpoint 復帰 / `ops-search-components` で lexical+semantic+rerank all non-zero |
-| M-Wave7 | Makefile 本格整理 | ⏳ | Wave 0 + Wave 1 完了後に着手 |
-| M-Wave8 | ドキュメント再統合 | ⏳ | 残件: runbook 2 本 drift 解消 (`TASKS.md` T2) + §5 表 / §1 表の最新化 (T3 で本コミット反映済) |
+| M-Wave5 | 継続改善サイクル MVP | 🟡 進行中 | `make verify-live-acceptance` 最終通し (`TASKS.md` T1) ⚠️ canonical 必須 |
+| M-Wave7 | Makefile 本格整理 | ⏳ 着手可 | Wave 0 / Wave 1 完了済。Make Command Matrix と Makefile を一致させる |
+| M-Wave8 | ドキュメント再統合 | ⏳ | runbook 2 本 drift 解消 (`TASKS.md` T2) |
 | M-Wave9 | 独自ドメイン + HTTPS + DNS | ⏳ scope outside | 本 sprint 除外 (user 指示)。詳細は §2 Wave 9 |
 
 ---
