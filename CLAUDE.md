@@ -97,6 +97,64 @@ docs/
 - `.github/agents/gcp-mlops-theme-research.agent.md` — 検索/ランキング設計比較と markdown 提案専用 agent (GitHub 側 user-invocable)
 - `.claude/settings.local.json` (gitignore 対象) — 個人ごとの permissions allowlist。team 共有の hooks は `.claude/settings.json` に書く
 
+## Claude Code 自身の運用ルール (2026-05-10 incident 反映)
+
+過去の自分が踏んだ罠を再発させないためのチェックリスト。報告前に必ず通すこと。
+
+### bg コマンド完了後の偽 exit 0 検出 (必須)
+
+`Background command "..." completed (exit code 0)` を **そのまま信用しない**。
+`make ... 2>&1 | tail -N` 形式は **末尾 `tail` の exit code が 0 = bash exit 0** で、中間 fail を黙殺する。
+
+完了通知後は **必ず** output 末尾を以下で grep:
+
+```bash
+tail -30 <output-file> | grep -E "FAILED|Error:|Traceback|exit code [^0]|did not"
+```
+
+ヒットした場合は ✅ 報告禁止、原因究明に切り替える。詳細: [`docs/troubleshooting/bg-pipe-fake-exit-zero.md`](docs/troubleshooting/bg-pipe-fake-exit-zero.md)。
+
+推奨パターン (新規 bg 実行時):
+
+```bash
+make foo 2>&1 | tee /tmp/foo.log; exit ${PIPESTATUS[0]}
+```
+
+または:
+
+```bash
+bash -c 'set -o pipefail; make foo 2>&1 | tail -100'
+```
+
+### bg job が予想時間を超えたら proactive に診断 (必須)
+
+通常 30s で終わる test / 5 min で終わる terraform apply / 15 min で終わる Composer 起動 が **2 倍を超えても完了通知が来ない** なら、`bg notification 待ち` と惰性報告せず:
+
+```bash
+ps aux | grep <process>     # alive?
+ls -la <output-file>        # mtime / size 動いているか
+pgrep -af <stuck child>     # kubectl / terraform 等の child が hang していないか
+```
+
+を即実行して状態確認。沈黙より過剰報告。
+
+### test 追加時の mock 漏れ防止 (必須)
+
+副作用 (subprocess / network call) を持つ関数を内部で呼ぶ関数を test するときは:
+
+1. **module top-level import** で書いて mock target を一意化 (関数内 delayed import は mock target が散らばる)
+2. 関連する全 test ファイルで mock 漏れがないか grep:
+   ```bash
+   grep -rn "<関数名>" tests/  # 呼んでる箇所を全件確認
+   ```
+3. **foreground で 1 度走らせて** PASS 確認してから bg 化
+
+### troubleshooting docs を必ず参照 / 追加
+
+新しい failure mode を踏んだら [`docs/troubleshooting/README.md`](docs/troubleshooting/README.md) に 1 ファイル追加。format は既存 doc 参照。再発時の判断材料を残す。
+
+---
+
 ## Claude Code に任せる作業 vs 人間判断
 
 - **任せる**: Port/adapter/fake の boilerplate 提案、6 ファイル parity 同期、doc 同期、テスト雛形、`scripts/ci/layers.py` の `RULES` 追記提案、`mlops-dev-a` への `terraform apply` / `make deploy-all` (事前承認範囲)

@@ -67,6 +67,7 @@ from scripts.deploy.api_gke import main as deploy_api_main
 from scripts.deploy.composer_deploy_dags import main as composer_deploy_dags_main
 from scripts.deploy.configmap_overlay import main as overlay_configmap_main
 from scripts.deploy.seed_lgbm_model import main as seed_lgbm_main
+from scripts.infra.elasticsearch_wait import wait_until_es_healthy
 from scripts.infra.feature_view_sync import main as feature_view_sync_main
 from scripts.infra.kubectl_context import ensure as ensure_kubectl_context
 from scripts.ops.sync_elasticsearch import run as sync_elasticsearch_run
@@ -160,8 +161,11 @@ def _run_sync_elasticsearch() -> int:
     # only runs once `.status.health` ∈ {green, yellow}. Times out at 5 min
     # which is the practical signal that ECK Operator is stalled (see
     # `docs/troubleshooting/eck-license-reconcile-stall.md`).
-    from scripts.infra.elasticsearch_wait import wait_until_es_healthy
-
+    #
+    # 2026-05-10 follow-up: import is module-top-level (not delayed) so test
+    # mocks have a single canonical target (`scripts.setup.deploy_all.wait_until_es_healthy`).
+    # The earlier delayed import caused tests to miss the mock, real kubectl ran
+    # for ~5 min against a destroyed cluster, and pytest hung silently.
     wait_until_es_healthy()
 
     project_id = env("PROJECT_ID")

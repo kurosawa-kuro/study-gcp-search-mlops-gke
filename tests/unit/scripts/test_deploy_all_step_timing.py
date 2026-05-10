@@ -210,7 +210,7 @@ def test_run_sync_elasticsearch_uses_project_and_default_cluster_url() -> None:
             clear=False,
         ),
         patch(
-            "scripts.infra.elasticsearch_wait.wait_until_es_healthy",
+            "scripts.setup.deploy_all.wait_until_es_healthy",
             return_value="green",
         ),
         patch("scripts.setup.deploy_all.sync_elasticsearch_run", return_value=0) as sync_mock,
@@ -230,7 +230,7 @@ def test_run_sync_elasticsearch_propagates_nonzero_exit() -> None:
     with (
         patch.dict("os.environ", {"PROJECT_ID": "mlops-test"}, clear=False),
         patch(
-            "scripts.infra.elasticsearch_wait.wait_until_es_healthy",
+            "scripts.setup.deploy_all.wait_until_es_healthy",
             return_value="green",
         ),
         patch("scripts.setup.deploy_all.sync_elasticsearch_run", return_value=1),

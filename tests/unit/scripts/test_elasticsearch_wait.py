@@ -85,9 +85,9 @@ def test_wait_raises_timeout_on_stuck_unknown() -> None:
         patch("scripts.infra.elasticsearch_wait.time.sleep"),
         # monotonic returns 0, then 1000 (past 60s deadline).
         patch("scripts.infra.elasticsearch_wait.time.monotonic", side_effect=[0, 1000, 1001]),
+        pytest.raises(TimeoutError, match="eck-license-reconcile-stall"),
     ):
-        with pytest.raises(TimeoutError, match="eck-license-reconcile-stall"):
-            wait_until_es_healthy(timeout_s=60)
+        wait_until_es_healthy(timeout_s=60)
 
 
 def test_healthy_states_pin_green_and_yellow() -> None:
