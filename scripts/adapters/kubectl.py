@@ -25,12 +25,25 @@ def kubectl_run(
     capture: bool = False,
     check: bool = True,
     timeout: int | None = None,
+    input: str | None = None,
+    env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
     """Invoke `kubectl <args...>`. Returns the completed subprocess.
+
+    - ``input`` is fed to ``kubectl``'s stdin (used by ``kubectl apply -f -``).
+    - ``env`` overrides the subprocess environment (e.g. ``KUBECONFIG=...``).
 
     Examples:
         kubectl_run("get", "pods", "-n", "search")
         kubectl_run("apply", "-f", "manifests.yaml", capture=False)
+        kubectl_run("apply", "-f", "-", input=manifest_yaml)
         out = kubectl_run("get", "elasticsearch", "-o", "jsonpath={.status.health}", capture=True)
     """
-    return _run(["kubectl", *args], capture=capture, check=check, timeout=timeout)
+    return _run(
+        ["kubectl", *args],
+        capture=capture,
+        check=check,
+        timeout=timeout,
+        input=input,
+        env=env,
+    )

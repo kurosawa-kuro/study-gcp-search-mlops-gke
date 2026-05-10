@@ -218,8 +218,8 @@ def test_run_all_core_recipe_pins_canonical_validation_path() -> None:
     assert positions == sorted(positions), (
         "run-all-core drifted from the canonical validation order"
     )
-    assert "verify-all: ## Alias of run-all-core" in makefile
-    assert "$(MAKE) run-all-core" in makefile
+    assert "run-all-core:" in makefile
+    assert "verify-all:" not in makefile, "Legacy cross-phase alias leaked back in"
 
 
 def test_wait_for_deployed_index_absent_is_idempotent_on_resume() -> None:

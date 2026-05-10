@@ -19,7 +19,11 @@ def main() -> int:
     project_id = env("PROJECT_ID")
     bucket = f"{project_id}-tfstate"
 
-    exists = gcloud_run("storage", "buckets", "describe", f"gs://{bucket}",
+    exists = gcloud_run(
+        "storage",
+        "buckets",
+        "describe",
+        f"gs://{bucket}",
         check=False,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,

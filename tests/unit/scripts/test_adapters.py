@@ -31,7 +31,21 @@ def test_kubectl_run_forwards_capture_check_timeout() -> None:
     with patch("scripts.adapters.kubectl._run", return_value=_FakeProc("v1.30")) as mock:
         kubectl_run("version", capture=True, check=False, timeout=10)
     kwargs = mock.call_args[1]
-    assert kwargs == {"capture": True, "check": False, "timeout": 10}
+    assert kwargs == {
+        "capture": True,
+        "check": False,
+        "timeout": 10,
+        "input": None,
+        "env": None,
+    }
+
+
+def test_kubectl_run_forwards_input_for_stdin_apply() -> None:
+    """`kubectl apply -f -` consumes a manifest YAML via stdin."""
+    with patch("scripts.adapters.kubectl._run", return_value=_FakeProc()) as mock:
+        kubectl_run("apply", "-f", "-", input="kind: ConfigMap\n")
+    kwargs = mock.call_args[1]
+    assert kwargs["input"] == "kind: ConfigMap\n"
 
 
 def test_terraform_run_inserts_chdir_flag() -> None:
@@ -67,4 +81,10 @@ def test_gcloud_run_forwards_capture_check_timeout() -> None:
     with patch("scripts.adapters.gcloud._run", return_value=_FakeProc("token...")) as mock:
         gcloud_run("auth", "print-access-token", capture=True, check=False, timeout=10)
     kwargs = mock.call_args[1]
-    assert kwargs == {"capture": True, "check": False, "timeout": 10}
+    assert kwargs == {
+        "capture": True,
+        "check": False,
+        "timeout": 10,
+        "input": None,
+        "env": None,
+    }

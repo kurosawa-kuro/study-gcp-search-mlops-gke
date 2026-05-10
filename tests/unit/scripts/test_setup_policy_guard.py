@@ -51,12 +51,12 @@ def test_api_deploy_targets_gke_rollout_path() -> None:
 def test_makefile_has_canonical_ops_targets() -> None:
     makefile = _read("Makefile")
 
-    assert "deploy-all-direct:" in makefile
     assert "ops-search-components:" in makefile
     assert "ops-accuracy-report:" in makefile
     assert "local-accuracy-report:" in makefile
     assert "python -u -m scripts.ops.search_components" in makefile
     assert "python -u -m scripts.ops.accuracy_report" in makefile
+    assert "deploy-all-direct" not in makefile, "Legacy Phase 4 alias leaked back in"
 
 
 def test_makefile_sync_elasticsearch_passes_required_args() -> None:
@@ -75,10 +75,7 @@ def test_makefile_sync_elasticsearch_passes_required_args() -> None:
     assert "--project-id=$(PROJECT_ID)" in makefile, (
         "sync-elasticsearch target must forward --project-id from $(PROJECT_ID)"
     )
-    assert (
-        "ELASTICSEARCH_URL:-http://elasticsearch.search.svc.cluster.local:9200"
-        in makefile
-    ), (
+    assert "ELASTICSEARCH_URL:-http://elasticsearch.search.svc.cluster.local:9200" in makefile, (
         "sync-elasticsearch target must use canonical cluster-local URL as fallback "
         "when ELASTICSEARCH_URL is unset"
     )

@@ -21,7 +21,7 @@ def test_feature_online_store_public_domain_from_api_parses_rest_shape() -> None
     fake_resp = io.BytesIO(json.dumps(body).encode())
     tok = subprocess.CompletedProcess(["gcloud"], returncode=0, stdout="tok\n")
     with (
-        patch.object(configmap_overlay, "run", return_value=tok),
+        patch.object(configmap_overlay, "gcloud_run", return_value=tok),
         patch.object(configmap_overlay.urllib.request, "urlopen", return_value=fake_resp),
     ):
         got = configmap_overlay._feature_online_store_public_domain_from_api(
@@ -35,7 +35,7 @@ def test_feature_online_store_public_domain_from_api_returns_empty_on_missing_do
     fake_resp = io.BytesIO(json.dumps(body).encode())
     tok = subprocess.CompletedProcess(["gcloud"], returncode=0, stdout="tok\n")
     with (
-        patch.object(configmap_overlay, "run", return_value=tok),
+        patch.object(configmap_overlay, "gcloud_run", return_value=tok),
         patch.object(configmap_overlay.urllib.request, "urlopen", return_value=fake_resp),
     ):
         got = configmap_overlay._feature_online_store_public_domain_from_api(

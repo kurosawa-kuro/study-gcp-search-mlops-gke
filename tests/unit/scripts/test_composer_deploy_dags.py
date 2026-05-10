@@ -21,7 +21,7 @@ from scripts.deploy import composer_deploy_dags
 
 
 def _fake_run_factory(stdout: str, returncode: int = 0):
-    def _fake_run(cmd, capture=False, check=False):
+    def _fake_run(*args, **kwargs):
         proc = MagicMock()
         proc.stdout = stdout
         proc.returncode = returncode
@@ -34,7 +34,7 @@ def test_main_early_returns_when_dag_bucket_empty(monkeypatch, capsys) -> None:
     """`composer_dag_bucket=""` (= enable_composer=false) のとき rc=0 で skip。"""
     monkeypatch.setattr(
         composer_deploy_dags,
-        "run",
+        "terraform_run",
         _fake_run_factory(stdout=json.dumps({})),
     )
     rc = composer_deploy_dags.main()
@@ -48,18 +48,21 @@ def test_main_uploads_dags_when_bucket_set(monkeypatch, capsys) -> None:
     + data files (SQL) を `gsutil cp` で upload する。"""
     calls: list[list[str]] = []
 
+    def _fake_terraform_run(*args, **kwargs):
+        calls.append(["terraform", *args])
+        proc = MagicMock()
+        proc.returncode = 0
+        proc.stdout = json.dumps({"composer_dag_bucket": {"value": "gs://composer-bucket/dags"}})
+        return proc
+
     def _fake_run(cmd, capture=False, check=False):
         calls.append(list(cmd))
         proc = MagicMock()
         proc.returncode = 0
-        if cmd[0] == "terraform":
-            proc.stdout = json.dumps(
-                {"composer_dag_bucket": {"value": "gs://composer-bucket/dags"}}
-            )
-        else:
-            proc.stdout = ""
+        proc.stdout = ""
         return proc
 
+    monkeypatch.setattr(composer_deploy_dags, "terraform_run", _fake_terraform_run)
     monkeypatch.setattr(composer_deploy_dags, "run", _fake_run)
     rc = composer_deploy_dags.main()
     assert rc == 0
@@ -112,7 +115,7 @@ def test_main_uploads_dags_when_bucket_set(monkeypatch, capsys) -> None:
 def test_main_raises_when_terraform_output_fails(monkeypatch) -> None:
     monkeypatch.setattr(
         composer_deploy_dags,
-        "run",
+        "terraform_run",
         _fake_run_factory(stdout="", returncode=1),
     )
     with pytest.raises(SystemExit, match="terraform output -json failed"):
@@ -122,7 +125,7 @@ def test_main_raises_when_terraform_output_fails(monkeypatch) -> None:
 def test_main_raises_on_invalid_json(monkeypatch) -> None:
     monkeypatch.setattr(
         composer_deploy_dags,
-        "run",
+        "terraform_run",
         _fake_run_factory(stdout="not valid json"),
     )
     with pytest.raises(SystemExit, match="terraform output JSON decode failed"):

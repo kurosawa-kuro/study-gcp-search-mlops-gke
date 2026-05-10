@@ -307,8 +307,9 @@ def test_destroy_all_persists_vvs_index_and_endpoint() -> None:
     )
 
     # vertex_import.py が gcloud で existing resource を確認 + terraform import を発行
+    # (M-Wave8.6 以降: subprocess 直書きから `terraform_run` / `gcloud` adapter 経由に移管)
     assert "def import_persistent_vvs_resources(" in vertex_import_py
-    assert '"terraform"' in vertex_import_py and '"import"' in vertex_import_py
+    assert "terraform_run(" in vertex_import_py and '"import"' in vertex_import_py
     assert "gcloud" in vertex_import_py and "ai" in vertex_import_py
 
 
@@ -416,7 +417,9 @@ def test_deploy_all_invokes_state_recovery_before_tf_apply() -> None:
         "state_recovery.py must export `recover_orphan_gcp_resources`"
     )
     # 2. tf_apply.py が terraform apply 前に呼ぶ
-    assert "from scripts.domain.gcp.state_recovery import recover_orphan_gcp_resources" in tf_apply_py
+    assert (
+        "from scripts.domain.gcp.state_recovery import recover_orphan_gcp_resources" in tf_apply_py
+    )
     assert "recover_orphan_gcp_resources(" in tf_apply_py, (
         "tf_apply.py must call recover_orphan_gcp_resources before terraform apply"
     )

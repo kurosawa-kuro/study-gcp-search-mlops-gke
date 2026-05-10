@@ -30,7 +30,10 @@ def _terraform_output(name: str) -> str:
     fallback resource-name resolution to kick in.
     """
     try:
-        proc = terraform_run("output", "-raw", name,
+        proc = terraform_run(
+            "output",
+            "-raw",
+            name,
             cwd="infra/terraform/environments/dev",
             check=True,
             text=True,

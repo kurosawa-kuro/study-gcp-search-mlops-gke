@@ -38,7 +38,10 @@ PIPELINE_PKG_INIT = REPO_ROOT / "pipeline" / "__init__.py"
 
 def _terraform_output(name: str) -> str:
     """Read a single terraform output as a string. Empty string when unset."""
-    proc = terraform_run(f"-chdir={INFRA}", "output", "-json",
+    proc = terraform_run(
+        f"-chdir={INFRA}",
+        "output",
+        "-json",
         capture=True,
         check=False,
     )

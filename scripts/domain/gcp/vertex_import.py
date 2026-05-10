@@ -16,9 +16,9 @@ Endpoint create + DNS propagation を 2 回目以降は省略できる)。
 from __future__ import annotations
 
 import json
-import subprocess
 from pathlib import Path
 
+from scripts.adapters.gcloud import gcloud_run
 from scripts.adapters.terraform import terraform_run
 
 INDEX_ADDR = "module.vector_search.google_vertex_ai_index.property_embeddings[0]"
@@ -26,16 +26,27 @@ ENDPOINT_ADDR = "module.vector_search.google_vertex_ai_index_endpoint.property_e
 
 
 def _state_has(infra_dir: Path, addr: str) -> bool:
-    proc = terraform_run(f"-chdir={infra_dir}", "state", "list", addr,
+    proc = terraform_run(
+        f"-chdir={infra_dir}",
+        "state",
+        "list",
+        addr,
         check=False,
         capture=True,
-        )
+    )
     return proc.returncode == 0 and addr in (proc.stdout or "")
 
 
 def _gcloud_first(args: list[str]) -> dict | None:
-    """Run a `gcloud ... list --format=json` and return the first item, or None."""
-    proc = subprocess.run(args, check=False, capture=True)
+    """Run a `gcloud ... list --format=json` and return the first item, or None.
+
+    ``args[0]`` must be ``"gcloud"`` (M-Wave8.6 adapter contract).
+    """
+    if not args or args[0] != "gcloud":
+        raise ValueError(
+            f"_gcloud_first expects args[0]=='gcloud' (M-Wave8.6 adapter contract); got {args[:1]}"
+        )
+    proc = gcloud_run(*args[1:], check=False, capture=True)
     if proc.returncode != 0:
         return None
     payload = json.loads(proc.stdout) if (proc.stdout or "").strip() else []
@@ -46,11 +57,12 @@ def _terraform_import(
     infra_dir: Path, addr: str, gcp_id: str, *, terraform_var_args: list[str]
 ) -> bool:
     print(f"==> terraform import {addr} ← {gcp_id}")
-    proc = terraform_run(f"-chdir={infra_dir}",
-            "import",
-            *terraform_var_args,
-            addr,
-            gcp_id,
+    proc = terraform_run(
+        f"-chdir={infra_dir}",
+        "import",
+        *terraform_var_args,
+        addr,
+        gcp_id,
         check=False,
     )
     return proc.returncode == 0

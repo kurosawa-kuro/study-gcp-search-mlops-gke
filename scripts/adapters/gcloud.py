@@ -26,6 +26,8 @@ def gcloud_run(
     capture: bool = False,
     check: bool = True,
     timeout: int | None = None,
+    input: str | None = None,
+    env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
     """Invoke `gcloud <args...>`. Returns the completed subprocess.
 
@@ -34,4 +36,11 @@ def gcloud_run(
         proc = gcloud_run("ai", "indexes", "list", "--region=asia-northeast1", capture=True)
         # proc.stdout has the JSON / table output, proc.returncode for status
     """
-    return _run(["gcloud", *args], capture=capture, check=check, timeout=timeout)
+    return _run(
+        ["gcloud", *args],
+        capture=capture,
+        check=check,
+        timeout=timeout,
+        input=input,
+        env=env,
+    )

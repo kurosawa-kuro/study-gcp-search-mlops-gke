@@ -2,6 +2,10 @@
 
 Pin the 2026-05-09 incident fix: deploy-all step 10 (sync-elasticsearch) must
 not start until ECK Elasticsearch CR `.status.health` is green or yellow.
+
+Mock target (post M-Wave8.6): the module imports ``kubectl_run`` from
+``scripts.adapters.kubectl``, so we patch it at the consumer module level
+(where the bound name lives).
 """
 
 from __future__ import annotations
@@ -28,13 +32,12 @@ def test_wait_returns_immediately_on_green() -> None:
     """If ES is already green on the first poll, return without sleeping."""
     with (
         patch(
-            "scripts.domain.k8s.elasticsearch_wait.subprocess.run",
+            "scripts.domain.k8s.elasticsearch_wait.kubectl_run",
             return_value=_FakeProc("green"),
         ),
         patch("scripts.domain.k8s.elasticsearch_wait.time.sleep") as sleep_mock,
     ):
         assert wait_until_es_healthy(timeout_s=60) == "green"
-    # No sleep on the happy path — first poll succeeds.
     sleep_mock.assert_not_called()
 
 
@@ -43,7 +46,7 @@ def test_wait_accepts_yellow_for_single_node_cluster() -> None:
     sync-elasticsearch must accept yellow."""
     with (
         patch(
-            "scripts.domain.k8s.elasticsearch_wait.subprocess.run",
+            "scripts.domain.k8s.elasticsearch_wait.kubectl_run",
             return_value=_FakeProc("yellow"),
         ),
         patch("scripts.domain.k8s.elasticsearch_wait.time.sleep"),
@@ -56,17 +59,23 @@ def test_wait_polls_until_health_becomes_green() -> None:
     health_values = iter(["", "unknown", "unknown", "green"])
     phase_values = iter(["", "ApplyingChanges", "ApplyingChanges", "Ready"])
 
-    def fake_run(cmd, **kwargs):
-        # Distinguish health vs phase calls by jsonpath.
-        if "{.status.health}" in cmd[-1]:
+    def fake_kubectl_run(*args, **kwargs):
+        # `args` is the positional tuple passed to kubectl_run; the jsonpath is
+        # the trailing positional element.
+        if "{.status.health}" in args[-1]:
             return _FakeProc(next(health_values))
         return _FakeProc(next(phase_values))
 
     with (
-        patch("scripts.domain.k8s.elasticsearch_wait.subprocess.run", side_effect=fake_run),
+        patch(
+            "scripts.domain.k8s.elasticsearch_wait.kubectl_run",
+            side_effect=fake_kubectl_run,
+        ),
         patch("scripts.domain.k8s.elasticsearch_wait.time.sleep"),
-        # Pretend monotonic always advances by 1s — never hit deadline.
-        patch("scripts.domain.k8s.elasticsearch_wait.time.monotonic", side_effect=range(0, 100)),
+        patch(
+            "scripts.domain.k8s.elasticsearch_wait.time.monotonic",
+            side_effect=range(0, 100),
+        ),
     ):
         assert wait_until_es_healthy(timeout_s=60) == "green"
 
@@ -79,12 +88,14 @@ def test_wait_raises_timeout_on_stuck_unknown() -> None:
     the cheaper path (see eck-license-reconcile-stall.md)."""
     with (
         patch(
-            "scripts.domain.k8s.elasticsearch_wait.subprocess.run",
+            "scripts.domain.k8s.elasticsearch_wait.kubectl_run",
             return_value=_FakeProc("unknown"),
         ),
         patch("scripts.domain.k8s.elasticsearch_wait.time.sleep"),
-        # monotonic returns 0, then 1000 (past 60s deadline).
-        patch("scripts.domain.k8s.elasticsearch_wait.time.monotonic", side_effect=[0, 1000, 1001]),
+        patch(
+            "scripts.domain.k8s.elasticsearch_wait.time.monotonic",
+            side_effect=[0, 1000, 1001],
+        ),
         pytest.raises(TimeoutError, match="eck-license-reconcile-stall"),
     ):
         wait_until_es_healthy(timeout_s=60)

@@ -182,6 +182,7 @@ def _step_done() -> None:
 
 # ---- common vars (terraform 引数共通化、散防止) -----------------------------
 
+
 def _common_vars() -> list[str]:
     return [
         "-var=enable_deletion_protection=false",
@@ -190,6 +191,7 @@ def _common_vars() -> list[str]:
 
 
 # ---- _run_* thin wrappers (実装は scripts/infra/* に委譲) -------------------
+
 
 def _run_seed_clean() -> int:
     return seed_clean_main()
@@ -233,9 +235,7 @@ def _run_state_rm_persistent_vvs() -> int:
             print(f"    state rm: {addr}")
             rm_count += 1
     if rm_count:
-        print(
-            f"==> state rm 永続化 VVS {rm_count} addr (GCP 残置、次回 deploy-all で import)"
-        )
+        print(f"==> state rm 永続化 VVS {rm_count} addr (GCP 残置、次回 deploy-all で import)")
     return 0
 
 
@@ -372,6 +372,7 @@ def _run_destroy_main() -> int:
 
 # ---- step list ---------------------------------------------------------------
 
+
 def _steps() -> list[DestroyStep]:
     return [
         DestroyStep(
@@ -457,6 +458,7 @@ def _resolve_step_ref(ref: str, steps: list[DestroyStep]) -> int:
 
 
 # ---- orchestration entrypoint -----------------------------------------------
+
 
 def main() -> int:
     global _DESTROY_ALL_STARTED_AT, _STEP_STARTED_AT

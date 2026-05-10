@@ -16,8 +16,9 @@ from __future__ import annotations
 
 import argparse
 import os
-import subprocess
 import sys
+
+from scripts.adapters.gcloud import gcloud_run
 
 
 def _resolve(name: str, default: str = "") -> str:
@@ -85,7 +86,8 @@ def main(argv: list[str] | None = None) -> int:
         region=args.region,
         dag=args.dag,
     )
-    proc = subprocess.run(cmd, check=False)
+    # cmd[0] is "gcloud"; the adapter prepends the binary itself.
+    proc = gcloud_run(*cmd[1:], check=False)
     return proc.returncode
 
 

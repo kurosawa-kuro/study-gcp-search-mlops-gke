@@ -110,11 +110,12 @@ def _resolve_command(cli_command: list[str]) -> list[str]:
 
 
 def _build_describe(project_id: str, build_id: str) -> tuple[str, str]:
-    proc = gcloud_run("builds",
-            "describe",
-            build_id,
-            f"--project={project_id}",
-            "--format=json",
+    proc = gcloud_run(
+        "builds",
+        "describe",
+        build_id,
+        f"--project={project_id}",
+        "--format=json",
         capture=True,
     )
     try:

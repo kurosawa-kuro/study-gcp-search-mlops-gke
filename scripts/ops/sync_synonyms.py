@@ -39,10 +39,11 @@ def _log(msg: str) -> None:
 def _gcloud(args: list[str]) -> str:
     """Run a ``gcloud`` command and return stdout.strip(); empty on failure."""
     try:
-        proc = gcloud_run(*args,
+        proc = gcloud_run(
+            *args,
             check=False,
             capture=True,
-        timeout=60,
+            timeout=60,
         )
     except (FileNotFoundError, subprocess.SubprocessError) as exc:
         _log(f"gcloud invocation failed: {exc}")

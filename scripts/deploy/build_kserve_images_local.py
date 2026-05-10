@@ -18,7 +18,7 @@ from scripts.adapters.gcloud import gcloud_run
 from scripts.adapters.kubectl import kubectl_run
 
 NAMESPACE = "kserve-inference"
-ML_BASE_IMAGE = "phase7-ml-base:local"
+ML_BASE_IMAGE = "mlops-ml-base:local"
 
 
 def _step(msg: str) -> None:
@@ -56,16 +56,18 @@ def _diag(label: str, proc: subprocess.CompletedProcess[str]) -> None:
 def _ensure_docker_buildx() -> None:
     if shutil.which("docker") is None:
         raise SystemExit("[error] docker CLI not found — install Docker first")
-    proc = subprocess.run(
-        ["docker", "buildx", "version"], capture=True, check=False
-    )
+    proc = subprocess.run(["docker", "buildx", "version"], capture=True, check=False)
     if proc.returncode != 0:
         raise SystemExit("[error] `docker buildx` not available.")
 
 
 def _ensure_ar_auth(region: str) -> None:
     registry = f"{region}-docker.pkg.dev"
-    proc = gcloud_run("auth", "configure-docker", registry, "--quiet",
+    proc = gcloud_run(
+        "auth",
+        "configure-docker",
+        registry,
+        "--quiet",
         capture=True,
         check=False,
     )
@@ -77,12 +79,13 @@ def _ensure_ar_auth(region: str) -> None:
 
 
 def _ensure_kubectl_context(cluster_name: str, region: str, project_id: str) -> None:
-    gcloud_run("container",
-            "clusters",
-            "get-credentials",
-            cluster_name,
-            f"--region={region}",
-            f"--project={project_id}",
+    gcloud_run(
+        "container",
+        "clusters",
+        "get-credentials",
+        cluster_name,
+        f"--region={region}",
+        f"--project={project_id}",
     )
 
 
@@ -122,21 +125,23 @@ def _patch_inference_service_image(isvc_name: str, image_uri: str) -> None:
         f'"image":"{image_uri}"'
         "}]}}}"
     )
-    kubectl_run("patch",
-            "inferenceservice",
-            isvc_name,
-            f"--namespace={NAMESPACE}",
-            "--type=merge",
-            f"--patch={patch}",
+    kubectl_run(
+        "patch",
+        "inferenceservice",
+        isvc_name,
+        f"--namespace={NAMESPACE}",
+        "--type=merge",
+        f"--patch={patch}",
     )
 
 
 def _set_deployment_image(deployment: str, container: str, image_uri: str) -> None:
-    kubectl_run("set",
-            "image",
-            f"deployment/{deployment}",
-            f"{container}={image_uri}",
-            f"--namespace={NAMESPACE}",
+    kubectl_run(
+        "set",
+        "image",
+        f"deployment/{deployment}",
+        f"{container}={image_uri}",
+        f"--namespace={NAMESPACE}",
     )
 
 

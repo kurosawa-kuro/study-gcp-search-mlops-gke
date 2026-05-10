@@ -150,9 +150,7 @@ def _bst_rename_if_needed(artifact_uri: str, *, apply: bool) -> str | None:
         _log(f"  PLAN gsutil cp {txt} {target}")
         return target
     _log(f"  RUN  gsutil cp {txt} {target}")
-    proc = subprocess.run(
-        ["gsutil", "cp", txt, target], capture=True, check=False
-    )
+    proc = subprocess.run(["gsutil", "cp", txt, target], capture=True, check=False)
     if proc.returncode != 0:
         raise RuntimeError(f"gsutil cp failed: {proc.stderr.strip()}")
     return target

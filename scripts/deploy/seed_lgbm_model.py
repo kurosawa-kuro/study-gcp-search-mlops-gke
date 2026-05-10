@@ -62,14 +62,15 @@ def _resolve_bucket() -> str:
 
 def _existing_object_size(gs_uri: str) -> int:
     """Return blob size in bytes, or -1 if missing/unreachable."""
-    proc = gcloud_run("storage",
-            "objects",
-            "describe",
-            gs_uri,
-            "--format=value(size)",
+    proc = gcloud_run(
+        "storage",
+        "objects",
+        "describe",
+        gs_uri,
+        "--format=value(size)",
         check=False,
         capture=True,
-        )
+    )
     if proc.returncode != 0:
         return -1
     raw = (proc.stdout or "").strip()

@@ -189,11 +189,32 @@ def _capture_kubectl_patch_call() -> tuple[list[list[str]], MagicMock]:
     return captured, run_mock
 
 
+def _capture_kubectl_run_call() -> tuple[list[list[str]], MagicMock]:
+    """Adapter-level capture: post-M-Wave8.6 kserve_models calls
+    ``kubectl_run("patch", ...)`` not ``run(["kubectl", "patch", ...])``.
+
+    ``kubectl_run`` receives positional args (without the ``"kubectl"`` prefix);
+    we re-prepend it so existing assertions continue to read like a full argv.
+    """
+    captured: list[list[str]] = []
+
+    def fake_kubectl_run(*argv: str, **kwargs: Any) -> Any:
+        captured.append(["kubectl", *argv])
+        proc = MagicMock()
+        proc.returncode = 0
+        proc.stdout = ""
+        proc.stderr = ""
+        return proc
+
+    run_mock = MagicMock(side_effect=fake_kubectl_run)
+    return captured, run_mock
+
+
 def test_patch_reranker_storage_uri_emits_expected_kubectl_shape() -> None:
     from scripts.deploy import kserve_models
 
-    captured, run_mock = _capture_kubectl_patch_call()
-    with patch.object(kserve_models, "run", run_mock):
+    captured, run_mock = _capture_kubectl_run_call()
+    with patch.object(kserve_models, "kubectl_run", run_mock):
         kserve_models._patch_reranker_storage_uri("gs://bucket/lgbm/2026-04-20/v2")
 
     assert len(captured) == 1
@@ -231,8 +252,8 @@ def test_patch_encoder_storage_uri_is_noop_under_hf_runtime() -> None:
     """
     from scripts.deploy import kserve_models
 
-    captured, run_mock = _capture_kubectl_patch_call()
-    with patch.object(kserve_models, "run", run_mock):
+    captured, run_mock = _capture_kubectl_run_call()
+    with patch.object(kserve_models, "kubectl_run", run_mock):
         kserve_models._patch_encoder_storage_uri("gs://bucket/encoders/v3/")
 
     assert captured == [], (

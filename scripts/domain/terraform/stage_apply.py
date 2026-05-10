@@ -11,6 +11,7 @@ import time
 from pathlib import Path
 
 from scripts._common import env
+from scripts.adapters.terraform import terraform_run
 from scripts.domain.terraform.lock import (
     is_state_lock_error,
     parse_terraform_lock_id,
@@ -39,12 +40,16 @@ def terraform_apply_stage1_with_retries(
     """Run stage1 apply; on state lock optionally force-unlock; on Vertex 409 sleep+retry."""
     max_attempts = int(env("TF_APPLY_STAGE1_MAX_ATTEMPTS", "5"))
     sleep_s = int(env("TF_APPLY_STAGE1_RETRY_SLEEP_SEC", "120"))
-    for attempt in range(1, max_attempts + 1):
-        proc = subprocess.run(
-            stage1_args,
-            capture=True,
-        check=False,
+    # ``stage1_args`` is the historical full argv (``["terraform", "-chdir=…", "apply", …]``).
+    # Strip the leading binary name when delegating to the adapter — the adapter
+    # prepends it itself.
+    if not stage1_args or stage1_args[0] != "terraform":
+        raise ValueError(
+            f"stage1_args must start with 'terraform' (got {stage1_args[:1]})"
         )
+    forwarded_args = stage1_args[1:]
+    for attempt in range(1, max_attempts + 1):
+        proc = terraform_run(*forwarded_args, capture=True, check=False)
         if proc.returncode == 0:
             if proc.stdout:
                 print(proc.stdout)
@@ -63,15 +68,18 @@ def terraform_apply_stage1_with_retries(
                 flush=True,
             )
             if should_auto_force_unlock() and lock_id:
-                unlock_cmd = [
-                    "terraform",
-                    f"-chdir={chdir_infra}",
+                print(
+                    f"==> TERRAFORM_STATE_FORCE_UNLOCK — terraform -chdir={chdir_infra} "
+                    f"force-unlock -force {lock_id}",
+                    flush=True,
+                )
+                terraform_run(
                     "force-unlock",
                     "-force",
                     lock_id,
-                ]
-                print(f"==> TERRAFORM_STATE_FORCE_UNLOCK — {' '.join(unlock_cmd)}", flush=True)
-                subprocess.run(unlock_cmd, check=True)
+                    chdir=str(chdir_infra),
+                    check=True,
+                )
                 print("==> retrying stage1 apply after force-unlock\n", flush=True)
                 continue
             raise SystemExit(1)

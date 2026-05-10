@@ -75,9 +75,7 @@ def _require(name: str) -> str:
 def _ensure_docker_buildx() -> None:
     if shutil.which("docker") is None:
         raise SystemExit("[error] docker CLI not found — install Docker Desktop / docker-ce first")
-    proc = subprocess.run(
-        ["docker", "buildx", "version"], capture=True, check=False
-    )
+    proc = subprocess.run(["docker", "buildx", "version"], capture=True, check=False)
     if proc.returncode != 0:
         raise SystemExit(
             "[error] `docker buildx` not available. Install BuildKit (Docker Desktop ≥ 19.03 "
@@ -88,7 +86,11 @@ def _ensure_docker_buildx() -> None:
 def _ensure_ar_auth(region: str) -> None:
     """Idempotent: configures local docker to push to <region>-docker.pkg.dev via gcloud."""
     registry = f"{region}-docker.pkg.dev"
-    proc = gcloud_run("auth", "configure-docker", registry, "--quiet",
+    proc = gcloud_run(
+        "auth",
+        "configure-docker",
+        registry,
+        "--quiet",
         capture=True,
         check=False,
     )
@@ -107,12 +109,13 @@ def _ensure_kubectl_context(cluster_name: str, region: str, project_id: str) -> 
     proc = kubectl_run("config", "current-context", capture=True, check=False)
     if proc.stdout:
         _info(f"current-context={proc.stdout.strip()}")
-    gcloud_run("container",
-            "clusters",
-            "get-credentials",
-            cluster_name,
-            f"--region={region}",
-            f"--project={project_id}",
+    gcloud_run(
+        "container",
+        "clusters",
+        "get-credentials",
+        cluster_name,
+        f"--region={region}",
+        f"--project={project_id}",
     )
 
 
@@ -161,20 +164,22 @@ def main() -> int:
     _info(f"docker buildx build SUCCESS elapsed={(time.monotonic() - build_start):.0f}s")
 
     _step(f"[3/4] kubectl set image (namespace={NAMESPACE} deployment={DEPLOYMENT})")
-    kubectl_run("set",
-            "image",
-            f"deployment/{DEPLOYMENT}",
-            f"{CONTAINER}={image_uri}",
-            f"--namespace={NAMESPACE}",
+    kubectl_run(
+        "set",
+        "image",
+        f"deployment/{DEPLOYMENT}",
+        f"{CONTAINER}={image_uri}",
+        f"--namespace={NAMESPACE}",
     )
 
     _step(f"[4/4] kubectl rollout status (timeout={ROLLOUT_TIMEOUT_SEC}s)")
     rollout_start = time.monotonic()
-    rollout_proc = kubectl_run("rollout",
-            "status",
-            f"deployment/{DEPLOYMENT}",
-            f"--namespace={NAMESPACE}",
-            f"--timeout={ROLLOUT_TIMEOUT_SEC}s",
+    rollout_proc = kubectl_run(
+        "rollout",
+        "status",
+        f"deployment/{DEPLOYMENT}",
+        f"--namespace={NAMESPACE}",
+        f"--timeout={ROLLOUT_TIMEOUT_SEC}s",
         capture=True,
         check=False,
     )

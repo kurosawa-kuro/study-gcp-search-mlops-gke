@@ -28,7 +28,10 @@ INFRA = Path(__file__).resolve().parents[2] / "infra" / "terraform" / "environme
 
 
 def _terraform_output_map() -> dict[str, str]:
-    proc = terraform_run(f"-chdir={INFRA}", "output", "-json",
+    proc = terraform_run(
+        f"-chdir={INFRA}",
+        "output",
+        "-json",
         capture=True,
         check=False,
     )

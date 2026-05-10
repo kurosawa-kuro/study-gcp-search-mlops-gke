@@ -24,7 +24,10 @@ INFRA = Path(__file__).resolve().parents[2] / "infra" / "terraform" / "environme
 
 def _terraform_output_map() -> dict[str, str]:
     """Return `terraform output -json` as a flat name->string map."""
-    proc = terraform_run(f"-chdir={INFRA}", "output", "-json",
+    proc = terraform_run(
+        f"-chdir={INFRA}",
+        "output",
+        "-json",
         capture=True,
         check=False,
     )
@@ -45,7 +48,9 @@ def _feature_online_store_public_domain_from_api(
     project_id: str, vertex_location: str, store_id: str
 ) -> str:
     """GET FeatureOnlineStore; return dedicatedServingEndpoint.publicEndpointDomainName."""
-    proc = gcloud_run("auth", "print-access-token",
+    proc = gcloud_run(
+        "auth",
+        "print-access-token",
         capture=True,
         check=False,
     )
@@ -124,11 +129,7 @@ def main() -> int:
     cm_yaml = render_configmap_yaml(data, with_header=False)
 
     print("==> kubectl apply -f - (search-api-config ConfigMap overlay)")
-    proc = kubectl_run("apply", "-f", "-",
-        input=cm_yaml,
-        text=True,
-        check=False,
-    )
+    proc = kubectl_run("apply", "-f", "-", input=cm_yaml, check=False)
     if proc.returncode != 0:
         raise SystemExit(f"[error] kubectl apply ConfigMap failed rc={proc.returncode}")
     return 0

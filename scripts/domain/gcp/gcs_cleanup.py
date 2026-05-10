@@ -24,12 +24,13 @@ def wipe_bucket(project_id: str, bucket: str) -> None:
     """
     uri = f"gs://{bucket}"
     print(f"    wipe {uri}")
-    gcloud_run("storage",
-            "rm",
-            "--recursive",
-            f"--project={project_id}",
-            "--quiet",
-            f"{uri}/**",
+    gcloud_run(
+        "storage",
+        "rm",
+        "--recursive",
+        f"--project={project_id}",
+        "--quiet",
+        f"{uri}/**",
         check=False,
     )
 

@@ -128,9 +128,7 @@ def test_es_networkpolicy_allows_eck_operator_namespace() -> None:
     削除すると `Phase=ApplyingChanges Health=unknown` reconcile stall が再発する。
     詳細: docs/troubleshooting/eck-license-reconcile-stall.md
     """
-    np_yaml = read_text(
-        REPO_ROOT / "infra" / "manifests" / "elasticsearch" / "networkpolicy.yaml"
-    )
+    np_yaml = read_text(REPO_ROOT / "infra" / "manifests" / "elasticsearch" / "networkpolicy.yaml")
     assert "kubernetes.io/metadata.name: elastic-system" in np_yaml, (
         "elasticsearch-kibana-policy NetworkPolicy must allow ingress from "
         "`elastic-system` namespace (ECK Operator location). Removing this "
@@ -151,9 +149,7 @@ def test_es_manifest_pins_http_and_anonymous_auth() -> None:
     本 contract は **学習プロジェクト前提を明示する pin** であり、production 化の
     境界判断点でもある (CLAUDE.md「個人技術学習プロジェクト」前提)。
     """
-    es_yaml = read_text(
-        REPO_ROOT / "infra" / "manifests" / "elasticsearch" / "elasticsearch.yaml"
-    )
+    es_yaml = read_text(REPO_ROOT / "infra" / "manifests" / "elasticsearch" / "elasticsearch.yaml")
 
     # 1. HTTP 化 (TLS 無効)
     assert "selfSignedCertificate:" in es_yaml and "disabled: true" in es_yaml, (

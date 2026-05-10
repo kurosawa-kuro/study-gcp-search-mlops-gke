@@ -26,7 +26,10 @@ def state_list(infra_dir: Path, env: dict[str, str] | None = None) -> list[str]:
     アクティブな利用先は無いが、ad-hoc な ``TF_VAR_*`` 上書きを可能にする
     ための general-purpose hook として残す)。
     """
-    proc = terraform_run(f"-chdir={infra_dir}", "state", "list",
+    proc = terraform_run(
+        f"-chdir={infra_dir}",
+        "state",
+        "list",
         check=False,
         capture=True,
         env=env,
@@ -87,10 +90,14 @@ def state_rm(infra_dir: Path, address: str) -> bool:
     配下の全 resource を一括で剥がせる。targeted destroy が cluster
     unreachable で実 resource を消せなかった時の fallback として使う。
     """
-    proc = terraform_run(f"-chdir={infra_dir}", "state", "rm", address,
+    proc = terraform_run(
+        f"-chdir={infra_dir}",
+        "state",
+        "rm",
+        address,
         check=False,
         capture=True,
-        )
+    )
     if proc.returncode == 0:
         return True
     tail = (proc.stderr or "").strip().splitlines()[-3:]

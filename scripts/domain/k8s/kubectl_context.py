@@ -32,12 +32,13 @@ def ensure() -> None:
     region = env("REGION", "asia-northeast1")
     cluster_name = env("GKE_CLUSTER_NAME", GKE_CLUSTER_NAME_DEFAULT)
     print(f"==> get-credentials cluster={cluster_name} region={region} project={project_id}")
-    gcloud_run("container",
-            "clusters",
-            "get-credentials",
-            cluster_name,
-            f"--region={region}",
-            f"--project={project_id}",
+    gcloud_run(
+        "container",
+        "clusters",
+        "get-credentials",
+        cluster_name,
+        f"--region={region}",
+        f"--project={project_id}",
     )
 
 
@@ -52,7 +53,12 @@ def wait_until_api_ready(*, timeout_seconds: int = 600, poll_seconds: int = 10) 
     """
     deadline = time.monotonic() + timeout_seconds
     while time.monotonic() < deadline:
-        proc = kubectl_run("get", "namespace", "kube-system", "-o", "name",
+        proc = kubectl_run(
+            "get",
+            "namespace",
+            "kube-system",
+            "-o",
+            "name",
             check=False,
             capture=True,
         )

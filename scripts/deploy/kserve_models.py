@@ -141,12 +141,13 @@ def _kubectl_patch(isvc_name: str, patch: dict[str, Any]) -> None:
     """Run `kubectl patch inferenceservice` with full echo of the applied patch."""
     patch_json = json.dumps(patch)
     _info(f"kubectl patch inferenceservice/{isvc_name} -n {NAMESPACE} patch={patch_json}")
-    proc = kubectl_run("patch",
-            "inferenceservice",
-            isvc_name,
-            f"--namespace={NAMESPACE}",
-            "--type=merge",
-            f"--patch={patch_json}",
+    proc = kubectl_run(
+        "patch",
+        "inferenceservice",
+        isvc_name,
+        f"--namespace={NAMESPACE}",
+        "--type=merge",
+        f"--patch={patch_json}",
         capture=True,
         check=False,
     )
@@ -197,39 +198,36 @@ def _patch_encoder_storage_uri(storage_uri: str) -> None:
 def _dump_diagnostics(name: str) -> None:
     """Dump kubectl get / describe / events / logs so failures are triageable."""
     _error(f"---- diagnostics for inferenceservice/{name} (namespace={NAMESPACE}) ----")
-    for cmd in (
-        ["kubectl", "get", "inferenceservice", name, f"--namespace={NAMESPACE}", "-o", "yaml"],
-        ["kubectl", "describe", "inferenceservice", name, f"--namespace={NAMESPACE}"],
-        [
-            "kubectl",
+    for kubectl_args in (
+        ("get", "inferenceservice", name, f"--namespace={NAMESPACE}", "-o", "yaml"),
+        ("describe", "inferenceservice", name, f"--namespace={NAMESPACE}"),
+        (
             "get",
             "pods",
             f"--namespace={NAMESPACE}",
             "-l",
             f"serving.kserve.io/inferenceservice={name}",
-        ],
-        [
-            "kubectl",
+        ),
+        (
             "get",
             "events",
             f"--namespace={NAMESPACE}",
             "--sort-by=.lastTimestamp",
             "--field-selector",
             f"involvedObject.name={name}",
-        ],
+        ),
         # best-effort pod logs (tail 200 across all pods for this ISVC)
-        [
-            "kubectl",
+        (
             "logs",
             f"--namespace={NAMESPACE}",
             "-l",
             f"serving.kserve.io/inferenceservice={name}",
             "--all-containers=true",
             "--tail=200",
-        ],
+        ),
     ):
-        _error(f"$ {' '.join(cmd)}")
-        proc = subprocess.run(cmd, capture=True, check=False)
+        _error(f"$ kubectl {' '.join(kubectl_args)}")
+        proc = kubectl_run(*kubectl_args, capture=True, check=False)
         if proc.stdout:
             sys.stderr.write(proc.stdout)
         if proc.stderr:
@@ -240,11 +238,12 @@ def _dump_diagnostics(name: str) -> None:
 def _wait_ready(name: str) -> None:
     _step(f"wait inferenceservice/{name} for condition=Ready timeout={ROLLOUT_TIMEOUT_SEC}s")
     start = time.monotonic()
-    proc = kubectl_run("wait",
-            f"inferenceservice/{name}",
-            f"--namespace={NAMESPACE}",
-            "--for=condition=Ready",
-            f"--timeout={ROLLOUT_TIMEOUT_SEC}s",
+    proc = kubectl_run(
+        "wait",
+        f"inferenceservice/{name}",
+        f"--namespace={NAMESPACE}",
+        "--for=condition=Ready",
+        f"--timeout={ROLLOUT_TIMEOUT_SEC}s",
         capture=True,
         check=False,
     )

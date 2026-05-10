@@ -42,13 +42,14 @@ HEALTHY_STATES = ("green", "yellow")
 
 def _read_health(namespace: str, name: str) -> str:
     """Return current `.status.health` value (empty string if not set yet)."""
-    proc = kubectl_run("-n",
-            namespace,
-            "get",
-            "elasticsearch",
-            name,
-            "-o",
-            "jsonpath={.status.health}",
+    proc = kubectl_run(
+        "-n",
+        namespace,
+        "get",
+        "elasticsearch",
+        name,
+        "-o",
+        "jsonpath={.status.health}",
         capture=True,
         check=False,
     )
@@ -56,13 +57,14 @@ def _read_health(namespace: str, name: str) -> str:
 
 
 def _read_phase(namespace: str, name: str) -> str:
-    proc = kubectl_run("-n",
-            namespace,
-            "get",
-            "elasticsearch",
-            name,
-            "-o",
-            "jsonpath={.status.phase}",
+    proc = kubectl_run(
+        "-n",
+        namespace,
+        "get",
+        "elasticsearch",
+        name,
+        "-o",
+        "jsonpath={.status.phase}",
         capture=True,
         check=False,
     )

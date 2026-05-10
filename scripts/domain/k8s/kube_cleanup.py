@@ -21,35 +21,34 @@ cluster が既に消滅している (前回 destroy-all が部分成功) ケー�
 
 from __future__ import annotations
 
-import subprocess
+from scripts.adapters.kubectl import kubectl_run
 
 
 def delete_orphan_workloads() -> None:
     """Pre-destroy: cluster-scoped CR を operator 健在のうちに掃除する。"""
     print("==>   pre-destroy: kubectl delete orphan workloads (avoid finalizer deadlock)")
-    for cmd in (
+    cleanups: tuple[tuple[str, ...], ...] = (
         # ISVC: KServe operator が finalizer を持つ。operator が活きてる間に消す。
-        [
-            "kubectl",
+        (
             "delete",
             "inferenceservice",
             "--all",
             "--namespace=kserve-inference",
             "--ignore-not-found",
             "--timeout=60s",
-        ],
+        ),
         # ExternalSecret: external-secrets operator が finalizer を持つ。
-        [
-            "kubectl",
+        (
             "delete",
             "externalsecret",
             "--all",
             "--namespace=search",
             "--ignore-not-found",
             "--timeout=60s",
-        ],
-    ):
-        proc = subprocess.run(cmd, check=False, capture=True)
+        ),
+    )
+    for kubectl_args in cleanups:
+        proc = kubectl_run(*kubectl_args, check=False, capture=True)
         if proc.stdout:
             print(f"    {proc.stdout.rstrip()}")
         if proc.returncode != 0:

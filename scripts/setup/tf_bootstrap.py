@@ -39,7 +39,11 @@ def main() -> int:
     gcloud_run("services", "enable", f"--project={project_id}", *REQUIRED_APIS)
 
     print(f"==> Creating gs://{bucket} if absent...", flush=True)
-    exists = gcloud_run("storage", "buckets", "describe", f"gs://{bucket}",
+    exists = gcloud_run(
+        "storage",
+        "buckets",
+        "describe",
+        f"gs://{bucket}",
         check=False,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,

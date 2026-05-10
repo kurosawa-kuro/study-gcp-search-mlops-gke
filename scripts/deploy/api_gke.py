@@ -86,12 +86,13 @@ def _ensure_kubectl_context(cluster_name: str, region: str, project_id: str) -> 
         f"refreshing credentials via `gcloud container clusters get-credentials "
         f"{cluster_name} --region={region}` (avoid stale CA after destroy/recreate)"
     )
-    gcloud_run("container",
-            "clusters",
-            "get-credentials",
-            cluster_name,
-            f"--region={region}",
-            f"--project={project_id}",
+    gcloud_run(
+        "container",
+        "clusters",
+        "get-credentials",
+        cluster_name,
+        f"--region={region}",
+        f"--project={project_id}",
     )
     after = kubectl_run("config", "current-context", capture=True, check=False)
     _info(f"kubectl current-context now={after.stdout.strip()!r}")
@@ -99,10 +100,9 @@ def _ensure_kubectl_context(cluster_name: str, region: str, project_id: str) -> 
 
 def _dump_rollout_diagnostics() -> None:
     _error(f"---- rollout diagnostics for deployment/{DEPLOYMENT} (namespace={NAMESPACE}) ----")
-    for cmd in (
-        ["kubectl", "get", "deployment", DEPLOYMENT, f"--namespace={NAMESPACE}", "-o", "wide"],
-        [
-            "kubectl",
+    for kubectl_args in (
+        ("get", "deployment", DEPLOYMENT, f"--namespace={NAMESPACE}", "-o", "wide"),
+        (
             "get",
             "pods",
             f"--namespace={NAMESPACE}",
@@ -110,27 +110,25 @@ def _dump_rollout_diagnostics() -> None:
             f"app.kubernetes.io/name={DEPLOYMENT}",
             "-o",
             "wide",
-        ],
-        ["kubectl", "describe", "deployment", DEPLOYMENT, f"--namespace={NAMESPACE}"],
-        [
-            "kubectl",
+        ),
+        ("describe", "deployment", DEPLOYMENT, f"--namespace={NAMESPACE}"),
+        (
             "get",
             "events",
             f"--namespace={NAMESPACE}",
             "--sort-by=.lastTimestamp",
-        ],
-        [
-            "kubectl",
+        ),
+        (
             "logs",
             f"--namespace={NAMESPACE}",
             "-l",
             f"app.kubernetes.io/name={DEPLOYMENT}",
             "--tail=200",
             "--all-containers=true",
-        ],
+        ),
     ):
-        _error(f"$ {' '.join(cmd)}")
-        proc = subprocess.run(cmd, capture=True, check=False)
+        _error(f"$ kubectl {' '.join(kubectl_args)}")
+        proc = kubectl_run(*kubectl_args, capture=True, check=False)
         if proc.stdout:
             sys.stderr.write(proc.stdout)
         if proc.stderr:
@@ -190,18 +188,20 @@ def main() -> int:
     _info(
         f"kubectl set image deployment/{DEPLOYMENT} {CONTAINER}={image_uri} --namespace={NAMESPACE}"
     )
-    kubectl_run("set",
-            "image",
-            f"deployment/{DEPLOYMENT}",
-            f"{CONTAINER}={image_uri}",
-            f"--namespace={NAMESPACE}",
+    kubectl_run(
+        "set",
+        "image",
+        f"deployment/{DEPLOYMENT}",
+        f"{CONTAINER}={image_uri}",
+        f"--namespace={NAMESPACE}",
     )
     rollout_start = time.monotonic()
-    proc = kubectl_run("rollout",
-            "status",
-            f"deployment/{DEPLOYMENT}",
-            f"--namespace={NAMESPACE}",
-            f"--timeout={ROLLOUT_TIMEOUT_SEC}s",
+    proc = kubectl_run(
+        "rollout",
+        "status",
+        f"deployment/{DEPLOYMENT}",
+        f"--namespace={NAMESPACE}",
+        f"--timeout={ROLLOUT_TIMEOUT_SEC}s",
         capture=True,
         check=False,
     )

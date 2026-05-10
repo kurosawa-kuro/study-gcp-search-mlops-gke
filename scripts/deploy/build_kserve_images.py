@@ -109,23 +109,25 @@ def _patch_inference_service_image(isvc_name: str, image_uri: str) -> None:
         "}]}}}"
     )
     _step(f"kubectl patch inferenceservice/{isvc_name} image={image_uri}")
-    kubectl_run("patch",
-            "inferenceservice",
-            isvc_name,
-            f"--namespace={NAMESPACE}",
-            "--type=merge",
-            f"--patch={patch}",
+    kubectl_run(
+        "patch",
+        "inferenceservice",
+        isvc_name,
+        f"--namespace={NAMESPACE}",
+        "--type=merge",
+        f"--patch={patch}",
     )
 
 
 def _set_deployment_image(deployment: str, container: str, image_uri: str) -> None:
     """Patch a plain Deployment's container image (used for reranker-explain)."""
     _step(f"kubectl set image deployment/{deployment} {container}={image_uri} -n {NAMESPACE}")
-    kubectl_run("set",
-            "image",
-            f"deployment/{deployment}",
-            f"{container}={image_uri}",
-            f"--namespace={NAMESPACE}",
+    kubectl_run(
+        "set",
+        "image",
+        f"deployment/{deployment}",
+        f"{container}={image_uri}",
+        f"--namespace={NAMESPACE}",
     )
 
 

@@ -181,15 +181,29 @@ def gcs_bucket_name(suffix: str) -> str:
 
 
 def run(
-    cmd: list[str], *, capture: bool = False, check: bool = True, timeout: int | None = None
+    cmd: list[str],
+    *,
+    capture: bool = False,
+    check: bool = True,
+    timeout: int | None = None,
+    input: str | None = None,
+    env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
-    """Thin wrapper around subprocess.run. `capture=True` returns stdout in `.stdout`."""
+    """Thin wrapper around subprocess.run.
+
+    - ``capture=True`` returns stdout in ``.stdout``.
+    - ``input`` (str) is fed to the process's stdin (text mode is always on).
+    - ``env`` overrides the subprocess environment (passed through to
+      ``subprocess.run``).
+    """
     return subprocess.run(
         cmd,
         check=check,
         text=True,
         stdout=subprocess.PIPE if capture else None,
         timeout=timeout,
+        input=input,
+        env=env,
     )
 
 

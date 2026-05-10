@@ -21,6 +21,7 @@ import subprocess
 from dataclasses import dataclass
 
 from scripts._common import env, fail
+from scripts.adapters.gcloud import gcloud_run
 
 HIGH_COST_BUCKET_SUFFIXES = ("models", "artifacts", "pipeline-root")
 HIGH_COST_DATASETS = ("feature_mart", "mlops", "predictions")
@@ -63,7 +64,12 @@ def _looks_like_api_disabled(stderr: str) -> bool:
 
 
 def _run_json(cmd: list[str]) -> tuple[list[dict], str | None]:
-    proc = subprocess.run(cmd, check=False, capture=True)
+    """Invoke `gcloud ... --format=json` (cmd[0]=='gcloud') and parse stdout."""
+    if not cmd or cmd[0] != "gcloud":
+        raise ValueError(
+            f"_run_json expects cmd[0]=='gcloud' (M-Wave8.6 adapter contract); got {cmd[:1]}"
+        )
+    proc = gcloud_run(*cmd[1:], check=False, capture=True)
     if proc.returncode != 0:
         stderr = (proc.stderr or "").strip()
         if _looks_like_api_disabled(stderr):
@@ -81,7 +87,8 @@ def _run_json(cmd: list[str]) -> tuple[list[dict], str | None]:
 
 
 def _run_bq_json(cmd: list[str]) -> tuple[list[dict], str | None]:
-    proc = subprocess.run(cmd, check=False, capture=True)
+    """Invoke `bq ...` (no adapter; bq stays on raw subprocess for now)."""
+    proc = subprocess.run(cmd, check=False, capture_output=True, text=True)
     if proc.returncode != 0:
         stderr = (proc.stderr or "").strip()
         if "Not found: Dataset" in stderr:

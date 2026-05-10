@@ -88,13 +88,14 @@ def main() -> int:
     latest_uri = f"{region}-docker.pkg.dev/{project_id}/{artifact_repo}/{IMAGE_NAME}:latest"
     _step(f"[bonus] tag {image_uri} as :latest ({latest_uri})")
 
-    proc = gcloud_run("artifacts",
-            "docker",
-            "tags",
-            "add",
-            image_uri,
-            latest_uri,
-            f"--project={project_id}",
+    proc = gcloud_run(
+        "artifacts",
+        "docker",
+        "tags",
+        "add",
+        image_uri,
+        latest_uri,
+        f"--project={project_id}",
         check=False,
     )
     if proc.returncode != 0:

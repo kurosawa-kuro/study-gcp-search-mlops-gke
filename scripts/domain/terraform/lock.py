@@ -15,6 +15,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from scripts.adapters.terraform import terraform_run
+
 # Terraform CLI wraps the lock info table in box-drawing characters (``│``) and
 # ANSI color codes (``\x1b[31m`` etc.). The 2026-05-10 incident showed that the
 # original anchor ``^\s*ID:`` did not match these prefixes — a stale lock could
@@ -96,15 +98,18 @@ def run_terraform_streaming_with_lock_retry(
         )
         raise SystemExit(1)
 
-    unlock_cmd = [
-        "terraform",
-        f"-chdir={chdir_infra}",
+    print(
+        f"==> TERRAFORM_STATE_FORCE_UNLOCK — terraform -chdir={chdir_infra} "
+        f"force-unlock -force {lock_id}",
+        flush=True,
+    )
+    terraform_run(
         "force-unlock",
         "-force",
         lock_id,
-    ]
-    print(f"==> TERRAFORM_STATE_FORCE_UNLOCK — {' '.join(unlock_cmd)}", flush=True)
-    subprocess.run(unlock_cmd, check=True)
+        chdir=str(chdir_infra),
+        check=True,
+    )
     print("==> retrying terraform command once after force-unlock\n", flush=True)
     rc2, _ = _run_stream_capture(cmd)
     if rc2 != 0:

@@ -29,16 +29,17 @@ def undeploy_endpoint_models(project_id: str, region: str, endpoint: str) -> Non
     `gcloud ... undeploy-model --quiet` waits for the long-running op,
     so control returns only when the deployed_model is fully detached.
     """
-    proc = gcloud_run("ai",
-            "endpoints",
-            "describe",
-            endpoint,
-            f"--region={region}",
-            f"--project={project_id}",
-            "--format=json",
+    proc = gcloud_run(
+        "ai",
+        "endpoints",
+        "describe",
+        endpoint,
+        f"--region={region}",
+        f"--project={project_id}",
+        "--format=json",
         check=False,
         capture=True,
-        )
+    )
     if proc.returncode != 0:
         print(f"    endpoint {endpoint!r} not present — skip")
         return
@@ -51,14 +52,15 @@ def undeploy_endpoint_models(project_id: str, region: str, endpoint: str) -> Non
         dm_id = dm["id"]
         display = dm.get("displayName", "?")
         print(f"    undeploy-model {endpoint} id={dm_id} display={display}")
-        gcloud_run("ai",
-                "endpoints",
-                "undeploy-model",
-                endpoint,
-                f"--deployed-model-id={dm_id}",
-                f"--region={region}",
-                f"--project={project_id}",
-                "--quiet",
+        gcloud_run(
+            "ai",
+            "endpoints",
+            "undeploy-model",
+            endpoint,
+            f"--deployed-model-id={dm_id}",
+            f"--region={region}",
+            f"--project={project_id}",
+            "--quiet",
         )
 
 
@@ -87,15 +89,16 @@ def deployed_index_state(project_id: str, region: str, deployed_index_id: str) -
       yet (being-undeployed ghost from prior destroy / mid-attach). Callers
       must keep waiting for this to clear before re-applying.
     """
-    proc = gcloud_run("ai",
-            "index-endpoints",
-            "list",
-            f"--region={region}",
-            f"--project={project_id}",
-            "--format=json",
+    proc = gcloud_run(
+        "ai",
+        "index-endpoints",
+        "list",
+        f"--region={region}",
+        f"--project={project_id}",
+        "--format=json",
         check=False,
         capture=True,
-        )
+    )
     if proc.returncode != 0:
         detail = (proc.stderr or proc.stdout or "").strip()
         print(f"    index-endpoints list failed — assume absent and continue: {detail}")
@@ -130,15 +133,16 @@ def undeploy_all_vvs_deployed_indexes(
     pid = project_id or env("PROJECT_ID")
     rgn = region or env("VERTEX_LOCATION") or env("REGION")
 
-    proc = gcloud_run("ai",
-            "index-endpoints",
-            "list",
-            f"--region={rgn}",
-            f"--project={pid}",
-            "--format=json",
+    proc = gcloud_run(
+        "ai",
+        "index-endpoints",
+        "list",
+        f"--region={rgn}",
+        f"--project={pid}",
+        "--format=json",
         check=False,
         capture=True,
-        )
+    )
     if proc.returncode != 0:
         detail = (proc.stderr or proc.stdout or "").strip()
         print(f"    index-endpoints list failed — assume absent and continue: {detail}")
@@ -162,14 +166,15 @@ def undeploy_all_vvs_deployed_indexes(
             if not deployed_id:
                 continue
             print(f"    undeploy-index endpoint={endpoint_id} deployed_index_id={deployed_id}")
-            gcloud_run("ai",
-                    "index-endpoints",
-                    "undeploy-index",
-                    endpoint_id,
-                    f"--deployed-index-id={deployed_id}",
-                    f"--region={rgn}",
-                    f"--project={pid}",
-                    "--quiet",
+            gcloud_run(
+                "ai",
+                "index-endpoints",
+                "undeploy-index",
+                endpoint_id,
+                f"--deployed-index-id={deployed_id}",
+                f"--region={rgn}",
+                f"--project={pid}",
+                "--quiet",
             )
 
 

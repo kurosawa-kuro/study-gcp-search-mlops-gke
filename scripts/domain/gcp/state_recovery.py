@@ -155,10 +155,14 @@ FEATURE_GROUP_FEATURES = tuple(
 
 def _state_has(infra_dir: Path, addr: str) -> bool:
     """terraform state list <addr> が hit するか。"""
-    proc = terraform_run(f"-chdir={infra_dir}", "state", "list", addr,
+    proc = terraform_run(
+        f"-chdir={infra_dir}",
+        "state",
+        "list",
+        addr,
         check=False,
         capture=True,
-        )
+    )
     return proc.returncode == 0 and addr in (proc.stdout or "")
 
 
@@ -166,19 +170,28 @@ def _terraform_import(
     infra_dir: Path, addr: str, gcp_id: str, *, terraform_var_args: list[str]
 ) -> bool:
     print(f"==> terraform import {addr} ← {gcp_id}")
-    proc = terraform_run(f"-chdir={infra_dir}",
-            "import",
-            *terraform_var_args,
-            addr,
-            gcp_id,
+    proc = terraform_run(
+        f"-chdir={infra_dir}",
+        "import",
+        *terraform_var_args,
+        addr,
+        gcp_id,
         check=False,
     )
     return proc.returncode == 0
 
 
 def _gcloud_json(args: list[str]) -> list[dict]:
-    """gcloud `--format=json` の結果を list[dict] に。失敗時は []。"""
-    proc = subprocess.run(args, check=False, capture=True)
+    """gcloud `--format=json` の結果を list[dict] に。失敗時は []。
+
+    ``args`` は ``["gcloud", ...]`` で先頭が ``"gcloud"`` 前提 (本 module 内
+    helper としての契約)。adapter 経由で呼び直して mock 経路を 1 本化する。
+    """
+    if not args or args[0] != "gcloud":
+        raise ValueError(
+            f"_gcloud_json expects args[0]=='gcloud' (post-M-Wave8.6 adapter contract); got {args[:1]}"
+        )
+    proc = gcloud_run(*args[1:], check=False, capture=True)
     if proc.returncode != 0:
         return []
     try:
@@ -448,14 +461,15 @@ def _recover_gcs_buckets(infra_dir: Path, project_id: str, var_args: list[str]) 
     tfstate bucket (`mlops-dev-a-tfstate`) は terraform 管理外のため除外。
     """
     imported = 0
-    proc = gcloud_run("storage",
-            "buckets",
-            "list",
-            f"--project={project_id}",
-            "--format=value(name)",
+    proc = gcloud_run(
+        "storage",
+        "buckets",
+        "list",
+        f"--project={project_id}",
+        "--format=value(name)",
         check=False,
         capture=True,
-        )
+    )
     if proc.returncode != 0:
         return 0
     existing = {line.strip() for line in (proc.stdout or "").splitlines() if line.strip()}
@@ -477,7 +491,7 @@ def _aiplatform_get(token: str, url: str) -> dict:
         ["curl", "-sS", "-H", f"Authorization: Bearer {token}", url],
         check=False,
         capture=True,
-        )
+    )
     if proc.returncode != 0:
         return {}
     try:
@@ -491,10 +505,12 @@ def _recover_feature_store(
 ) -> int:
     """Vertex AI Feature Group / Feature Online Store / Feature View — REST API 経由."""
     imported = 0
-    proc = gcloud_run("auth", "print-access-token",
+    proc = gcloud_run(
+        "auth",
+        "print-access-token",
         check=False,
         capture=True,
-        )
+    )
     if proc.returncode != 0:
         return 0
     token = (proc.stdout or "").strip()
@@ -575,11 +591,12 @@ def _recover_dataform(infra_dir: Path, project_id: str, region: str, var_args: l
     """Dataform repositories — gcloud has no list subcommand, fall back to direct API."""
     imported = 0
     # Use REST API directly via gcloud's default access token
-    proc = gcloud_run("auth",
-            "print-access-token",
+    proc = gcloud_run(
+        "auth",
+        "print-access-token",
         check=False,
         capture=True,
-        )
+    )
     if proc.returncode != 0:
         return 0
     token = (proc.stdout or "").strip()
@@ -593,7 +610,7 @@ def _recover_dataform(infra_dir: Path, project_id: str, region: str, var_args: l
         ],
         check=False,
         capture=True,
-        )
+    )
     if api_proc.returncode != 0:
         return 0
     try:

@@ -1,4 +1,5 @@
 SHELL := /usr/bin/env bash
+.SHELLFLAGS := -eu -o pipefail -c
 .DEFAULT_GOAL := help
 
 # Absolute paths keep targets idempotent regardless of invocation cwd.
@@ -33,17 +34,6 @@ LOG_ROOT ?= $(ROOT)/logs
 MONITOR_LOG_DIR ?= $(LOG_ROOT)/deploy-monitor
 VERIFY_LOG_DIR ?= $(LOG_ROOT)/verification
 
-PHASE_NAME := phase-7-gke
-NA_TARGETS := up down wait-db free-ports build seed serve test-e2e install-browsers \
-	db-migrate-% db-seed-% ops-bootstrap \
-	ops-sync ops-embed ops-train-build ops-train-fit ops-ranking-verbose \
-	ops-weekly \
-	eval-compare eval-offline kpi-daily eval-weekly-report features-daily features-report \
-	api-dev-search-rerank setup-encoder-endpoint setup-reranker-endpoint \
-	ops-monitor ops-monitor-lro ops-enable-search
-
-include mk/base.mk
-
 export PROJECT_ID REGION API_SERVICE ARTIFACT_REPO VERTEX_LOCATION PIPELINE_ROOT_BUCKET PIPELINE_TEMPLATE_GCS_PATH
 
 .PHONY: help doctor sync sync-app sync-ml sync-pipelines test lint fmt fmt-check typecheck check \
@@ -52,24 +42,26 @@ export PROJECT_ID REGION API_SERVICE ARTIFACT_REPO VERTEX_LOCATION PIPELINE_ROOT
 	setup-model-monitoring \
         setup-pipeline-schedule \
         apply-manifests \
-        deploy-all deploy-all-direct run-all destroy-all seed-test seed-test-clean \
+        deploy-all run-all run-all-core destroy-all seed-test seed-test-clean \
 	verify-deploy-all verify-destroy-all verify-live-acceptance verify-full-recreate \
         sync-elasticsearch sync-synonyms \
         label-build build-training-dataset train-smoke train-smoke-persist api-dev api-dev-hybrid \
         verify-local-parity verify-local-app verify-local-ml verify-local-hybrid clean \
         docker-auth build-ml-base-local deploy-api deploy-api-local deploy-kserve-images deploy-kserve-images-local deploy-kserve-models kube-creds \
         composer-deploy-dags build-composer-runner ops-composer-trigger ops-composer-list-runs ops-composer-task-states \
-		ops-deploy-monitor \
+        ops-deploy-monitor ops-run-all-monitor \
         ops-api-url ops-daily ops-livez ops-search ops-search-components ops-ranking ops-feedback \
         ops-accuracy-report local-accuracy-report \
         ops-skew-latest ops-search-volume ops-runs-recent \
 	ops-skew-run ops-train-now ops-train-wait ops-pipeline-run ops-promote-reranker ops-reload-api \
 	ops-check-retrain ops-bq-scan-top ops-label-seed \
         ops-slo-status bqml-train-popularity \
-        ops-kserve-monitoring ops-destroy-check \
+        ops-kserve-monitoring ops-destroy-check destroy-coast-down \
         ops-vertex-models-list ops-vertex-pipeline-status ops-vertex-explain \
         ops-vertex-monitoring ops-vertex-vector-search-smoke ops-vertex-feature-group \
-        ops-vertex-all
+        ops-vertex-all state-recover ops-recover-wif ops-promote-encoder seed-lgbm-model
+
+# ----- Help / Doctor -----
 
 help: ## Show this help
 	@uv run python -u -m scripts.lib.makefile_help $(MAKEFILE_LIST)
@@ -119,7 +111,7 @@ check-layers: ## AST-based layer boundary check (Ports / pure logic must not imp
 
 # ----- Terraform -----
 
-tf-bootstrap: ## Phase 0: enable APIs + create tfstate bucket (idempotent, needs project owner rights)
+tf-bootstrap: ## Bootstrap: enable APIs + create tfstate bucket (idempotent, needs project owner rights)
 	uv run python -u -m scripts.setup.tf_bootstrap
 
 tf-init: ## terraform init (with tfstate bucket preflight check)
@@ -159,9 +151,6 @@ state-recover: ## Import orphan GCP resources back into tfstate (緊急 cleanup 
 ops-deploy-monitor: ## Real-time monitor: runs deploy-all and reports live step/build stall status
 	uv run python -u -m scripts.deploy.monitor --label deploy-monitor
 
-deploy-all-direct: ## Compatibility alias of deploy-all (Phase4 naming)
-	$(MAKE) deploy-all
-
 run-all: ## End-to-end validation flow after deploy (layer check → seed → train pipeline submit → smoke APIs → daily ops)
 	$(MAKE) ops-run-all-monitor
 
@@ -185,9 +174,6 @@ run-all-core: ## Core validation flow after deploy (no monitor wrapper)
 ops-run-all-monitor: ## Real-time monitor for run-all-core
 	uv run python -u -m scripts.deploy.monitor --label run-all -- make run-all-core
 
-verify-all: ## Alias of run-all-core for cross-phase teaching vocabulary
-	$(MAKE) run-all-core
-
 destroy-all: ## Tear down every Terraform-managed resource (no prompt — PDCA loop, pair with deploy-all)
 	uv run python -u -m scripts.setup.destroy_all
 
@@ -200,10 +186,10 @@ verify-live-acceptance: ## Run canonical live acceptance and aggregate logs unde
 verify-full-recreate: ## Run destroy-all -> deploy-all -> live acceptance gate and aggregate logs under logs/verification/
 	uv run python -u -m scripts.verify.full_recreate
 
-ops-destroy-check: ## Assert no high-cost residual Phase 7 resources remain after destroy-all
+ops-destroy-check: ## Assert no high-cost residual GCP resources remain after destroy-all
 	uv run python -u -m scripts.ops.destroy_check --project-id=$(PROJECT_ID) --region=$(REGION) --vertex-location=$(VERTEX_LOCATION)
 
-destroy-phase7-learning: ## Coast-down placeholder: Dataflow Job / Feature Online Store / KServe explain pod
+destroy-coast-down: ## Coast-down placeholder: Dataflow Job / Feature Online Store / KServe explain pod
 	@echo "Not implemented yet. See docs/runbook/05_運用.md for current manual coast-down guidance."
 	@exit 1
 
@@ -270,7 +256,7 @@ docker-auth: ## (Optional) configure local docker for Artifact Registry
 	gcloud auth configure-docker $(REGION)-docker.pkg.dev --quiet
 
 build-ml-base-local: ## Local docker buildx cache base for encoder/reranker builder stages
-	docker buildx build --file infra/run/services/ml_base/Dockerfile --load -t phase7-ml-base:local .
+	docker buildx build --file infra/run/services/ml_base/Dockerfile --load -t mlops-ml-base:local .
 
 kube-creds: ## Fetch kubeconfig for the GKE Autopilot cluster
 	gcloud container clusters get-credentials $${GKE_CLUSTER_NAME:-hybrid-search} --region=$(REGION) --project=$(PROJECT_ID)
@@ -290,7 +276,7 @@ deploy-kserve-images-local: ## Local docker buildx + push + cluster patch for en
 deploy-kserve-models: ## Sync Model Registry artifacts into KServe InferenceService
 	uv run python -u -m scripts.deploy.kserve_models
 
-composer-deploy-dags: ## Upload pipeline/dags/*.py to Composer DAG GCS bucket (Phase 7 W2-4)
+composer-deploy-dags: ## Upload pipeline/dags/*.py to Composer DAG GCS bucket
 	uv run python -u -m scripts.deploy.composer_deploy_dags
 
 build-composer-runner: ## Cloud Build composer-runner image (DAG KubernetesPodOperator runner、V5 fix)
@@ -386,12 +372,12 @@ ops-accuracy-report: ## Simple ranking accuracy report on deployed Cloud Run (/s
 local-accuracy-report: ## Simple ranking accuracy report against local API (/search, TARGET=local)
 	TARGET=local uv run python -u -m scripts.ops.accuracy_report
 
-# ----- Phase 6 PMLE ops targets -----
+# ----- PMLE ops targets (SLO + BQML popularity) -----
 
-ops-slo-status: ## Phase 6 T5: print current compliance + burn-rate (1h/3d) for availability + latency SLOs
+ops-slo-status: ## Print current compliance + burn-rate (1h/3d) for availability + latency SLOs
 	uv run python -u -m scripts.ops.slo_status
 
-bqml-train-popularity: ## Phase 6 T1: train BQML property-popularity model (BOOSTED_TREE_REGRESSOR)
+bqml-train-popularity: ## Train BQML property-popularity model (BOOSTED_TREE_REGRESSOR)
 	uv run python -u -m scripts.bqml.train_popularity
 
 # ----- Vertex AI feature verification scripts (each ops target probes one Vertex
@@ -410,7 +396,7 @@ ops-vertex-explain: ## Vertex Explainable AI via /search?explain=true (assert no
 ops-vertex-monitoring: ## Vertex Model Monitoring: read recent BQ alert rows (LIMIT=10)
 	uv run python -u -m scripts.ops.vertex.monitoring
 
-ops-kserve-monitoring: ## Phase 7 self-managed drift alerts from model_monitoring_alerts (LIMIT=10)
+ops-kserve-monitoring: ## KServe self-managed drift alerts from model_monitoring_alerts (LIMIT=10)
 	uv run python -u -m scripts.ops.vertex.monitoring
 
 ops-vertex-vector-search-smoke: ## Vertex Vector Search: probe find_neighbors against the live serving index

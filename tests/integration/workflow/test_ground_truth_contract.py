@@ -36,7 +36,7 @@ def test_makefile_exposes_ground_truth_targets() -> None:
         "uv sync --dev --extra ml-train --extra pipelines",
         "uv run --extra ml-train rank-train --dry-run",
         "uv run --extra ml-encoder --extra ml-reranker python -m scripts.setup.local_hybrid",
-        "docker buildx build --file infra/run/services/ml_base/Dockerfile --load -t phase7-ml-base:local .",
+        "docker buildx build --file infra/run/services/ml_base/Dockerfile --load -t mlops-ml-base:local .",
     ):
         assert required in makefile, f"Makefile lost local-build optimization contract: {required}"
 

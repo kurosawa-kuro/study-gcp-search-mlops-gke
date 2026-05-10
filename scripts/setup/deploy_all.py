@@ -360,7 +360,9 @@ def main() -> int:
             # 2026-05-10: precondition (外部 reconciler 完了待ち) があれば step.run()
             # の前に実行。例外で fail させ、main loop 側で統一 error 報告する。
             if step.precondition is not None:
-                print(f"==> step {step.number} ({step.name}) precondition: {step.precondition.__name__}")
+                print(
+                    f"==> step {step.number} ({step.name}) precondition: {step.precondition.__name__}"
+                )
                 step.precondition()
             rc = step.run()
             if rc != 0:

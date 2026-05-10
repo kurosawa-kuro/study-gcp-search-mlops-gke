@@ -12,11 +12,11 @@ from __future__ import annotations
 import argparse
 import json
 import re
-import subprocess
 import sys
 from collections.abc import Sequence
 
 from scripts._common import env, fail
+from scripts.adapters.gcloud import gcloud_run
 
 
 def _balanced_array_from(text: str, start: int) -> str:
@@ -75,8 +75,7 @@ def _gcloud_composer(
     region: str,
     composer_env: str,
 ) -> str:
-    cmd: list[str] = [
-        "gcloud",
+    args: list[str] = [
         "composer",
         "environments",
         "run",
@@ -86,7 +85,7 @@ def _gcloud_composer(
         *subcommand_after_run,
     ]
     # Composer API + remote Airflow can exceed 1-2 min; fail fast with a clear error.
-    proc = subprocess.run(cmd, check=False, text=True, capture_output=True, timeout=300)
+    proc = gcloud_run(*args, check=False, capture=True, timeout=300)
     out = (proc.stdout or "") + (proc.stderr or "")
     if proc.returncode != 0 and "[" not in out:
         raise RuntimeError(f"gcloud failed rc={proc.returncode}: {out[-2000:]}")

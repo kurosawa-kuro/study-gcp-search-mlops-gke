@@ -25,6 +25,8 @@ def terraform_run(
     capture: bool = False,
     check: bool = True,
     timeout: int | None = None,
+    input: str | None = None,
+    env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
     """Invoke `terraform [-chdir=...] <args...>`. Returns the completed subprocess.
 
@@ -32,9 +34,10 @@ def terraform_run(
         terraform_run("init", chdir=str(INFRA))
         terraform_run("output", "-json", chdir=str(INFRA), capture=True)
         terraform_run("state", "list", chdir=str(INFRA), capture=True)
+        terraform_run("state", "list", chdir=str(INFRA), env={"TF_VAR_x": "y"})
     """
     cmd = ["terraform"]
     if chdir is not None:
         cmd.append(f"-chdir={chdir}")
     cmd.extend(args)
-    return _run(cmd, capture=capture, check=check, timeout=timeout)
+    return _run(cmd, capture=capture, check=check, timeout=timeout, input=input, env=env)
