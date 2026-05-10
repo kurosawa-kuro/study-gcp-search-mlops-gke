@@ -34,8 +34,10 @@ Meilisearch を廃止、GKE 上で Elasticsearch (ECK) を稼働。Elastic Cloud
 
 | # | 残 | 関連 | 状態 |
 |---|---|---|---|
-| 1 | M-Wave8.7 ES production 化 (HTTPS + password auth) | §2 Wave 8.7 | ⏸ ドメイン購入タイミング待ち |
-| 2 | M-Wave9 独自ドメイン + HTTPS + DNS (Web 公開基盤) | §2 Wave 9 | ⏸ scope outside (user 指示) |
+| 1 | M-Wave9 独自ドメイン + HTTPS + DNS (Web 公開基盤) — **Step 1〜6** ([§2 Wave 9](#wave-9--web-公開基盤-独自ドメイン--https--dns)) | §2 Wave 9 | ⏸ ドメイン購入タイミングで着手 |
+| 2 | M-Wave8.7 ES production 化 (HTTPS + password auth) — **Step 7-1〜7-5** ([§2 Wave 8.7](#wave-87--es-production-化-https--password-auth)) | §2 Wave 8.7 | ⏸ Wave 9 完了後 (cert + DNS 先) |
+
+実施順は **Wave 9 → Wave 8.7** (cert + DNS が外側、ES auth が内側 — 外側を先に揃えてから内側の認可強化)。両 Wave の具体手順 (gcloud / kubectl / file edit / 検証コマンド) は §2 にステップ展開済。
 
 完了済 Wave (0/1/2/3/4/5/6/7/8 / M-Pivot / M-RunbookLocal / M-Wave8.5 / M-Wave8.6 Phase 1-3 + 後段 caller migration / Step.precondition framework / C4 Makefile python -u / PMLE doc / GCP ID rename `phase7-*` → `mlops-*` / `destroy-coast-down`) は [03_実装カタログ §7.3](../architecture/03_実装カタログ.md) を正本。
 
@@ -43,34 +45,147 @@ Meilisearch を廃止、GKE 上で Elasticsearch (ECK) を稼働。Elastic Cloud
 
 ## §2. 残 Wave 詳細
 
-### Wave 8.7 — ES production 化 (HTTPS + password auth)
+### Wave 9 — Web 公開基盤 (独自ドメイン + HTTPS + DNS)
 
-**目的**: 学習用 (a') 解 (HTTP + anonymous superuser) を production grade へ移行。
+**目的**: Web アプリを GCP 上で独自ドメイン配信、HTTPS/TLS + DNS を canonical 手順で固定。Wave 9 完了後に Wave 8.7 (ES auth production 化) を続けて実施する (cert + DNS が先、internal auth は後)。
 
-**作業**:
-- [ ] canonical URL を環境変数で http/https 切替 (`scripts/ops/sync_elasticsearch.py` / `infra/manifests/search-api/configmap.yaml`)
-- [ ] ECK auto-generated `elasticsearch-es-elastic-user` secret から password fetch する経路を `_run_sync_elasticsearch` に組込
-- [ ] `infra/manifests/elasticsearch/elasticsearch.yaml` の `xpack.security.authc.anonymous.*` 削除 → ECK default の HTTPS+auth へ
-- [ ] [test_codebase_invariants.py](../../tests/integration/parity/test_codebase_invariants.py) の `test_es_manifest_pins_http_and_anonymous_auth` を HTTPS+auth pin に更新
-- [ ] CLAUDE.md / README に「学習用 anonymous superuser は production 厳禁」を明記
+**前提**:
+- M-Wave5 (継続改善サイクル) PASS 済 (canonical 経路が deployed cluster で動作)
+- `make verify-live-acceptance` が green (Gateway 外部 IP 取得可能、`make ops-api-url` で確認)
+- Billing 有効。Cloud Domains は前払い、`.com` で ~$12/yr
 
-**完了条件**: ES が default の HTTPS+auth で動作、`make verify-live-acceptance` PASS。**前提**: ドメイン購入タイミング (M-Wave9 と同時推奨)。
+#### Step 1 — Cloud Domains で購入
+
+GCP Console → Network services → Cloud Domains で `<your-domain>` を購入 (~$12/yr)。
+購入時の auto-DNS-zone option は **無効化** (canonical な Terraform 配下に zone を置くため)。
+
+```bash
+gcloud domains registrations list --location=global --project=$PROJECT_ID
+```
+
+#### Step 2 — Cloud DNS Public Zone 作成 + NS 委任
+
+```bash
+gcloud dns managed-zones create mlops-public \
+  --description="Public zone for $DOMAIN" \
+  --dns-name="$DOMAIN." \
+  --visibility=public \
+  --project=$PROJECT_ID
+
+gcloud dns managed-zones describe mlops-public \
+  --project=$PROJECT_ID --format='value(nameServers)'
+```
+
+Cloud Domains 側で NS を上記 4 本に書き換え (購入時の Cloud DNS auto-zone を使わない設計)。
+反映確認:
+
+```bash
+dig NS $DOMAIN +short    # 4 NS が GCP DNS を指していること
+```
+
+#### Step 3 — Gateway listener + HTTPRoute に独自ドメイン host 追加
+
+`infra/manifests/search-api/gateway.yaml` の `spec.listeners[]` に HTTPS listener (`port: 443`, `protocol: HTTPS`, `tls.mode: Terminate`, `tls.options.networking.gke.io/pre-shared-certs: <cert-name>`) を追加。
+`infra/manifests/search-api/httproute.yaml` の `spec.hostnames: ["$DOMAIN"]` に独自ドメインを追加 (既存 `search-api.example.com` 学習用 host と並列で残す形でも可)。
+
+```bash
+make apply-manifests
+kubectl get gateway search-api-gateway -n search -o yaml | grep -A5 listeners
+```
+
+#### Step 4 — Google-managed certificate 作成 + Gateway バインド
+
+```bash
+gcloud compute ssl-certificates create mlops-search-cert \
+  --domains="$DOMAIN" --global \
+  --project=$PROJECT_ID
+
+gcloud compute ssl-certificates describe mlops-search-cert \
+  --global --project=$PROJECT_ID --format='value(managed.status)'
+# ACTIVE になるまで待つ (DNS A record 完成 + プロビジョニング ~10-30 min)
+```
+
+Gateway の listener annotation `networking.gke.io/pre-shared-certs: mlops-search-cert` で binding。
+
+#### Step 5 — A / AAAA を Gateway 外部 IP へ
+
+```bash
+GATEWAY_IP=$(make ops-api-url | sed 's|https://||')
+gcloud dns record-sets create "$DOMAIN." \
+  --zone=mlops-public --type=A --ttl=300 \
+  --rrdatas="$GATEWAY_IP" --project=$PROJECT_ID
+```
+
+`AAAA` は Gateway IPv6 が必要な場合のみ。`CNAME` は apex には張れない (subdomain 用途のみ)。
+反映確認:
+
+```bash
+dig +short $DOMAIN
+```
+
+#### Step 6 — smoke 疎通検証
+
+```bash
+curl -I "https://$DOMAIN"                              # 200 OK + cert chain
+openssl s_client -connect "$DOMAIN:443" -servername "$DOMAIN" </dev/null \
+  | openssl x509 -noout -issuer -dates                  # Google Trust Services
+API_URL="https://$DOMAIN" API_REQUIRE_TOKEN=false make ops-search
+```
+
+**完了条件**: 独自ドメイン経由で `/api/v1/search` が HTTPS 200 を返し、証明書が自動更新 (`managed.status=ACTIVE`)。**scope outside** (user 指示で除外継続、ドメイン購入タイミングで着手)。
 
 ---
 
-### Wave 9 — Web 公開基盤 (独自ドメイン + HTTPS + DNS)
+### Wave 8.7 — ES production 化 (HTTPS + password auth)
 
-**目的**: Web アプリを GCP 上で独自ドメイン配信、HTTPS/TLS + DNS を canonical 手順で固定。
+**目的**: 学習用 (a') 解 (HTTP + anonymous superuser) を production grade へ移行。**Wave 9 完了後に着手** (Gateway HTTPS が外側、ES auth が内側 — 内側の認可強化は外側 cert 完成後でないと差分検証が混ざる)。
 
-**作業**:
-- [ ] GCP (Cloud Domains) で公開用ドメインを購入
-- [ ] Cloud DNS Public Zone 作成、購入ドメインの NS 委任
-- [ ] Gateway リスナーに独自ドメイン host 追加、`HTTPRoute` の `hostnames` 一致
-- [ ] Google-managed certificate を作成、Gateway にバインド
-- [ ] `A/AAAA` (必要に応じて `CNAME`) を Gateway 外部 IP へ
-- [ ] `curl -I https://<domain>` / `openssl s_client` / `make ops-search` で疎通検証
+#### Step 7-1 — canonical URL の http/https 切替
 
-**完了条件**: 独自ドメイン経由で `/api/v1/search` が HTTPS 200 を返し、証明書が自動更新される。**scope outside** (user 指示で除外継続、ドメイン購入タイミングで着手)。
+```bash
+# `scripts/ops/sync_elasticsearch.py`
+#   --es-url default を https://elasticsearch.search.svc.cluster.local:9200 に
+# `infra/manifests/search-api/configmap.yaml`
+#   ELASTICSEARCH_URL を環境変数 ELASTIC_URL_SCHEME=https/http で切替可能に
+```
+
+#### Step 7-2 — ECK secret 経由 password fetch
+
+ECK が `<cluster-name>-es-elastic-user` という Secret に `elastic` ユーザの初期 password を auto-generate する。`scripts/ops/sync_elasticsearch.py::_run_sync_elasticsearch` 冒頭で:
+
+```python
+auth_secret = kubectl_run(
+    "get", "secret", "elasticsearch-es-elastic-user",
+    f"--namespace={ES_NAMESPACE}",
+    "-o", "jsonpath={.data.elastic}",
+    capture=True,
+)
+import base64
+es_password = base64.b64decode(auth_secret.stdout).decode()
+```
+
+これを httpx の `auth=("elastic", es_password)` に渡す。CI / search-api 側は ExternalSecret + KSA 経由で同 Secret を Pod 内に mount。
+
+#### Step 7-3 — `xpack.security.authc.anonymous.*` 削除
+
+```bash
+# infra/manifests/elasticsearch/elasticsearch.yaml
+#   spec.config から xpack.security.authc.anonymous.{username,roles,authz_exception} を削除
+#   spec.http.tls.selfSignedCertificate.disabled: true も削除 (= ECK default の HTTPS+self-signed cert に戻る)
+```
+
+#### Step 7-4 — contract test を HTTPS+auth pin に更新
+
+```bash
+# tests/integration/parity/test_codebase_invariants.py::test_es_manifest_pins_http_and_anonymous_auth
+#   anonymous.* token が manifest に **無い** ことを assert (現行の「ある」から反転)
+```
+
+#### Step 7-5 — CLAUDE.md / README で学習用 anonymous の禁忌を明記
+
+「(a') 解の HTTP + anonymous superuser は学習プロジェクト前提。production では `xpack.security.authc.anonymous.*` を絶対に有効化しない」を追記。
+
+**完了条件**: ES が ECK default の HTTPS+auth で動作、`make verify-live-acceptance` PASS、`test_es_manifest_pins_http_and_anonymous_auth` が新 pin で green。
 
 ---
 
@@ -134,9 +249,7 @@ Composer = 上位 orchestrator、Vertex Pipelines = 下位 ML executor。`train/
 
 | ID | 内容 | 状態 |
 |---|---|---|
-| M-Wave7 | Makefile 本格整理 | ⏳ 着手可 |
-| M-Wave8.6 後段 | caller migration (subprocess → adapter) | ⏳ 着手可 |
-| M-Wave8.7 | ES production 化 | ⏸ M-Wave9 と同時 |
+| M-Wave8.7 | ES production 化 (HTTPS + password) | ⏸ ドメイン購入後 (M-Wave9 と同時推奨) |
 | M-Wave9 | 独自ドメイン + HTTPS + DNS | ⏸ scope outside |
 
 完了済は [`../architecture/03_実装カタログ.md`](../architecture/03_実装カタログ.md) §7.3 を正本。

@@ -22,7 +22,9 @@ cluster は **destroy 完了** (永続 VVS Index/Endpoint のみ残置、コス�
 
 | # | 内容 | コスト | 状態 |
 |---|---|---|---|
-| 1 | M-Wave8.7 ES production 化 (HTTPS+password) + M-Wave9 (独自ドメイン+HTTPS+DNS) | 1 sprint | ⏸ ドメイン購入後 |
+| 1 | M-Wave9 独自ドメイン + HTTPS + DNS (Step 1-6) → M-Wave8.7 ES production 化 (Step 7-1〜7-5) | 1 sprint | ⏸ ドメイン購入後、実施順 9 → 8.7 |
+
+具体手順は [`TASKS_ROADMAP.md §2 Wave 9 / 8.7`](TASKS_ROADMAP.md#2-残-wave-詳細) に gcloud / kubectl / file edit / 検証コマンド単位で展開済。
 
 詳細は [`TASKS_ROADMAP.md §1 / §2`](TASKS_ROADMAP.md)。
 
