@@ -1,26 +1,37 @@
 # TASKS — current sprint
 
 権威順位: [`TASKS_ROADMAP.md`](TASKS_ROADMAP.md) > 本書 > [`../architecture/01_仕様と設計.md`](../architecture/01_仕様と設計.md)。
-完了済み実装ログは [`../architecture/03_実装カタログ.md`](../architecture/03_実装カタログ.md)。
+完了済の実装ログ + マイルストーン履歴 + incident memo は [`../architecture/03_実装カタログ.md`](../architecture/03_実装カタログ.md) §6 / §7.3 / §7.4 を正本。
 
 ---
 
-## sprint 状態 (2026-05-10)
+## sprint 状態 (2026-05-10 終了時点)
 
-**本 sprint ✅ クローズ**。M-Wave5 (継続改善サイクル MVP) PASS、cluster destroy 完了 (永続 VVS 残置)。詳細は [`../architecture/03_実装カタログ.md`](../architecture/03_実装カタログ.md) §6 (直近完了ログ) / §7.3 (マイルストーン履歴) / §7.4 (incident memo)。
+**本 sprint 完了**:
+- M-Wave5 (継続改善サイクル MVP) PASS、verify-live-acceptance 22.68s
+- M-Wave8.5 (Phase 概念完全撤廃) 達成、`grep -rE "Phase [0-9]" docs/ tests/` ADR 除外で 0 件
+- M-Wave8.6 Phase 1+2+3 minimal (orchestrator ドメイン分離 / adapters 構造)
+- C4 Makefile `python -u -m` 統一 (line buffer 強制、bg-pipe 罠予防)
+- PMLE 学習 doc 8 章新設
 
-## 次 sprint candidates (優先度順)
+cluster は **destroy 完了** (永続 VVS Index/Endpoint のみ残置、コスト止血済)。次セッションは clean state から `make deploy-all` 一発で復活可能。
 
-- **M-Wave8.7** ES production 化 (HTTPS + password auth) — 詳細: [`TASKS_ROADMAP.md`](TASKS_ROADMAP.md) §2 Wave 8.7
-- **M-Wave8.5** Phase 概念完全撤廃 — 詳細: §2 Wave 8.5
-- **M-Wave8.6 seed 期** orchestrator ドメイン分離 (`scripts/infra/*` → `scripts/domain/`、subprocess wrapper を `scripts/adapters/`) — 詳細: §2 Wave 8.6
-- **C4** Makefile target に `stdbuf -oL` 組込 — Wave 7 (Makefile 整理) の延長
-- **M-Wave9** 独自ドメイン + HTTPS + DNS — scope outside、user 指示で除外継続
+## 残課題 (次 sprint candidates、優先度順)
+
+| # | 内容 | コスト | 状態 |
+|---|---|---|---|
+| 1 | M-Wave7 Makefile 本格整理 (target rename / help 再生成 / Phase Support Matrix 撤去 / 不要 target 撤去) | 1 sprint | ⏳ 着手可 |
+| 2 | M-Wave8.6 後段 caller migration (subprocess → adapter ~30 箇所) | 半 sprint | ⏳ 着手可 |
+| 3 | M-Wave8.7 ES production 化 (HTTPS+password) + M-Wave9 (独自ドメイン+HTTPS+DNS) | 1 sprint | ⏸ ドメイン購入後 |
+| 4 | GCP リソース ID rename (`phase7-synonym` Memorystore / `destroy-phase7-learning` Make target) | 半 sprint | ⏸ infra 同期必要 |
+
+詳細は [`TASKS_ROADMAP.md §1 / §2`](TASKS_ROADMAP.md)。
 
 ## 参照
 
-- 完了済み実装スナップショット + マイルストーン履歴 + incident memo: [`../architecture/03_実装カタログ.md`](../architecture/03_実装カタログ.md)
-- Wave / 長期 backlog / 不変ルール: [`TASKS_ROADMAP.md`](TASKS_ROADMAP.md)
+- 完了済: [`../architecture/03_実装カタログ.md`](../architecture/03_実装カタログ.md)
+- 長期 backlog / 不変ルール: [`TASKS_ROADMAP.md`](TASKS_ROADMAP.md)
 - canonical 仕様: [`../architecture/01_仕様と設計.md`](../architecture/01_仕様と設計.md)
-- 検証ゲート / PDCA: [`../runbook/04_検証.md`](../runbook/04_検証.md) / [`../runbook/05_運用.md`](../runbook/05_運用.md)
-- troubleshooting: [`../troubleshooting/`](../troubleshooting/) (eck-license-reconcile-stall / terraform-lock-stale-after-bg-kill / bg-pipe-fake-exit-zero)
+- 検証 / PDCA: [`../runbook/04_検証.md`](../runbook/04_検証.md) / [`../runbook/05_運用.md`](../runbook/05_運用.md)
+- troubleshooting: [`../troubleshooting/`](../troubleshooting/)
+- PMLE 学習 doc: [`../pmle-learning-notes.md`](../pmle-learning-notes.md)
