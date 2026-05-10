@@ -63,7 +63,7 @@ def _looks_like_api_disabled(stderr: str) -> bool:
 
 
 def _run_json(cmd: list[str]) -> tuple[list[dict], str | None]:
-    proc = subprocess.run(cmd, check=False, capture_output=True, text=True)
+    proc = subprocess.run(cmd, check=False, capture=True)
     if proc.returncode != 0:
         stderr = (proc.stderr or "").strip()
         if _looks_like_api_disabled(stderr):
@@ -81,7 +81,7 @@ def _run_json(cmd: list[str]) -> tuple[list[dict], str | None]:
 
 
 def _run_bq_json(cmd: list[str]) -> tuple[list[dict], str | None]:
-    proc = subprocess.run(cmd, check=False, capture_output=True, text=True)
+    proc = subprocess.run(cmd, check=False, capture=True)
     if proc.returncode != 0:
         stderr = (proc.stderr or "").strip()
         if "Not found: Dataset" in stderr:

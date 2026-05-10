@@ -49,8 +49,7 @@ def _read_health(namespace: str, name: str) -> str:
             name,
             "-o",
             "jsonpath={.status.health}",
-        capture_output=True,
-        text=True,
+        capture=True,
         check=False,
     )
     return proc.stdout.strip()
@@ -64,8 +63,7 @@ def _read_phase(namespace: str, name: str) -> str:
             name,
             "-o",
             "jsonpath={.status.phase}",
-        capture_output=True,
-        text=True,
+        capture=True,
         check=False,
     )
     return proc.stdout.strip()

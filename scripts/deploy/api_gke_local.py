@@ -76,7 +76,7 @@ def _ensure_docker_buildx() -> None:
     if shutil.which("docker") is None:
         raise SystemExit("[error] docker CLI not found — install Docker Desktop / docker-ce first")
     proc = subprocess.run(
-        ["docker", "buildx", "version"], capture_output=True, text=True, check=False
+        ["docker", "buildx", "version"], capture=True, check=False
     )
     if proc.returncode != 0:
         raise SystemExit(
@@ -89,8 +89,7 @@ def _ensure_ar_auth(region: str) -> None:
     """Idempotent: configures local docker to push to <region>-docker.pkg.dev via gcloud."""
     registry = f"{region}-docker.pkg.dev"
     proc = gcloud_run("auth", "configure-docker", registry, "--quiet",
-        capture_output=True,
-        text=True,
+        capture=True,
         check=False,
     )
     if proc.returncode != 0:

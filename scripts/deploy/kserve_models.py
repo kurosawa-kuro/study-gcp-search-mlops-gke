@@ -229,7 +229,7 @@ def _dump_diagnostics(name: str) -> None:
         ],
     ):
         _error(f"$ {' '.join(cmd)}")
-        proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
+        proc = subprocess.run(cmd, capture=True, check=False)
         if proc.stdout:
             sys.stderr.write(proc.stdout)
         if proc.stderr:

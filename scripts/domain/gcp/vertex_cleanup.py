@@ -37,9 +37,8 @@ def undeploy_endpoint_models(project_id: str, region: str, endpoint: str) -> Non
             f"--project={project_id}",
             "--format=json",
         check=False,
-        capture_output=True,
-        text=True,
-    )
+        capture=True,
+        )
     if proc.returncode != 0:
         print(f"    endpoint {endpoint!r} not present — skip")
         return
@@ -95,9 +94,8 @@ def deployed_index_state(project_id: str, region: str, deployed_index_id: str) -
             f"--project={project_id}",
             "--format=json",
         check=False,
-        capture_output=True,
-        text=True,
-    )
+        capture=True,
+        )
     if proc.returncode != 0:
         detail = (proc.stderr or proc.stdout or "").strip()
         print(f"    index-endpoints list failed — assume absent and continue: {detail}")
@@ -139,9 +137,8 @@ def undeploy_all_vvs_deployed_indexes(
             f"--project={pid}",
             "--format=json",
         check=False,
-        capture_output=True,
-        text=True,
-    )
+        capture=True,
+        )
     if proc.returncode != 0:
         detail = (proc.stderr or proc.stdout or "").strip()
         print(f"    index-endpoints list failed — assume absent and continue: {detail}")

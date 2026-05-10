@@ -25,7 +25,7 @@ OPTIONAL = {"jq", "gcloud"}
 
 
 def _version(tool: str) -> str:
-    proc = subprocess.run([tool, "--version"], check=False, capture_output=True, text=True)
+    proc = subprocess.run([tool, "--version"], check=False, capture=True)
     out = proc.stdout or proc.stderr
     return out.splitlines()[0] if out else ""
 

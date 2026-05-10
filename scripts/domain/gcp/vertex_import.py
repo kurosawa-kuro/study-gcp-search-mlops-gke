@@ -28,15 +28,14 @@ ENDPOINT_ADDR = "module.vector_search.google_vertex_ai_index_endpoint.property_e
 def _state_has(infra_dir: Path, addr: str) -> bool:
     proc = terraform_run(f"-chdir={infra_dir}", "state", "list", addr,
         check=False,
-        capture_output=True,
-        text=True,
-    )
+        capture=True,
+        )
     return proc.returncode == 0 and addr in (proc.stdout or "")
 
 
 def _gcloud_first(args: list[str]) -> dict | None:
     """Run a `gcloud ... list --format=json` and return the first item, or None."""
-    proc = subprocess.run(args, check=False, capture_output=True, text=True)
+    proc = subprocess.run(args, check=False, capture=True)
     if proc.returncode != 0:
         return None
     payload = json.loads(proc.stdout) if (proc.stdout or "").strip() else []

@@ -123,7 +123,7 @@ def _select_version(
 
 def _gsutil_ls(uri: str) -> list[str]:
     """List GCS object names under ``uri``. Empty list on no objects."""
-    proc = subprocess.run(["gsutil", "ls", uri], capture_output=True, text=True, check=False)
+    proc = subprocess.run(["gsutil", "ls", uri], capture=True, check=False)
     if proc.returncode != 0:
         # Treat "no objects" as empty rather than fatal — caller decides.
         return []
@@ -151,7 +151,7 @@ def _bst_rename_if_needed(artifact_uri: str, *, apply: bool) -> str | None:
         return target
     _log(f"  RUN  gsutil cp {txt} {target}")
     proc = subprocess.run(
-        ["gsutil", "cp", txt, target], capture_output=True, text=True, check=False
+        ["gsutil", "cp", txt, target], capture=True, check=False
     )
     if proc.returncode != 0:
         raise RuntimeError(f"gsutil cp failed: {proc.stderr.strip()}")

@@ -49,7 +49,7 @@ def delete_orphan_workloads() -> None:
             "--timeout=60s",
         ],
     ):
-        proc = subprocess.run(cmd, check=False, capture_output=True, text=True)
+        proc = subprocess.run(cmd, check=False, capture=True)
         if proc.stdout:
             print(f"    {proc.stdout.rstrip()}")
         if proc.returncode != 0:

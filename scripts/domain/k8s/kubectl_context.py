@@ -54,8 +54,7 @@ def wait_until_api_ready(*, timeout_seconds: int = 600, poll_seconds: int = 10) 
     while time.monotonic() < deadline:
         proc = kubectl_run("get", "namespace", "kube-system", "-o", "name",
             check=False,
-            text=True,
-            capture_output=True,
+            capture=True,
         )
         if proc.returncode == 0 and "namespace/kube-system" in (proc.stdout or ""):
             print("==> kubernetes API reachable (namespace/kube-system)")

@@ -68,9 +68,8 @@ def _existing_object_size(gs_uri: str) -> int:
             gs_uri,
             "--format=value(size)",
         check=False,
-        text=True,
-        capture_output=True,
-    )
+        capture=True,
+        )
     if proc.returncode != 0:
         return -1
     raw = (proc.stdout or "").strip()

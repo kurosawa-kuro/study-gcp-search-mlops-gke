@@ -27,9 +27,8 @@ from scripts.adapters.gcloud import gcloud_run
 def _access_token() -> str | None:
     proc = gcloud_run("auth", "print-access-token",
         check=False,
-        capture_output=True,
-        text=True,
-    )
+        capture=True,
+        )
     if proc.returncode != 0:
         return None
     return (proc.stdout or "").strip() or None
@@ -39,9 +38,8 @@ def _rest_get(token: str, url: str) -> dict:
     proc = subprocess.run(
         ["curl", "-sS", "-H", f"Authorization: Bearer {token}", url],
         check=False,
-        capture_output=True,
-        text=True,
-    )
+        capture=True,
+        )
     if proc.returncode != 0:
         return {}
     try:

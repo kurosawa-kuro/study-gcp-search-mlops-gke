@@ -28,8 +28,7 @@ def state_list(infra_dir: Path, env: dict[str, str] | None = None) -> list[str]:
     """
     proc = terraform_run(f"-chdir={infra_dir}", "state", "list",
         check=False,
-        capture_output=True,
-        text=True,
+        capture=True,
         env=env,
     )
     if proc.returncode != 0:
@@ -90,9 +89,8 @@ def state_rm(infra_dir: Path, address: str) -> bool:
     """
     proc = terraform_run(f"-chdir={infra_dir}", "state", "rm", address,
         check=False,
-        capture_output=True,
-        text=True,
-    )
+        capture=True,
+        )
     if proc.returncode == 0:
         return True
     tail = (proc.stderr or "").strip().splitlines()[-3:]

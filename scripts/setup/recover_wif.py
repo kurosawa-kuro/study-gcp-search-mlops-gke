@@ -44,9 +44,8 @@ def _gcloud_capture(args: list[str]) -> tuple[int, str]:
     """
     proc = gcloud_run(*args,
         check=False,
-        capture_output=True,
-        text=True,
-    )
+        capture=True,
+        )
     return proc.returncode, proc.stdout.strip()
 
 

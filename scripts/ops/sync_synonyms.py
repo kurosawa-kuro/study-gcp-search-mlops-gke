@@ -41,9 +41,8 @@ def _gcloud(args: list[str]) -> str:
     try:
         proc = gcloud_run(*args,
             check=False,
-            capture_output=True,
-            text=True,
-            timeout=60,
+            capture=True,
+        timeout=60,
         )
     except (FileNotFoundError, subprocess.SubprocessError) as exc:
         _log(f"gcloud invocation failed: {exc}")

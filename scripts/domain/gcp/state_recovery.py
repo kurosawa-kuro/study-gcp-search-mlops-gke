@@ -157,9 +157,8 @@ def _state_has(infra_dir: Path, addr: str) -> bool:
     """terraform state list <addr> が hit するか。"""
     proc = terraform_run(f"-chdir={infra_dir}", "state", "list", addr,
         check=False,
-        capture_output=True,
-        text=True,
-    )
+        capture=True,
+        )
     return proc.returncode == 0 and addr in (proc.stdout or "")
 
 
@@ -179,7 +178,7 @@ def _terraform_import(
 
 def _gcloud_json(args: list[str]) -> list[dict]:
     """gcloud `--format=json` の結果を list[dict] に。失敗時は []。"""
-    proc = subprocess.run(args, check=False, capture_output=True, text=True)
+    proc = subprocess.run(args, check=False, capture=True)
     if proc.returncode != 0:
         return []
     try:
@@ -455,9 +454,8 @@ def _recover_gcs_buckets(infra_dir: Path, project_id: str, var_args: list[str]) 
             f"--project={project_id}",
             "--format=value(name)",
         check=False,
-        capture_output=True,
-        text=True,
-    )
+        capture=True,
+        )
     if proc.returncode != 0:
         return 0
     existing = {line.strip() for line in (proc.stdout or "").splitlines() if line.strip()}
@@ -478,9 +476,8 @@ def _aiplatform_get(token: str, url: str) -> dict:
     proc = subprocess.run(
         ["curl", "-sS", "-H", f"Authorization: Bearer {token}", url],
         check=False,
-        capture_output=True,
-        text=True,
-    )
+        capture=True,
+        )
     if proc.returncode != 0:
         return {}
     try:
@@ -496,9 +493,8 @@ def _recover_feature_store(
     imported = 0
     proc = gcloud_run("auth", "print-access-token",
         check=False,
-        capture_output=True,
-        text=True,
-    )
+        capture=True,
+        )
     if proc.returncode != 0:
         return 0
     token = (proc.stdout or "").strip()
@@ -582,9 +578,8 @@ def _recover_dataform(infra_dir: Path, project_id: str, region: str, var_args: l
     proc = gcloud_run("auth",
             "print-access-token",
         check=False,
-        capture_output=True,
-        text=True,
-    )
+        capture=True,
+        )
     if proc.returncode != 0:
         return 0
     token = (proc.stdout or "").strip()
@@ -597,9 +592,8 @@ def _recover_dataform(infra_dir: Path, project_id: str, region: str, var_args: l
             f"https://dataform.googleapis.com/v1beta1/projects/{project_id}/locations/{region}/repositories",
         ],
         check=False,
-        capture_output=True,
-        text=True,
-    )
+        capture=True,
+        )
     if api_proc.returncode != 0:
         return 0
     try:

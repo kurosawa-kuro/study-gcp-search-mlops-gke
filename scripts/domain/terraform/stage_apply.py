@@ -42,9 +42,8 @@ def terraform_apply_stage1_with_retries(
     for attempt in range(1, max_attempts + 1):
         proc = subprocess.run(
             stage1_args,
-            text=True,
-            capture_output=True,
-            check=False,
+            capture=True,
+        check=False,
         )
         if proc.returncode == 0:
             if proc.stdout:
