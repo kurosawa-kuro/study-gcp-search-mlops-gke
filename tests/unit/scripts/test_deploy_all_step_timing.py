@@ -9,6 +9,7 @@ consumers.
 
 from __future__ import annotations
 
+import argparse
 import re
 from unittest.mock import patch
 
@@ -200,18 +201,15 @@ def test_run_tf_apply_uses_staged_apply_and_waits_for_readiness() -> None:
 
 
 def test_run_sync_elasticsearch_uses_project_and_default_cluster_url() -> None:
-    # 2026-05-10 incident hook: _run_sync_elasticsearch() now calls
-    # wait_until_es_healthy() before sync. Mock the wait so the test does not
-    # invoke real kubectl (which would hang for ~5 min against a destroyed cluster).
+    # 2026-05-10 framework refactor: ECK health wait moved to
+    # `DeployStep.precondition`. `_run_sync_elasticsearch` now focuses on the
+    # sync body itself; the wait is invoked by the main loop. Therefore this
+    # test no longer needs a `wait_until_es_healthy` mock.
     with (
         patch.dict(
             "os.environ",
             {"PROJECT_ID": "mlops-test"},
             clear=False,
-        ),
-        patch(
-            "scripts.setup.deploy_all.wait_until_es_healthy",
-            return_value="green",
         ),
         patch("scripts.setup.deploy_all.sync_elasticsearch_run", return_value=0) as sync_mock,
     ):
@@ -229,10 +227,104 @@ def test_run_sync_elasticsearch_propagates_nonzero_exit() -> None:
     """sync_elasticsearch.run returns shell-style codes; deploy-all must fail the step."""
     with (
         patch.dict("os.environ", {"PROJECT_ID": "mlops-test"}, clear=False),
-        patch(
-            "scripts.setup.deploy_all.wait_until_es_healthy",
-            return_value="green",
-        ),
         patch("scripts.setup.deploy_all.sync_elasticsearch_run", return_value=1),
     ):
         assert dall._run_sync_elasticsearch() == 1
+
+
+def test_main_invokes_precondition_before_run() -> None:
+    """2026-05-10 framework refactor: `DeployStep.precondition` is invoked by
+    the main loop immediately before `step.run()`. This test pins the call
+    order — precondition first, then run — so the wait cannot be silently
+    moved or dropped."""
+    call_log: list[str] = []
+
+    def fake_pre() -> None:
+        call_log.append("precondition")
+
+    def fake_run() -> int:
+        call_log.append("run")
+        return 0
+
+    fake_step = dall.DeployStep(
+        number=1,
+        name="fake",
+        label="fake step (with precondition)",
+        run=fake_run,
+        precondition=fake_pre,
+    )
+
+    with (
+        patch(
+            "scripts.setup.deploy_all._parse_args",
+            return_value=argparse.Namespace(from_step="1", to_step="1"),
+        ),
+        patch("scripts.setup.deploy_all._steps", return_value=[fake_step]),
+    ):
+        assert dall.main() == 0
+
+    assert call_log == ["precondition", "run"], (
+        "main loop must invoke precondition before run "
+        "(framework contract for sync-elasticsearch ECK wait)"
+    )
+
+
+def test_main_skips_precondition_when_none() -> None:
+    """Steps without a precondition (the default) must not break the main loop."""
+    call_log: list[str] = []
+
+    def fake_run() -> int:
+        call_log.append("run")
+        return 0
+
+    fake_step = dall.DeployStep(
+        number=1,
+        name="fake",
+        label="fake step (no precondition)",
+        run=fake_run,
+    )
+
+    with (
+        patch(
+            "scripts.setup.deploy_all._parse_args",
+            return_value=argparse.Namespace(from_step="1", to_step="1"),
+        ),
+        patch("scripts.setup.deploy_all._steps", return_value=[fake_step]),
+    ):
+        assert dall.main() == 0
+
+    assert call_log == ["run"]
+
+
+def test_main_propagates_precondition_exception_as_step_failure() -> None:
+    """Precondition failures (e.g. ECK 5-min timeout) must surface as a step
+    failure with the same logging path as a normal step error."""
+    fake_pre_calls = 0
+
+    def fake_pre() -> None:
+        nonlocal fake_pre_calls
+        fake_pre_calls += 1
+        raise TimeoutError("simulated ECK reconcile stall")
+
+    def fake_run() -> int:
+        # Should never run because precondition failed.
+        raise AssertionError("run() must not be called after precondition failure")
+
+    fake_step = dall.DeployStep(
+        number=1,
+        name="fake",
+        label="fake step",
+        run=fake_run,
+        precondition=fake_pre,
+    )
+
+    with (
+        patch(
+            "scripts.setup.deploy_all._parse_args",
+            return_value=argparse.Namespace(from_step="1", to_step="1"),
+        ),
+        patch("scripts.setup.deploy_all._steps", return_value=[fake_step]),
+        pytest.raises(TimeoutError, match="simulated ECK reconcile stall"),
+    ):
+        dall.main()
+    assert fake_pre_calls == 1

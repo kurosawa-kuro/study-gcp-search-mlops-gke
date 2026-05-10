@@ -54,7 +54,7 @@ make tf-validate               # terraform validate (offline)
 # Local 検証 (GCP に触れない)
 make verify-local-app          # FastAPI boot + DI + API contract
 make verify-local-ml           # ML / pipeline 単体 + smoke train
-make verify-local-hybrid       # workflow contract + 上記 2 つ
+make verify-local-hybrid       # verify-local-parity + ground-truth contract + verify-local-app + verify-local-ml (live なし全 PASS)
 
 # Cloud canonical (実 GCP)
 make deploy-all                # 15 step (tf-bootstrap → 2 段階 apply → seed → sync-elasticsearch → composer-deploy-dags → deploy-api)

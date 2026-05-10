@@ -140,6 +140,13 @@ class DestroyStep:
     name: str
     label: str
     run: Callable[[], int]
+    # Symmetric with `DeployStep.precondition` (2026-05-10 framework refactor).
+    # Currently no destroy step has a precondition, but the field exists so
+    # future race fixes (e.g. wait for finalizer-driven cleanup before
+    # state-flip) can be added without changing the framework shape. Same
+    # invocation contract: main loop calls `step.precondition()` before
+    # `step.run()`, exceptions surface as step failures.
+    precondition: Callable[[], object] | None = None
 
 
 # ---- step framework ----------------------------------------------------------
@@ -488,6 +495,13 @@ def main() -> int:
         for step in selected:
             current_step = step
             _step(step.number, total, step.label)
+            # Symmetric with deploy_all: run precondition (if any) before step.run().
+            if step.precondition is not None:
+                print(
+                    f"==> step {step.number} ({step.name}) precondition: "
+                    f"{step.precondition.__name__}"
+                )
+                step.precondition()
             rc = step.run()
             if rc != 0:
                 print(

@@ -94,6 +94,15 @@ class DeployStep:
     name: str
     label: str
     run: Callable[[], int]
+    # 2026-05-10: 各 step が走る前に外部 reconciler の完了を待つ optional hook。
+    # main loop が `step.run()` の直前に precondition を呼び、例外で fail する。
+    # 例: step 10 (sync-elasticsearch) は `wait_until_es_healthy` を待ってから
+    # 走らないと ECK の Phase=ApplyingChanges race で `Server disconnected` で
+    # fail する。precondition を step に直接持たせることで:
+    # 1. _run_* 関数本体は本来の責務 (sync) に集中
+    # 2. 失敗時の error 報告が main loop 側で統一される (偽 exit 0 罠も波及しない)
+    # 3. 将来 race が観測されたら precondition を 1 行追加するだけ
+    precondition: Callable[[], object] | None = None
 
 
 def _step(n: int, total: int, label: str) -> None:
@@ -153,21 +162,8 @@ def _run_seed_test() -> int:
 
 
 def _run_sync_elasticsearch() -> int:
-    # 2026-05-09 incident: step 9 (apply-manifests) directly followed by
-    # step 10 (sync-elasticsearch) ran while ECK was still bootstrapping the
-    # ES cluster (Phase=ApplyingChanges, Health=unknown). The HTTP API
-    # responded with `Server disconnected without sending a response` and the
-    # step failed with no retry. Add an explicit health wait so the step
-    # only runs once `.status.health` ∈ {green, yellow}. Times out at 5 min
-    # which is the practical signal that ECK Operator is stalled (see
-    # `docs/troubleshooting/eck-license-reconcile-stall.md`).
-    #
-    # 2026-05-10 follow-up: import is module-top-level (not delayed) so test
-    # mocks have a single canonical target (`scripts.setup.deploy_all.wait_until_es_healthy`).
-    # The earlier delayed import caused tests to miss the mock, real kubectl ran
-    # for ~5 min against a destroyed cluster, and pytest hung silently.
-    wait_until_es_healthy()
-
+    # ECK health wait は precondition (DeployStep.precondition=wait_until_es_healthy)
+    # で main loop が呼ぶ。ここは sync 本体の責務に集中する。
     project_id = env("PROJECT_ID")
     es_url = env(
         "ELASTICSEARCH_URL",
@@ -265,6 +261,12 @@ def _steps() -> list[DeployStep]:
             "sync-elasticsearch",
             "sync Elasticsearch from feature_mart.properties_cleaned (canonical lexical path)",
             _run_sync_elasticsearch,
+            # 2026-05-09 incident: step 9 (apply-manifests) → step 10 race で
+            # ECK ApplyingChanges 中に sync が走り `Server disconnected` で fail。
+            # precondition で ES `.status.health` ∈ {green, yellow} まで待つ。
+            # 5 min timeout = ECK Operator 停滞のシグナル
+            # (see `docs/troubleshooting/eck-license-reconcile-stall.md`)。
+            precondition=wait_until_es_healthy,
         ),
         DeployStep(
             11,
@@ -354,6 +356,11 @@ def main() -> int:
         for step in selected:
             current_step = step
             _step(step.number, total, step.label)
+            # 2026-05-10: precondition (外部 reconciler 完了待ち) があれば step.run()
+            # の前に実行。例外で fail させ、main loop 側で統一 error 報告する。
+            if step.precondition is not None:
+                print(f"==> step {step.number} ({step.name}) precondition: {step.precondition.__name__}")
+                step.precondition()
             rc = step.run()
             if rc != 0:
                 print(f"==> deploy-all FAILED at step {step.number} ({step.name}) — see logs above")

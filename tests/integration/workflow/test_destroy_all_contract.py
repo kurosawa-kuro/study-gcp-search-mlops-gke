@@ -130,31 +130,49 @@ def test_sync_elasticsearch_step_waits_for_es_health_first() -> None:
     The HTTP API responded with `Server disconnected without sending a
     response` and the step failed with no retry, stalling the entire pipeline.
 
-    Pin: `_run_sync_elasticsearch` calls `wait_until_es_healthy()` before
-    invoking `sync_elasticsearch_run`. Times out at 5 min (= ECK Operator
-    stall signal, see `docs/troubleshooting/eck-license-reconcile-stall.md`).
+    2026-05-10 framework refactor: the wait moved out of `_run_sync_elasticsearch`
+    into the new `DeployStep.precondition` field. The main loop calls
+    `step.precondition()` immediately before `step.run()`. This pins the
+    precondition wiring so future regressions cannot silently drop the wait.
+
+    Pin (new framework):
+    1. `DeployStep` has a `precondition` field
+    2. `_steps()` registers `precondition=wait_until_es_healthy` for sync-elasticsearch
+    3. main loop invokes `step.precondition()` before `step.run()`
+    4. `wait_until_es_healthy` exists and pins green/yellow as healthy states
     """
     deploy_all_py = _read("scripts/setup/deploy_all.py")
     es_wait_py = _read("scripts/infra/elasticsearch_wait.py")
 
-    # 1. _run_sync_elasticsearch imports + calls wait_until_es_healthy
+    # 1. DeployStep dataclass exposes precondition field
+    assert "precondition: Callable[[], object] | None = None" in deploy_all_py, (
+        "DeployStep must expose a `precondition` field for external-reconciler waits"
+    )
+
+    # 2. step 10 (sync-elasticsearch) registers wait_until_es_healthy as precondition
     import re
 
-    body_match = re.search(
-        r"^def _run_sync_elasticsearch\(\) -> int:\n(.*?)(?=^def |\Z)",
+    # step 10 block を step 11 の DeployStep( 出現直前まで切り出す (parens balancing
+    # の代わりに lookahead を使うシンプルな手法)。
+    sync_step_match = re.search(
+        r"DeployStep\(\s*10,\s*\"sync-elasticsearch\",.*?(?=DeployStep\(\s*11,)",
         deploy_all_py,
-        re.MULTILINE | re.DOTALL,
+        re.DOTALL,
     )
-    assert body_match, "_run_sync_elasticsearch function not found"
-    body = body_match.group(1)
-    assert "wait_until_es_healthy" in body, (
-        "_run_sync_elasticsearch must call wait_until_es_healthy() before sync_elasticsearch_run "
+    assert sync_step_match, "step 10 (sync-elasticsearch) DeployStep not found"
+    sync_step_body = sync_step_match.group(0)
+    assert "precondition=wait_until_es_healthy" in sync_step_body, (
+        "step 10 (sync-elasticsearch) must register precondition=wait_until_es_healthy "
         "(2026-05-09 incident: ECK ApplyingChanges → HTTP API unreachable → step fail no retry)"
     )
 
-    # 2. wait module exists + exports the entrypoint
+    # 3. main loop invokes precondition before run
+    assert "step.precondition()" in deploy_all_py, (
+        "main loop must call step.precondition() before step.run()"
+    )
+
+    # 4. wait module exists + pins green/yellow
     assert "def wait_until_es_healthy(" in es_wait_py
-    # 3. wait module pins green/yellow as the only healthy states
     assert 'HEALTHY_STATES = ("green", "yellow")' in es_wait_py
 
 
