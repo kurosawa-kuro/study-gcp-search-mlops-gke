@@ -5,7 +5,7 @@
 -target=<each>` を打って attribute を server-side で flip してから本体 destroy
 に進む。`PROTECTED_TARGETS` (旧 `PROTECTED_TABLE_TARGETS`) が destroy 対象と
 ズレると本体 destroy が `Error: cannot destroy ... deletion_protection=true`
-で fail する (Phase 6 Run 2 で BQ table 2 件、Phase 7 Run 4 で GKE cluster で
+で fail する (Composer なし派生 Run 2 で BQ table 2 件、canonical 構成 Run 4 で GKE cluster で
 発症済の事故パターン)。
 
 このテストは:
@@ -108,7 +108,7 @@ def test_protected_gke_cluster_is_in_destroy_all_targets() -> None:
     `var.deletion_protection` in modules/gke/main.tf. Without flipping it
     server-side first the body destroy fails with
     ``Cannot destroy cluster because deletion_protection is set to true``
-    (Phase 7 Run 4 incident).
+    (canonical 構成 Run 4 incident).
     """
     tf_clusters = _resources_with_deletion_protection(GKE_TF, _GKE_CLUSTER_RE)
     destroy_clusters = _destroy_gke_cluster_names()
@@ -128,6 +128,6 @@ def test_protected_targets_baseline() -> None:
     targets = _destroy_all_targets()
     assert len(targets) == 16, (
         f"Expected 16 protected resources (15 BQ tables + 1 GKE cluster, "
-        f"Phase 7 baseline), got {len(targets)}: {sorted(targets)}. "
+        f"canonical 構成 baseline), got {len(targets)}: {sorted(targets)}. "
         "If the count changed intentionally, bump this baseline."
     )

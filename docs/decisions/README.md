@@ -4,6 +4,8 @@
 インラインコメントや `docs/architecture/03_実装カタログ.md` 冒頭の bullet list だと
 見落とされやすいため、独立した ADR として切り出している。
 
+> **2026-05-10 retroactive note (M-Wave8.5 完全撤廃)**: 各 ADR の本文に過去残っていた `教育用フェーズ初期〜7` 表記は **historical context** であり、現 canonical の用語体系 (`canonical 構成` / `Composer なし派生` / `encoder 期` / `rerank 期` / `seed 期` 等) に retroactively renamed されている。Status / Decision の効力は変わらない (= Accepted のまま)、表記のみ更新。元の `Phase X` 表記は git log に残る。
+
 ## 形式
 
 各 ADR は次の節を持つ:

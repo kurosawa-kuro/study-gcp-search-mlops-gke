@@ -1,4 +1,4 @@
-"""Unit tests for the canonical Feature Online Store adapter (Phase 7 W2-8 後).
+"""Unit tests for the canonical Feature Online Store adapter (canonical 構成 W2-8 後).
 
 W2-8 で BigQueryFeatureFetcher は撤去。本 phase の唯一の FeatureFetcher 実装は
 ``FeatureOnlineStoreFetcher`` (Vertex AI Feature View 経由)。SDK 呼び出しは

@@ -1,12 +1,12 @@
 # ADR 0004 — `sa-api` の `feature_mart` データセットへの dataViewer 配線
 
 **Status**: Accepted
-**Phase**: Phase 4 起点 → Phase 5 / 6 / 7 継承
+**Phase**: encoder 期 起点 → rerank 期 / 6 / 7 継承
 
 ## Context
 
-Phase 4 初期構成では `sa-api` (search-api ランタイム SA) には `mlops` データセットへの
-`bigquery.dataViewer` のみ付与していた。Phase 5 で `feature_mart` データセット
+encoder 期 初期構成では `sa-api` (search-api ランタイム SA) には `mlops` データセットへの
+`bigquery.dataViewer` のみ付与していた。rerank 期 で `feature_mart` データセット
 (Dataform 出力 + property_embeddings 等) を導入したとき配線を漏らし、`/search` ハンドラが
 `property_embeddings` への `VECTOR_SEARCH` で 403 を返す事故が発生。
 

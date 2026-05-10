@@ -1,6 +1,6 @@
 # tests/integration/parity/
 
-Phase 7 の **lock-step 不変条件** を pin する pytest 群。
+canonical 構成 の **lock-step 不変条件** を pin する pytest 群。
 "3 箇所の同じ概念がバラバラに変更され silent でデータ破損" を CI で防ぐ。
 
 ## 何を pin しているか (現行)

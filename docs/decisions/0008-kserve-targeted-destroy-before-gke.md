@@ -1,11 +1,11 @@
 # ADR 0008 — `module.kserve` の K8s/Helm リソースは GKE cluster より先に target destroy する
 
 **Status**: Accepted
-**Phase**: Phase 7 起点
+**Phase**: canonical 構成 起点
 
 ## Context
 
-Phase 7 の `infra/terraform/environments/dev/provider.tf` は `kubernetes` / `helm`
+canonical 構成 の `infra/terraform/environments/dev/provider.tf` は `kubernetes` / `helm`
 provider を `data.google_container_cluster.hybrid_search` の endpoint / token を
 使って構成している:
 
@@ -49,7 +49,7 @@ Error: Kubernetes cluster unreachable: invalid configuration: no configuration h
 ### Fallback (cluster 既消滅時)
 
 step 1 の **exit code が 0 でも** cluster unreachable で K8s API 呼び出しが
-silent skip され state に残骸が残るケースがある (Phase 7 Run 4 で
+silent skip され state に残骸が残るケースがある (canonical 構成 Run 4 で
 `helm_release.kserve_crd` が **個別列挙から漏れて** `0 destroyed` が返ったが
 state に残存していたパターン)。よって fallback の判定は:
 
@@ -77,11 +77,11 @@ state に残存していたパターン)。よって fallback の判定は:
   state 修復 (場合によっては 30 分〜) と比べれば誤差
 - 新たに K8s / Helm リソースを `module.kserve` に追加した時の **メンテ負担なし** —
   `-target=module.kserve` (module 単位 target) と `terraform state rm module.kserve`
-  (module 単位 state rm) で配下 resource は自動的に網羅される (Phase 7 Run 4 で
+  (module 単位 state rm) で配下 resource は自動的に網羅される (canonical 構成 Run 4 で
   個別列挙の取りこぼし事故を踏んだので、その教訓の上に立つ)
 - 本 ADR と ADR 0005 (Deployment env を manifest 側で管理) は同じ哲学:
   **「Terraform で Kubernetes API を直接叩く設計は壊れやすい」** → manifest /
-  外部スクリプトに切り出すか、destroy 順序を明示制御する。Phase 8 以降で
+  外部スクリプトに切り出すか、destroy 順序を明示制御する。将来 canonical 拡張時に
   `infra/manifests/` を Terraform `kubernetes_manifest` 経由に戻す判断をした場合、
   本 ADR の destroy 戦略はそのまま流用可能 (target destroy の対象 module を
   追加するだけ)

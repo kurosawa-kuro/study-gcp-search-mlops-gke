@@ -1,4 +1,4 @@
-"""Structural tests for the Phase 1 real-estate BigQuery tables.
+"""Structural tests for the 教育用フェーズ初期 real-estate BigQuery tables.
 
 These catch drift between the Terraform module and the documented contract in
 ``docs/tasks/TASKS_ROADMAP.md §5``:
@@ -126,7 +126,7 @@ def test_ranking_labels_declared() -> None:
 
 def test_training_runs_metrics_has_ranker_columns() -> None:
     block = _extract_resource_block("google_bigquery_table", "training_runs")
-    # Ranker columns are the live contract after Phase 10c.
+    # Ranker columns are the live contract after 教育用フェーズ初期0c.
     for ranker in ("ndcg_at_10", "map", "recall_at_20"):
         assert f'name = "{ranker}"' in block, f"ranker metrics.{ranker} missing"
 
@@ -140,9 +140,9 @@ def test_training_runs_hyperparams_has_lambdarank_fields() -> None:
 
 
 def test_legacy_predictions_log_removed() -> None:
-    """Phase 10c guarantee — the California predictions_log no longer ships in Terraform."""
+    """教育用フェーズ初期0c guarantee — the California predictions_log no longer ships in Terraform."""
     text = _read()
     assert 'resource "google_bigquery_table" "predictions_log"' not in text, (
-        "predictions_log must be deleted from Terraform (Phase 10c). "
+        "predictions_log must be deleted from Terraform (教育用フェーズ初期0c). "
         "Remaining references indicate the destructive migration is incomplete."
     )

@@ -1,15 +1,15 @@
 # ADR 0006 — Cloud Run `/healthz` 予約名回避のため app は `/livez` を canonical liveness にする
 
 **Status**: Accepted
-**Phase**: Phase 4 起点 (Cloud Run 期) → Phase 7 (GKE) でも踏襲
+**Phase**: encoder 期 起点 (Cloud Run 期) → canonical 構成 (GKE) でも踏襲
 
 ## Context
 
-Phase 4-6 の Cloud Run 環境では、GFE (Google Front End) が `/healthz` を **HTML 404 で
+encoder 期-6 の Cloud Run 環境では、GFE (Google Front End) が `/healthz` を **HTML 404 で
 横取り** する仕様があり、app 側で `/healthz` を 200 で実装してもクライアントには到達しない
-ことが発生 (Phase 5 inheritance bug)。
+ことが発生 (rerank 期 inheritance bug)。
 
-Phase 7 は GKE に移行したので Cloud Run の制約自体は外れたが、ops script (`scripts/ops/livez.py`)
+canonical 構成 は GKE に移行したので Cloud Run の制約自体は外れたが、ops script (`scripts/ops/livez.py`)
 や Makefile (`make ops-livez`) を含む既存ツール群が `/livez` を canonical として叩いている。
 ここで GKE 環境で `/healthz` を canonical に戻すと cross-phase の operability が壊れる。
 
@@ -26,5 +26,5 @@ Phase 7 は GKE に移行したので Cloud Run の制約自体は外れたが�
 ## Consequences
 
 - 環境別に endpoint 名を分岐せず cross-phase で同じ ops vocabulary を維持できる
-- Cloud Run に戻すケース (Phase 4-6 リポを再利用) でも変更不要
+- Cloud Run に戻すケース (encoder 期-6 リポを再利用) でも変更不要
 - `/healthz` alias を残すコストはわずかだが、削除するときは ops 側の互換も同時に切る

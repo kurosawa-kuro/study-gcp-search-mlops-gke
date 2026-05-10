@@ -1,4 +1,4 @@
-"""/api/v1/search + /api/v1/feedback endpoint tests — Phase 4 completion gate."""
+"""/api/v1/search + /api/v1/feedback endpoint tests — encoder 期 completion gate."""
 
 from __future__ import annotations
 

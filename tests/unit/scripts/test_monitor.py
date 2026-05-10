@@ -3,7 +3,7 @@
 The monitor's value is detecting *where* deploy-all is stuck. That detection
 hinges on two regex parsers (``_STEP_RE`` / ``_BUILD_WAIT_RE``) and the
 ``MonitorState`` machine they feed. These tests pin both so refactoring the
-monitor doesn't silently break stall detection in the next Phase 7 rollout.
+monitor doesn't silently break stall detection in the next canonical 構成 rollout.
 """
 
 from __future__ import annotations

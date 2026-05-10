@@ -1,11 +1,11 @@
-"""Unit tests for ``VectorSearchWriter`` adapters (Phase 7 PR-3).
+"""Unit tests for ``VectorSearchWriter`` adapters (canonical 構成 PR-3).
 
 Both adapters are exercised without importing
 ``google.cloud.aiplatform`` — ``VertexVectorSearchWriter`` accepts an
 ``index_factory`` injection, ``InMemoryVectorSearchWriter`` is pure
 Python.
 
-Phase 7 ``docs/tasks/TASKS_ROADMAP.md`` §3.3 受け入れ条件 (ローカル):
+canonical 構成 ``docs/tasks/TASKS_ROADMAP.md`` §3.3 受け入れ条件 (ローカル):
 - mock で `MatchingEngineIndex.upsert_datapoints` を stub した unit test PASS
 - ローカルで pipeline を fake adapter (BQ writer + VVS writer 両方 fake) で完走
 """

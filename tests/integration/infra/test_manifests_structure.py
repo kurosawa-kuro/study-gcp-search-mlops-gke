@@ -1,4 +1,4 @@
-"""Structural invariants for the Phase 7 K8s manifests (``infra/manifests/``).
+"""Structural invariants for the canonical 構成 K8s manifests (``infra/manifests/``).
 
 The manifests are Terraform-external (applied via ``kubectl apply -k``), so
 they escape ``make tf-validate``. These tests keep the most error-prone bits
@@ -77,7 +77,7 @@ def test_search_api_deployment_resource_limits_match_nonnegotiable() -> None:
 
 
 def test_search_api_deployment_exposes_kserve_env_vars() -> None:
-    """The Deployment's baked-in env must wire the Phase 7 KServe URLs. If
+    """The Deployment's baked-in env must wire the canonical 構成 KServe URLs. If
     someone removes the env entry without adding a ConfigMap fallback, the
     KServeEncoder/Reranker will silently disable themselves at composition
     root (empty-string gate) and /search will 503 in production.
@@ -145,7 +145,7 @@ def test_search_api_deployment_probes_have_canonical_paths() -> None:
 
     - ``livenessProbe`` → ``/livez``: unconditional 200 — process is alive.
       ``/healthz`` is a Cloud Run / GFE reserved name that returned HTML
-      404 in Phase 5, so we use ``/livez`` exclusively.
+      404 in rerank 期, so we use ``/livez`` exclusively.
     - ``readinessProbe`` → ``/readyz``: returns 503 until
       ``container.candidate_retriever`` and ``container.encoder_client``
       are both wired by ``ContainerBuilder.build()`` in lifespan. A

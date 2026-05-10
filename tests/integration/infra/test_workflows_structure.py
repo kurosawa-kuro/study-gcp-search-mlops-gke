@@ -45,12 +45,12 @@ def test_workflow_file_exists(filename: str) -> None:
 
 @pytest.mark.parametrize("filename", RETIRED_WORKFLOWS)
 def test_retired_workflows_are_absent(filename: str) -> None:
-    """Phase 9 deleted the Cloud Run Jobs `training-job` / `embedding-job`.
+    """KFP 移行で deleted the Cloud Run Jobs `training-job` / `embedding-job`.
 
     The two legacy workflows should no longer exist; KFP pipelines replace them.
     """
     assert not (WORKFLOWS_DIR / filename).exists(), (
-        f"{filename} must be removed — replaced by KFP pipelines in Phase 9"
+        f"{filename} must be removed — replaced by KFP pipelines (canonical)"
     )
 
 
@@ -100,11 +100,11 @@ def test_pipeline_workflow_paths() -> None:
 
 
 def test_api_workflow_keeps_broad_filter_and_rolls_out_via_kubectl() -> None:
-    """Phase 7 deploy-api.yml contract.
+    """canonical 構成 deploy-api.yml contract.
 
     The workflow triggers on ``app/**`` and ``ml/**`` changes, then rolls the
     new image via ``kubectl set image`` + ``kubectl rollout status`` (not
-    ``gcloud run deploy``). Phase 5/6 Vertex env injection moved out of the
+    ``gcloud run deploy``). rerank 期/6 Vertex env injection moved out of the
     deploy-api workflow — the Deployment ConfigMap (infra/manifests/search-api)
     owns KSERVE_* URLs now, and Vertex endpoint IDs are no longer needed
     because encoder/reranker live on KServe instead of Vertex Endpoints.
@@ -113,10 +113,10 @@ def test_api_workflow_keeps_broad_filter_and_rolls_out_via_kubectl() -> None:
     assert "- app/**" in text
     assert "- ml/**" in text
     assert "kubectl set image" in text, (
-        "Phase 7 rolls search-api via `kubectl set image`, not `gcloud run deploy`."
+        "canonical 構成 rolls search-api via `kubectl set image`, not `gcloud run deploy`."
     )
     assert "deployment/" in text, (
-        "`kubectl set image deployment/<name>` is the Phase 7 rollout target."
+        "`kubectl set image deployment/<name>` is the canonical 構成 rollout target."
     )
     assert "rollout status" in text, (
         "`kubectl rollout status` must gate the CI step on successful rollout."

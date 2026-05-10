@@ -1,10 +1,10 @@
-"""Unit tests for ``VertexVectorSearchSemanticSearch`` adapter (Phase 7 PR-1).
+"""Unit tests for ``VertexVectorSearchSemanticSearch`` adapter (canonical 構成 PR-1).
 
 Covers the adapter contract without importing or hitting
 ``google.cloud.aiplatform`` — tests inject ``endpoint_factory`` to satisfy
 the lazy-import seam, so ``make check`` runs offline.
 
-Phase 7 ``docs/tasks/TASKS_ROADMAP.md`` §3.1 受け入れ条件 (ローカル):
+canonical 構成 ``docs/tasks/TASKS_ROADMAP.md`` §3.1 受け入れ条件 (ローカル):
 - mock で Vertex SDK call を stub した unit test PASS
 """
 

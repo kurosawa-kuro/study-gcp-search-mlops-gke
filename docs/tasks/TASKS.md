@@ -13,7 +13,7 @@
 
 - **M-Wave8.7** ES production 化 (HTTPS + password auth) — 詳細: [`TASKS_ROADMAP.md`](TASKS_ROADMAP.md) §2 Wave 8.7
 - **M-Wave8.5** Phase 概念完全撤廃 — 詳細: §2 Wave 8.5
-- **M-Wave8.6 Phase 3** orchestrator ドメイン分離 (`scripts/infra/*` → `scripts/domain/`、subprocess wrapper を `scripts/adapters/`) — 詳細: §2 Wave 8.6
+- **M-Wave8.6 seed 期** orchestrator ドメイン分離 (`scripts/infra/*` → `scripts/domain/`、subprocess wrapper を `scripts/adapters/`) — 詳細: §2 Wave 8.6
 - **C4** Makefile target に `stdbuf -oL` 組込 — Wave 7 (Makefile 整理) の延長
 - **M-Wave9** 独自ドメイン + HTTPS + DNS — scope outside、user 指示で除外継続
 

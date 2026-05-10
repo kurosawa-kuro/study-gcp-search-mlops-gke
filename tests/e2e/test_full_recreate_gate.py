@@ -27,7 +27,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.e2e.phase7_acceptance_checks import run_phase7_live_acceptance_checks
+from tests.e2e.live_acceptance_checks import run_live_acceptance_checks
 
 pytestmark = [pytest.mark.live_gcp, pytest.mark.full_recreate]
 
@@ -57,8 +57,8 @@ def _run(cmd: list[str], *, timeout: int) -> None:
         raise AssertionError(f"command failed rc={proc.returncode}: {' '.join(cmd)}\n{tail}")
 
 
-def test_phase7_full_recreate_acceptance_live() -> None:
+def test_full_recreate_acceptance_live() -> None:
     _require_full_recreate()
     _run(["make", "destroy-all"], timeout=1800)
     _run(["make", "deploy-all"], timeout=3600)
-    run_phase7_live_acceptance_checks(REPO_ROOT)
+    run_live_acceptance_checks(REPO_ROOT)

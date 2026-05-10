@@ -1,4 +1,4 @@
-"""Phase 6 T4 unit tests.
+"""Composer なし派生 T4 unit tests.
 
 * **T4 (Explainable AI)** — ``run_search(want_explanations=True)`` returns
   attributions when the reranker satisfies ``RerankerExplainer``, and

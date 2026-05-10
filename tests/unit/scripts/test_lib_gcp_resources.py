@@ -39,7 +39,7 @@ def test_endpoint_names_have_endpoint_suffix() -> None:
 
     Vertex AI の "endpoint shell" リソース ID と、Vertex Model Display 名
     (``property-encoder`` 等、suffix なし) を取り違えるとリソースが見つから
-    ない事故が起きる (Phase 7 Run 5 で観測)。型としても文字列だが、
+    ない事故が起きる (canonical 構成 Run 5 で観測)。型としても文字列だが、
     suffix で意味を区別する規約を pin する。
     """
     for ep in VERTEX_ENDPOINTS:

@@ -9,7 +9,7 @@ class MockRerankerClient:
     Default behaviour: ``predict([row1, row2, row3])`` → ``[1.0, 0.9, 0.8, ...]``
     so ranking tests can assert order without computing LightGBM math.
 
-    For Phase 6 T4 (explain) tests, ``predict_with_explain`` returns a
+    For Composer なし派生 T4 (explain) tests, ``predict_with_explain`` returns a
     flat ``1/N`` attribution per feature plus ``_baseline`` so the
     ``RerankerExplainer`` Protocol is satisfied.
     """

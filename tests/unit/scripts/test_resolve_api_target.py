@@ -1,6 +1,6 @@
 """Unit tests for scripts._common.resolve_api_target.
 
-Pins the Phase 7 resolution contract:
+Pins the canonical 構成 resolution contract:
 
     1. ``API_URL`` wins (mode=explicit). Token only when API_REQUIRE_TOKEN=truthy.
        ``API_HOST_HEADER`` / ``API_INSECURE_TLS`` で Host / TLS 検証を上書き可能。

@@ -1,8 +1,8 @@
-"""Phase 7 PR-4 — `run_search` x FeatureFetcher opt-in merge.
+"""canonical 構成 PR-4 — `run_search` x FeatureFetcher opt-in merge.
 
 Verifies the contract added in PR-4:
 
-- ``run_search(feature_fetcher=None)`` (default) preserves Phase 5 / 6
+- ``run_search(feature_fetcher=None)`` (default) preserves rerank 期 / 6
   behaviour exactly — candidate features are passed through to the
   reranker untouched.
 - ``run_search(feature_fetcher=fake)`` calls ``fetch`` once with the
@@ -12,7 +12,7 @@ Verifies the contract added in PR-4:
 - A failing fetcher does not 503 the request — rerank continues with
   BQ-enriched (stale) features and the failure is logged.
 
-Phase 7 ``docs/tasks/TASKS_ROADMAP.md`` §3.4 受け入れ条件 (ローカル):
+canonical 構成 ``docs/tasks/TASKS_ROADMAP.md`` §3.4 受け入れ条件 (ローカル):
 - default で挙動変わらず (unit test で確認)
 - 設定時のみ Feature Online Store の fetch 経路に分岐 (unit test で確認)
 """

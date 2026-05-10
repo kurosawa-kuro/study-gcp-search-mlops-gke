@@ -1,4 +1,4 @@
-"""Pin the Phase 7 promote contract.
+"""Pin the canonical 構成 promote contract.
 
 ``deploy-kserve-models`` reads the ``production`` alias on each Vertex
 Model; ``scripts/ops/promote.py`` is the canonical way to set that
@@ -72,7 +72,7 @@ def test_resolve_display_name_env_override_uses_model_named_var(
 ) -> None:
     """The env override is named ``*_MODEL_DISPLAY_NAME`` (not ``*_ENDPOINT_*``).
 
-    Phase 5/6 ops used ``RERANKER_ENDPOINT_DISPLAY_NAME`` which read the
+    rerank 期/6 ops used ``RERANKER_ENDPOINT_DISPLAY_NAME`` which read the
     Endpoint display_name out of setting.yaml — pointed at a Model search
     that string returns zero hits. Renaming makes the contract explicit;
     this test pins it so we don't drift back.
@@ -120,7 +120,7 @@ def test_set_production_alias_dry_run_does_not_call_registry() -> None:
 
 
 def test_run_alias_fails_fast_when_artifact_uri_is_empty(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Phase 7 Run 1 reranker/v1 regression: production alias was promoted
+    """canonical 構成 Run 1 reranker/v1 regression: production alias was promoted
     to an artifact_uri that pointed to an empty bucket, causing a
     KServe Init:CrashLoopBackOff. The new promote refuses to apply
     when GCS lists 0 objects under the URI."""

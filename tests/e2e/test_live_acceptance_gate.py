@@ -23,7 +23,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.e2e.phase7_acceptance_checks import run_phase7_live_acceptance_checks
+from tests.e2e.live_acceptance_checks import run_live_acceptance_checks
 
 pytestmark = pytest.mark.live_gcp
 
@@ -35,7 +35,7 @@ def _require_acceptance_env() -> None:
         pytest.skip("set RUN_LIVE_GCP_ACCEPTANCE=1 to run live acceptance on existing deploy")
 
 
-def test_phase7_live_acceptance_on_existing_env() -> None:
+def test_live_acceptance_on_existing_env() -> None:
     """Requires prior ``make deploy-all`` (or equivalent)."""
     _require_acceptance_env()
-    run_phase7_live_acceptance_checks(REPO_ROOT)
+    run_live_acceptance_checks(REPO_ROOT)

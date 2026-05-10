@@ -1,6 +1,6 @@
 """Unit tests for `scripts/adapters/{kubectl,gcloud,terraform}.py`.
 
-Pin the M-Wave8.6 Phase 3 contract: thin adapters around CLI tools that
+Pin the M-Wave8.6 seed 期 contract: thin adapters around CLI tools that
 forward args correctly and provide a single mock target per CLI.
 """
 

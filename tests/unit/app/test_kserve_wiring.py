@@ -1,11 +1,11 @@
-"""Phase 7 composition-root + ApiSettings wiring for KServe adapters.
+"""canonical 構成 composition-root + ApiSettings wiring for KServe adapters.
 
 These tests pin down the contract between ``app.settings.ApiSettings``
 (env var → attribute) and ``ContainerBuilder._build_*_client`` (settings →
 ``KServeEncoder`` / ``KServeReranker``). They run purely in-process, with no
 GCP calls or kubectl.
 
-Why this layer matters: Phase 7 introduces three new env-driven knobs
+Why this layer matters: canonical 構成 introduces three new env-driven knobs
 (``KSERVE_ENCODER_URL`` / ``KSERVE_RERANKER_URL`` / ``KSERVE_RERANKER_EXPLAIN_URL``).
 Silent wiring regressions here surface as 503 on ``/search`` in production,
 so the wiring needs explicit coverage independent of the adapter unit tests.
@@ -48,7 +48,7 @@ def _build_reranker_client(settings: ApiSettings):
 
 
 def test_apisettings_kserve_fields_default_to_empty_string() -> None:
-    """Defaults: the Phase 7 KServe URL fields must default to empty string
+    """Defaults: the canonical 構成 KServe URL fields must default to empty string
     (not None / not a hardcoded cluster-local URL) so the composition root's
     empty-string gate (disable rerank / encoder when URL is missing) behaves
     correctly on a fresh environment without env vars.
@@ -139,7 +139,7 @@ def test_build_encoder_client_instantiates_kserve_encoder_when_url_set() -> None
 
 
 # ----------------------------------------------------------------------------
-# _build_reranker_client (the Phase 7 change that added explain_url wiring)
+# _build_reranker_client (the canonical 構成 change that added explain_url wiring)
 # ----------------------------------------------------------------------------
 
 
@@ -157,7 +157,7 @@ def test_build_reranker_client_returns_none_when_url_empty() -> None:
 
 def test_build_reranker_client_instantiates_with_explain_url_when_set() -> None:
     """When ``KSERVE_RERANKER_EXPLAIN_URL`` is set, the constructed adapter
-    must carry that explain URL — critical for the Phase 6 T4 explain path to
+    must carry that explain URL — critical for the Composer なし派生 T4 explain path to
     dispatch via a dedicated /explain route instead of parameters.explain=true.
     """
     client, _ = _build_reranker_client(
@@ -210,9 +210,9 @@ def test_build_reranker_client_handles_whitespace_explain_url() -> None:
 
 def test_build_reranker_client_has_predict_with_explain_for_ranking_gate() -> None:
     """Regression guard for the ``ranking.py`` ``hasattr(reranker,
-    "predict_with_explain")`` gate: the Phase 7 reranker client must expose
+    "predict_with_explain")`` gate: the canonical 構成 reranker client must expose
     the method so ``/search?explain=true`` dispatches through the explain
-    branch (Phase 6 T4 invariant).
+    branch (Composer なし派生 T4 invariant).
     """
     client, _ = _build_reranker_client(
         _settings(enable_rerank=True, kserve_reranker_url="http://r.x/predict")

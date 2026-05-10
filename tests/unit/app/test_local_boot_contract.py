@@ -2,7 +2,7 @@
 
 The app must be able to build its immutable container without ADC, BigQuery,
 or Pub/Sub when search is explicitly disabled. Otherwise even `/livez`
-verification becomes environment-dependent and the Phase 7 workflow contract
+verification becomes environment-dependent and the canonical 構成 workflow contract
 cannot be trusted.
 """
 

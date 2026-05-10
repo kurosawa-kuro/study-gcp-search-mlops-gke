@@ -1,6 +1,6 @@
-"""SearchBuilder canonical wiring (Phase 7 W2-8 完了後).
+"""SearchBuilder canonical wiring (canonical 構成 W2-8 完了後).
 
-W2-8 で BQ semantic / BQ feature fetcher の互換レイヤを撤去し、Phase 7 は
+W2-8 で BQ semantic / BQ feature fetcher の互換レイヤを撤去し、canonical 構成 は
 Vertex Vector Search + Feature Online Store の 1 経路に収束した。本 test は:
 
 - ``_build_vertex_vector_search`` が settings から

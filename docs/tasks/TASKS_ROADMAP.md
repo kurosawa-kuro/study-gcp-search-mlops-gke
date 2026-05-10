@@ -16,7 +16,7 @@
 - `1/` 〜 `6/` ディレクトリ、`docs/phases/`、`docs/教育資料/`、`archive/` は撤去済み
 - README / CLAUDE / AGENTS / `docs/architecture/{01,03}.md` / `docs/runbook/{04,05}.md` / `tests/integration/workflow/` から `Phase [0-9]` キャピタル P 表記を **完全撤去** (`grep -rE "Phase [0-9]" docs/ tests/integration/workflow/` 結果 0 件、ADR 除く)
 - ⚠️ ADR (`docs/decisions/`) は historical record として `Phase X` 表記を残置 (過去の判断履歴、変えると意味が壊れる)
-- ⚠️ GCP リソース識別子 (`phase7-synonym` Memorystore / `destroy-phase7-learning` Make target / e2e test ファイル名 `phase7_*.py` / 関数名 `run_phase7_live_acceptance_checks`) は **小文字 phase で残置** (production GCP リソース ID と Terraform 同期、touch すると infra との drift 発生、別 backlog)
+- ⚠️ GCP リソース識別子 (`phase7-synonym` Memorystore / `destroy-phase7-learning` Make target / e2e test ファイル名 `phase7_*.py` / 関数名 `run_live_acceptance_checks`) は **小文字 phase で残置** (production GCP リソース ID と Terraform 同期、touch すると infra との drift 発生、別 backlog)
 
 ### §0.2 仕様の大幅変更 (正解データ + 継続改善サイクル前提)
 
@@ -337,13 +337,13 @@ Composer = 上位 orchestrator、Vertex Pipelines = 下位 ML executor。`train/
 
 ## §5. マイルストーン
 
-完了済 (M-Pivot / M-RunbookLocal / M-Wave0 / M-Wave1 / M-Wave2 / M-Wave3 / M-Wave4 / **M-Wave5** / M-Wave6 / M-Wave8 (drift 解消部分) / M-Wave8.6 Phase 1 / Step.precondition framework) は [`../architecture/03_実装カタログ.md`](../architecture/03_実装カタログ.md) §7.3 を正本とする。本表は **未完了のみ** 残す。
+完了済 (M-Pivot / M-RunbookLocal / M-Wave0 / M-Wave1 / M-Wave2 / M-Wave3 / M-Wave4 / **M-Wave5** / M-Wave6 / M-Wave8 (drift 解消部分) / M-Wave8.6 教育用フェーズ初期 / Step.precondition framework) は [`../architecture/03_実装カタログ.md`](../architecture/03_実装カタログ.md) §7.3 を正本とする。本表は **未完了のみ** 残す。
 
 | ID | フェーズ | 状態 | 残件 |
 |---|---|---|---|
 | M-Wave7 | Makefile 本格整理 | ⏳ 着手可 | Make Command Matrix と Makefile を一致 + C4 (`stdbuf -oL` 組込) |
 | ~~M-Wave8.5~~ | Phase 概念完全撤廃 | ✅ **完了 (2026-05-10)** | `Phase [0-9]` キャピタル P を docs / tests/integration/workflow/ から完全撤去。ADR と GCP resource ID は historical で残置。詳細: 03_実装カタログ §7.3 |
-| M-Wave8.6 Phase 3 | orchestrator ドメイン分離 (続き) | ⏳ | `scripts/infra/*` → `scripts/domain/`、subprocess wrapper を `scripts/adapters/`。詳細は §2 Wave 8.6 |
+| M-Wave8.6 seed 期 | orchestrator ドメイン分離 (続き) | ⏳ | `scripts/infra/*` → `scripts/domain/`、subprocess wrapper を `scripts/adapters/`。詳細は §2 Wave 8.6 |
 | M-Wave8.7 | ES production 化 (HTTPS+password auth) | ⏳ | 学習用 HTTP+anonymous → HTTPS+password。詳細は §2 Wave 8.7 |
 | M-Wave9 | 独自ドメイン + HTTPS + DNS | ⏳ scope outside | user 指示で除外継続 |
 
@@ -384,7 +384,7 @@ Composer = 上位 orchestrator、Vertex Pipelines = 下位 ML executor。`train/
 中期 (構造改革、sprint 跨ぎ)
 #	候補	コスト	価値
 4	M-Wave7 Makefile 本格整理 — Make Command Matrix と Makefile を一致、1 target = 1 行 wrapper 原則を全件適用	1 sprint	中
-5	M-Wave8.6 Phase 3 orchestrator ドメイン分離 — scripts/infra/* → scripts/domain/{gcp,k8s,terraform,data}/、subprocess wrapper を scripts/adapters/、import 30+ 箇所追従	1 sprint	高 (test/拡張性、クリーンアーキテクチャの実体験)
+5	M-Wave8.6 seed 期 orchestrator ドメイン分離 — scripts/infra/* → scripts/domain/{gcp,k8s,terraform,data}/、subprocess wrapper を scripts/adapters/、import 30+ 箇所追従	1 sprint	高 (test/拡張性、クリーンアーキテクチャの実体験)
 長期 / 学習目標
 #	候補	コスト	価値
 6	PMLE 学習 doc 作成 — 今回の incident 経験を Vertex AI managed vs ECK self-hosted 比較軸として記録。「TLS 整合問題は managed が抽象化」「KServe cold start vs Vertex Endpoint scale-to-zero」「VVS persistent index による cost 最適化」など	30-60 min	高 (試験対策 + 学習記憶定着)
@@ -395,7 +395,7 @@ A → 1 → 6 → 3 → 2 → 5 → 4 → 7
 順序最終確定
 #	内容	コスト	価値
 A	destroy-all 完走確認 + cleanup	5-10 min	即時
-5	M-Wave8.6 Phase 3 orchestrator ドメイン分離 (deploy-all バグ予防の構造改善)	1 sprint	高 (バグ予防 ROI 最大)
+5	M-Wave8.6 seed 期 orchestrator ドメイン分離 (deploy-all バグ予防の構造改善)	1 sprint	高 (バグ予防 ROI 最大)
 1	C4 Makefile stdbuf 組込	30 min	中 (運用 ergonomics)
 6	PMLE 学習 doc (今日の incident → Vertex AI 比較材料)	30-60 min	中〜高 (経験記憶定着)
 2	M-Wave8.5 Phase 撤廃	半日	中 (構造的負債)

@@ -1,4 +1,4 @@
-"""Happy-path tests for BigQueryRankerRepository (Task 1 / Phase 6)."""
+"""Happy-path tests for BigQueryRankerRepository (Task 1 / Composer なし派生)."""
 
 from __future__ import annotations
 

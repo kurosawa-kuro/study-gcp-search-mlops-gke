@@ -1,6 +1,6 @@
-"""Phase 7 SYN-1 — RedisSynonymExpander unit tests (in-memory fake Redis).
+"""canonical 構成 SYN-1 — RedisSynonymExpander unit tests (in-memory fake Redis).
 
-Mirrors the Phase 3 tests at ``3/study-hybrid-search-local/tests/unit/app/
+Mirrors the seed 期 tests at ``3/study-hybrid-search-local/tests/unit/app/
 test_synonym_expander.py``. Both phases share the same Port shape and
 the same adapter wire format (``syn:<token>`` SET → SMEMBERS), so the
 tests are intentionally identical except for the import paths.

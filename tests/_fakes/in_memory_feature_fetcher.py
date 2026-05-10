@@ -1,4 +1,4 @@
-"""Deterministic in-memory ``FeatureFetcher`` stub (Phase 7 PR-2).
+"""Deterministic in-memory ``FeatureFetcher`` stub (canonical 構成 PR-2).
 
 Used in unit / integration tests where rerank-side feature fetching needs
 to be exercised without hitting BigQuery or Vertex AI Feature Online

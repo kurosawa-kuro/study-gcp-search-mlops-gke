@@ -46,7 +46,7 @@ def test_committed_configmap_matches_generator_output() -> None:
 def test_configmap_keys_cover_every_deployment_reference() -> None:
     """Every ``configMapKeyRef.key`` in deployment.yaml must exist in CONFIGMAP_KEYS.
 
-    This is the structural safeguard against the Phase 7 W2-5 incident
+    This is the structural safeguard against the canonical 構成 W2-5 incident
     where deployment.yaml bound 7 new keys (semantic_backend / vertex_*_*)
     but the deploy_all overlay kept the old 3-key schema, blocking
     rollout with ``CreateContainerConfigError``. Now that

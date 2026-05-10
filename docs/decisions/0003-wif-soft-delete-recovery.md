@@ -1,7 +1,7 @@
 # ADR 0003 — WIF pool/provider の 30 日 soft-delete に対する `_recover_wif_state` 自動 undelete
 
 **Status**: Accepted
-**Phase**: Phase 4 起点 → Phase 5 / 6 / 7 継承
+**Phase**: encoder 期 起点 → rerank 期 / 6 / 7 継承
 
 ## Context
 

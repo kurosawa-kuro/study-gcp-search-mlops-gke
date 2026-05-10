@@ -1,4 +1,4 @@
-"""Tests for concrete adapters in app.adapters (Phase 6: KServe encoder/reranker)."""
+"""Tests for concrete adapters in app.adapters (Composer なし派生: KServe encoder/reranker)."""
 
 from __future__ import annotations
 
@@ -74,7 +74,7 @@ def test_kserve_encoder_parses_embedding_dict_response_v1() -> None:
 
     fake_client.post.assert_called_once()
     sent_json = fake_client.post.call_args.kwargs["json"]
-    # Phase 7 Run 2: encoder runtime を HF stock runtime に切替えたため、
+    # canonical 構成 Run 2: encoder runtime を HF stock runtime に切替えたため、
     # adapter は client 側で E5 prefix (`query: ` / `passage: `) を付与し、
     # ペイロードは ``{"instances": ["query: ..."]}`` の bare list 形式で送る。
     assert sent_json == {"instances": ["query: 赤羽駅徒歩10分"]}
@@ -112,7 +112,7 @@ def test_kserve_encoder_parses_v2_open_inference_response() -> None:
 def test_kserve_reranker_predict_with_explain_via_predict_route() -> None:
     """No dedicated explain URL → POST to predict URL with parameters.explain=true.
 
-    Matches the Phase 6 Vertex CPR reranker contract in ``ml/serving/reranker.py``
+    Matches the Composer なし派生 Vertex CPR reranker contract in ``ml/serving/reranker.py``
     where ``/predict`` accepts ``parameters.explain=True`` and returns both
     ``predictions`` and ``attributions`` in one round-trip.
     """
@@ -209,7 +209,7 @@ def test_kserve_reranker_predict_with_explain_empty_instances_short_circuits() -
 
 
 def test_kserve_reranker_predict_with_explain_v2_degrades_to_predict_only() -> None:
-    """Phase 7 B19 regression — KServe MLServer v2 stock LightGBM runtime
+    """canonical 構成 B19 regression — KServe MLServer v2 stock LightGBM runtime
     rejects ``parameters.explain=true`` (returns 422). The adapter must
     detect the v2 URL and fall back to a plain v2 predict + empty
     attribution dicts so ``/search?explain=true`` stays 200 instead of

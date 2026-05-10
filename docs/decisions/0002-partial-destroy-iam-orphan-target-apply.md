@@ -1,7 +1,7 @@
 # ADR 0002 — 半 destroy 後の SA / Dataset IAM orphan を `-target` で部分 apply する
 
 **Status**: Accepted
-**Phase**: Phase 4 起点 → Phase 5 / 6 / 7 継承
+**Phase**: encoder 期 起点 → rerank 期 / 6 / 7 継承
 
 ## Context
 

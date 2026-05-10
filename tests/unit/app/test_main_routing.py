@@ -1,6 +1,6 @@
 """Pin the top-level routing contract for ``create_app``.
 
-The Phase 7 reorg split overloaded paths so external systems (Prometheus
+The canonical 構成 reorg split overloaded paths so external systems (Prometheus
 GMP / SLO scrape) and the operator UI don't fight for the same URLs.
 This test fixes the surface so a future refactor can't silently
 regress it:
@@ -96,7 +96,7 @@ def test_ui_ops_returns_html(app_no_lifespan) -> None:  # type: ignore[no-untype
 
 
 def test_metrics_serves_prometheus_exposition(app_no_lifespan) -> None:  # type: ignore[no-untyped-def]
-    """``/metrics`` must NOT be HTML (was the Phase 5 inheritance bug).
+    """``/metrics`` must NOT be HTML (was the rerank 期 inheritance bug).
 
     Prometheus exposition uses ``text/plain; version=0.0.4`` content type
     and `# HELP` / `# TYPE` comments. The bug returned ``text/html`` from
@@ -120,7 +120,7 @@ def test_metrics_emits_slo_compatible_labels(app_no_lifespan) -> None:  # type: 
     ``metric.label."status"=monitoring.regex.full_match("2..")``. If the
     instrumentor stops emitting these labels the SLO scrape selects zero
     series and Terraform apply fails — the same regression that blocked
-    Phase 7 Run 1. This test catches it before deploy.
+    canonical 構成 Run 1. This test catches it before deploy.
     """
     with TestClient(app_no_lifespan) as client:
         # /docs is NOT in the excluded_handlers list so it produces a 2xx

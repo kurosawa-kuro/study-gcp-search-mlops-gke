@@ -1,4 +1,4 @@
-"""Pin scripts/deploy/composer_deploy_dags.py — DAG GCS upload helper (Phase 7 W2-4).
+"""Pin scripts/deploy/composer_deploy_dags.py — DAG GCS upload helper (canonical 構成 W2-4).
 
 検証:
 - `terraform output composer_dag_bucket` が空文字 → early-return (rc=0)

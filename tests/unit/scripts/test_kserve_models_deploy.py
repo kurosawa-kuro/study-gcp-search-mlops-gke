@@ -116,7 +116,7 @@ def test_resolve_latest_falls_back_to_first_when_no_production_alias(
 ) -> None:
     """No model has ``production`` alias → fall back to models[0] with a
     warning log (verified by stdout capture). This is the path flagged as LOW
-    in the Phase 7 audit — caller should run ``make ops-promote-reranker``
+    in the canonical 構成 audit — caller should run ``make ops-promote-reranker``
     first, but the script must not crash.
     """
     from scripts.deploy import kserve_models
@@ -220,14 +220,14 @@ def test_patch_reranker_storage_uri_emits_expected_kubectl_shape() -> None:
 
 
 def test_patch_encoder_storage_uri_is_noop_under_hf_runtime() -> None:
-    """Phase 7 Run 2 で encoder を KServe HuggingFace stock runtime に切替えた
+    """canonical 構成 Run 2 で encoder を KServe HuggingFace stock runtime に切替えた
     結果、storage URI patch が **不要** になった (HF runtime は ``args`` の
     ``--model_id`` で weights を解決するため env 経由の storageUri を読まない)。
     ``_patch_encoder_storage_uri`` は無音の no-op ではなく、``kubectl patch``
     を呼ばないことを明示的にこのテストで pin する。
 
     旧テスト (trailing slash 正規化 / kserve-container env 注入) は
-    Phase 7 Run 2 で encoder.yaml から env block ごと削除されたため意味を失った。
+    canonical 構成 Run 2 で encoder.yaml から env block ごと削除されたため意味を失った。
     """
     from scripts.deploy import kserve_models
 

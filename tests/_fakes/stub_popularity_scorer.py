@@ -1,4 +1,4 @@
-"""Deterministic ``PopularityScorer`` stub for Phase 6 T1 tests."""
+"""Deterministic ``PopularityScorer`` stub for Composer なし派生 T1 tests."""
 
 from __future__ import annotations
 

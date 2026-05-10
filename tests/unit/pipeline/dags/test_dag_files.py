@@ -1,4 +1,4 @@
-"""Phase 7 W2-4 Stage 2: pipeline/dags/*.py の AST + 構造 sanity check.
+"""canonical 構成 W2-4 Stage 2: pipeline/dags/*.py の AST + 構造 sanity check.
 
 Composer (Airflow Gen 3) は Composer worker 上で実行されるため、ローカル CI で
 は **`apache-airflow` を依存に入れず**、AST + 文字列 / 正規表現でファイルの

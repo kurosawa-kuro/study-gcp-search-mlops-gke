@@ -3,7 +3,7 @@
 Mirrors the previous shell recipe:
 
     RUN_LIVE_GCP_ACCEPTANCE=1 uv run pytest \
-        tests/e2e/test_phase7_acceptance_gate.py -m live_gcp -v -s
+        tests/e2e/test_live_acceptance_gate.py -m live_gcp -v -s
 
 Logs go to ``logs/verification/live-acceptance-<utc>.log`` with
 ``live-acceptance.latest.log`` symlink kept fresh.
@@ -19,7 +19,7 @@ def main() -> int:
         "uv",
         "run",
         "pytest",
-        "tests/e2e/test_phase7_acceptance_gate.py",
+        "tests/e2e/test_live_acceptance_gate.py",
         "-m",
         "live_gcp",
         "-v",

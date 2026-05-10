@@ -1,12 +1,12 @@
 # ADR 0001 — BQ table の `deletion_protection=true` を `terraform destroy` 前に state-flip する
 
 **Status**: Accepted
-**Phase**: Phase 4 起点 → Phase 5 / 6 / 7 継承
+**Phase**: encoder 期 起点 → rerank 期 / 6 / 7 継承
 
 ## Context
 
 `infra/terraform/modules/data/main.tf` の BQ table 群は production 事故 (誤 destroy) を防ぐため
-`deletion_protection = true` を default としている。一方、Phase 4-7 の PDCA loop は
+`deletion_protection = true` を default としている。一方、encoder 期-7 の PDCA loop は
 `make destroy-all` → `make deploy-all` の 2-shot 再構築を前提にしており、`destroy-all` を実行する
 たびに `deletion_protection` が立っているため `terraform destroy` がブロックされる。
 

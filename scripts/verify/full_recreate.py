@@ -3,7 +3,7 @@
 Mirrors the previous shell recipe:
 
     RUN_LIVE_GCP_FULL_RECREATE=1 uv run pytest \
-        tests/e2e/test_phase7_full_recreate_gate.py \
+        tests/e2e/test_full_recreate_gate.py \
         -m "live_gcp and full_recreate" -v -s
 
 The gate is flaky (Vertex async deletion timing) and is therefore kept
@@ -20,7 +20,7 @@ def main() -> int:
         "uv",
         "run",
         "pytest",
-        "tests/e2e/test_phase7_full_recreate_gate.py",
+        "tests/e2e/test_full_recreate_gate.py",
         "-m",
         "live_gcp and full_recreate",
         "-v",

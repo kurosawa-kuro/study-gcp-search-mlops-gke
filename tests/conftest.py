@@ -185,7 +185,7 @@ def fake_container_factory(
             "label_repository": NoopLabelRepository(),
             "metrics_repository": InMemoryMetricsRepository(),
             "training_dataset_repository": InMemoryTrainingDatasetRepository(),
-            "feature_fetcher": None,  # PR-4 default off — preserves Phase 5 behaviour
+            "feature_fetcher": None,  # PR-4 default off — preserves rerank 期 behaviour
         }
         defaults.update(overrides)
         # Build SearchService / FeedbackService from the composed adapters so

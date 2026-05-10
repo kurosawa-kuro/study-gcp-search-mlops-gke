@@ -1,4 +1,4 @@
-"""Shared live checks for Phase 7 opt-in e2e (ConfigMap + canonical ops gates).
+"""Shared live checks for canonical 構成 opt-in e2e (ConfigMap + canonical ops gates).
 
 Used by:
 
@@ -12,7 +12,7 @@ import subprocess
 from pathlib import Path
 
 
-def run_phase7_live_acceptance_checks(repo_root: Path) -> None:
+def run_live_acceptance_checks(repo_root: Path) -> None:
     """Assume cluster + search-api already deployed; validate canonical path."""
     proc = subprocess.run(
         ["kubectl", "get", "configmap", "-n", "search", "search-api-config", "-o", "yaml"],
