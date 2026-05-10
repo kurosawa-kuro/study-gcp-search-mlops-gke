@@ -1,25 +1,35 @@
 ---
-description: Python — FastAPI, ports/adapters, checks (phase-aware)
+description: Python — FastAPI, ports/adapters, checks
 globs: "**/*.py"
 alwaysApply: false
 ---
 
-# Python (phase-aware)
+# Python
 
 ## Tooling
 
-- **Phase 7** (`7/study-hybrid-search-gke`): Python **3.12+**, `uv`, **ruff** + **ruff format**, **mypy** (strict), **pytest**. Run `make sync` then `make check` from that phase root after substantive edits.
-- Other phases may use Docker Compose or different Python versions — **always confirm** in that phase’s `CLAUDE.md` and `make help`.
+Python **3.12+**, `uv` workspace, **ruff** + **ruff format**, **mypy** (strict), **pytest**。
+非自明な編集後は `make sync` → `make check` をリポジトリルートで実行。
 
 ## Architecture
 
-- Respect **Port / Adapter** boundaries: `core → ports ← adapters`. **Composition / DI wiring** belongs in the phase’s composition root (e.g. Phase 7 `app/composition_root.py`), not scattered in handlers.
-- Services depend on **protocols only**; avoid importing concrete adapters from domain/core layers. Follow `scripts/ci/layers.py` / `make check-layers` rules when the phase provides them.
+- Port / Adapter 境界: `core → ports ← adapters`。Composition / DI 配線は `app/composition_root.py` (および `app/container/{infra,ml,search}.py`) に集約。handler / service / domain では adapter を `new` しない。
+- Service は protocol のみに依存。具象 adapter を domain / core 層から import しない。`scripts/ci/layers.py` のルール (= `make check-layers`) を破らない。
+- 1 file = 1 Port (`app/services/protocols/`), 1 file = 1 adapter (`app/services/adapters/`)。`request.app.state.<x>` の `getattr` 経由参照は禁止 — `Depends(get_container)` 系を使う。
 
-## Feature changes (Phase 4+ hybrid search)
+## Feature changes (ranker / 特徴量)
 
-- When changing **ranker / feature** definitions, keep **six-way parity** in one change set when applicable (Dataform SQL, `build_ranker_features`, `FEATURE_COLS_RANKER`, Terraform `ranking_log.features`, monitoring SQL, Vertex Feature Group features). See Phase 7 `CLAUDE.md` “Feature parity invariant”.
+ranker 特徴量を追加 / 削除 / 改名するときは **6 ファイル同 PR** を維持:
+
+1. `pipeline/data_job/dataform/features/property_features_daily.sqlx`
+2. `ml/data/feature_engineering/ranker_features.py::build_ranker_features`
+3. `ml/data/feature_engineering/schema.py::FEATURE_COLS_RANKER`
+4. `infra/terraform/modules/data/main.tf` `ranking_log.features` RECORD
+5. `infra/sql/monitoring/validate_feature_skew.sql` UNPIVOT
+6. `infra/terraform/modules/vertex/main.tf` `google_vertex_ai_feature_group_feature` × N
+
+詳細: `CLAUDE.md` 「Feature parity invariant」。
 
 ## Style
 
-- Prefer explicit **type hints**, clear names, and **English** identifiers / comments to match the existing codebase.
+- 型ヒント / 明確な命名 / 既存コードに合わせて識別子・コメントは英語ベース (日本語コメントが既存にあれば従う)。

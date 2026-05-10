@@ -26,7 +26,7 @@ Walk the diff (or the file list the user gives you) and flag:
 
 1. **Adapter import in a Port-side file** — any `from app.services.adapters.<x> import` or `import google.cloud.<x>` outside `EXCLUSIONS`. Also catches lazy imports inside functions.
 2. **New Port without `RULES`/`DIRECTORY_RULES` entry** — if a new file under `app/services/protocols/` / `ml/<feat>/ports/` / `pipeline/training_job/ports/` is added but the same PR does not touch `scripts/ci/layers.py`, flag it.
-3. **New Port without noop_adapter** — if a new Protocol is added to `app/services/protocols/<concept>.py` but no `Noop<Concept>` / `InMemory<Concept>` exists in `app/services/noop_adapters/`, flag it. Reason: `make api-dev` (local SEMANTIC_BACKEND=noop / LEXICAL_BACKEND=noop path) breaks.
+3. **New Port without noop_adapter** — if a new Protocol is added to `app/services/protocols/<concept>.py` but no `Noop<Concept>` / `InMemory<Concept>` exists in `app/services/noop_adapters/`, flag it. Reason: `make api-dev` (GCP creds 無しでも noop adapter で構文 boot する前提) が壊れる。
 4. **Composition root leak** — any `new <Adapter>(…)` outside `app/composition_root.py` / `app/container/{infra,ml,search}.py`. Also flag `getattr(request.app.state, …)` in handlers.
 5. **DAG → app.\*** — any `from app.` or `import app.` in `pipeline/dags/`.
 6. **Duplicate Port name across ml/app** — same class name in both `app/services/protocols/` and `ml/<feat>/ports/`. Use `rg -n "class \w+Port" app/services/protocols/ ml/` to enumerate.

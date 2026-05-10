@@ -1,6 +1,6 @@
 name: Deploy Reranker Image
 
-# Phase 10: builds the Vertex AI reranker CPR container image and pushes to
+# Builds the Vertex AI reranker CPR container image and pushes to
 # Artifact Registry. Endpoint deployment is handled by the KFP train_pipeline
 # (register_reranker component) or scripts/ops/promote.py — this workflow
 # only refreshes the image.

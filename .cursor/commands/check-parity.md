@@ -1,11 +1,11 @@
 ---
-description: "Run a feature parity check for the 6-file invariant (Phase 7 hybrid search)."
+description: "Run a feature parity check for the 6-file invariant (ranker features)."
 argument-hint: "<feature-name> | <PR#> | <commit-range> | (empty for working-tree changes)"
 ---
 
 # /check-parity (Cursor)
 
-Use this command when a change might touch **ranker / feature columns** in Phase 7 (`7/study-hybrid-search-gke/`).
+ranker / feature column を変更する change set で **6 ファイル parity invariant** を破っていないかを検査する。
 
 **Invariant (6 files, same change set):**
 
@@ -20,10 +20,10 @@ Use this command when a change might touch **ranker / feature columns** in Phase
 
 Verify the 6-file feature parity invariant for: **$ARGUMENTS**
 
-- If `$ARGUMENTS` is empty, use `git diff --name-only HEAD` (or `main..HEAD` if on a feature branch) to see what changed.
-- If `$ARGUMENTS` looks like a feature column name, grep it across all 6 sites.
-- If `$ARGUMENTS` is a commit range (e.g. `main..HEAD`), use `git diff --name-only` for that range.
+- `$ARGUMENTS` が空: working-tree changes (`git diff --name-only HEAD` または `main..HEAD`) を対象に。
+- feature column 名らしき場合: その名前を 6 site 全てで grep。
+- commit range (例 `main..HEAD`) の場合: `git diff --name-only` で取得。
 
-Output: table of the 6 sites (present / missing), **PASS** or **FAIL**, and if FAIL, the ordered list of missing edits.
+Output: 6 site の table (TOUCHED / NOT TOUCHED / N/A) + **PASS** / **FAIL** + FAIL の場合は依存順に missing edits を列挙。
 
-**Reference:** `.claude/agents/feature-parity-checker.agent.md`, `7/study-hybrid-search-gke/CLAUDE.md` (Feature parity invariant).
+**Reference:** [`.claude/agents/feature-parity-checker.agent.md`](../../.claude/agents/feature-parity-checker.agent.md), [`CLAUDE.md`](../../CLAUDE.md) "Feature parity invariant"。

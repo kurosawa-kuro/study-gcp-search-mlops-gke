@@ -1,6 +1,6 @@
 name: Deploy Trainer Image
 
-# Phase 10: builds the KFP trainer container image (LightGBM LambdaRank).
+# Builds the KFP trainer container image (LightGBM LambdaRank).
 # Picked up by the train_reranker component in pipelines/ whenever the image
 # tag is pinned to :latest or updated in the KFP template.
 

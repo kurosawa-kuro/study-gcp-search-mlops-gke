@@ -21,7 +21,7 @@ argument-hint: 'What concept is the new Port for? (e.g. "Memorystore Redis cache
 
 **Do NOT use this skill for**:
 - Modifying an existing Port (use `port-adapter-boundary-reviewer.agent.md` instead).
-- Hybrid-search 5-element changes (Meilisearch / ME5 / VVS / RRF / LightGBM) — those are user-decision.
+- Hybrid-search 5-element changes (Elasticsearch / ME5 / VVS / RRF / LightGBM) — those are user-decision.
 - Pure adapter swaps where the Port already exists (just add the adapter file + composition root entry).
 
 ## Workflow
@@ -60,7 +60,7 @@ class Noop<Concept>:
         return <empty-or-default>
 ```
 
-**Rule**: Without this, `make api-dev` with `SEMANTIC_BACKEND=noop` / `LEXICAL_BACKEND=noop` cannot start.
+**Rule**: Noop double が無いと unit test / 認証なし local boot で `<Concept>Port` を依存解決できず起動不能になる。`make api-dev` が GCP creds 無しでも構文 boot できる前提を壊さない。
 
 ### Step 3 — Update `scripts/ci/layers.py`
 
@@ -99,7 +99,7 @@ class Fake<Concept>:
 Path: `app/composition_root.py` + `app/container/{infra,ml,search}.py`
 
 Decide which builder owns it:
-- **InfraBuilder** — GCP SDK clients, HTTP clients, Pub/Sub, BigQuery, Vertex, KServe, Redis, Meilisearch.
+- **InfraBuilder** — GCP SDK clients, HTTP clients, Pub/Sub, BigQuery, Vertex, KServe, Redis, Elasticsearch.
 - **MlBuilder** — ML model wrappers, encoders, rerankers, training/registry adapters.
 - **SearchBuilder** — high-level search service composition.
 
@@ -130,7 +130,7 @@ class <Backend><Concept>:
 
 - **app vs ml side** — if the Port is consumed at request time by `app/services/`, put it in `app/services/protocols/`. If it's consumed at training/registry/serving lifecycle in batch jobs, put it in `ml/<feat>/ports/`. Never both (no duplicate Port names across trees).
 - **Builder ownership** — pick **one** builder. Cross-builder injection is allowed (`SearchBuilder` consumes `InfraBuilder`/`MlBuilder` outputs), but the Port's owner is single.
-- **Adapter naming** — use the backend prefix (`Redis<Concept>`, `BigQuery<Concept>`, `KServe<Concept>`, `Meilisearch<Concept>`). Avoid generic names like `Default<Concept>`.
+- **Adapter naming** — use the backend prefix (`Redis<Concept>`, `BigQuery<Concept>`, `KServe<Concept>`, `Elasticsearch<Concept>`). Avoid generic names like `Default<Concept>`.
 - **Terraform follow-up** — if the new Port has a GCP resource backing (Memorystore, Pub/Sub topic, FOS feature view), open `infra/terraform/modules/<concept>/` in a follow-up PR. **One concept = one module.**
 
 ## Completion Criteria
@@ -143,6 +143,6 @@ class <Backend><Concept>:
 ## Suggested Verification Commands
 
 - After applying: `make check-layers` — must exit 0.
-- After applying: `SEMANTIC_BACKEND=noop LEXICAL_BACKEND=noop make api-dev` then `curl localhost:8000/livez` — must return 200.
+- After applying: `make api-dev` then `curl localhost:8000/livez` — must return 200 (GCP creds 無しでも noop adapter で boot できる前提を保つ)。
 - Find any forgotten Port: `rg "class \w+Port" app/services/protocols/ ml/`.
 - Confirm composition root is the only `new`-site for the new adapter: `rg "<Backend><Concept>\(" app/`.

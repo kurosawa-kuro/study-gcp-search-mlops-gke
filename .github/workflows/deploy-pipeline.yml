@@ -1,11 +1,13 @@
 name: Deploy Pipeline
 
-# Phase 10: compiles the KFP embed + train pipelines, pushes the YAML templates
+# Compiles the KFP embed + train pipelines, pushes the YAML templates
 # to gs://mlops-dev-a-pipeline-root/templates/, and re-runs the Model Monitoring
-# + PipelineJobSchedule setup scripts idempotently.
+# + schedule spec resolver scripts idempotently.
 #
-# Everything below is read by the pipeline-trigger Cloud Function at fire time
-# (see infra/terraform/modules/vertex/main.tf env vars).
+# Note: 本線 retrain orchestration は Composer DAG (`pipeline/dags/`)。
+# Vertex PipelineJobSchedule は併存禁止 (CLAUDE.md 非負制約)。
+# `create_schedule.py` が PipelineJobSchedule を実際に apply している場合は
+# Composer 二重起動になるので、resolver only に絞り apply ステップを撤去する。
 
 on:
   push:

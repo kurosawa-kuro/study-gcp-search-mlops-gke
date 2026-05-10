@@ -1,12 +1,13 @@
 ---
-description: Terraform / GCP — WIF, no keys in repo, phase isolation
+description: Terraform / GCP — WIF, no keys in repo, safety
 globs: ["**/*.tf", "**/*.tfvars"]
 alwaysApply: false
 ---
 
-# Terraform (phase-aware)
+# Terraform
 
-- **Scope**: Edits under `*/infra/terraform/**` are **phase-local**. Do not copy module names, variable names, or `backend` blocks from another phase without reading that phase’s `CLAUDE.md` and `make help`.
-- **Auth**: Prefer **Workload Identity Federation**; do **not** add or suggest service account JSON keys in repo, CI, or examples.
-- **Apply / destroy**: Do not assume permission to run `terraform apply` or `destroy` in an arbitrary project. **Phase 7** pre-approved automation for project `mlops-dev-a` is documented in [`7/study-hybrid-search-gke/CLAUDE.md`](7/study-hybrid-search-gke/CLAUDE.md) only.
-- **After changes**: From the phase root, run `make tf-validate` or `make check` if the phase defines them (see phase `CLAUDE.md`).
+- **Scope**: `infra/terraform/**` 配下が canonical。モジュール (`vector_search/` / `composer/` / `vertex/` / `data/` 等) と root の `main.tf` / `variables.tf` / `terraform.tfvars` を読んでから編集。
+- **Auth**: **Workload Identity Federation** を使う。SA JSON キーをリポ / CI / 例示に追加・提案しない。
+- **Apply / destroy**: 任意のプロジェクトで `terraform apply` / `destroy` を実行する権限を仮定しない。**例外**: project `mlops-dev-a` 上での自動化は事前承認済 — 範囲は `CLAUDE.md` を参照。
+- **After changes**: `make tf-validate` (offline) / `make check-layers` / 必要なら `make check`。
+- **二重起動禁止**: `google_vertex_ai_pipeline_job_schedule` 系を再導入しない (Composer DAG が本線 retrain orchestration)。Cloud Scheduler / Eventarc / Cloud Function は smoke / manual trigger 用途のみ残す。

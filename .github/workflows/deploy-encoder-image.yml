@@ -1,6 +1,6 @@
 name: Deploy Encoder Image
 
-# Phase 10: builds the Vertex AI encoder CPR container image and pushes to
+# Builds the Vertex AI encoder CPR container image and pushes to
 # Artifact Registry. The image is only picked up by Vertex AI when a Model
 # upload + Endpoint deploy is executed (aiplatform.Model.upload /
 # aiplatform.Model.deploy) from scripts/setup or the KFP embed_pipeline.

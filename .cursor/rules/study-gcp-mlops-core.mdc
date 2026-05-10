@@ -1,36 +1,50 @@
 ---
-description: study-gcp-mlops monorepo — phase model, safety, doc authority
+description: study-gcp-search-mlops-gke — repo charter, safety, doc authority
 alwaysApply: true
 ---
 
-# study-gcp-mlops (core)
+# study-gcp-search-mlops-gke (core)
 
-## Phase model
+## What this repo is
 
-- Seven numbered phases under `1/` … `7/`. **Treat each phase as an isolated workspace**: independent Python env, Makefile, and conventions. Do **not** copy commands or patterns from another phase without checking that phase’s docs.
-- **Canonical implementation** for the hybrid-search stack lives under `7/study-hybrid-search-gke/`. Older phases may be docs-only after intentional removal; infer from that phase’s `CLAUDE.md` / README.
+不動産ハイブリッド検索 + 継続改善 MLOps サイクルの個人技術学習プロジェクト (個人用)。リポジトリルートが canonical 実装。Phase 形式 (旧 `1/`〜`7/`) は撤廃済 — ルート直下のディレクトリ構成 (`app/` / `ml/` / `pipeline/` / `infra/` / `scripts/` / `definitions/`) のみが正本。
 
 ## Before editing code
 
-- Read **repository root** [`CLAUDE.md`](CLAUDE.md) and the **target phase** `<N>/.../CLAUDE.md`. Phase-local rules override generic repo guidance.
-- For Phase 7, start sprint context from [`7/study-hybrid-search-gke/docs/tasks/TASKS.md`](7/study-hybrid-search-gke/docs/tasks/TASKS.md). Doc precedence is described in root `CLAUDE.md` (roadmap > TASKS > architecture specs > README).
+- 必読: [`CLAUDE.md`](CLAUDE.md) と [`docs/tasks/TASKS.md`](docs/tasks/TASKS.md) (current sprint 正本)。
+- 仕様の正本順位: `docs/tasks/TASKS_ROADMAP.md` > `docs/tasks/TASKS.md` > `docs/architecture/01_仕様と設計.md` > `README.md` > `CLAUDE.md`。
+- 実装スナップショットは [`docs/architecture/03_実装カタログ.md`](docs/architecture/03_実装カタログ.md)。
 
-## Non‑negotiable product constraints
+## Non-negotiable product constraints (中核 5 要素)
 
-- Do **not** remove or replace the hybrid-search **five pillars** without explicit user agreement: Meilisearch BM25, multilingual-e5, vector retrieval (BQ `VECTOR_SEARCH` or Vertex Vector Search by phase), RRF, LightGBM LambdaRank.
-- **Out of scope for the curriculum** (do not introduce): Agent Builder, Vizier, Model Garden, Gemini RAG (see root `README.md`).
-- Phase 6 rule of thumb: do **not** change core `/search` default behaviour unless the user explicitly asks; Phase 7 follows its own `CLAUDE.md` for canonical completion criteria.
+ユーザの明示的合意なしに削除・置換・無効化しない:
+
+- **Elasticsearch BM25** (lexical lane canonical — Meilisearch ではない)
+- **multilingual-e5** (semantic encoder)
+- **Vertex AI Vector Search** (semantic serving index — BigQuery `VECTOR_SEARCH` への退行は禁止)
+- **RRF** (lexical + semantic 結合)
+- **LightGBM LambdaRank** (rerank)
+
+Out of scope (導入禁止): Agent Builder, Vizier, Model Garden, Gemini RAG, W&B, Looker Studio, Doppler。
+
+## Architecture invariants
+
+- Port/Adapter, 依存方向 `core → ports ← adapters`。`scripts/ci/layers.py` (= `make check-layers`) で AST 検査。
+- 6 軸 Port: lexical retriever / semantic encoder / semantic vector store / reranker / feature fetcher / ranking log。
+- Composer (Managed Airflow Gen 3) が本線 orchestration。`PipelineJobSchedule` 二重起動禁止。
+- Feature parity invariant: ranker 列を変更したら **6 ファイル同 PR**。詳細は `CLAUDE.md` 「Feature parity invariant」。
 
 ## Quality and verification
 
-- After non-trivial changes, run the phase’s checks (see root `CLAUDE.md` “コマンド早見”): e.g. Phase 4/5/6/7 `make check`; Phase 1/2 `make test`; Phase 3 `make test` + layer checks as documented.
-- Prefer **small, purposeful diffs** and one primary intent per change set.
+- 非自明な変更後: `make check` (ruff + ruff format --check + mypy strict + pytest) と `make check-layers`。
+- Local 検証は `make verify-local-{app,ml,hybrid}` で GCP に触れず完走。
+- 小さく目的の明確な diff を 1 PR に。
 
 ## Security and destructive actions
 
-- Never print or suggest embedding **secrets**: `.env`, API keys, tokens, SA JSON, Secret Manager payload contents.
-- Do **not** run or instruct **destructive production operations** (`terraform apply`, production DB writes, shared `main` branch force-push) unless the user clearly requests them. **Exception**: Phase 7 documents **pre-approved** automation scope for project `mlops-dev-a` only — follow [`7/study-hybrid-search-gke/CLAUDE.md`](7/study-hybrid-search-gke/CLAUDE.md) for boundaries.
+- Secrets を出力 / 提案しない: `.env` / API key / token / SA JSON / Secret Manager 中身。
+- 破壊的本番操作 (`terraform apply` / `destroy` / 共有 main への force push) は user の明示要請なしに実行・指示しない。**例外**: project `mlops-dev-a` 上での自動化 (`make deploy-all` / `make destroy-all`) は事前承認済 — 範囲は `CLAUDE.md` に従う。
 
 ## Archives
 
-- Do not modify `OLD-study-gcp-mlops-hybrid-search-vertex/` or archive trees unless the user explicitly asks.
+- `OLD-study-gcp-mlops-hybrid-search-vertex/` 等の archive ツリーは user の明示要請なしに変更しない。

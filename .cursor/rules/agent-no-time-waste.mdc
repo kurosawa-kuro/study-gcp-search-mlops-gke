@@ -1,24 +1,26 @@
 ---
-description: Ban agent polling loops and redundant Cloud Builds in study-hybrid-search-gke
+description: Ban agent polling loops and redundant Cloud Builds in study-gcp-search-mlops-gke
 alwaysApply: true
 ---
 
 # Memory / 禁止の趣旨（ユーザー確定文）
 
-学習・検証の時間を、エージェント側の「待たせ」や「焼き直し」で消費するのは **契約上の信頼を損なう行為**として扱う。長時間ポーリングや根拠のない再ビルドは **クレーム・返金レベル**の時間コストに相当する。
+学習・検証の時間を、エージェント側の「待たせ」や「焼き直し」で消費するのは **契約上の信頼を損なう行為** として扱う。長時間ポーリングや根拠のない再ビルドは **クレーム・返金レベル** の時間コストに相当する。
 
 ---
 
-# Time-cost rules (Phase 7 hybrid-search-gke)
+# Time-cost rules
 
 Treat the following as **trust-breaking / customer-claim level** misuse of the user's session:
 
-1. **No polling loops** — Do not run shell `for`/`while` loops with `sleep` waiting for Composer DAG runs, Vertex pipelines, or Cloud Build. Run **`make ops-composer-task-states` once** (or a single equivalent command), report task states, and stop. Long-running work continues on GCP without the agent blocking.
+1. **No polling loops** — Composer DAG runs / Vertex pipelines / Cloud Build を待つために shell `for`/`while` + `sleep` ループを実行しない。**`make ops-composer-task-states` を 1 回実行**して task states を報告し停止する。長時間処理は GCP 側で進行させ agent はブロックしない。
 
-2. **No redundant `make build-composer-runner`** — Do not rebuild the composer-runner image unless Dockerfile / runner-relevant code changed, or there is evidence the live Pod uses a stale image. A recent successful build logged in `docs/tasks/TASKS.md` is sufficient reason to skip.
+2. **No redundant `make build-composer-runner`** — Dockerfile / runner-relevant code が変わっていない、または live Pod が stale image を使っている明確な証拠がない限り composer-runner image を再ビルドしない。`docs/tasks/TASKS.md` に直近の成功 build が記録されていれば skip 理由として十分。
 
-3. **No blind retries** — After a failure, classify logs once, apply one fix if needed, verify once.
+3. **No blind retries** — failure 後は (a) log を 1 度分類 → (b) 必要なら 1 つ修正 → (c) 1 度検証。同じコマンドの盲目再実行を禁止。
 
-4. **`env/config/setting.yaml` は非クレデンシャル専用（リポジトリ設計）** — 秘密は `env/secret/credential.yaml`（gitignore）または Secret Manager。setting に鍵・トークン実体を書く提案をしない。迷ったら `env/README.md`。
+4. **`env/config/setting.yaml` は非クレデンシャル専用 (リポ設計)** — secrets は `env/secret/credential.yaml` (gitignore) または Secret Manager。setting に key / token 実体を書く提案をしない。迷ったら `env/README.md`。
 
-5. **長時間ジョブをファイルへ `tee`／リダイレクトしたとき** — 応答の **最初** にユーザーへ **`tail -f` の絶対パス**を提示する。例: `make deploy-all` → `tail -f …/_verify_deploy_all.log`；full recreate pytest → `tail -f …/_full_recreate_gate.log`。質問で止めず、`docs/tasks/TASKS.md` にコピペ例あり。
+5. **長時間ジョブをファイルへ `tee` / リダイレクトしたとき** — 応答の **最初** にユーザへ **`tail -f` の絶対パス** を提示する (例: `make deploy-all` → `tail -f …/_verify_deploy_all.log`; full recreate pytest → `tail -f …/_full_recreate_gate.log`)。質問で止めず、`docs/tasks/TASKS.md` のコピペ例を活用する。
+
+6. **bg job の偽 exit 0 検出** — `make ... 2>&1 | tail -N` 形式は末尾 `tail` の exit code が 0 だと bash exit 0 になり中間 fail を黙殺する。完了通知後は **必ず** `tail -30 <output> | grep -E "FAILED|Error:|Traceback|exit code [^0]|did not"` で末尾を grep。詳細: `docs/troubleshooting/bg-pipe-fake-exit-zero.md`。

@@ -1,4 +1,4 @@
-# .github/workflows — Phase 7 (CI/CD)
+# .github/workflows — CI/CD
 
 ## ジョブ一覧
 

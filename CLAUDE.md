@@ -87,7 +87,9 @@ docs/
 |---|---|---|
 | agent | `port-adapter-boundary-reviewer` | diff の Port-Adapter 境界違反 (adapter import 漏れ / RULES 更新忘れ / noop_adapter 不足 / DI 配線忘れ) を検出。`make check-layers` の補完。read-only |
 | agent | `feature-parity-checker` | 特徴量変更 PR の **6 ファイル parity** を検証 (Dataform / `build_ranker_features` / `FEATURE_COLS_RANKER` / TF `ranking_log.features` / `validate_feature_skew.sql` / Vertex Feature Group)。read-only |
+| agent | `derivation-by-subtraction-reviewer` | canonical から adapter swap / subtraction で簡易教育変種を導出する diff を提案。中核 5 要素・Composer 二重起動禁止などの canonical 死守ラインを破る案は DANGEROUS marking。read-only |
 | skill | `port-adapter-scaffolder` | 新 Port を切るときの 6 ステップ (Port → Noop adapter → RULES → Fake → composition root → 本番 adapter → 03_実装カタログ追記) |
+| skill | `doc-sync` | canonical / historical doc を policy 変更後に同期。正本順位 (TASKS_ROADMAP > TASKS > 01_仕様と設計 > README > CLAUDE) で drift 検出 + 集約 + link 化 |
 | command | `/check-parity` | `feature-parity-checker` を呼ぶ薄い wrapper |
 | hook | `SessionStart` (`hooks/show-tasks.sh`) | `docs/tasks/TASKS.md` の先頭 50 行を表示 |
 | hook | `PostToolUse` (`hooks/check-layers.sh`) | Edit/Write/MultiEdit の対象が Port-Adapter sensitive area なら `make check-layers` をバックグラウンド実行、失敗時のみ stderr に短い出力 |
@@ -95,6 +97,7 @@ docs/
 その他:
 
 - `.github/agents/gcp-mlops-theme-research.agent.md` — 検索/ランキング設計比較と markdown 提案専用 agent (GitHub 側 user-invocable)
+- `.github/skills/doc-sync/SKILL.md` — `.claude/skills/doc-sync/` の GitHub 側 mirror
 - `.claude/settings.local.json` (gitignore 対象) — 個人ごとの permissions allowlist。team 共有の hooks は `.claude/settings.json` に書く
 
 ## Claude Code 自身の運用ルール (2026-05-10 incident 反映)
