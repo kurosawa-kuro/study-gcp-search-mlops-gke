@@ -19,13 +19,14 @@ import json
 import subprocess
 from pathlib import Path
 
+from scripts.adapters.terraform import terraform_run
+
 INDEX_ADDR = "module.vector_search.google_vertex_ai_index.property_embeddings[0]"
 ENDPOINT_ADDR = "module.vector_search.google_vertex_ai_index_endpoint.property_embeddings[0]"
 
 
 def _state_has(infra_dir: Path, addr: str) -> bool:
-    proc = subprocess.run(
-        ["terraform", f"-chdir={infra_dir}", "state", "list", addr],
+    proc = terraform_run(f"-chdir={infra_dir}", "state", "list", addr,
         check=False,
         capture_output=True,
         text=True,
@@ -46,15 +47,11 @@ def _terraform_import(
     infra_dir: Path, addr: str, gcp_id: str, *, terraform_var_args: list[str]
 ) -> bool:
     print(f"==> terraform import {addr} ← {gcp_id}")
-    proc = subprocess.run(
-        [
-            "terraform",
-            f"-chdir={infra_dir}",
+    proc = terraform_run(f"-chdir={infra_dir}",
             "import",
             *terraform_var_args,
             addr,
             gcp_id,
-        ],
         check=False,
     )
     return proc.returncode == 0

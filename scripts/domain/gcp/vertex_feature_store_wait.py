@@ -21,11 +21,11 @@ import subprocess
 import time
 
 from scripts._common import env
+from scripts.adapters.gcloud import gcloud_run
 
 
 def _access_token() -> str | None:
-    proc = subprocess.run(
-        ["gcloud", "auth", "print-access-token"],
+    proc = gcloud_run("auth", "print-access-token",
         check=False,
         capture_output=True,
         text=True,

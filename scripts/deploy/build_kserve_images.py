@@ -41,10 +41,10 @@ import time
 from scripts._common import (
     env,
     resolve_git_sha,
-    run,
     submit_cloud_build_async,
     wait_cloud_build,
 )
+from scripts.adapters.kubectl import kubectl_run
 
 BUILD_TIMEOUT_SEC = 1800
 NAMESPACE = "kserve-inference"
@@ -109,31 +109,23 @@ def _patch_inference_service_image(isvc_name: str, image_uri: str) -> None:
         "}]}}}"
     )
     _step(f"kubectl patch inferenceservice/{isvc_name} image={image_uri}")
-    run(
-        [
-            "kubectl",
-            "patch",
+    kubectl_run("patch",
             "inferenceservice",
             isvc_name,
             f"--namespace={NAMESPACE}",
             "--type=merge",
             f"--patch={patch}",
-        ]
     )
 
 
 def _set_deployment_image(deployment: str, container: str, image_uri: str) -> None:
     """Patch a plain Deployment's container image (used for reranker-explain)."""
     _step(f"kubectl set image deployment/{deployment} {container}={image_uri} -n {NAMESPACE}")
-    run(
-        [
-            "kubectl",
-            "set",
+    kubectl_run("set",
             "image",
             f"deployment/{deployment}",
             f"{container}={image_uri}",
             f"--namespace={NAMESPACE}",
-        ]
     )
 
 

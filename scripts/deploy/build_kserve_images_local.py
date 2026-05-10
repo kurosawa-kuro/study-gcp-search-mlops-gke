@@ -13,7 +13,9 @@ import subprocess
 import sys
 import time
 
-from scripts._common import env, resolve_git_sha, run
+from scripts._common import env, resolve_git_sha
+from scripts.adapters.gcloud import gcloud_run
+from scripts.adapters.kubectl import kubectl_run
 
 NAMESPACE = "kserve-inference"
 ML_BASE_IMAGE = "phase7-ml-base:local"
@@ -63,8 +65,7 @@ def _ensure_docker_buildx() -> None:
 
 def _ensure_ar_auth(region: str) -> None:
     registry = f"{region}-docker.pkg.dev"
-    proc = subprocess.run(
-        ["gcloud", "auth", "configure-docker", registry, "--quiet"],
+    proc = gcloud_run("auth", "configure-docker", registry, "--quiet",
         capture_output=True,
         text=True,
         check=False,
@@ -77,16 +78,12 @@ def _ensure_ar_auth(region: str) -> None:
 
 
 def _ensure_kubectl_context(cluster_name: str, region: str, project_id: str) -> None:
-    run(
-        [
-            "gcloud",
-            "container",
+    gcloud_run("container",
             "clusters",
             "get-credentials",
             cluster_name,
             f"--region={region}",
             f"--project={project_id}",
-        ]
     )
 
 
@@ -126,29 +123,21 @@ def _patch_inference_service_image(isvc_name: str, image_uri: str) -> None:
         f'"image":"{image_uri}"'
         "}]}}}"
     )
-    run(
-        [
-            "kubectl",
-            "patch",
+    kubectl_run("patch",
             "inferenceservice",
             isvc_name,
             f"--namespace={NAMESPACE}",
             "--type=merge",
             f"--patch={patch}",
-        ]
     )
 
 
 def _set_deployment_image(deployment: str, container: str, image_uri: str) -> None:
-    run(
-        [
-            "kubectl",
-            "set",
+    kubectl_run("set",
             "image",
             f"deployment/{deployment}",
             f"{container}={image_uri}",
             f"--namespace={NAMESPACE}",
-        ]
     )
 
 

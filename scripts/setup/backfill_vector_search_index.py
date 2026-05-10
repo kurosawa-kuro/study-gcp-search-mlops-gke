@@ -40,7 +40,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from scripts._common import env, run
+from scripts._common import env
+from scripts.adapters.terraform import terraform_run
 
 DEFAULT_BATCH_SIZE = 500
 INFRA = Path(__file__).resolve().parents[2] / "infra" / "terraform" / "environments" / "dev"
@@ -56,7 +57,7 @@ class BackfillSpec:
 
 
 def _terraform_output_map() -> dict[str, str]:
-    proc = run(["terraform", f"-chdir={INFRA}", "output", "-json"], capture=True, check=False)
+    proc = terraform_run(f"-chdir={INFRA}", "output", "-json", capture=True, check=False)
     if proc.returncode != 0:
         return {}
     try:

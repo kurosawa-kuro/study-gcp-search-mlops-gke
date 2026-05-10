@@ -10,7 +10,8 @@ set to true`` で fail する。本 module で `gcloud storage rm --recursive`
 
 from __future__ import annotations
 
-from scripts._common import env, run
+from scripts._common import env
+from scripts.adapters.gcloud import gcloud_run
 from scripts.lib.gcp_resources import BUCKET_SUFFIXES
 
 
@@ -23,16 +24,12 @@ def wipe_bucket(project_id: str, bucket: str) -> None:
     """
     uri = f"gs://{bucket}"
     print(f"    wipe {uri}")
-    run(
-        [
-            "gcloud",
-            "storage",
+    gcloud_run("storage",
             "rm",
             "--recursive",
             f"--project={project_id}",
             "--quiet",
             f"{uri}/**",
-        ],
         check=False,
     )
 

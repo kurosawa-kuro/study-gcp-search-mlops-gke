@@ -8,7 +8,9 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-from scripts._common import env, fail, run
+from scripts._common import env, fail
+from scripts.adapters.gcloud import gcloud_run
+from scripts.adapters.terraform import terraform_run
 
 INFRA = Path(__file__).resolve().parents[2] / "infra" / "terraform" / "environments" / "dev"
 
@@ -17,8 +19,7 @@ def main() -> int:
     project_id = env("PROJECT_ID")
     bucket = f"{project_id}-tfstate"
 
-    exists = subprocess.run(
-        ["gcloud", "storage", "buckets", "describe", f"gs://{bucket}"],
+    exists = gcloud_run("storage", "buckets", "describe", f"gs://{bucket}",
         check=False,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
@@ -30,7 +31,7 @@ def main() -> int:
             "       For offline syntax-only validation use 'make tf-validate'."
         )
 
-    run(["terraform", f"-chdir={INFRA}", "init"])
+    terraform_run(f"-chdir={INFRA}", "init")
     return 0
 
 

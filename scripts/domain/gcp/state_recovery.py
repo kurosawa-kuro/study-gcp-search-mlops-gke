@@ -33,6 +33,9 @@ import json
 import subprocess
 from pathlib import Path
 
+from scripts.adapters.gcloud import gcloud_run
+from scripts.adapters.terraform import terraform_run
+
 # ---------------------------------------------------------------------------
 # Terraform address ↔ GCP resource mapping
 # `infra/terraform/modules/*/main.tf` の resource declaration と一致させる。
@@ -152,8 +155,7 @@ FEATURE_GROUP_FEATURES = tuple(
 
 def _state_has(infra_dir: Path, addr: str) -> bool:
     """terraform state list <addr> が hit するか。"""
-    proc = subprocess.run(
-        ["terraform", f"-chdir={infra_dir}", "state", "list", addr],
+    proc = terraform_run(f"-chdir={infra_dir}", "state", "list", addr,
         check=False,
         capture_output=True,
         text=True,
@@ -165,15 +167,11 @@ def _terraform_import(
     infra_dir: Path, addr: str, gcp_id: str, *, terraform_var_args: list[str]
 ) -> bool:
     print(f"==> terraform import {addr} ← {gcp_id}")
-    proc = subprocess.run(
-        [
-            "terraform",
-            f"-chdir={infra_dir}",
+    proc = terraform_run(f"-chdir={infra_dir}",
             "import",
             *terraform_var_args,
             addr,
             gcp_id,
-        ],
         check=False,
     )
     return proc.returncode == 0
@@ -451,15 +449,11 @@ def _recover_gcs_buckets(infra_dir: Path, project_id: str, var_args: list[str]) 
     tfstate bucket (`mlops-dev-a-tfstate`) は terraform 管理外のため除外。
     """
     imported = 0
-    proc = subprocess.run(
-        [
-            "gcloud",
-            "storage",
+    proc = gcloud_run("storage",
             "buckets",
             "list",
             f"--project={project_id}",
             "--format=value(name)",
-        ],
         check=False,
         capture_output=True,
         text=True,
@@ -500,8 +494,7 @@ def _recover_feature_store(
 ) -> int:
     """Vertex AI Feature Group / Feature Online Store / Feature View — REST API 経由."""
     imported = 0
-    proc = subprocess.run(
-        ["gcloud", "auth", "print-access-token"],
+    proc = gcloud_run("auth", "print-access-token",
         check=False,
         capture_output=True,
         text=True,
@@ -586,12 +579,8 @@ def _recover_dataform(infra_dir: Path, project_id: str, region: str, var_args: l
     """Dataform repositories — gcloud has no list subcommand, fall back to direct API."""
     imported = 0
     # Use REST API directly via gcloud's default access token
-    proc = subprocess.run(
-        [
-            "gcloud",
-            "auth",
+    proc = gcloud_run("auth",
             "print-access-token",
-        ],
         check=False,
         capture_output=True,
         text=True,

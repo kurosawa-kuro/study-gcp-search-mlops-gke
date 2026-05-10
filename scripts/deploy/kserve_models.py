@@ -33,7 +33,8 @@ import time
 from dataclasses import dataclass
 from typing import Any
 
-from scripts._common import env, run
+from scripts._common import env
+from scripts.adapters.kubectl import kubectl_run
 
 NAMESPACE = "kserve-inference"
 ROLLOUT_TIMEOUT_SEC = 600
@@ -140,16 +141,12 @@ def _kubectl_patch(isvc_name: str, patch: dict[str, Any]) -> None:
     """Run `kubectl patch inferenceservice` with full echo of the applied patch."""
     patch_json = json.dumps(patch)
     _info(f"kubectl patch inferenceservice/{isvc_name} -n {NAMESPACE} patch={patch_json}")
-    proc = run(
-        [
-            "kubectl",
-            "patch",
+    proc = kubectl_run("patch",
             "inferenceservice",
             isvc_name,
             f"--namespace={NAMESPACE}",
             "--type=merge",
             f"--patch={patch_json}",
-        ],
         capture=True,
         check=False,
     )
@@ -243,15 +240,11 @@ def _dump_diagnostics(name: str) -> None:
 def _wait_ready(name: str) -> None:
     _step(f"wait inferenceservice/{name} for condition=Ready timeout={ROLLOUT_TIMEOUT_SEC}s")
     start = time.monotonic()
-    proc = run(
-        [
-            "kubectl",
-            "wait",
+    proc = kubectl_run("wait",
             f"inferenceservice/{name}",
             f"--namespace={NAMESPACE}",
             "--for=condition=Ready",
             f"--timeout={ROLLOUT_TIMEOUT_SEC}s",
-        ],
         capture=True,
         check=False,
     )

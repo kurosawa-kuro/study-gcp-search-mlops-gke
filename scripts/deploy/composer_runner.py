@@ -15,6 +15,7 @@ import sys
 import time
 
 from scripts._common import env, resolve_git_sha, submit_cloud_build_async, wait_cloud_build
+from scripts.adapters.gcloud import gcloud_run
 
 BUILD_TIMEOUT_SEC = 1800
 
@@ -86,19 +87,14 @@ def main() -> int:
     # DAG 側は :latest を pin することで毎回 build で URL を書き換えなくて済む。
     latest_uri = f"{region}-docker.pkg.dev/{project_id}/{artifact_repo}/{IMAGE_NAME}:latest"
     _step(f"[bonus] tag {image_uri} as :latest ({latest_uri})")
-    import subprocess
 
-    proc = subprocess.run(
-        [
-            "gcloud",
-            "artifacts",
+    proc = gcloud_run("artifacts",
             "docker",
             "tags",
             "add",
             image_uri,
             latest_uri,
             f"--project={project_id}",
-        ],
         check=False,
     )
     if proc.returncode != 0:

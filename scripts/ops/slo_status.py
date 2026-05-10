@@ -19,6 +19,7 @@ import json
 import subprocess
 
 from scripts._common import env, fail, gcloud, http_json
+from scripts.adapters.terraform import terraform_run
 
 
 def _terraform_output(name: str) -> str:
@@ -29,8 +30,7 @@ def _terraform_output(name: str) -> str:
     fallback resource-name resolution to kick in.
     """
     try:
-        proc = subprocess.run(
-            ["terraform", "output", "-raw", name],
+        proc = terraform_run("output", "-raw", name,
             cwd="infra/terraform/environments/dev",
             check=True,
             text=True,

@@ -9,12 +9,14 @@ ConfigMap schema is defined only in ``scripts/lib/config.py`` (Phase 7 W2-5 drif
 from __future__ import annotations
 
 import json
-import subprocess
 import urllib.error
 import urllib.request
 from pathlib import Path
 
-from scripts._common import env, gcs_bucket_name, run
+from scripts._common import env, gcs_bucket_name
+from scripts.adapters.gcloud import gcloud_run
+from scripts.adapters.kubectl import kubectl_run
+from scripts.adapters.terraform import terraform_run
 from scripts.lib.config import generate_configmap_data, render_configmap_yaml
 
 INFRA = Path(__file__).resolve().parents[2] / "infra" / "terraform" / "environments" / "dev"
@@ -22,8 +24,7 @@ INFRA = Path(__file__).resolve().parents[2] / "infra" / "terraform" / "environme
 
 def _terraform_output_map() -> dict[str, str]:
     """Return `terraform output -json` as a flat name->string map."""
-    proc = run(
-        ["terraform", f"-chdir={INFRA}", "output", "-json"],
+    proc = terraform_run(f"-chdir={INFRA}", "output", "-json",
         capture=True,
         check=False,
     )
@@ -44,8 +45,7 @@ def _feature_online_store_public_domain_from_api(
     project_id: str, vertex_location: str, store_id: str
 ) -> str:
     """GET FeatureOnlineStore; return dedicatedServingEndpoint.publicEndpointDomainName."""
-    proc = run(
-        ["gcloud", "auth", "print-access-token"],
+    proc = gcloud_run("auth", "print-access-token",
         capture=True,
         check=False,
     )
@@ -124,8 +124,7 @@ def main() -> int:
     cm_yaml = render_configmap_yaml(data, with_header=False)
 
     print("==> kubectl apply -f - (search-api-config ConfigMap overlay)")
-    proc = subprocess.run(
-        ["kubectl", "apply", "-f", "-"],
+    proc = kubectl_run("apply", "-f", "-",
         input=cm_yaml,
         text=True,
         check=False,

@@ -28,6 +28,7 @@ import json
 from pathlib import Path
 
 from scripts._common import run
+from scripts.adapters.terraform import terraform_run
 
 INFRA = Path(__file__).resolve().parents[2] / "infra" / "terraform" / "environments" / "dev"
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -37,8 +38,7 @@ PIPELINE_PKG_INIT = REPO_ROOT / "pipeline" / "__init__.py"
 
 def _terraform_output(name: str) -> str:
     """Read a single terraform output as a string. Empty string when unset."""
-    proc = run(
-        ["terraform", f"-chdir={INFRA}", "output", "-json"],
+    proc = terraform_run(f"-chdir={INFRA}", "output", "-json",
         capture=True,
         check=False,
     )

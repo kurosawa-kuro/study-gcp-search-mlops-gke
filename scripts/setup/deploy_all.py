@@ -61,7 +61,8 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from scripts._common import env, run
+from scripts._common import env
+from scripts.adapters.kubectl import kubectl_run
 from scripts.ci.sync_dataform import main as sync_dataform_main
 from scripts.deploy.api_gke import main as deploy_api_main
 from scripts.deploy.composer_deploy_dags import main as composer_deploy_dags_main
@@ -197,7 +198,7 @@ def _run_apply_manifests() -> int:
     """
     ensure_kubectl_context()
     print(f"==> kubectl apply -k {MANIFESTS}")
-    run(["kubectl", "apply", "-k", str(MANIFESTS)])
+    kubectl_run("apply", "-k", str(MANIFESTS))
     return 0
 
 

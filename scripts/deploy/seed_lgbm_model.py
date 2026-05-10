@@ -29,12 +29,12 @@ synthetic one if the caller forgets which step they ran.
 
 from __future__ import annotations
 
-import subprocess
 import sys
 import tempfile
 from pathlib import Path
 
 from scripts._common import env, gcloud, gcs_bucket_name, run
+from scripts.adapters.gcloud import gcloud_run
 
 DEFAULT_BUCKET_SUFFIX = (
     "models"  # `<project>-models`; see scripts.lib.gcp_resources.BUCKET_SUFFIXES
@@ -62,15 +62,11 @@ def _resolve_bucket() -> str:
 
 def _existing_object_size(gs_uri: str) -> int:
     """Return blob size in bytes, or -1 if missing/unreachable."""
-    proc = subprocess.run(
-        [
-            "gcloud",
-            "storage",
+    proc = gcloud_run("storage",
             "objects",
             "describe",
             gs_uri,
             "--format=value(size)",
-        ],
         check=False,
         text=True,
         capture_output=True,

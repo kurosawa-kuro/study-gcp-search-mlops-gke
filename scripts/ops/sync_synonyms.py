@@ -29,6 +29,8 @@ from typing import Any
 
 import yaml
 
+from scripts.adapters.gcloud import gcloud_run
+
 
 def _log(msg: str) -> None:
     print(f"[sync_synonyms] {msg}", flush=True)
@@ -37,8 +39,7 @@ def _log(msg: str) -> None:
 def _gcloud(args: list[str]) -> str:
     """Run a ``gcloud`` command and return stdout.strip(); empty on failure."""
     try:
-        proc = subprocess.run(
-            ["gcloud", *args],
+        proc = gcloud_run(*args,
             check=False,
             capture_output=True,
             text=True,

@@ -18,10 +18,11 @@ get-credentials を呼んで kubeconfig を上書き**する (gcloud 側で値�
 
 from __future__ import annotations
 
-import subprocess
 import time
 
-from scripts._common import env, run
+from scripts._common import env
+from scripts.adapters.gcloud import gcloud_run
+from scripts.adapters.kubectl import kubectl_run
 from scripts.lib.gcp_resources import GKE_CLUSTER_NAME_DEFAULT
 
 
@@ -31,16 +32,12 @@ def ensure() -> None:
     region = env("REGION", "asia-northeast1")
     cluster_name = env("GKE_CLUSTER_NAME", GKE_CLUSTER_NAME_DEFAULT)
     print(f"==> get-credentials cluster={cluster_name} region={region} project={project_id}")
-    run(
-        [
-            "gcloud",
-            "container",
+    gcloud_run("container",
             "clusters",
             "get-credentials",
             cluster_name,
             f"--region={region}",
             f"--project={project_id}",
-        ]
     )
 
 
@@ -55,8 +52,7 @@ def wait_until_api_ready(*, timeout_seconds: int = 600, poll_seconds: int = 10) 
     """
     deadline = time.monotonic() + timeout_seconds
     while time.monotonic() < deadline:
-        proc = subprocess.run(
-            ["kubectl", "get", "namespace", "kube-system", "-o", "name"],
+        proc = kubectl_run("get", "namespace", "kube-system", "-o", "name",
             check=False,
             text=True,
             capture_output=True,

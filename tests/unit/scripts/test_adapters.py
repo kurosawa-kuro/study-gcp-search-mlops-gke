@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-from scripts.adapters import gcloud as gcloud_adapter
+from scripts.adapters.gcloud import gcloud_run
 from scripts.adapters.kubectl import kubectl_run
 from scripts.adapters.terraform import terraform_run
 
@@ -50,12 +50,21 @@ def test_terraform_run_omits_chdir_when_none() -> None:
     assert cmd == ["terraform", "version"]
 
 
-def test_gcloud_adapter_re_exports_common_helper() -> None:
-    """`scripts.adapters.gcloud.gcloud_run` must reference `scripts._common.gcloud`.
+def test_gcloud_run_prefixes_gcloud_to_args() -> None:
+    """`gcloud_run("services", "enable", ...)` must invoke `["gcloud", "services", "enable", ...]`.
 
-    Pin: re-export shim, not a separate implementation. Migration to the canonical
-    adapter import is incremental; the underlying implementation stays in _common.
+    2026-05-10 update: signature unified with kubectl_run / terraform_run
+    (returns CompletedProcess, not stripped string). Legacy `_common.gcloud`
+    remains for back-compat but new callers should use this adapter.
     """
-    from scripts._common import gcloud as common_gcloud
+    with patch("scripts.adapters.gcloud._run", return_value=_FakeProc()) as mock:
+        gcloud_run("services", "enable", "--project=mlops-dev-a", "iam.googleapis.com")
+    cmd = mock.call_args[0][0]
+    assert cmd == ["gcloud", "services", "enable", "--project=mlops-dev-a", "iam.googleapis.com"]
 
-    assert gcloud_adapter.gcloud_run is common_gcloud
+
+def test_gcloud_run_forwards_capture_check_timeout() -> None:
+    with patch("scripts.adapters.gcloud._run", return_value=_FakeProc("token...")) as mock:
+        gcloud_run("auth", "print-access-token", capture=True, check=False, timeout=10)
+    kwargs = mock.call_args[1]
+    assert kwargs == {"capture": True, "check": False, "timeout": 10}

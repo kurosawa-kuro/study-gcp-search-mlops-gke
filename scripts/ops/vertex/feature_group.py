@@ -32,11 +32,12 @@ import urllib.parse
 import urllib.request
 from typing import Any
 
-from scripts._common import env, fail, run
+from scripts._common import env, fail
+from scripts.adapters.gcloud import gcloud_run
 
 
 def _access_token() -> str:
-    proc = run(["gcloud", "auth", "print-access-token"], capture=True, check=False)
+    proc = gcloud_run("auth", "print-access-token", capture=True, check=False)
     token = (proc.stdout or "").strip()
     if proc.returncode != 0 or not token:
         raise RuntimeError("gcloud auth print-access-token failed")

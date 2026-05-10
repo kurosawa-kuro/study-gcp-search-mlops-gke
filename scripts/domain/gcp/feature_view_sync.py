@@ -20,14 +20,15 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-from scripts._common import env, run
+from scripts._common import env
+from scripts.adapters.gcloud import gcloud_run
+from scripts.adapters.terraform import terraform_run
 
 INFRA = Path(__file__).resolve().parents[2] / "infra" / "terraform" / "environments" / "dev"
 
 
 def _terraform_output_map() -> dict[str, str]:
-    proc = run(
-        ["terraform", f"-chdir={INFRA}", "output", "-json"],
+    proc = terraform_run(f"-chdir={INFRA}", "output", "-json",
         capture=True,
         check=False,
     )
@@ -42,7 +43,7 @@ def _terraform_output_map() -> dict[str, str]:
 
 
 def _access_token() -> str:
-    proc = run(["gcloud", "auth", "print-access-token"], capture=True, check=False)
+    proc = gcloud_run("auth", "print-access-token", capture=True, check=False)
     token = (proc.stdout or "").strip()
     if proc.returncode != 0 or not token:
         raise SystemExit("[error] gcloud auth print-access-token failed for Feature View sync")

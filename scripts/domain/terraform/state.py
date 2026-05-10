@@ -11,8 +11,9 @@ I/O 層 (subprocess による terraform CLI 呼び出し)。pure-data ではな�
 
 from __future__ import annotations
 
-import subprocess
 from pathlib import Path
+
+from scripts.adapters.terraform import terraform_run
 
 
 def state_list(infra_dir: Path, env: dict[str, str] | None = None) -> list[str]:
@@ -25,8 +26,7 @@ def state_list(infra_dir: Path, env: dict[str, str] | None = None) -> list[str]:
     アクティブな利用先は無いが、ad-hoc な ``TF_VAR_*`` 上書きを可能にする
     ための general-purpose hook として残す)。
     """
-    proc = subprocess.run(
-        ["terraform", f"-chdir={infra_dir}", "state", "list"],
+    proc = terraform_run(f"-chdir={infra_dir}", "state", "list",
         check=False,
         capture_output=True,
         text=True,
@@ -88,8 +88,7 @@ def state_rm(infra_dir: Path, address: str) -> bool:
     配下の全 resource を一括で剥がせる。targeted destroy が cluster
     unreachable で実 resource を消せなかった時の fallback として使う。
     """
-    proc = subprocess.run(
-        ["terraform", f"-chdir={infra_dir}", "state", "rm", address],
+    proc = terraform_run(f"-chdir={infra_dir}", "state", "rm", address,
         check=False,
         capture_output=True,
         text=True,

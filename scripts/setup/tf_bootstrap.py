@@ -8,7 +8,8 @@ from __future__ import annotations
 import subprocess
 import sys
 
-from scripts._common import env, gcloud, run
+from scripts._common import env, gcloud
+from scripts.adapters.gcloud import gcloud_run
 
 REQUIRED_APIS = [
     "serviceusage.googleapis.com",
@@ -35,11 +36,10 @@ def main() -> int:
     bucket = f"{project_id}-tfstate"
 
     print(f"==> Enabling required APIs on {project_id}...", flush=True)
-    run(["gcloud", "services", "enable", f"--project={project_id}", *REQUIRED_APIS])
+    gcloud_run("services", "enable", f"--project={project_id}", *REQUIRED_APIS)
 
     print(f"==> Creating gs://{bucket} if absent...", flush=True)
-    exists = subprocess.run(
-        ["gcloud", "storage", "buckets", "describe", f"gs://{bucket}"],
+    exists = gcloud_run("storage", "buckets", "describe", f"gs://{bucket}",
         check=False,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,

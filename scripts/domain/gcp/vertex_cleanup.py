@@ -14,10 +14,10 @@ shell として残置 — ただし Phase 6 までの canonical 経路を継承�
 from __future__ import annotations
 
 import json
-import subprocess
 import time
 
-from scripts._common import env, run
+from scripts._common import env
+from scripts.adapters.gcloud import gcloud_run
 from scripts.lib.gcp_resources import VERTEX_ENDPOINTS
 
 
@@ -29,17 +29,13 @@ def undeploy_endpoint_models(project_id: str, region: str, endpoint: str) -> Non
     `gcloud ... undeploy-model --quiet` waits for the long-running op,
     so control returns only when the deployed_model is fully detached.
     """
-    proc = subprocess.run(
-        [
-            "gcloud",
-            "ai",
+    proc = gcloud_run("ai",
             "endpoints",
             "describe",
             endpoint,
             f"--region={region}",
             f"--project={project_id}",
             "--format=json",
-        ],
         check=False,
         capture_output=True,
         text=True,
@@ -56,10 +52,7 @@ def undeploy_endpoint_models(project_id: str, region: str, endpoint: str) -> Non
         dm_id = dm["id"]
         display = dm.get("displayName", "?")
         print(f"    undeploy-model {endpoint} id={dm_id} display={display}")
-        run(
-            [
-                "gcloud",
-                "ai",
+        gcloud_run("ai",
                 "endpoints",
                 "undeploy-model",
                 endpoint,
@@ -67,7 +60,6 @@ def undeploy_endpoint_models(project_id: str, region: str, endpoint: str) -> Non
                 f"--region={region}",
                 f"--project={project_id}",
                 "--quiet",
-            ]
         )
 
 
@@ -96,16 +88,12 @@ def deployed_index_state(project_id: str, region: str, deployed_index_id: str) -
       yet (being-undeployed ghost from prior destroy / mid-attach). Callers
       must keep waiting for this to clear before re-applying.
     """
-    proc = subprocess.run(
-        [
-            "gcloud",
-            "ai",
+    proc = gcloud_run("ai",
             "index-endpoints",
             "list",
             f"--region={region}",
             f"--project={project_id}",
             "--format=json",
-        ],
         check=False,
         capture_output=True,
         text=True,
@@ -144,16 +132,12 @@ def undeploy_all_vvs_deployed_indexes(
     pid = project_id or env("PROJECT_ID")
     rgn = region or env("VERTEX_LOCATION") or env("REGION")
 
-    proc = subprocess.run(
-        [
-            "gcloud",
-            "ai",
+    proc = gcloud_run("ai",
             "index-endpoints",
             "list",
             f"--region={rgn}",
             f"--project={pid}",
             "--format=json",
-        ],
         check=False,
         capture_output=True,
         text=True,
@@ -181,10 +165,7 @@ def undeploy_all_vvs_deployed_indexes(
             if not deployed_id:
                 continue
             print(f"    undeploy-index endpoint={endpoint_id} deployed_index_id={deployed_id}")
-            run(
-                [
-                    "gcloud",
-                    "ai",
+            gcloud_run("ai",
                     "index-endpoints",
                     "undeploy-index",
                     endpoint_id,
@@ -192,7 +173,6 @@ def undeploy_all_vvs_deployed_indexes(
                     f"--region={rgn}",
                     f"--project={pid}",
                     "--quiet",
-                ]
             )
 
 

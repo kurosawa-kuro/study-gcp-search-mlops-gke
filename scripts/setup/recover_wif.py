@@ -25,10 +25,11 @@ tool としても `python -m scripts.setup.recover_wif` で実行可能。
 
 from __future__ import annotations
 
-import subprocess
 from pathlib import Path
 
-from scripts._common import env, run, terraform_var_args
+from scripts._common import env, terraform_var_args
+from scripts.adapters.gcloud import gcloud_run
+from scripts.adapters.terraform import terraform_run
 from scripts.domain.terraform.state import is_in_state
 
 INFRA = Path(__file__).resolve().parents[2] / "infra" / "terraform" / "environments" / "dev"
@@ -41,8 +42,7 @@ def _gcloud_capture(args: list[str]) -> tuple[int, str]:
     本 module は returncode で「resource そのものが存在しない」を判定する
     必要があるため、専用 wrapper を持つ。
     """
-    proc = subprocess.run(
-        ["gcloud", *args],
+    proc = gcloud_run(*args,
         check=False,
         capture_output=True,
         text=True,
@@ -81,33 +81,24 @@ def recover(project_id: str | None = None) -> None:
     pool_exists_in_gcp = rc == 0 and pool_state in {"ACTIVE", "DELETED"}
     if pool_exists_in_gcp and pool_state == "DELETED":
         print("    pool soft-deleted → undelete to ACTIVE")
-        run(
-            [
-                "gcloud",
-                "iam",
+        gcloud_run("iam",
                 "workload-identity-pools",
                 "undelete",
                 "github",
                 "--location=global",
                 f"--project={pid}",
                 "--quiet",
-            ]
         )
     if pool_exists_in_gcp and not is_in_state(INFRA, pool_address):
         print(f"    pool exists in GCP but NOT in tfstate → import {pool_address}")
-        subprocess.run(
-            ["terraform", f"-chdir={INFRA}", "state", "rm", pool_address],
+        terraform_run(f"-chdir={INFRA}", "state", "rm", pool_address,
             check=False,
         )
-        subprocess.run(
-            [
-                "terraform",
-                f"-chdir={INFRA}",
+        terraform_run(f"-chdir={INFRA}",
                 "import",
                 *terraform_var_args("GITHUB_REPO", "ONCALL_EMAIL"),
                 pool_address,
                 pool_id,
-            ],
             check=True,
         )
 
@@ -133,10 +124,7 @@ def recover(project_id: str | None = None) -> None:
     provider_exists_in_gcp = rc == 0
     if provider_exists_in_gcp and expire_time:
         print("    provider soft-deleted → undelete to ACTIVE")
-        run(
-            [
-                "gcloud",
-                "iam",
+        gcloud_run("iam",
                 "workload-identity-pools",
                 "providers",
                 "undelete",
@@ -145,23 +133,17 @@ def recover(project_id: str | None = None) -> None:
                 "--location=global",
                 f"--project={pid}",
                 "--quiet",
-            ]
         )
     if provider_exists_in_gcp and not is_in_state(INFRA, provider_address):
         print(f"    provider exists in GCP but NOT in tfstate → import {provider_address}")
-        subprocess.run(
-            ["terraform", f"-chdir={INFRA}", "state", "rm", provider_address],
+        terraform_run(f"-chdir={INFRA}", "state", "rm", provider_address,
             check=False,
         )
-        subprocess.run(
-            [
-                "terraform",
-                f"-chdir={INFRA}",
+        terraform_run(f"-chdir={INFRA}",
                 "import",
                 *terraform_var_args("GITHUB_REPO", "ONCALL_EMAIL"),
                 provider_address,
                 provider_id,
-            ],
             check=True,
         )
 

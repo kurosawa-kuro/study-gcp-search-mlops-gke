@@ -19,8 +19,9 @@ destroy-all the cluster.
 
 from __future__ import annotations
 
-import subprocess
 import time
+
+from scripts.adapters.kubectl import kubectl_run
 
 # ECK Elasticsearch CR location. Override only if the manifest moves.
 DEFAULT_NAMESPACE = "search"
@@ -41,17 +42,13 @@ HEALTHY_STATES = ("green", "yellow")
 
 def _read_health(namespace: str, name: str) -> str:
     """Return current `.status.health` value (empty string if not set yet)."""
-    proc = subprocess.run(
-        [
-            "kubectl",
-            "-n",
+    proc = kubectl_run("-n",
             namespace,
             "get",
             "elasticsearch",
             name,
             "-o",
             "jsonpath={.status.health}",
-        ],
         capture_output=True,
         text=True,
         check=False,
@@ -60,17 +57,13 @@ def _read_health(namespace: str, name: str) -> str:
 
 
 def _read_phase(namespace: str, name: str) -> str:
-    proc = subprocess.run(
-        [
-            "kubectl",
-            "-n",
+    proc = kubectl_run("-n",
             namespace,
             "get",
             "elasticsearch",
             name,
             "-o",
             "jsonpath={.status.phase}",
-        ],
         capture_output=True,
         text=True,
         check=False,

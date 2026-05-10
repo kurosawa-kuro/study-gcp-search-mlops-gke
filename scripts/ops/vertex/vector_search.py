@@ -26,15 +26,15 @@ import os
 from pathlib import Path
 
 from scripts._common import env, fail
+from scripts.adapters.terraform import terraform_run
 
 INFRA = Path(__file__).resolve().parents[3] / "infra" / "terraform" / "environments" / "dev"
 DEFAULT_PROBE_DIM = 768
 
 
 def _terraform_output_map() -> dict[str, str]:
-    from scripts._common import run
 
-    proc = run(["terraform", f"-chdir={INFRA}", "output", "-json"], capture=True, check=False)
+    proc = terraform_run(f"-chdir={INFRA}", "output", "-json", capture=True, check=False)
     if proc.returncode != 0:
         return {}
     try:

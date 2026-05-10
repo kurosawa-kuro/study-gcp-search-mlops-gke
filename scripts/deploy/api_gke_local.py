@@ -29,7 +29,9 @@ import subprocess
 import sys
 import time
 
-from scripts._common import env, resolve_git_sha, run
+from scripts._common import env, resolve_git_sha
+from scripts.adapters.gcloud import gcloud_run
+from scripts.adapters.kubectl import kubectl_run
 
 ROLLOUT_TIMEOUT_SEC = 300
 NAMESPACE = "search"
@@ -86,8 +88,7 @@ def _ensure_docker_buildx() -> None:
 def _ensure_ar_auth(region: str) -> None:
     """Idempotent: configures local docker to push to <region>-docker.pkg.dev via gcloud."""
     registry = f"{region}-docker.pkg.dev"
-    proc = subprocess.run(
-        ["gcloud", "auth", "configure-docker", registry, "--quiet"],
+    proc = gcloud_run("auth", "configure-docker", registry, "--quiet",
         capture_output=True,
         text=True,
         check=False,
@@ -104,19 +105,15 @@ def _ensure_kubectl_context(cluster_name: str, region: str, project_id: str) -> 
     # Phase 7 Run 5 — destroy-all → deploy-all で cluster を再作成すると
     # kubeconfig 上の context name は同じでも CA / endpoint が古いままになるため、
     # 毎回 get-credentials を呼んで kubeconfig を上書きする (no-op に近い fast path)。
-    proc = run(["kubectl", "config", "current-context"], capture=True, check=False)
+    proc = kubectl_run("config", "current-context", capture=True, check=False)
     if proc.stdout:
         _info(f"current-context={proc.stdout.strip()}")
-    run(
-        [
-            "gcloud",
-            "container",
+    gcloud_run("container",
             "clusters",
             "get-credentials",
             cluster_name,
             f"--region={region}",
             f"--project={project_id}",
-        ]
     )
 
 
@@ -165,28 +162,20 @@ def main() -> int:
     _info(f"docker buildx build SUCCESS elapsed={(time.monotonic() - build_start):.0f}s")
 
     _step(f"[3/4] kubectl set image (namespace={NAMESPACE} deployment={DEPLOYMENT})")
-    run(
-        [
-            "kubectl",
-            "set",
+    kubectl_run("set",
             "image",
             f"deployment/{DEPLOYMENT}",
             f"{CONTAINER}={image_uri}",
             f"--namespace={NAMESPACE}",
-        ]
     )
 
     _step(f"[4/4] kubectl rollout status (timeout={ROLLOUT_TIMEOUT_SEC}s)")
     rollout_start = time.monotonic()
-    rollout_proc = run(
-        [
-            "kubectl",
-            "rollout",
+    rollout_proc = kubectl_run("rollout",
             "status",
             f"deployment/{DEPLOYMENT}",
             f"--namespace={NAMESPACE}",
             f"--timeout={ROLLOUT_TIMEOUT_SEC}s",
-        ],
         capture=True,
         check=False,
     )
