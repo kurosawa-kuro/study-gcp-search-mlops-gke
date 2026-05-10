@@ -10,7 +10,9 @@
 **本 sprint 完了**:
 - M-Wave5 (継続改善サイクル MVP) PASS、verify-live-acceptance 22.68s
 - M-Wave8.5 (Phase 概念完全撤廃) 達成、`grep -rE "Phase [0-9]" docs/ tests/` ADR 除外で 0 件
-- M-Wave8.6 Phase 1+2+3 minimal (orchestrator ドメイン分離 / adapters 構造)
+- M-Wave8.6 Phase 1+2+3 + 後段 caller migration 完了 (orchestrator ドメイン分離 / adapters 構造 / `subprocess.run([cli, ...])` → `cli_run(...)` 全件)
+- M-Wave7 Makefile 本格整理 (Phase Support Matrix 撤去 / `mk/base.mk` 削除 / `deploy-all-direct` + `verify-all` legacy alias 撤去 / `destroy-phase7-learning` → `destroy-coast-down` rename / `phase7-ml-base:local` → `mlops-ml-base:local` / `.SHELLFLAGS pipefail` 追加)
+- GCP リソース ID rename: `phase7-synonym` → `mlops-synonym` (Memorystore + Secret + ExternalSecret)
 - C4 Makefile `python -u -m` 統一 (line buffer 強制、bg-pipe 罠予防)
 - PMLE 学習 doc 8 章新設
 
@@ -20,10 +22,7 @@ cluster は **destroy 完了** (永続 VVS Index/Endpoint のみ残置、コス�
 
 | # | 内容 | コスト | 状態 |
 |---|---|---|---|
-| 1 | M-Wave7 Makefile 本格整理 (target rename / help 再生成 / Phase Support Matrix 撤去 / 不要 target 撤去) | 1 sprint | ⏳ 着手可 |
-| 2 | M-Wave8.6 後段 caller migration (subprocess → adapter ~30 箇所) | 半 sprint | ⏳ 着手可 |
-| 3 | M-Wave8.7 ES production 化 (HTTPS+password) + M-Wave9 (独自ドメイン+HTTPS+DNS) | 1 sprint | ⏸ ドメイン購入後 |
-| 4 | GCP リソース ID rename (`phase7-synonym` Memorystore / `destroy-phase7-learning` Make target) | 半 sprint | ⏸ infra 同期必要 |
+| 1 | M-Wave8.7 ES production 化 (HTTPS+password) + M-Wave9 (独自ドメイン+HTTPS+DNS) | 1 sprint | ⏸ ドメイン購入後 |
 
 詳細は [`TASKS_ROADMAP.md §1 / §2`](TASKS_ROADMAP.md)。
 

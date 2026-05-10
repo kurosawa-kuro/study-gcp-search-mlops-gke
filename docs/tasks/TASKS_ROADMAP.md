@@ -16,8 +16,9 @@
 
 例外:
 - ADR (`docs/decisions/`) は historical record として `Phase X` 表記を残置 (retroactive note は ADR README に明記)
-- GCP リソース識別子 (`phase7-synonym` Memorystore / `destroy-phase7-learning` Make target) は production リソース ID と Terraform 同期、touch すると infra との drift 発生 → 別 backlog
+- e2e test ファイル名 (`tests/e2e/test_phase7_*.py` / `live_acceptance_checks.py::test_phase7_*`) は historical fixture として残置 (rename すると fixture と手元の運用ログ参照が drift する)
 - M-Wave マイルストーンの Phase 1/2/3 (M-Wave8.6 Phase 1/2/3 等) は milestone 段階の固有名 = 撤廃対象外
+- GCP リソース ID は **2026-05-10 rename 済**: `phase7-synonym` → `mlops-synonym` (Memorystore + Secret + ExternalSecret); Make target `destroy-phase7-learning` → `destroy-coast-down`; Docker tag `phase7-ml-base:local` → `mlops-ml-base:local`
 
 ### §0.2 仕様の大本命 (正解データ + 継続改善サイクル)
 
@@ -33,48 +34,14 @@ Meilisearch を廃止、GKE 上で Elasticsearch (ECK) を稼働。Elastic Cloud
 
 | # | 残 | 関連 | 状態 |
 |---|---|---|---|
-| 1 | M-Wave7 Makefile 本格整理 (target rename / help 再生成 / 不要 target 撤去 / 規約 doc 同期) | §2 Wave 7 | ⏳ 着手可 |
-| 2 | M-Wave8.6 Phase 2/3 後段 — caller migration (`subprocess.run(["kubectl"\|"terraform", ...])` → adapter 経由 ~30 箇所) | §2 Wave 8.6 | ⏳ 着手可 |
-| 3 | M-Wave8.7 ES production 化 (HTTPS + password auth) | §2 Wave 8.7 | ⏸ ドメイン購入タイミング待ち |
-| 4 | M-Wave9 独自ドメイン + HTTPS + DNS (Web 公開基盤) | §2 Wave 9 | ⏸ scope outside (user 指示) |
-| 5 | GCP リソース ID rename (`phase7-synonym` Memorystore / `destroy-phase7-learning` Make target) | §0.1 例外 | ⏸ M-Wave8.5 残、infra 同期必要 |
+| 1 | M-Wave8.7 ES production 化 (HTTPS + password auth) | §2 Wave 8.7 | ⏸ ドメイン購入タイミング待ち |
+| 2 | M-Wave9 独自ドメイン + HTTPS + DNS (Web 公開基盤) | §2 Wave 9 | ⏸ scope outside (user 指示) |
 
-完了済 Wave (0/1/2/3/4/5/6/8 / M-Pivot / M-RunbookLocal / M-Wave8.6 Phase 1-3 / M-Wave8.5 / Step.precondition framework / C4 Makefile python -u / PMLE doc) は [03_実装カタログ §7.3](../architecture/03_実装カタログ.md) を正本。
+完了済 Wave (0/1/2/3/4/5/6/7/8 / M-Pivot / M-RunbookLocal / M-Wave8.5 / M-Wave8.6 Phase 1-3 + 後段 caller migration / Step.precondition framework / C4 Makefile python -u / PMLE doc / GCP ID rename `phase7-*` → `mlops-*` / `destroy-coast-down`) は [03_実装カタログ §7.3](../architecture/03_実装カタログ.md) を正本。
 
 ---
 
 ## §2. 残 Wave 詳細
-
-### Wave 7 — Makefile / 実行系の本格整理
-
-**目的**: Makefile を `make help` だけで全体把握できる canonical 状態に。Wave 0 (止血) 完了済。
-
-**作業**:
-- [ ] 全 Make target を canonical 命名規約 ([`docs/conventions/Makefile規約.md`](../conventions/Makefile規約.md) / [`スクリプト規約.md`](../conventions/スクリプト規約.md)) に揃える
-- [ ] `tools/generate_makefile_md.sh` から `archive/1〜6` walk + Phase Support Matrix を撤去 (= M-Pivot 反映)
-- [ ] `make help` の語彙再生成 (`tools/generate_makefile_md.sh` 実行)
-- [ ] 不要 / 重複 / legacy target を撤去 (`up`/`down`/`db-migrate-*`/`seed`/`serve`/`eval-*` 等、本リポで未使用)
-- [ ] 1 target = 1 行の `uv run python -u -m scripts.<folder>.<module>` 原則を全件適用
-- [ ] **C5**: bg/pipe 系 target に `set -o pipefail` を SHELL 既定に (現状は `python -u` で line buffer のみ対応、pipefail は未対応)
-
-**完了条件**: Makefile 内に多行 shell 0 件 (Wave 0 で達成済)、`docs/conventions/Makefile規約.md` の Make Command Matrix が現状と一致 + Phase Support Matrix なし。
-
----
-
-### Wave 8.6 Phase 2/3 後段 — caller migration
-
-**目的**: M-Wave8.6 Phase 1 (step 分離 / tf_apply.py 切り出し) / Phase 2 (`scripts/domain/{gcp,k8s,terraform}/` 再配置) / Phase 3 minimal (`scripts/adapters/{kubectl,gcloud,terraform}.py` 構造) は 2026-05-09/10 で完了。**残 = 既存 caller の subprocess 直書きを adapter 経由 migration**。
-
-**作業**:
-- [ ] `scripts/domain/gcp/state_recovery.py` 内 9 件の `subprocess.run(["gcloud", ...])` → `gcloud_run(...)`
-- [ ] `scripts/domain/gcp/vertex_*.py` 内 3 件 + `scripts/domain/k8s/elasticsearch_wait.py` 内 2 件 → adapter 経由
-- [ ] `scripts/setup/seed_minimal_clean.py` 3 件 (bq) / `scripts/_common.py` 内 3 件 → 順次
-- [ ] `scripts/lib/*` を `scripts/domain/<topic>/` に整理 (現状残存)
-- [ ] mypy + pytest で regression 0 確認
-
-**完了条件**: `grep -rE 'subprocess\.run\(\["(kubectl|gcloud|terraform)"' scripts/` が ≤ 5 件 (adapters 内部実装を除く)。
-
----
 
 ### Wave 8.7 — ES production 化 (HTTPS + password auth)
 

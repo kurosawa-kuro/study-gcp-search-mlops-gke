@@ -10,8 +10,8 @@ variable "region" {
 
 variable "instance_name" {
   type        = string
-  description = "Cloud Memorystore for Redis instance ID"
-  default     = "phase7-synonym"
+  description = "Cloud Memorystore for Redis instance ID (synonym dictionary backing store)"
+  default     = "mlops-synonym"
 }
 
 variable "tier" {
@@ -46,5 +46,5 @@ variable "vpc_network" {
 variable "auth_secret_id" {
   type        = string
   description = "Secret Manager secret ID where the AUTH string is mirrored for KSA / ESO"
-  default     = "phase7-synonym-redis-auth"
+  default     = "mlops-synonym-redis-auth"
 }

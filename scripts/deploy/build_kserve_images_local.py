@@ -56,7 +56,9 @@ def _diag(label: str, proc: subprocess.CompletedProcess[str]) -> None:
 def _ensure_docker_buildx() -> None:
     if shutil.which("docker") is None:
         raise SystemExit("[error] docker CLI not found — install Docker first")
-    proc = subprocess.run(["docker", "buildx", "version"], capture=True, check=False)
+    proc = subprocess.run(
+        ["docker", "buildx", "version"], capture_output=True, text=True, check=False
+    )
     if proc.returncode != 0:
         raise SystemExit("[error] `docker buildx` not available.")
 

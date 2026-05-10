@@ -126,12 +126,12 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--redis-instance",
-        default=os.environ.get("SYNONYM_REDIS_INSTANCE", "phase7-synonym"),
+        default=os.environ.get("SYNONYM_REDIS_INSTANCE", "mlops-synonym"),
         help="Memorystore instance name to resolve --redis-url from when omitted.",
     )
     parser.add_argument(
         "--redis-auth-secret-id",
-        default=os.environ.get("SYNONYM_REDIS_AUTH_SECRET_ID", "phase7-synonym-redis-auth"),
+        default=os.environ.get("SYNONYM_REDIS_AUTH_SECRET_ID", "mlops-synonym-redis-auth"),
         help="Secret Manager secret id for Memorystore AUTH string.",
     )
     parser.add_argument(

@@ -44,9 +44,7 @@ def terraform_apply_stage1_with_retries(
     # Strip the leading binary name when delegating to the adapter — the adapter
     # prepends it itself.
     if not stage1_args or stage1_args[0] != "terraform":
-        raise ValueError(
-            f"stage1_args must start with 'terraform' (got {stage1_args[:1]})"
-        )
+        raise ValueError(f"stage1_args must start with 'terraform' (got {stage1_args[:1]})")
     forwarded_args = stage1_args[1:]
     for attempt in range(1, max_attempts + 1):
         proc = terraform_run(*forwarded_args, capture=True, check=False)
