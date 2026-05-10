@@ -116,3 +116,55 @@ def test_search_api_deployment_has_no_meili_env_refs() -> None:
     dep = read_text(REPO_ROOT / "infra" / "manifests" / "search-api" / "deployment.yaml")
     assert "MEILI_" not in dep, "deployment.yaml must not reference Meilisearch env vars"
     assert "meili" not in dep.lower(), "deployment.yaml must not reference meili resources"
+
+
+def test_es_networkpolicy_allows_eck_operator_namespace() -> None:
+    """2026-05-10 incident root cause: `elasticsearch-kibana-policy` NetworkPolicy
+    の ingress に `elastic-system` ns が欠落していて、ECK Operator から ES の
+    `:9200/_security/api_key` を呼ぶ reconcile が `connect: connection timed out`
+    で永続的に block されていた。
+
+    Pin: ECK Operator namespace (`elastic-system`) からの ingress が許可されている。
+    削除すると `Phase=ApplyingChanges Health=unknown` reconcile stall が再発する。
+    詳細: docs/troubleshooting/eck-license-reconcile-stall.md
+    """
+    np_yaml = read_text(
+        REPO_ROOT / "infra" / "manifests" / "elasticsearch" / "networkpolicy.yaml"
+    )
+    assert "kubernetes.io/metadata.name: elastic-system" in np_yaml, (
+        "elasticsearch-kibana-policy NetworkPolicy must allow ingress from "
+        "`elastic-system` namespace (ECK Operator location). Removing this "
+        "causes 2026-05-10 reconcile stall to recur."
+    )
+
+
+def test_es_manifest_pins_http_and_anonymous_auth() -> None:
+    """2026-05-10 incident: ECK 8.x default は HTTPS + auth 必須だが、本リポの
+    canonical URL は `http://elasticsearch.search.svc.cluster.local:9200`
+    (Wave 8 contract test で pin 済)。両者の整合のため、ES manifest で:
+
+    1. `spec.http.tls.selfSignedCertificate.disabled: true` (HTTP 化)
+    2. `xpack.security.authc.anonymous.username: anonymous_user` + `roles: superuser`
+       (anonymous auth bypass、学習プロジェクト前提)
+
+    production 化 (HTTPS + password auth) する時は本 contract を更新すること。
+    本 contract は **学習プロジェクト前提を明示する pin** であり、production 化の
+    境界判断点でもある (CLAUDE.md「個人技術学習プロジェクト」前提)。
+    """
+    es_yaml = read_text(
+        REPO_ROOT / "infra" / "manifests" / "elasticsearch" / "elasticsearch.yaml"
+    )
+
+    # 1. HTTP 化 (TLS 無効)
+    assert "selfSignedCertificate:" in es_yaml and "disabled: true" in es_yaml, (
+        "ES manifest must set spec.http.tls.selfSignedCertificate.disabled: true "
+        "(canonical URL is http://, ECK default HTTPS would cause Server disconnected)"
+    )
+
+    # 2. anonymous superuser (auth bypass)
+    assert "xpack.security.authc.anonymous.username: anonymous_user" in es_yaml, (
+        "ES manifest must define anonymous user for HTTP auth bypass (学習用)"
+    )
+    assert "xpack.security.authc.anonymous.roles: superuser" in es_yaml, (
+        "anonymous user must have superuser role to allow sync-elasticsearch bulk indexing"
+    )

@@ -203,6 +203,24 @@ search-api → event logs → BigQuery curated → Composer (retrain_orchestrati
 
 ---
 
+### Wave 8.7 — ES production 化 (HTTPS + password auth)
+
+**目的**: 2026-05-10 incident 解消で採用した (a') 解 = HTTP + anonymous superuser は **学習プロジェクト前提** (CLAUDE.md「個人技術学習プロジェクト」)。production 配信や client 公開フェーズで使う場合は HTTPS + password auth へ移行する必要がある。
+
+**残件 (= production 化のための作業)**:
+- [ ] canonical URL を環境変数で http/https 切替可能に (`scripts/ops/sync_elasticsearch.py` / `infra/manifests/search-api/configmap.yaml`)
+- [ ] ECK auto-generated `elasticsearch-es-elastic-user` secret から password fetch する経路を `_run_sync_elasticsearch` に組込
+- [ ] `infra/manifests/elasticsearch/elasticsearch.yaml` の `xpack.security.authc.anonymous.*` を削除 → ES manifest を default の HTTPS+auth へ戻す
+- [ ] Wave 8 contract test (`test_docs_runbook_and_catalog_pin_elasticsearch_workflow`) を **HTTPS + auth header 対応** に拡張
+- [ ] [tests/integration/parity/test_codebase_invariants.py](../../tests/integration/parity/test_codebase_invariants.py) の `test_es_manifest_pins_http_and_anonymous_auth` を更新
+- [ ] CLAUDE.md / README に「学習用 anonymous superuser は production 厳禁」を明記
+
+**完了条件**: ES が default の HTTPS+auth で動作、`make verify-live-acceptance` PASS、上記 contract test がすべて HTTPS+password auth pin に変更され `make check` PASS。
+
+**前提**: 学習用 deploy-all が本 sprint で安定動作することが前提 (T1 PASS)。
+
+---
+
 ### Wave 8.6 — orchestrator のドメイン分離 (クリーンアーキテクチャ整理)
 
 **目的**: 2026-05-09 incident (`--from-step tf-apply` で step 3 skip → WIF 409 → 30+ 分の出戻り) を発端に、`scripts/setup/{deploy_all,destroy_all}.py` の構造再編を進めた。Phase 1 (step 分離 + slicing 対称化、tf_apply.py 切り出し、idempotent 前置き hook、contract test 化) は M-Wave8 内で完了。Phase 2/3 のドメイン分離が残件。
@@ -325,6 +343,7 @@ Composer = 上位 orchestrator、Vertex Pipelines = 下位 ML executor。`train/
 | M-Wave7 | Makefile 本格整理 | ⏳ 着手可 | Wave 0 / Wave 1 完了済。Make Command Matrix と Makefile を一致させる |
 | M-Wave8.5 | Phase 概念の完全撤廃 | ⏳ | Wave 8 完了済 (drift 解消は 03_実装カタログ §7.3)。残: 01 §3 / workflow contract test 15+ / runbook の `Phase [0-9]` を固有名 (canonical / Composer なし派生) へ置換。詳細は §2 Wave 8.5 |
 | M-Wave8.6 | orchestrator のドメイン分離 | ⏳ | Phase 1 (step 分離 + tf_apply.py 切り出し + 対称化) 完了 (2026-05-09)。残: `scripts/infra/*` → `scripts/domain/{gcp,k8s,terraform,data}/` 再配置、subprocess wrapper を `scripts/adapters/` に分離。詳細は §2 Wave 8.6 |
+| M-Wave8.7 | ES production 化 (HTTPS + password auth) | ⏳ scope outside (学習プロジェクト前提で本 sprint 除外) | 2026-05-10 incident で採用した HTTP + anonymous superuser は学習用。production 配信時に HTTPS + password auth へ移行。詳細は §2 Wave 8.7 |
 | M-Wave9 | 独自ドメイン + HTTPS + DNS | ⏳ scope outside | 本 sprint 除外 (user 指示)。詳細は §2 Wave 9 |
 
 ---

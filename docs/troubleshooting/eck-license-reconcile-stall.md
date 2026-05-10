@@ -98,3 +98,74 @@ ML pipeline の reconcile stall 系一般に転用できる思考:
 - 設計判断: `docs/tasks/TASKS_ROADMAP.md §3.1` (ゴール劣化禁止) / §4.9 (VVS 永続化 lessons learned)
 - destroy-all step 分離: `docs/architecture/03_実装カタログ.md §7.3` M-Wave8.6 Phase 1
 - 過去の類似 cost-cut 判断: `docs/tasks/TASKS_ROADMAP.md §4.10` (state recovery 12 type 拡張)
+
+---
+
+## 2026-05-10 真の root cause 確定 (本 doc 旧版の判断指針通り、2 回連続再発で初めて見えた)
+
+### 表層症状
+`Phase=ApplyingChanges Health=unknown` が永続化、HTTP API 無応答。
+
+### 本質原因 (2 つの構造的 bug の重ね合わせ)
+
+#### Bug 1: NetworkPolicy が ECK Operator namespace を block
+
+`infra/manifests/elasticsearch/networkpolicy.yaml` の ingress に **`elastic-system` ns 漏れ**:
+
+```yaml
+# 修正前
+ingress:
+  - from:
+    - namespaceSelector: { matchLabels: { kubernetes.io/metadata.name: search } }
+    - namespaceSelector: { matchLabels: { kubernetes.io/metadata.name: kserve-inference } }
+    # ↑ elastic-system が抜けている
+    ports: [{ protocol: TCP, port: 9200 }]
+```
+
+ECK Operator は `https://<es>:9200/_security/api_key?name=eck-*` を呼んで reconcile する。block されると `dial tcp: connect: connection timed out` で `Phase=ApplyingChanges` 永続化。
+
+#### Bug 2: canonical URL `http://...` と ECK 8.x default `xpack.security.http.ssl.enabled=true` の不整合
+
+ECK 8.x は default で HTTPS only + auth 必須。`http://elasticsearch.search.svc.cluster.local:9200` で接続すると、TLS expected で plain HTTP が来る → handshake fail → **`Server disconnected without sending a response`**。
+
+Bug 1 は ECK Operator 側、Bug 2 は client 側 (`sync_elasticsearch.py` 経由)。両方直さないと完走しない。
+
+### 採用解決策 (a' = 学習プロジェクト前提)
+
+1. **NetworkPolicy 修正**: `elastic-system` ns ingress を ingress 許可に追加
+2. **ES manifest 修正**:
+   - `spec.http.tls.selfSignedCertificate.disabled: true` で TLS 無効化 (canonical URL `http://...` 維持)
+   - `spec.nodeSets[].config.xpack.security.authc.anonymous.username/roles/authz_exception` で **anonymous superuser** auth bypass。security stack は ON のまま (ECK 8.x の deprecated path 回避)
+
+これで:
+- canonical URL `http://elasticsearch.search.svc.cluster.local:9200` のまま
+- Wave 8 contract test 無修正
+- ES `health=green` + HTTP 200 (anonymous accepted) で sync 通過
+
+### production 化のための backlog (TASKS_ROADMAP §「ES production 化」)
+
+- canonical URL を環境変数で http/https 切り替え可能に
+- ECK auto-generated `elasticsearch-es-elastic-user` secret から password fetch 経路を `_run_sync_elasticsearch` に組込
+- `xpack.security.authc.anonymous` を削除 → `--username/--password` を渡す形へ移行
+- Wave 8 contract test を https+auth header 対応に拡張
+- 学習用 anonymous superuser は **production 厳禁** であることを CLAUDE.md / README で明示
+
+### 教訓
+
+- 「2 回連続発症で初めて log 調査の価値が出る」判断指針は機能した = **再現性確認 → 調査 → root cause 特定 → 修正 → 1 分で復旧**
+- 前日 (5/9) の destroy-all 判断は **時間効率としては正解**、ただし root cause は state 汚染ではなく **manifest bug** だった
+- `wait_until_es_healthy` の 5 min timeout は「観測窓」として機能した。前回は 14h 放置で何も観測できなかった
+- **Manifest review 観点**: NetworkPolicy を書く時は **どの ns からの ingress が必要か** を operator / sidecar / probe / scrape 全部漏れなく列挙する。ECK は `elastic-system` ns から reconcile するので必須
+
+### 関連 contract test (再発防止)
+
+`tests/integration/parity/` に NetworkPolicy + ES config の必須 wording を pin (実装済 / TODO):
+
+```python
+def test_es_networkpolicy_allows_eck_operator_namespace():
+    """ECK Operator は elastic-system ns に居る。block すると reconcile stall (2026-05-10)."""
+
+def test_es_manifest_pins_http_and_anonymous_auth():
+    """学習プロジェクト前提: HTTP + anonymous superuser を ES CR に維持。
+    production 化時は本 contract を更新 (HTTPS + password auth へ)."""
+```
