@@ -32,14 +32,14 @@ Meilisearch を廃止し、**Elasticsearch を採用** する。ただし Elasti
 
 ## §1. 今の課題 (Current Challenges)
 
-| # | 課題 | 関連 doc | 状態 / スコープ |
+| # | 課題 | 関連 doc | 状態 |
 |---|---|---|---|
-| 1 | プロジェクト方針の変更 (Phase 形式廃止) | — | ✅ ピボット完了 |
-| 2 | 仕様の大幅変更 (正解データ + 継続改善サイクル前提) | 本書 Wave 2-5 | ✅ 実装完了 / 🟡 Wave 5 live 検証 (`verify-live-acceptance`) 残件 |
-| 3 | 検索基盤の変更 (Meilisearch → Elasticsearch on GKE) | 本書 Wave 6 | ✅ 完了 (`ops-search-components` all non-zero) |
-| 4 | API エンドポイントの整理 (試行錯誤でつぎはぎ) | 本書 Wave 1 | ✅ 完了 (2026-05-09 contract test 9 件 PASS、03_実装カタログ §7.3) |
-| 5 | Makefile / 実行系の破綻 (「コード直書き禁止」違反) | 本書 Wave 0 / 7 | 🟡 Wave 0 (止血) ✅ 完了 / Wave 7 (本格整理) ⏳ 着手可 |
-| 6 | Web アプリ公開基盤の不足 (独自ドメイン + HTTPS + DNS) | [`docs/runbook/05_運用.md`](../runbook/05_運用.md) | ⏳ **scope outside (本 sprint)** — Wave 9 に分離。GCP でドメイン購入、証明書発行、DNS 委任、Gateway/HTTPRoute 反映 |
+| 1 | Phase 形式廃止 (ピボット) | 03_実装カタログ §7.3 | ✅ |
+| 2 | 正解データ + 継続改善サイクル | 本書 Wave 2-5 / 03_実装カタログ §7.3 | ✅ (M-Wave5 完了 2026-05-10) |
+| 3 | Elasticsearch on GKE 移行 | 本書 Wave 6 / 03_実装カタログ §7.3 | ✅ |
+| 4 | API 4 軸整理 | 本書 Wave 1 / 03_実装カタログ §7.3 | ✅ |
+| 5 | Makefile 止血 / 本格整理 | 本書 Wave 0 / 7 | 🟡 Wave 0 ✅ / Wave 7 ⏳ 着手可 |
+| 6 | Web 公開基盤 (独自ドメイン+HTTPS+DNS) | 本書 Wave 9 | ⏳ scope outside |
 
 ---
 
@@ -336,16 +336,15 @@ Composer = 上位 orchestrator、Vertex Pipelines = 下位 ML executor。`train/
 
 ## §5. マイルストーン
 
-完了済 (M-Pivot / M-RunbookLocal / M-Wave0 / M-Wave1 / M-Wave2 / M-Wave3 / M-Wave4 / M-Wave6) は [`../architecture/03_実装カタログ.md`](../architecture/03_実装カタログ.md) §7.3 を正本とする。本表は **未完了 / 進行中のみ** 残す。
+完了済 (M-Pivot / M-RunbookLocal / M-Wave0 / M-Wave1 / M-Wave2 / M-Wave3 / M-Wave4 / **M-Wave5** / M-Wave6 / M-Wave8 (drift 解消部分) / M-Wave8.6 Phase 1 / Step.precondition framework) は [`../architecture/03_実装カタログ.md`](../architecture/03_実装カタログ.md) §7.3 を正本とする。本表は **未完了のみ** 残す。
 
-| ID | フェーズ | 状態 | 残件 / 着手リンク |
+| ID | フェーズ | 状態 | 残件 |
 |---|---|---|---|
-| ~~M-Wave5~~ | 継続改善サイクル MVP | ✅ **完了 (2026-05-10)** | `make verify-live-acceptance` PASS (e2e 22.68s)。canonical 経路全動作。詳細: 03_実装カタログ §7.3 |
-| M-Wave7 | Makefile 本格整理 | ⏳ 着手可 | Wave 0 / Wave 1 完了済。Make Command Matrix と Makefile を一致させる |
-| M-Wave8.5 | Phase 概念の完全撤廃 | ⏳ | Wave 8 完了済 (drift 解消は 03_実装カタログ §7.3)。残: 01 §3 / workflow contract test 15+ / runbook の `Phase [0-9]` を固有名 (canonical / Composer なし派生) へ置換。詳細は §2 Wave 8.5 |
-| M-Wave8.6 | orchestrator のドメイン分離 | ⏳ | Phase 1 (step 分離 + tf_apply.py 切り出し + 対称化) 完了 (2026-05-09)。残: `scripts/infra/*` → `scripts/domain/{gcp,k8s,terraform,data}/` 再配置、subprocess wrapper を `scripts/adapters/` に分離。詳細は §2 Wave 8.6 |
-| M-Wave8.7 | ES production 化 (HTTPS + password auth) | ⏳ scope outside (学習プロジェクト前提で本 sprint 除外) | 2026-05-10 incident で採用した HTTP + anonymous superuser は学習用。production 配信時に HTTPS + password auth へ移行。詳細は §2 Wave 8.7 |
-| M-Wave9 | 独自ドメイン + HTTPS + DNS | ⏳ scope outside | 本 sprint 除外 (user 指示)。詳細は §2 Wave 9 |
+| M-Wave7 | Makefile 本格整理 | ⏳ 着手可 | Make Command Matrix と Makefile を一致 + C4 (`stdbuf -oL` 組込) |
+| M-Wave8.5 | Phase 概念完全撤廃 | ⏳ | 01 §3 / workflow contract test 15+ / runbook の `Phase [0-9]` を固有名へ置換。詳細は §2 Wave 8.5 |
+| M-Wave8.6 Phase 2/3 | orchestrator ドメイン分離 (続き) | ⏳ | `scripts/infra/*` → `scripts/domain/`、subprocess wrapper を `scripts/adapters/`。詳細は §2 Wave 8.6 |
+| M-Wave8.7 | ES production 化 (HTTPS+password auth) | ⏳ | 学習用 HTTP+anonymous → HTTPS+password。詳細は §2 Wave 8.7 |
+| M-Wave9 | 独自ドメイン + HTTPS + DNS | ⏳ scope outside | user 指示で除外継続 |
 
 ---
 
@@ -371,3 +370,34 @@ Composer = 上位 orchestrator、Vertex Pipelines = 下位 ML executor。`train/
 - [`../../README.md`](../../README.md) — プロジェクト概要 + 技術スタック + 非負制約
 - [`../../CLAUDE.md`](../../CLAUDE.md) — Claude Code 向けガイド
 - [`../../AGENTS.md`](../../AGENTS.md) — Cursor / Codex 向け charter
+
+今後すべきこと (短期 → 中期 → 長期)
+即時 (本日中、destroy-all 完走後)
+内容	コスト
+⭐ A	destroy-all 完走確認 → 状態 doc 化 → git status 整理 + 必要なら commit	5-15 min
+短期 (次 1-2 sprint、低リスク高 ROI 順)
+#	候補	コスト	価値
+1	C4 Makefile stdbuf 組込 — bg-pipe-fake-exit-zero.md の推奨パターンを Makefile target レベルで自動化、Bash tool 側のオペ負荷を消す	30 min	中 (運用 ergonomics、毎セッション効く)
+2	M-Wave8.5 Phase 概念完全撤廃 — 01 §3 / workflow contract test 15+ / runbook の Phase [0-9] を一斉置換。文字列置換が中心、機械的	半日	中 (構造的負債解消、「学習プロジェクト最終形態名」固有名化)
+3	M-Wave8.7 ES production 化 — HTTP+anonymous → HTTPS+password auth。canonical URL 環境変数化 + ECK auto-generated password fetch + Wave 8 contract test を HTTPS+auth pin に拡張	1 sprint	高 (実務 ES 標準実装の経験 + PMLE 比較材料)
+中期 (構造改革、sprint 跨ぎ)
+#	候補	コスト	価値
+4	M-Wave7 Makefile 本格整理 — Make Command Matrix と Makefile を一致、1 target = 1 行 wrapper 原則を全件適用	1 sprint	中
+5	M-Wave8.6 Phase 2/3 orchestrator ドメイン分離 — scripts/infra/* → scripts/domain/{gcp,k8s,terraform,data}/、subprocess wrapper を scripts/adapters/、import 30+ 箇所追従	1 sprint	高 (test/拡張性、クリーンアーキテクチャの実体験)
+長期 / 学習目標
+#	候補	コスト	価値
+6	PMLE 学習 doc 作成 — 今回の incident 経験を Vertex AI managed vs ECK self-hosted 比較軸として記録。「TLS 整合問題は managed が抽象化」「KServe cold start vs Vertex Endpoint scale-to-zero」「VVS persistent index による cost 最適化」など	30-60 min	高 (試験対策 + 学習記憶定着)
+7	M-Wave9 独自ドメイン + HTTPS + DNS — Web 公開基盤 (現状 scope outside)	1 sprint	中 (production 公開時に必要)
+私の推奨順序
+A → 1 → 6 → 3 → 2 → 5 → 4 → 7
+
+順序最終確定
+#	内容	コスト	価値
+A	destroy-all 完走確認 + cleanup	5-10 min	即時
+5	M-Wave8.6 Phase 2/3 orchestrator ドメイン分離 (deploy-all バグ予防の構造改善)	1 sprint	高 (バグ予防 ROI 最大)
+1	C4 Makefile stdbuf 組込	30 min	中 (運用 ergonomics)
+6	PMLE 学習 doc (今日の incident → Vertex AI 比較材料)	30-60 min	中〜高 (経験記憶定着)
+2	M-Wave8.5 Phase 撤廃	半日	中 (構造的負債)
+4	M-Wave7 Makefile 本格整理	1 sprint	中
+⏸	HTTPS セット (M-Wave8.7 + M-Wave9)	ドメイン購入後	高
+destroy-all bg 完走待ち + Monitor 継続。完走通知が来たら 5 (orchestrator domain 分離) の 影響範囲調査 から着手。
