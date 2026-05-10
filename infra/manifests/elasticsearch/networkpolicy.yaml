@@ -15,6 +15,13 @@ spec:
     - Ingress
     - Egress
   ingress:
+    # 2026-05-10 incident root cause:
+    # ECK Operator (`elastic-system` ns) は ES pod の `:9200/_security/api_key`
+    # を呼んで reconcile する設計。`elastic-system` を許可しないと
+    # `connect: connection timed out` で reconcile が完了せず、
+    # `Phase=ApplyingChanges Health=unknown` で永続的にストールする
+    # (= 14h 経っても green にならない)。
+    # 詳細: docs/troubleshooting/eck-license-reconcile-stall.md
     - from:
         - namespaceSelector:
             matchLabels:
@@ -22,6 +29,9 @@ spec:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: kserve-inference
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: elastic-system
       ports:
         - protocol: TCP
           port: 9200
