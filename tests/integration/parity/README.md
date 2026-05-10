@@ -7,7 +7,7 @@ Phase 7 の **lock-step 不変条件** を pin する pytest 群。
 
 | test ファイル | lock-step する file 群 | 守りたい不変条件 |
 |---|---|---|
-| `test_codebase_invariants.py` | `app/` / `ml/` / `pipeline/` / `scripts/*.py` / `infra/manifests/**/*.yaml` ↔ `docs/runbook/04_検証.md` §2 L1'' | W2-8 互換レイヤ文字列と Meilisearch lexical 残骸が canonical コードツリーに戻らない（手動 ``rg`` の CI 代替）。インフラ cleanup 用の ``scripts/infra/state_recovery.py`` は対象外 |
+| `test_codebase_invariants.py` | `app/` / `ml/` / `pipeline/` / `scripts/*.py` / `infra/manifests/**/*.yaml` ↔ `docs/runbook/04_検証.md` §2 L1'' | W2-8 互換レイヤ文字列と Meilisearch lexical 残骸が canonical コードツリーに戻らない（手動 ``rg`` の CI 代替）。インフラ cleanup 用の ``scripts/domain/gcp/state_recovery.py`` は対象外 |
 | `test_feature_parity_ranking.py` | `ml/data/feature_engineering/schema.py::FEATURE_COLS_RANKER` ↔ `infra/terraform/modules/data/main.tf::ranking_log.features` ↔ `pipeline/data_job/dataform/features/property_features_daily.sqlx` | ranker 学習用の特徴量列が Python / BQ table schema / Dataform feature SQL で一致 |
 | `test_feature_parity_feature_group.py` | `FEATURE_COLS_RANKER` ↔ `infra/terraform/modules/vertex/main.tf::feature_group_property_features` | Vertex Feature Group の property-side feature 順序と value_type が Python と一致 |
 | `test_feature_parity_sql_ranker.py` | `FEATURE_COLS_RANKER` ↔ `infra/sql/monitoring/validate_feature_skew.sql` UNPIVOT | feature skew SQL が UNPIVOT する列が Python schema と一致 |

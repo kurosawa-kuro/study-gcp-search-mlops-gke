@@ -154,7 +154,7 @@ verify-deploy-all: ## Run deploy-all and aggregate stdout/stderr under logs/veri
 	uv run python -m scripts.verify.deploy_all
 
 state-recover: ## Import orphan GCP resources back into tfstate (緊急 cleanup 後の "alreadyExists" fail 回避、`docs/tasks/TASKS_ROADMAP.md §4.10`)
-	uv run python -m scripts.infra.state_recovery
+	uv run python -m scripts.domain.gcp.state_recovery
 
 ops-deploy-monitor: ## Real-time monitor: runs deploy-all and reports live step/build stall status
 	uv run python -u -m scripts.deploy.monitor --label deploy-monitor

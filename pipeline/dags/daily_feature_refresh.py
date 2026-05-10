@@ -77,7 +77,7 @@ with DAG(
 
     trigger_fv_sync = python_pod(
         task_id="trigger_fv_sync",
-        module="scripts.infra.feature_view_sync",
+        module="scripts.domain.gcp.feature_view_sync",
     )
 
     gate_vvs_refresh = ShortCircuitOperator(

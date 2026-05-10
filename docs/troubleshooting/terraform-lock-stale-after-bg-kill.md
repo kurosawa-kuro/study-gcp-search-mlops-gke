@@ -42,7 +42,7 @@ terraform -chdir=infra/terraform/environments/dev force-unlock -force <LOCK_ID>
 TERRAFORM_STATE_FORCE_UNLOCK=1 make destroy-all
 ```
 
-`scripts/infra/terraform_lock.py` が:
+`scripts/domain/terraform/lock.py` が:
 
 1. `Error acquiring the state lock` を検知
 2. lock ID を parse (ANSI escape strip + 緩い prefix で、罫線 `│` + ANSI color 入り output に対応)
@@ -53,7 +53,7 @@ TERRAFORM_STATE_FORCE_UNLOCK=1 make destroy-all
 
 ## 設計上の防止策
 
-- `scripts/infra/terraform_lock.py` の lock ID parser を ANSI escape 入りの実出力でも parse できるように修正済 (2026-05-10)
+- `scripts/domain/terraform/lock.py` の lock ID parser を ANSI escape 入りの実出力でも parse できるように修正済 (2026-05-10)
 - `tests/unit/scripts/test_terraform_lock.py` に実 ANSI escape 入りの test を pin
 
 ## 過去事故
@@ -64,7 +64,7 @@ TERRAFORM_STATE_FORCE_UNLOCK=1 make destroy-all
 
 ## 関連
 
-- `scripts/infra/terraform_lock.py` (実装)
+- `scripts/domain/terraform/lock.py` (実装)
 - `tests/unit/scripts/test_terraform_lock.py` (test、ANSI escape pin)
 - `docs/troubleshooting/eck-license-reconcile-stall.md` (cluster destroy する時の判断指針)
 - `docs/troubleshooting/bg-pipe-fake-exit-zero.md` (bg + pipe 偽 exit 0 罠)

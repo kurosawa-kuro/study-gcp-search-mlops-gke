@@ -40,14 +40,14 @@ What this does NOT touch (preserved for the next `make deploy-all`):
 - Local artifacts (`infra/tfplan`, `pipeline/data_job/dataform/workflow_settings.yaml`).
 
 Remote state **lock** (``default.tflock``): another ``terraform apply`` / interrupted
-session may hold the lock. Terraform commands use ``scripts/infra/terraform_lock.py``
+session may hold the lock. Terraform commands use ``scripts/domain/terraform/lock.py``
 — on lock, print the ``force-unlock`` hint; optional auto-unlock when
 ``TERRAFORM_STATE_FORCE_UNLOCK=1`` (aliases: ``DESTROY_ALL_FORCE_UNLOCK``,
 ``DEPLOY_ALL_FORCE_UNLOCK``). **Only** if no other Terraform is running.
 
 設計方針 (Phase 7 W3 リファクタ + 2026-05-09 step 分離):
 - 本ファイルは **orchestrator のみ**。state query / Vertex Endpoint cleanup /
-  K8s finalizer cleanup / GCS bucket wipe は `scripts/infra/*` に委譲し、
+  K8s finalizer cleanup / GCS bucket wipe は `scripts/domain/{gcp,k8s,terraform}/*` に委譲し、
   ここは **step 定義 + 順序 + vars 引き渡し + slicing** だけを担う。
 - `_run_*` は対応 module の関数を呼ぶ thin wrapper (drift 源にならないように)。
 - `--from-step` / `--to-step` で step 単位リカバリー可能 (deploy-all と対称)。
@@ -63,9 +63,10 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from scripts._common import env, terraform_var_args
-from scripts.infra import gcs_cleanup, kube_cleanup, vertex_cleanup
-from scripts.infra.terraform_lock import run_terraform_streaming_with_lock_retry
-from scripts.infra.terraform_state import (
+from scripts.domain.gcp import gcs_cleanup, vertex_cleanup
+from scripts.domain.k8s import kube_cleanup
+from scripts.domain.terraform.lock import run_terraform_streaming_with_lock_retry
+from scripts.domain.terraform.state import (
     addresses_starting_with,
     filter_targets_in_state,
     state_list,

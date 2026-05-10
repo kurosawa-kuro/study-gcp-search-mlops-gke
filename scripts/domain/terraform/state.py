@@ -6,7 +6,7 @@ unreachable で何も消えていなかった」「empty-state での destroy �
 依存閉包が recreate された」事故への対処を関数単位で再利用可能にする。
 
 I/O 層 (subprocess による terraform CLI 呼び出し)。pure-data ではないので
-`scripts/lib/` ではなく `scripts/infra/` に置く。
+`scripts/lib/` ではなく `scripts/domain/terraform/` に置く。
 """
 
 from __future__ import annotations

@@ -1,8 +1,8 @@
-"""Unit tests for scripts.infra.terraform_lock."""
+"""Unit tests for scripts.domain.terraform.lock."""
 
 from __future__ import annotations
 
-from scripts.infra.terraform_lock import (
+from scripts.domain.terraform.lock import (
     is_state_lock_error,
     parse_terraform_lock_id,
     should_auto_force_unlock,

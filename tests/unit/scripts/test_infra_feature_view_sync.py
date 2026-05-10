@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from unittest.mock import patch
 
-from scripts.infra import feature_view_sync as fvs
+from scripts.domain.gcp import feature_view_sync as fvs
 
 
 class _FakeResponse:

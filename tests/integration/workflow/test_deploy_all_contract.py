@@ -230,7 +230,7 @@ def test_wait_for_deployed_index_absent_is_idempotent_on_resume() -> None:
     過去事故: deploy-all step 6 で Composer API 未有効化により失敗 → 再開時に
     既デプロイ済 v2 が「absent になるのを待ち続ける」15 min timeout で fail。
     本契約は『absent OR ready』の両方を early-exit safe state として pin する。"""
-    vertex_cleanup_py = _read("scripts/infra/vertex_cleanup.py")
+    vertex_cleanup_py = _read("scripts/domain/gcp/vertex_cleanup.py")
     assert "def deployed_index_state(" in vertex_cleanup_py, (
         "deployed_index_state() must classify lifecycle (absent / ready / transitional)"
     )
@@ -247,7 +247,7 @@ def test_deploy_all_waits_vertex_feature_store_and_retries_stage1_on_409() -> No
     2026-05-09 refactor: tf-apply の business logic は `scripts/setup/tf_apply.py`
     へ分離 (deploy_all.py は orchestrator only)。pin 対象を新所在へ追従。"""
     tf_apply_py = _read("scripts/setup/tf_apply.py")
-    stage_py = _read("scripts/infra/terraform_stage_apply.py")
+    stage_py = _read("scripts/domain/terraform/stage_apply.py")
     assert "wait_until_feature_store_names_released" in tf_apply_py
     assert "terraform_apply_stage1_with_retries" in tf_apply_py
     assert "terraform_apply_stage1_with_retries" in stage_py

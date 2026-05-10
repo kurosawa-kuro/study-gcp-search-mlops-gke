@@ -22,17 +22,17 @@ from __future__ import annotations
 from pathlib import Path
 
 from scripts._common import env, terraform_var_args
-from scripts.infra.kubectl_context import ensure as ensure_kubectl_context
-from scripts.infra.kubectl_context import wait_until_api_ready
-from scripts.infra.state_recovery import recover_orphan_gcp_resources
-from scripts.infra.terraform_lock import run_terraform_streaming_with_lock_retry
-from scripts.infra.terraform_stage_apply import (
+from scripts.domain.gcp.state_recovery import recover_orphan_gcp_resources
+from scripts.domain.gcp.vertex_cleanup import wait_for_deployed_index_absent
+from scripts.domain.gcp.vertex_feature_store_wait import wait_until_feature_store_names_released
+from scripts.domain.gcp.vertex_import import import_persistent_vvs_resources
+from scripts.domain.k8s.kubectl_context import ensure as ensure_kubectl_context
+from scripts.domain.k8s.kubectl_context import wait_until_api_ready
+from scripts.domain.terraform.lock import run_terraform_streaming_with_lock_retry
+from scripts.domain.terraform.stage_apply import (
     TF_APPLY_STAGE1_TARGETS,
     terraform_apply_stage1_with_retries,
 )
-from scripts.infra.vertex_cleanup import wait_for_deployed_index_absent
-from scripts.infra.vertex_feature_store_wait import wait_until_feature_store_names_released
-from scripts.infra.vertex_import import import_persistent_vvs_resources
 from scripts.lib.gcp_resources import GKE_CLUSTER_NAME_DEFAULT
 from scripts.setup.recover_wif import main as recover_wif_main
 

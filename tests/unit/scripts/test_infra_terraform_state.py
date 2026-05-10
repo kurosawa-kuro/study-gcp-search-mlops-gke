@@ -1,4 +1,4 @@
-"""Pin scripts/infra/terraform_state.py — state query / mutation helpers.
+"""Pin scripts/domain/terraform/state.py — state query / mutation helpers.
 
 destroy_all で「`-target` destroy が exit 0 でも何も消えていなかった」
 「empty-state での destroy 再走で依存閉包が recreate された」事故への
@@ -13,7 +13,7 @@ import subprocess
 from pathlib import Path
 from unittest.mock import patch
 
-from scripts.infra import terraform_state as ts
+from scripts.domain.terraform import state as ts
 
 
 def _completed(stdout: str = "", returncode: int = 0) -> subprocess.CompletedProcess[str]:

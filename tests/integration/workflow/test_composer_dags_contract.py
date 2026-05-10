@@ -112,7 +112,7 @@ def test_retrain_dag_is_canonical_retrain_trigger() -> None:
 def test_dag_files_call_only_existing_scripts() -> None:
     """DAG が呼ぶ `python -m scripts.* / pipeline.*` の全 module が実ファイルに解決。"""
     expected_modules = {
-        "scripts.infra.feature_view_sync": "scripts/infra/feature_view_sync.py",
+        "scripts.domain.gcp.feature_view_sync": "scripts/domain/gcp/feature_view_sync.py",
         "scripts.setup.backfill_vector_search_index": "scripts/setup/backfill_vector_search_index.py",
         "scripts.ops.check_retrain": "scripts/ops/check_retrain.py",
         "scripts.ops.vertex.pipeline_wait": "scripts/ops/vertex/pipeline_wait.py",

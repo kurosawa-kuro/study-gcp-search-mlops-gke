@@ -47,7 +47,7 @@ moment infra is created. See CLAUDE.md non-negotiables.
   sibling module (`scripts/{ci,deploy,setup}/<step>.py`) または
   topical module (`scripts/{lib,infra}/`) に置く。
 - **Terraform**: stage1 の target 集合・409 リトライ・state lock 吸収は
-  ``scripts/infra/terraform_stage_apply.py`` と ``scripts/infra/terraform_lock.py``
+  ``scripts/domain/terraform/stage_apply.py`` と ``scripts/domain/terraform/lock.py``
   に集約 (このファイルにロジックを再増殖させない)。
 - _run_* は対応 module の `main()` を呼ぶだけの thin wrapper にする
   (drift 源にならないように)。
@@ -67,9 +67,9 @@ from scripts.deploy.api_gke import main as deploy_api_main
 from scripts.deploy.composer_deploy_dags import main as composer_deploy_dags_main
 from scripts.deploy.configmap_overlay import main as overlay_configmap_main
 from scripts.deploy.seed_lgbm_model import main as seed_lgbm_main
-from scripts.infra.elasticsearch_wait import wait_until_es_healthy
-from scripts.infra.feature_view_sync import main as feature_view_sync_main
-from scripts.infra.kubectl_context import ensure as ensure_kubectl_context
+from scripts.domain.gcp.feature_view_sync import main as feature_view_sync_main
+from scripts.domain.k8s.elasticsearch_wait import wait_until_es_healthy
+from scripts.domain.k8s.kubectl_context import ensure as ensure_kubectl_context
 from scripts.ops.sync_elasticsearch import run as sync_elasticsearch_run
 from scripts.setup.backfill_vector_search_index import main as backfill_vector_search_main
 from scripts.setup.recover_wif import main as recover_wif_main

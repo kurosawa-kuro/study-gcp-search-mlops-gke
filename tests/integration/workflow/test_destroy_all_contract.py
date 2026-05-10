@@ -35,7 +35,7 @@ def test_destroy_all_destroy_apply_symmetry() -> None:
     維持されていることを pin。
     """
     destroy_all_py = _read("scripts/setup/destroy_all.py")
-    stage_apply_py = _read("scripts/infra/terraform_stage_apply.py")
+    stage_apply_py = _read("scripts/domain/terraform/stage_apply.py")
 
     assert 'KSERVE_MODULE_TARGET = "module.kserve"' in destroy_all_py
     assert "terraform destroy -target=module.kserve" in destroy_all_py
@@ -73,7 +73,7 @@ def test_destroy_all_proactively_undeploys_stale_vvs_indexes() -> None:
     `wait_for_deployed_index_absent` は wait しかしないため、destroy 側に
     proactive undeploy を入れる責任がある。"""
     destroy_all_py = _read("scripts/setup/destroy_all.py")
-    vertex_cleanup_py = _read("scripts/infra/vertex_cleanup.py")
+    vertex_cleanup_py = _read("scripts/domain/gcp/vertex_cleanup.py")
 
     assert "def undeploy_all_vvs_deployed_indexes(" in vertex_cleanup_py
     assert '"undeploy-index"' in vertex_cleanup_py, (
@@ -142,7 +142,7 @@ def test_sync_elasticsearch_step_waits_for_es_health_first() -> None:
     4. `wait_until_es_healthy` exists and pins green/yellow as healthy states
     """
     deploy_all_py = _read("scripts/setup/deploy_all.py")
-    es_wait_py = _read("scripts/infra/elasticsearch_wait.py")
+    es_wait_py = _read("scripts/domain/k8s/elasticsearch_wait.py")
 
     # 1. DeployStep dataclass exposes precondition field
     assert "precondition: Callable[[], object] | None = None" in deploy_all_py, (
@@ -277,7 +277,7 @@ def test_destroy_all_persists_vvs_index_and_endpoint() -> None:
     # tf-apply の business logic (import_persistent_vvs_resources の呼出し含む) は
     # `scripts/setup/tf_apply.py` へ移動済。pin 対象を新所在へ追従。
     tf_apply_py = _read("scripts/setup/tf_apply.py")
-    vertex_import_py = _read("scripts/infra/vertex_import.py")
+    vertex_import_py = _read("scripts/domain/gcp/vertex_import.py")
 
     # main.tf — Index / Endpoint には prevent_destroy を入れない (state rm pattern)
     # コメント内の説明文の `prevent_destroy = true` は誤検知させない (lifecycle block のみ確認)
@@ -399,13 +399,13 @@ def test_deploy_all_invokes_state_recovery_before_tf_apply() -> None:
     stage1 で `Error: alreadyExists` が大量発生して deploy-all が止まる。
 
     本契約は以下を pin する:
-    1. `scripts/infra/state_recovery.py` が存在し、`recover_orphan_gcp_resources` を export
+    1. `scripts/domain/gcp/state_recovery.py` が存在し、`recover_orphan_gcp_resources` を export
     2. `scripts/setup/deploy_all.py::_run_tf_apply` が tf-apply 直前に `recover_orphan_gcp_resources` を呼ぶ
     3. `Makefile` に `make state-recover` target が存在 (CLI single-shot smoke)
     4. recovery 対象 resource type が IAM SA / BQ dataset+table / Pub/Sub topic+sub /
        Cloud Function / Eventarc / Cloud Run の 6 種を網羅
     """
-    state_recovery_py = _read("scripts/infra/state_recovery.py")
+    state_recovery_py = _read("scripts/domain/gcp/state_recovery.py")
     # 2026-05-09 refactor: tf-apply 内部 logic は `scripts/setup/tf_apply.py` に分離。
     # state_recovery 呼出しもこちらに移動。
     tf_apply_py = _read("scripts/setup/tf_apply.py")
@@ -416,13 +416,13 @@ def test_deploy_all_invokes_state_recovery_before_tf_apply() -> None:
         "state_recovery.py must export `recover_orphan_gcp_resources`"
     )
     # 2. tf_apply.py が terraform apply 前に呼ぶ
-    assert "from scripts.infra.state_recovery import recover_orphan_gcp_resources" in tf_apply_py
+    assert "from scripts.domain.gcp.state_recovery import recover_orphan_gcp_resources" in tf_apply_py
     assert "recover_orphan_gcp_resources(" in tf_apply_py, (
         "tf_apply.py must call recover_orphan_gcp_resources before terraform apply"
     )
     # 3. Make target
     assert "state-recover:" in makefile, "Makefile must have `state-recover` target"
-    assert "scripts.infra.state_recovery" in makefile
+    assert "scripts.domain.gcp.state_recovery" in makefile
     # 4. recovery resource types が 11 種網羅 (2026-05-03 後 incident で複数回拡張:
     # Artifact Registry / Secret Manager / Dataform repo / GCS buckets / Feature Store
     # の `alreadyExists` も実観測。Feature Store は Feature Group + Feature Online Store
@@ -455,7 +455,7 @@ def test_state_recovery_iam_sa_mapping_matches_terraform() -> None:
     新 SA を main.tf に追加したら本 list にも追加する責務を contract で固定。
     drift すると recovery が新 SA を import せず、`alreadyExists` で fail。
     """
-    state_recovery_py = _read("scripts/infra/state_recovery.py")
+    state_recovery_py = _read("scripts/domain/gcp/state_recovery.py")
     iam_main_tf = _read("infra/terraform/modules/iam/main.tf")
 
     import re as _re

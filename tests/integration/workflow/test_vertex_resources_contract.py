@@ -59,8 +59,7 @@ def test_feature_view_online_serving_source_is_direct_bigquery() -> None:
     """Feature View が BigQuery `property_features_online_latest` を直接参照する契約。"""
     data_tf = _read("infra/terraform/modules/data/main.tf")
     vertex_tf = _read("infra/terraform/modules/vertex/main.tf")
-    deploy_all_py = _read("scripts/setup/deploy_all.py")
-    stage_apply_py = _read("scripts/infra/terraform_stage_apply.py")
+    stage_apply_py = _read("scripts/domain/terraform/stage_apply.py")
     assert 'table_id            = "property_features_online_latest"' in data_tf
     assert "depends_on          = [google_bigquery_table.property_features_daily]" in data_tf
     assert (

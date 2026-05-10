@@ -1,4 +1,4 @@
-"""Pin scripts/infra/{kube,gcs,vertex}_cleanup.py — destroy-all 用 cleanup.
+"""Pin scripts/domain/{k8s/kube_cleanup,gcp/{gcs,vertex}_cleanup}.py — destroy-all 用 cleanup.
 
 destroy_all.py から切り出した cleanup 関数群が想定どおり gcloud /
 kubectl をコールすることを subprocess mock で確認する。
@@ -10,7 +10,8 @@ import json
 import subprocess
 from unittest.mock import patch
 
-from scripts.infra import gcs_cleanup, kube_cleanup, vertex_cleanup
+from scripts.domain.gcp import gcs_cleanup, vertex_cleanup
+from scripts.domain.k8s import kube_cleanup
 
 
 def _completed(stdout: str = "", returncode: int = 0) -> subprocess.CompletedProcess[str]:

@@ -7,7 +7,7 @@ immediate ``deploy-all`` runs ``terraform apply`` and hits::
     Error 409: Re-using the same name as a FeatureGroup being deleted
 
 This module polls the regional Vertex REST **list** APIs (same host as
-``scripts/infra/state_recovery._recover_feature_store``) until the canonical
+``scripts/domain/gcp/state_recovery._recover_feature_store``) until the canonical
 IDs are absent, so creates become safe.
 
 Duplication note: list URL shape matches ``state_recovery._aiplatform_get`` —

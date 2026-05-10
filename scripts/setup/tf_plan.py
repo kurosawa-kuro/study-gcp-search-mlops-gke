@@ -14,7 +14,7 @@ import os
 from pathlib import Path
 
 from scripts._common import DEFAULTS, _load_list_setting, fail
-from scripts.infra.terraform_lock import run_terraform_streaming_with_lock_retry
+from scripts.domain.terraform.lock import run_terraform_streaming_with_lock_retry
 
 INFRA = Path(__file__).resolve().parents[2] / "infra" / "terraform" / "environments" / "dev"
 

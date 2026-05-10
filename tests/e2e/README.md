@@ -26,4 +26,4 @@ make verify-full-recreate
 
 ログは `logs/verification/` に集約され、`*.latest.log` を `tail -f` すれば追跡できる。
 
-`deploy-all` は `scripts/infra/vertex_feature_store_wait.py` で Feature Group / Feature Online Store 名の解放を待ってから tf-apply する（destroy 直後の 409 緩和）。
+`deploy-all` は `scripts/domain/gcp/vertex_feature_store_wait.py` で Feature Group / Feature Online Store 名の解放を待ってから tf-apply する（destroy 直後の 409 緩和）。

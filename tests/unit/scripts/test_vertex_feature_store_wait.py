@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from scripts.infra import vertex_feature_store_wait as vfs
+from scripts.domain.gcp import vertex_feature_store_wait as vfs
 
 
 def test_wait_until_feature_store_names_released_exits_when_empty(

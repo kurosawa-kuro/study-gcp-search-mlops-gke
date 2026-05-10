@@ -29,7 +29,7 @@ import subprocess
 from pathlib import Path
 
 from scripts._common import env, run, terraform_var_args
-from scripts.infra.terraform_state import is_in_state
+from scripts.domain.terraform.state import is_in_state
 
 INFRA = Path(__file__).resolve().parents[2] / "infra" / "terraform" / "environments" / "dev"
 
