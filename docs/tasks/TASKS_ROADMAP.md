@@ -340,7 +340,7 @@ Composer = 上位 orchestrator、Vertex Pipelines = 下位 ML executor。`train/
 
 | ID | フェーズ | 状態 | 残件 / 着手リンク |
 |---|---|---|---|
-| M-Wave5 | 継続改善サイクル MVP | 🟡 進行中 | `make verify-live-acceptance` 最終通し (`TASKS.md` T1) ⚠️ canonical 必須 |
+| ~~M-Wave5~~ | 継続改善サイクル MVP | ✅ **完了 (2026-05-10)** | `make verify-live-acceptance` PASS (e2e 22.68s)。canonical 経路全動作。詳細: 03_実装カタログ §7.3 |
 | M-Wave7 | Makefile 本格整理 | ⏳ 着手可 | Wave 0 / Wave 1 完了済。Make Command Matrix と Makefile を一致させる |
 | M-Wave8.5 | Phase 概念の完全撤廃 | ⏳ | Wave 8 完了済 (drift 解消は 03_実装カタログ §7.3)。残: 01 §3 / workflow contract test 15+ / runbook の `Phase [0-9]` を固有名 (canonical / Composer なし派生) へ置換。詳細は §2 Wave 8.5 |
 | M-Wave8.6 | orchestrator のドメイン分離 | ⏳ | Phase 1 (step 分離 + tf_apply.py 切り出し + 対称化) 完了 (2026-05-09)。残: `scripts/infra/*` → `scripts/domain/{gcp,k8s,terraform,data}/` 再配置、subprocess wrapper を `scripts/adapters/` に分離。詳細は §2 Wave 8.6 |

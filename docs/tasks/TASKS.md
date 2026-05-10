@@ -12,13 +12,12 @@
 
 ---
 
-## 完成定義 (Definition of Done)
+## 完成定義 (Definition of Done) — **本 sprint ✅ 完了 (2026-05-10)**
 
-下記 1 項目が ✅ になれば本 sprint 完了。完了済 (T2 / T3 / T4 / T5) は [`../architecture/03_実装カタログ.md`](../architecture/03_実装カタログ.md) §7.3 へ移管済。
-
-| ID | タスク | 完了条件 | 着手コマンド / 手順 |
-|---|---|---|---|
-| T1 ⚠️ | M-Wave5 live 検証通し | `make verify-live-acceptance` が PASS | step 10 (sync-elasticsearch) 完了後に着手。下記「2026-05-09 中断点」参照 |
+| ID | タスク | 結果 |
+|---|---|---|
+| T1 ⚠️ | M-Wave5 live 検証通し | ✅ `make verify-live-acceptance` PASS (e2e 22.68s)。canonical 経路: `lexical=4 / semantic=3 / rerank=5`、`ndcg_at_10=1.0`、KServe rerank 経由で `final_rank` / `me5_score` 返却 |
+| T2-T5 | docs / contract test / framework | ✅ [`03_実装カタログ.md §7.3`](../architecture/03_実装カタログ.md) 移管済 |
 
 ⚠️ = canonical 必須項目。[`../architecture/01_仕様と設計.md`](../architecture/01_仕様と設計.md) §0.1 ゴール劣化禁止対象。
 

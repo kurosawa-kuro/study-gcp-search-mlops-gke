@@ -157,15 +157,28 @@ Bug 1 は ECK Operator 側、Bug 2 は client 側 (`sync_elasticsearch.py` 経�
 - `wait_until_es_healthy` の 5 min timeout は「観測窓」として機能した。前回は 14h 放置で何も観測できなかった
 - **Manifest review 観点**: NetworkPolicy を書く時は **どの ns からの ingress が必要か** を operator / sidecar / probe / scrape 全部漏れなく列挙する。ECK は `elastic-system` ns から reconcile するので必須
 
-### 関連 contract test (再発防止)
+### 関連 contract test (再発防止、2026-05-10 実装済)
 
-`tests/integration/parity/` に NetworkPolicy + ES config の必須 wording を pin (実装済 / TODO):
+`tests/integration/parity/test_codebase_invariants.py`:
 
-```python
-def test_es_networkpolicy_allows_eck_operator_namespace():
-    """ECK Operator は elastic-system ns に居る。block すると reconcile stall (2026-05-10)."""
+- `test_es_networkpolicy_allows_eck_operator_namespace` ✅ — NetworkPolicy に `elastic-system` ns ingress を pin
+- `test_es_manifest_pins_http_and_anonymous_auth` ✅ — HTTP + anonymous superuser の維持を pin、production 化境界判断点
 
-def test_es_manifest_pins_http_and_anonymous_auth():
-    """学習プロジェクト前提: HTTP + anonymous superuser を ES CR に維持。
-    production 化時は本 contract を更新 (HTTPS + password auth へ)."""
+### close 確定 (2026-05-10)
+
+採用解 (a') の妥当性は **T1 PASS で実証**:
+
 ```
+make verify-live-acceptance → PASSED (22.68s)
+ops-search-components: lexical=4 / semantic=3 / rerank=5 all non-zero
+readyz_rerank_enabled=True
+model_path=property-reranker-predictor.kserve-inference.svc.cluster.local/v2/models/property-reranker/infer
+```
+
+= **HTTP + anonymous superuser が中核 5 要素を阻害しない** ことを実測。本 incident は **doc 化 + contract test 化 + production 化 backlog (M-Wave8.7)** で完全 close。
+
+### 「次の自分への手紙」
+
+- **HTTP + anonymous は学習限定の意図的選択**。production では HTTPS + password auth (M-Wave8.7) へ移行する
+- **KServe cold start 由来の T1 timeout** = 初回 e2e は warm-up retry が必要。CI では `make ops-livez` 後に `sleep 30` を挟むのが安全。今回は 1 回目 timeout → 2 回目 22.68s で PASS
+- **deploy-all resume 497s** が persistent stack 設計 (VVS Index/Endpoint 残置) の有効性実測値、次回比較ベースライン
