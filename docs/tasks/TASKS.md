@@ -24,50 +24,51 @@
 
 ---
 
-## 2026-05-10 中断点 (翌セッション resume 用)
+## 2026-05-10 進捗 (live cluster、T1 検証直前)
 
-**cluster は destroy 完了 / clean state**:
-- `terraform state list` 空 / GKE / Composer / KServe / Pub/Sub / Vertex Endpoint shell すべて削除
-- 残置: tfstate bucket / API 有効化 / **VVS Index/Endpoint** (persistent design 通り)、コスト止血済
+**cluster は live**:
+- `make deploy-all` step 1-15 全完走 (deploy-all complete、resume 経由で完了)
+- ES on GKE (HTTP + anonymous superuser、(a') 解採用)、health=green、Phase=Ready
+- GKE / Composer / KServe / VVS Index/Endpoint/deployed_index / Vertex Endpoints / Pub/Sub / Feature View sync 全 live
 
-### 着手手順 (翌セッション)
+### 残: T1 (verify-live-acceptance)
 
-1. **新コードで一発復活トライ** (推奨):
-   ```bash
-   make deploy-all
-   ```
-   今回反省を反映した修正により、以下が自動化されている:
-   - tf-apply 冒頭の `recover_wif` idempotent hook (WIF 409 自動回復)
-   - step 10 (`sync-elasticsearch`) 前の ES health wait (Phase=ApplyingChanges race 自動回避)
-   - terraform_lock parser の ANSI escape 対応 (lock 残存時に `TERRAFORM_STATE_FORCE_UNLOCK=1` で自動 unlock + retry)
-
-2. T1 `make verify-live-acceptance` 走行 → M-Wave5 ✅
-
-3. cluster 残置を避けるなら最後に `make destroy-all` (新 step 分離で `--from-step` slicing 可能)
-
-### 細かく進めたい場合
-
-`uv run python -m scripts.setup.deploy_all --from-step <step> --to-step <step>` で 1 step ずつ。step 名一覧:
-
-```
-tf-bootstrap, tf-init, recover-wif, sync-dataform, tf-plan, tf-apply,
-seed-lgbm-model, seed-test, apply-manifests, sync-elasticsearch,
-backfill-vvs, trigger-fv-sync, overlay-configmap, composer-deploy-dags,
-deploy-api
+```bash
+make verify-live-acceptance
 ```
 
-### 解消済みの並行課題 (2026-05-10)
+= run-all-core 相当の canonical 検証。期待: `lexical=N1 semantic=N2 rerank=N3` all non-zero、`ndcg_at_10=1.0`、`final_rank`/`me5_score` 返却。
 
-| ID | 課題 | 解消 |
-|---|---|---|
-| C1 | `make sync-elasticsearch` Makefile target が env を引き渡していない | ✅ Makefile に `--project-id=$(PROJECT_ID)` + `--es-url` のフォールバック追加。contract test pin |
-| C2 | `_run_sync_elasticsearch` 前に ES health wait がない | ✅ `scripts/infra/elasticsearch_wait.py` 新設、`_run_sync_elasticsearch` 冒頭で `wait_until_es_healthy()`。contract test pin |
+T1 PASS 後は最後に `make destroy-all` (新 step 分離で安全 teardown)。
 
-### 残課題 (低優先、別 sprint)
+### 2026-05-10 incident と適用修正 (全件 contract test pin)
+
+| # | 問題 | 適用修正 | contract test |
+|---|---|---|---|
+| 1 | WIF pool soft-delete 30日残置 → tf-apply 409 | `tf_apply.py` 冒頭 `recover_wif_main()` idempotent hook | `test_tf_apply_invokes_recover_wif_as_pre_step` |
+| 2 | destroy-all step 分離なし (deploy 側との非対称) | `DestroyStep` + `--from-step/--to-step` slicing で対称化 | `test_destroy_all_provides_step_slicing_symmetric_with_deploy_all` |
+| 3 | terraform_lock parser が ANSI escape で fail | ANSI strip + 緩い行頭 anchor | `test_parse_lock_id_handles_real_ansi_color_output` |
+| 4 | sync-elasticsearch ECK ApplyingChanges race | `wait_until_es_healthy` precondition (`DeployStep.precondition` framework) | `test_sync_elasticsearch_step_waits_for_es_health_first` + 3 unit test |
+| 5 | NetworkPolicy elastic-system ns ingress 漏れ | `networkpolicy.yaml` に追加 | `test_es_networkpolicy_allows_eck_operator_namespace` |
+| 6 | canonical URL http vs ECK default HTTPS 不整合 | ES manifest `selfSignedCertificate.disabled: true` + `xpack.security.authc.anonymous` (学習用 (a') 解) | `test_es_manifest_pins_http_and_anonymous_auth` |
+| 7 | tee block buffer で 40 分 visibility ゼロ | `stdbuf -oL` を推奨パターンに格上げ | doc: `bg-pipe-fake-exit-zero.md` |
+| 8 | bg pipe 偽 exit 0 | `pipefail` 推奨 + Bash tool 完了通知後の output grep 必須化 | doc + CLAUDE.md 「Claude Code 自身の運用ルール」 |
+| 9 | mock 漏れ (`wait_until_es_healthy`) | module-top-level import + framework 化で mock target 一意化 | unit test 3 件 (`test_main_invokes_precondition_before_run` 他) |
+
+### 残課題 (別 sprint、Wave 8.7 として backlog 化)
+
+production 化 (HTTPS + password auth) は [`TASKS_ROADMAP.md §2 Wave 8.7`](TASKS_ROADMAP.md):
+- canonical URL を環境変数で http/https 切替可能化
+- ECK auto-generated `elasticsearch-es-elastic-user` secret から password fetch 経路を `_run_sync_elasticsearch` に組込
+- `xpack.security.authc.anonymous` 削除 → default HTTPS+auth へ
+- Wave 8 contract test を HTTPS+auth pin に拡張
+
+### 残課題 (Makefile / Bash 運用改善、優先度低)
 
 | ID | 課題 | 詳細 |
 |---|---|---|
-| C3 | `verify-local-hybrid` の説明 (CLAUDE.md) と実装ズレ | CLAUDE.md は「`workflow contract + verify-local-app + verify-local-ml`」と説明しているが、実走ログには workflow contract が含まれない。Makefile の verify-local-hybrid target を確認して説明 or 実装の整合化 |
+| C3 | `verify-local-hybrid` の説明 (CLAUDE.md) と実装ズレ | ✅ 2026-05-10 解消、CLAUDE.md を `parity + ground-truth contract + verify-local-app + verify-local-ml` に精緻化 |
+| C4 | Makefile target に `stdbuf -oL` を組込 | 現状は Bash tool 側で `bash -c 'set -o pipefail; ... \| stdbuf -oL -eL tee ...'` を毎回書いている。Makefile target で wrapping すれば次回から Bash tool 側のオペが軽くなる。Wave 7 (Makefile 整理) の延長 |
 
 ---
 

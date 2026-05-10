@@ -174,6 +174,7 @@ search-api → event logs → BigQuery curated → Composer (retrain_orchestrati
 - [ ] 1 target = 1 行の `uv run python -m scripts.<folder>.<module>` 原則を全件適用
 - [ ] `make help` の語彙を再生成 (`tools/generate_makefile_md.sh`)
 - [ ] 不要 / 重複 / legacy target を撤去
+- [ ] **2026-05-10 incident 反映**: bg/pipe 系 target (`deploy-all` / `destroy-all` / `verify-live-acceptance` 等) に `stdbuf -oL -eL` を wrap して line buffer 化、`set -o pipefail` を SHELL 既定に。Bash tool 側で毎回 `bash -c 'set -o pipefail; ... \| stdbuf -oL -eL tee ...'` を書く運用負荷を消す
 
 **完了条件**: Makefile 内に多行 shell が 0 件。`docs/conventions/Makefile規約.md` の Make Command Matrix が現状と一致。
 
