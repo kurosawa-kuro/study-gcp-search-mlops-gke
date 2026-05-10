@@ -24,35 +24,49 @@
 
 ---
 
-## 2026-05-09 中断点 (翌日 resume 用)
+## 2026-05-10 中断点 (翌セッション resume 用)
 
-**cluster は live のまま** (mlops-dev-a / GKE 5 nodes / Composer / VVS / ES on GKE)。コスト累積中。翌日続けるか destroy-all で止めるかは下記で判断。
+**cluster は destroy 完了 / clean state**:
+- `terraform state list` 空 / GKE / Composer / KServe / Pub/Sub / Vertex Endpoint shell すべて削除
+- 残置: tfstate bucket / API 有効化 / **VVS Index/Endpoint** (persistent design 通り)、コスト止血済
 
-### 完了済 step (個別 target で逐次実行)
-- step 1 `tf-bootstrap` ✅ / 2 `tf-init` ✅ / 3 `recover-wif` ✅ / 4 `sync-dataform-config` ✅ / 5 `tf-plan` ✅ (188 add)
-- step 6 `tf-apply` ✅ (1 回目失敗 → recover-wif → 31 分で完走)
-- step 7 `seed-lgbm-model` ✅ / 8 `seed-test` ✅ / 9 `apply-manifests` ✅
+### 着手手順 (翌セッション)
 
-### 中断点
-- **step 10 `sync-elasticsearch`**: 失敗 (ES `HEALTH=unknown PHASE=ApplyingChanges` で API endpoint 未起動)。中断時 ES wait の bg job kill 済。
-
-### 翌日の着手手順 (deploy-all を使わず細かく)
-1. cluster 生存確認: `kubectl get nodes` / `kubectl -n search get elasticsearch`
-2. ES が `green`/`yellow` になるまで待機 (起動から 5-10 分で到達のはず):
+1. **新コードで一発復活トライ** (推奨):
+   ```bash
+   make deploy-all
    ```
-   until h=$(kubectl -n search get elasticsearch elasticsearch -o jsonpath='{.status.health}'); [ "$h" = "green" ] || [ "$h" = "yellow" ]; do sleep 15; done
-   ```
-3. `uv run python -m scripts.setup.deploy_all --from-step sync-elasticsearch --to-step sync-elasticsearch`
-4. step 11 `backfill-vvs` / 12 `trigger-fv-sync` / 13 `overlay-configmap` / 14 `composer-deploy-dags` / 15 `deploy-api` を `--from-step / --to-step` で 1 つずつ
-5. T1 `make verify-live-acceptance` 走行 → M-Wave5 ✅
-6. cluster 残置の場合は最後に `make destroy-all` (= 新 step 分離で `--from-step` slicing 可能)
+   今回反省を反映した修正により、以下が自動化されている:
+   - tf-apply 冒頭の `recover_wif` idempotent hook (WIF 409 自動回復)
+   - step 10 (`sync-elasticsearch`) 前の ES health wait (Phase=ApplyingChanges race 自動回避)
+   - terraform_lock parser の ANSI escape 対応 (lock 残存時に `TERRAFORM_STATE_FORCE_UNLOCK=1` で自動 unlock + retry)
 
-### 並行課題 (本 sprint 外、低優先)
+2. T1 `make verify-live-acceptance` 走行 → M-Wave5 ✅
+
+3. cluster 残置を避けるなら最後に `make destroy-all` (新 step 分離で `--from-step` slicing 可能)
+
+### 細かく進めたい場合
+
+`uv run python -m scripts.setup.deploy_all --from-step <step> --to-step <step>` で 1 step ずつ。step 名一覧:
+
+```
+tf-bootstrap, tf-init, recover-wif, sync-dataform, tf-plan, tf-apply,
+seed-lgbm-model, seed-test, apply-manifests, sync-elasticsearch,
+backfill-vvs, trigger-fv-sync, overlay-configmap, composer-deploy-dags,
+deploy-api
+```
+
+### 解消済みの並行課題 (2026-05-10)
+
+| ID | 課題 | 解消 |
+|---|---|---|
+| C1 | `make sync-elasticsearch` Makefile target が env を引き渡していない | ✅ Makefile に `--project-id=$(PROJECT_ID)` + `--es-url` のフォールバック追加。contract test pin |
+| C2 | `_run_sync_elasticsearch` 前に ES health wait がない | ✅ `scripts/infra/elasticsearch_wait.py` 新設、`_run_sync_elasticsearch` 冒頭で `wait_until_es_healthy()`。contract test pin |
+
+### 残課題 (低優先、別 sprint)
 
 | ID | 課題 | 詳細 |
 |---|---|---|
-| C1 | `make sync-elasticsearch` Makefile target が env を引き渡していない | 個別 `make sync-elasticsearch` で実行すると `ELASTICSEARCH_URL is empty` で fail。deploy_all 経由なら OK。Makefile 側で `ELASTICSEARCH_URL` / `--es-url` を明示する修正が必要。Wave 0 / Wave 7 の延長 |
-| C2 | `_run_sync_elasticsearch` 前に ES health wait がない | step 10 が ES 起動完了より早く走ると `Server disconnected` で fail。`_run_sync_elasticsearch` 冒頭で `kubectl wait` または `cluster_health` polling を組み込むべき |
 | C3 | `verify-local-hybrid` の説明 (CLAUDE.md) と実装ズレ | CLAUDE.md は「`workflow contract + verify-local-app + verify-local-ml`」と説明しているが、実走ログには workflow contract が含まれない。Makefile の verify-local-hybrid target を確認して説明 or 実装の整合化 |
 
 ---

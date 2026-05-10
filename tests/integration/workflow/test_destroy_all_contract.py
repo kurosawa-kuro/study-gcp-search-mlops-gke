@@ -124,6 +124,40 @@ def test_recover_wif_handles_soft_delete_undelete() -> None:
     )
 
 
+def test_sync_elasticsearch_step_waits_for_es_health_first() -> None:
+    """2026-05-09 incident: step 10 (`sync-elasticsearch`) ran while ECK was
+    still bootstrapping the ES cluster (Phase=ApplyingChanges, Health=unknown).
+    The HTTP API responded with `Server disconnected without sending a
+    response` and the step failed with no retry, stalling the entire pipeline.
+
+    Pin: `_run_sync_elasticsearch` calls `wait_until_es_healthy()` before
+    invoking `sync_elasticsearch_run`. Times out at 5 min (= ECK Operator
+    stall signal, see `docs/troubleshooting/eck-license-reconcile-stall.md`).
+    """
+    deploy_all_py = _read("scripts/setup/deploy_all.py")
+    es_wait_py = _read("scripts/infra/elasticsearch_wait.py")
+
+    # 1. _run_sync_elasticsearch imports + calls wait_until_es_healthy
+    import re
+
+    body_match = re.search(
+        r"^def _run_sync_elasticsearch\(\) -> int:\n(.*?)(?=^def |\Z)",
+        deploy_all_py,
+        re.MULTILINE | re.DOTALL,
+    )
+    assert body_match, "_run_sync_elasticsearch function not found"
+    body = body_match.group(1)
+    assert "wait_until_es_healthy" in body, (
+        "_run_sync_elasticsearch must call wait_until_es_healthy() before sync_elasticsearch_run "
+        "(2026-05-09 incident: ECK ApplyingChanges → HTTP API unreachable → step fail no retry)"
+    )
+
+    # 2. wait module exists + exports the entrypoint
+    assert "def wait_until_es_healthy(" in es_wait_py
+    # 3. wait module pins green/yellow as the only healthy states
+    assert 'HEALTHY_STATES = ("green", "yellow")' in es_wait_py
+
+
 def test_destroy_all_provides_step_slicing_symmetric_with_deploy_all() -> None:
     """2026-05-09 refactor: destroy-all を step 分離 + slicing 対応にし、deploy-all
     と対称化した。**deploy 側だけ slicing できる非対称が、step 単位リカバリーを

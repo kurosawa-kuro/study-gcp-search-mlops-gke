@@ -152,6 +152,18 @@ def _run_seed_test() -> int:
 
 
 def _run_sync_elasticsearch() -> int:
+    # 2026-05-09 incident: step 9 (apply-manifests) directly followed by
+    # step 10 (sync-elasticsearch) ran while ECK was still bootstrapping the
+    # ES cluster (Phase=ApplyingChanges, Health=unknown). The HTTP API
+    # responded with `Server disconnected without sending a response` and the
+    # step failed with no retry. Add an explicit health wait so the step
+    # only runs once `.status.health` ∈ {green, yellow}. Times out at 5 min
+    # which is the practical signal that ECK Operator is stalled (see
+    # `docs/troubleshooting/eck-license-reconcile-stall.md`).
+    from scripts.infra.elasticsearch_wait import wait_until_es_healthy
+
+    wait_until_es_healthy()
+
     project_id = env("PROJECT_ID")
     es_url = env(
         "ELASTICSEARCH_URL",

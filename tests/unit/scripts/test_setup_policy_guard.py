@@ -59,6 +59,31 @@ def test_makefile_has_canonical_ops_targets() -> None:
     assert "python -m scripts.ops.accuracy_report" in makefile
 
 
+def test_makefile_sync_elasticsearch_passes_required_args() -> None:
+    """2026-05-09 incident: bare `make sync-elasticsearch` failed with
+    `--es-url / ELASTICSEARCH_URL is empty` because the Makefile target did not
+    forward `--project-id` or `--es-url`. The deploy-all path worked because
+    `_run_sync_elasticsearch` builds the args explicitly, but the make target
+    itself was unusable for individual step retry — exactly the slicing
+    workflow user prefers (`細かく確実に`).
+
+    Pin: the make target must forward both args, with `ELASTICSEARCH_URL`
+    falling back to the canonical cluster-local URL.
+    """
+    makefile = _read("Makefile")
+
+    assert "--project-id=$(PROJECT_ID)" in makefile, (
+        "sync-elasticsearch target must forward --project-id from $(PROJECT_ID)"
+    )
+    assert (
+        "ELASTICSEARCH_URL:-http://elasticsearch.search.svc.cluster.local:9200"
+        in makefile
+    ), (
+        "sync-elasticsearch target must use canonical cluster-local URL as fallback "
+        "when ELASTICSEARCH_URL is unset"
+    )
+
+
 def test_seed_and_feature_group_contract_pin_feature_timestamp() -> None:
     seed_minimal = _read("scripts/setup/seed_minimal.py")
     data_tf = _read("infra/terraform/modules/data/main.tf")

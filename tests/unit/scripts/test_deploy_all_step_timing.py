@@ -200,11 +200,18 @@ def test_run_tf_apply_uses_staged_apply_and_waits_for_readiness() -> None:
 
 
 def test_run_sync_elasticsearch_uses_project_and_default_cluster_url() -> None:
+    # 2026-05-10 incident hook: _run_sync_elasticsearch() now calls
+    # wait_until_es_healthy() before sync. Mock the wait so the test does not
+    # invoke real kubectl (which would hang for ~5 min against a destroyed cluster).
     with (
         patch.dict(
             "os.environ",
             {"PROJECT_ID": "mlops-test"},
             clear=False,
+        ),
+        patch(
+            "scripts.infra.elasticsearch_wait.wait_until_es_healthy",
+            return_value="green",
         ),
         patch("scripts.setup.deploy_all.sync_elasticsearch_run", return_value=0) as sync_mock,
     ):
@@ -222,6 +229,10 @@ def test_run_sync_elasticsearch_propagates_nonzero_exit() -> None:
     """sync_elasticsearch.run returns shell-style codes; deploy-all must fail the step."""
     with (
         patch.dict("os.environ", {"PROJECT_ID": "mlops-test"}, clear=False),
+        patch(
+            "scripts.infra.elasticsearch_wait.wait_until_es_healthy",
+            return_value="green",
+        ),
         patch("scripts.setup.deploy_all.sync_elasticsearch_run", return_value=1),
     ):
         assert dall._run_sync_elasticsearch() == 1

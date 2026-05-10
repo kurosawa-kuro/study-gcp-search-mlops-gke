@@ -217,7 +217,9 @@ sync-synonyms: ## Sync synonym dictionary YAML -> Cloud Memorystore for Redis (s
 	uv run python -m scripts.ops.sync_synonyms
 
 sync-elasticsearch: ## Sync feature_mart.properties_cleaned -> Elasticsearch (canonical lexical lane)
-	uv run python -m scripts.ops.sync_elasticsearch
+	uv run python -m scripts.ops.sync_elasticsearch \
+		--project-id=$(PROJECT_ID) \
+		--es-url=$${ELASTICSEARCH_URL:-http://elasticsearch.search.svc.cluster.local:9200}
 
 # ----- App / Job smoke commands (local) -----
 
