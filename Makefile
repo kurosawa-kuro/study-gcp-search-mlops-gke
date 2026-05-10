@@ -72,10 +72,10 @@ export PROJECT_ID REGION API_SERVICE ARTIFACT_REPO VERTEX_LOCATION PIPELINE_ROOT
         ops-vertex-all
 
 help: ## Show this help
-	@uv run python -m scripts.lib.makefile_help $(MAKEFILE_LIST)
+	@uv run python -u -m scripts.lib.makefile_help $(MAKEFILE_LIST)
 
 doctor: ## Verify that prerequisite tools are installed
-	uv run python -m scripts.setup.doctor
+	uv run python -u -m scripts.setup.doctor
 
 # ----- Python workspace -----
 
@@ -109,21 +109,21 @@ typecheck: ## mypy strict
 check: lint fmt-check typecheck test ## Run all CI-equivalent checks
 
 sync-dataform-config: ## Regenerate pipeline/data_job/dataform/workflow_settings.yaml
-	uv run python -m scripts.ci.sync_dataform
+	uv run python -u -m scripts.ci.sync_dataform
 
 sync-configmap: ## Regenerate infra/manifests/search-api/configmap.example.yaml from setting.yaml
-	uv run python -m scripts.ci.sync_configmap
+	uv run python -u -m scripts.ci.sync_configmap
 
 check-layers: ## AST-based layer boundary check (Ports / pure logic must not import concrete adapters or SDKs)
-	uv run python -m scripts.ci.layers
+	uv run python -u -m scripts.ci.layers
 
 # ----- Terraform -----
 
 tf-bootstrap: ## Phase 0: enable APIs + create tfstate bucket (idempotent, needs project owner rights)
-	uv run python -m scripts.setup.tf_bootstrap
+	uv run python -u -m scripts.setup.tf_bootstrap
 
 tf-init: ## terraform init (with tfstate bucket preflight check)
-	uv run python -m scripts.setup.tf_init
+	uv run python -u -m scripts.setup.tf_init
 
 tf-validate: ## terraform validate (backend-less, works offline)
 	terraform -chdir=$(TF_DIR) init -backend=false -upgrade=false >/dev/null
@@ -136,25 +136,25 @@ tf-fmt-fix: ## terraform fmt (writes)
 	terraform -chdir=$(TF_DIR) fmt
 
 tf-plan: ## terraform plan (requires GITHUB_REPO + ONCALL_EMAIL; saves tfplan)
-	uv run python -m scripts.setup.tf_plan
+	uv run python -u -m scripts.setup.tf_plan
 
 setup-model-monitoring: ## Print resolved Vertex Model Monitoring setup payload
-	uv run python -m scripts.setup.setup_model_monitoring
+	uv run python -u -m scripts.setup.setup_model_monitoring
 
 setup-pipeline-schedule: ## Print resolved Vertex Pipeline schedule setup payload
-	uv run python -m scripts.setup.create_schedule
+	uv run python -u -m scripts.setup.create_schedule
 
 apply-manifests: ## Apply infra/manifests via kubectl apply -k
 	kubectl apply -k $(ROOT)/infra/manifests
 
 deploy-all: ## End-to-end provisioning + search-api rollout (tf-apply → kubectl apply -k → overlay-configmap → deploy-api)
-	uv run python -m scripts.setup.deploy_all
+	uv run python -u -m scripts.setup.deploy_all
 
 verify-deploy-all: ## Run deploy-all and aggregate stdout/stderr under logs/verification/
-	uv run python -m scripts.verify.deploy_all
+	uv run python -u -m scripts.verify.deploy_all
 
 state-recover: ## Import orphan GCP resources back into tfstate (緊急 cleanup 後の "alreadyExists" fail 回避、`docs/tasks/TASKS_ROADMAP.md §4.10`)
-	uv run python -m scripts.domain.gcp.state_recovery
+	uv run python -u -m scripts.domain.gcp.state_recovery
 
 ops-deploy-monitor: ## Real-time monitor: runs deploy-all and reports live step/build stall status
 	uv run python -u -m scripts.deploy.monitor --label deploy-monitor
@@ -189,35 +189,35 @@ verify-all: ## Alias of run-all-core for cross-phase teaching vocabulary
 	$(MAKE) run-all-core
 
 destroy-all: ## Tear down every Terraform-managed resource (no prompt — PDCA loop, pair with deploy-all)
-	uv run python -m scripts.setup.destroy_all
+	uv run python -u -m scripts.setup.destroy_all
 
 verify-destroy-all: ## Run destroy-all and aggregate stdout/stderr under logs/verification/
-	uv run python -m scripts.verify.destroy_all
+	uv run python -u -m scripts.verify.destroy_all
 
 verify-live-acceptance: ## Run canonical live acceptance and aggregate logs under logs/verification/
-	uv run python -m scripts.verify.live_acceptance
+	uv run python -u -m scripts.verify.live_acceptance
 
 verify-full-recreate: ## Run destroy-all -> deploy-all -> live acceptance gate and aggregate logs under logs/verification/
-	uv run python -m scripts.verify.full_recreate
+	uv run python -u -m scripts.verify.full_recreate
 
 ops-destroy-check: ## Assert no high-cost residual Phase 7 resources remain after destroy-all
-	uv run python -m scripts.ops.destroy_check --project-id=$(PROJECT_ID) --region=$(REGION) --vertex-location=$(VERTEX_LOCATION)
+	uv run python -u -m scripts.ops.destroy_check --project-id=$(PROJECT_ID) --region=$(REGION) --vertex-location=$(VERTEX_LOCATION)
 
 destroy-phase7-learning: ## Coast-down placeholder: Dataflow Job / Feature Online Store / KServe explain pod
 	@echo "Not implemented yet. See docs/runbook/05_運用.md for current manual coast-down guidance."
 	@exit 1
 
 seed-test: ## Insert 5 test properties for PDCA smoke
-	uv run python -m scripts.setup.seed_minimal
+	uv run python -u -m scripts.setup.seed_minimal
 
 seed-test-clean: ## Drop the test seed data (benign if absent)
-	uv run python -m scripts.setup.seed_minimal_clean
+	uv run python -u -m scripts.setup.seed_minimal_clean
 
 sync-synonyms: ## Sync synonym dictionary YAML -> Cloud Memorystore for Redis (skips when Memorystore not provisioned)
-	uv run python -m scripts.ops.sync_synonyms
+	uv run python -u -m scripts.ops.sync_synonyms
 
 sync-elasticsearch: ## Sync feature_mart.properties_cleaned -> Elasticsearch (canonical lexical lane)
-	uv run python -m scripts.ops.sync_elasticsearch \
+	uv run python -u -m scripts.ops.sync_elasticsearch \
 		--project-id=$(PROJECT_ID) \
 		--es-url=$${ELASTICSEARCH_URL:-http://elasticsearch.search.svc.cluster.local:9200}
 
@@ -276,39 +276,39 @@ kube-creds: ## Fetch kubeconfig for the GKE Autopilot cluster
 	gcloud container clusters get-credentials $${GKE_CLUSTER_NAME:-hybrid-search} --region=$(REGION) --project=$(PROJECT_ID)
 
 deploy-api: ## Cloud Build (kaniko cache) + `kubectl set image` for search-api
-	uv run python -m scripts.deploy.api_gke
+	uv run python -u -m scripts.deploy.api_gke
 
 deploy-api-local: ## ローカル docker buildx + push + rollout (BuildKit cache mount で 2 回目以降が高速)
-	uv run python -m scripts.deploy.api_gke_local
+	uv run python -u -m scripts.deploy.api_gke_local
 
 deploy-kserve-images: ## Cloud Build + image patch for property-encoder/reranker InferenceServices
-	uv run python -m scripts.deploy.build_kserve_images
+	uv run python -u -m scripts.deploy.build_kserve_images
 
 deploy-kserve-images-local: ## Local docker buildx + push + cluster patch for encoder/reranker
-	uv run python -m scripts.deploy.build_kserve_images_local
+	uv run python -u -m scripts.deploy.build_kserve_images_local
 
 deploy-kserve-models: ## Sync Model Registry artifacts into KServe InferenceService
-	uv run python -m scripts.deploy.kserve_models
+	uv run python -u -m scripts.deploy.kserve_models
 
 composer-deploy-dags: ## Upload pipeline/dags/*.py to Composer DAG GCS bucket (Phase 7 W2-4)
-	uv run python -m scripts.deploy.composer_deploy_dags
+	uv run python -u -m scripts.deploy.composer_deploy_dags
 
 build-composer-runner: ## Cloud Build composer-runner image (DAG KubernetesPodOperator runner、V5 fix)
-	uv run python -m scripts.deploy.composer_runner
+	uv run python -u -m scripts.deploy.composer_runner
 
 # Canonical backend remains `gcloud composer environments run ...` wrapped by
 # Python modules so Make targets stay one-line and contract-testable.
 ops-composer-trigger: ## Trigger a Composer DAG manually (DAG=retrain_orchestration etc.)
-	DAG=$(DAG) uv run python -m scripts.ops.composer_dag trigger
+	DAG=$(DAG) uv run python -u -m scripts.ops.composer_dag trigger
 
 ops-composer-list-runs: ## List recent runs of a Composer DAG (DAG=retrain_orchestration etc.)
-	DAG=$(DAG) uv run python -m scripts.ops.composer_dag list-runs
+	DAG=$(DAG) uv run python -u -m scripts.ops.composer_dag list-runs
 
 ops-composer-task-states: ## Task states for latest run (DAG=...) or RUN_ID=manual__...
-	DAG=$(DAG) RUN_ID=$(RUN_ID) uv run python -m scripts.ops.composer_task_states
+	DAG=$(DAG) RUN_ID=$(RUN_ID) uv run python -u -m scripts.ops.composer_task_states
 
 seed-lgbm-model: ## Seed a synthetic LightGBM model into gs://$(MODELS_BUCKET)/lgbm/latest/ (idempotent)
-	uv run python -m scripts.deploy.seed_lgbm_model
+	uv run python -u -m scripts.deploy.seed_lgbm_model
 
 # ----- Housekeeping -----
 
@@ -339,85 +339,85 @@ ops-bq-scan-top: ## Top 20 BQ scans in the last 7 days (cost audit)
 	bq query --use_legacy_sql=false --project_id=$(PROJECT_ID) < scripts/sql/bq_scan_top.sql
 
 ops-recover-wif: ## Manually reconcile WIF pool/provider with Terraform state (PDCA loop safety)
-	uv run python -m scripts.setup.recover_wif
+	uv run python -u -m scripts.setup.recover_wif
 
 ops-train-now: ## Submit train pipeline to Vertex AI
 	uv run python -m pipeline.workflow.compile --target train --output-dir dist/pipelines --submit --project-id $(PROJECT_ID) --location $(VERTEX_LOCATION) --pipeline-root gs://$(PIPELINE_ROOT_BUCKET)/runs --service-account sa-pipeline@$(PROJECT_ID).iam.gserviceaccount.com
 
 ops-train-wait: ## Wait for the latest train pipeline run to reach SUCCEEDED
-	uv run python -m scripts.ops.vertex.pipeline_wait
+	uv run python -u -m scripts.ops.vertex.pipeline_wait
 
 ops-pipeline-run: ## Submit a pipeline manually: TARGET=embed|train PARAM='key=value'
 	uv run python -m pipeline.workflow.compile --target $${TARGET:-train} --output-dir dist/pipelines --submit --project-id $(PROJECT_ID) --location $(VERTEX_LOCATION) --pipeline-root gs://$(PIPELINE_ROOT_BUCKET)/runs --service-account sa-pipeline@$(PROJECT_ID).iam.gserviceaccount.com $${PARAM:+--parameter $$PARAM}
 
 ops-promote-reranker: ## Promote a reranker to `production` alias. Usage: MODEL_ID=N or VERSION_ID=N [BST_RENAME=1] [APPLY=1].
-	uv run python -m scripts.ops.promote reranker
+	uv run python -u -m scripts.ops.promote reranker
 
 ops-promote-encoder: ## Promote an encoder to `production` alias. Usage: MODEL_ID=N or VERSION_ID=N [APPLY=1].
-	uv run python -m scripts.ops.promote encoder
+	uv run python -u -m scripts.ops.promote encoder
 
 ops-reload-api: ## Trigger a rolling restart of search-api Pods to re-read ConfigMap / model URIs
 	kubectl rollout restart deployment/search-api --namespace=search
 
 ops-livez: ## Hit /livez on the deployed search-api (IAM-gated)
-	uv run python -m scripts.ops.livez
+	uv run python -u -m scripts.ops.livez
 
 ops-search: ## POST /search smoke (override QUERY/TOP_K/MAX_RENT env vars)
-	uv run python -m scripts.ops.search
+	uv run python -u -m scripts.ops.search
 
 ops-search-components: ## Strict gate: lexical/semantic/rerank contributions must all be non-zero
-	uv run python -m scripts.ops.search_components
+	uv run python -u -m scripts.ops.search_components
 
 ops-ranking: ## POST /search and inspect lexical_rank / final_rank / score / me5_score
-	uv run python -m scripts.ops.ranking
+	uv run python -u -m scripts.ops.ranking
 
 ops-feedback: ## /search → /feedback round-trip (publisher path smoke)
-	uv run python -m scripts.ops.feedback
+	uv run python -u -m scripts.ops.feedback
 
 ops-label-seed: ## Seed canonical user actions against /search
-	uv run python -m scripts.ops.label_seed
+	uv run python -u -m scripts.ops.label_seed
 
 ops-check-retrain: ## POST /jobs/check-retrain with OIDC; pipe to jq
-	uv run python -m scripts.ops.check_retrain
+	uv run python -u -m scripts.ops.check_retrain
 
 ops-accuracy-report: ## Simple ranking accuracy report on deployed Cloud Run (/search, TARGET=gcp)
-	TARGET=gcp uv run python -m scripts.ops.accuracy_report
+	TARGET=gcp uv run python -u -m scripts.ops.accuracy_report
 
 local-accuracy-report: ## Simple ranking accuracy report against local API (/search, TARGET=local)
-	TARGET=local uv run python -m scripts.ops.accuracy_report
+	TARGET=local uv run python -u -m scripts.ops.accuracy_report
 
 # ----- Phase 6 PMLE ops targets -----
 
 ops-slo-status: ## Phase 6 T5: print current compliance + burn-rate (1h/3d) for availability + latency SLOs
-	uv run python -m scripts.ops.slo_status
+	uv run python -u -m scripts.ops.slo_status
 
 bqml-train-popularity: ## Phase 6 T1: train BQML property-popularity model (BOOSTED_TREE_REGRESSOR)
-	uv run python -m scripts.bqml.train_popularity
+	uv run python -u -m scripts.bqml.train_popularity
 
 # ----- Vertex AI feature verification scripts (each ops target probes one Vertex
 # AI surface in isolation. ops-vertex-all chains them; individual ones are useful
 # when triaging which surface broke.)
 
 ops-vertex-models-list: ## Vertex Model Registry: list versions/aliases for encoder/reranker
-	uv run python -m scripts.ops.vertex.models_list
+	uv run python -u -m scripts.ops.vertex.models_list
 
 ops-vertex-pipeline-status: ## Vertex Pipelines: list latest runs + state (LIMIT=10)
-	uv run python -m scripts.ops.vertex.pipeline_status
+	uv run python -u -m scripts.ops.vertex.pipeline_status
 
 ops-vertex-explain: ## Vertex Explainable AI via /search?explain=true (assert non-empty attributions)
-	uv run python -m scripts.ops.vertex.explain
+	uv run python -u -m scripts.ops.vertex.explain
 
 ops-vertex-monitoring: ## Vertex Model Monitoring: read recent BQ alert rows (LIMIT=10)
-	uv run python -m scripts.ops.vertex.monitoring
+	uv run python -u -m scripts.ops.vertex.monitoring
 
 ops-kserve-monitoring: ## Phase 7 self-managed drift alerts from model_monitoring_alerts (LIMIT=10)
-	uv run python -m scripts.ops.vertex.monitoring
+	uv run python -u -m scripts.ops.vertex.monitoring
 
 ops-vertex-vector-search-smoke: ## Vertex Vector Search: probe find_neighbors against the live serving index
-	uv run python -m scripts.ops.vertex.vector_search
+	uv run python -u -m scripts.ops.vertex.vector_search
 
 ops-vertex-feature-group: ## Vertex Feature Group: fetch online feature values for PROPERTY_ID=p001
-	uv run python -m scripts.ops.vertex.feature_group
+	uv run python -u -m scripts.ops.vertex.feature_group
 
 ops-vertex-all: ops-vertex-models-list ops-vertex-pipeline-status ops-vertex-explain ops-vertex-monitoring ops-vertex-vector-search-smoke ops-vertex-feature-group ## Run every Vertex AI smoke check in sequence
 	@echo "==> all Vertex AI smoke checks completed"

@@ -28,7 +28,7 @@
 | ファイル | 役割 | 本リポの実装 |
 |---|---|---|
 | `TASKS.md` / `TODO.md` | 今 sprint の作業状態 (現在の目的 / やる・やらない / 完了条件) | 全 7 phase の `docs/TASKS.md` (今回新設) |
-| `ROADMAP.md` / 移行計画 | 中長期 backlog | Phase 1-6 = `docs/02_移行ロードマップ.md` / Phase 7 = `docs/tasks/TASKS_ROADMAP.md` (TASKS 系統に rename) / root = `docs/tasks/02_移行ロードマップ.md` (Phase 横断ハブ) |
+| `ROADMAP.md` / 移行計画 | 中長期 backlog | 教育用フェーズ = `docs/02_移行ロードマップ.md` / canonical 構成 = `docs/tasks/TASKS_ROADMAP.md` (TASKS 系統に rename) / root = `docs/tasks/02_移行ロードマップ.md` (Phase 横断ハブ) |
 | `CHANGELOG.md` | リリースごとの変更履歴 | 未使用 (学習リポなので不要) |
 
 ### 1.3 参照型 (関連時のみ読む)
@@ -38,7 +38,7 @@
 | `ARCHITECTURE.md` / `docs/architecture/` | アーキテクチャ | 各 phase の `docs/architecture/01_仕様と設計.md` (機能仕様 + 設計を統合) |
 | `SPEC.md` / `SPECIFICATION.md` | 仕様 | 同上 (`01_仕様と設計.md` に統合) |
 | `CONVENTIONS.md` / `docs/conventions/` | 命名・コード規約 | `docs/conventions/` (命名規約 / フォルダ-ファイル / スクリプト規約 / Makefile規約 / Docker配置規約) |
-| `DECISIONS.md` / `docs/decisions/` (ADR) | 判断履歴 (なぜその設計にしたか) | `docs/decisions/` ADR 0001〜0008 (Phase 1/2/6/7 で稼働) |
+| `DECISIONS.md` / `docs/decisions/` (ADR) | 判断履歴 (なぜその設計にしたか) | `docs/decisions/` ADR 0001〜0008 (教育用フェーズ初期/2/6/7 で稼働) |
 | `CONTRIBUTING.md` | 寄稿ガイド | 未使用 (個人リポ) |
 | `SECURITY.md` | セキュリティポリシー | 未使用 |
 | `docs/RUNBOOK.md` / `docs/runbook/04_運用.md` | 運用手順 | 各 phase の `docs/runbook/04_運用.md` |
@@ -78,9 +78,9 @@
 
 | # | 提案 | 判断 | 反映先 |
 |---|---|---|---|
-| 1 | `CLAUDE.md` 薄型化 | **採用 (部分的)** | Phase 1 CLAUDE.md (142 → 86 行) / Phase 7 CLAUDE.md (151 → 139 行)。Phase 2/3/4/5 は元から薄い (30-35 行) ため変更なし。Phase 6 (179 行) は親 CLAUDE.md が "load-bearing" と明記しており不採用 |
-| 2 | `docs/TASKS.md` 運用 | **採用 (全 7 Phase)** | 全 phase の `docs/TASKS.md` を新設。完了済 phase (1-6) は完了スナップショット形式、アクティブ Phase 7 は current-sprint 形式 (Wave 1 ✅ / Wave 2 🟡 / Wave 3 ⏳) |
-| 3 | `docs/DECISIONS.md` 追加 | **既に先行実装済 (Phase 6/7)** | Phase 6/7 の `docs/decisions/` に ADR 0001〜0008 が稼働中。Phase 3/4/5 への展開は user 判断で見送り (実際に判断履歴が必要になった時点で追加する遅延運用) |
+| 1 | `CLAUDE.md` 薄型化 | **採用 (部分的)** | 教育用フェーズ初期 CLAUDE.md (142 → 86 行) / canonical 構成 CLAUDE.md (151 → 139 行)。seed 期/4/5 は元から薄い (30-35 行) ため変更なし。Composer なし派生 (179 行) は親 CLAUDE.md が "load-bearing" と明記しており不採用 |
+| 2 | `docs/TASKS.md` 運用 | **採用 (全 7 Phase)** | 全 phase の `docs/TASKS.md` を新設。完了済 phase (1-6) は完了スナップショット形式、アクティブ canonical 構成 は current-sprint 形式 (Wave 1 ✅ / Wave 2 🟡 / Wave 3 ⏳) |
+| 3 | `docs/DECISIONS.md` 追加 | **既に先行実装済 (Composer なし派生/7)** | Composer なし派生/7 の `docs/decisions/` に ADR 0001〜0008 が稼働中。seed 期/4/5 への展開は user 判断で見送り (実際に判断履歴が必要になった時点で追加する遅延運用) |
 | 4 | Plan Mode 運用ルール | **採用 (運用慣習として、リポ docs には書かない)** | リポ側の docs ではなく Claude Code の `MEMORY.md` フィードバック層が自然 (新規ドキュメント化はしない) |
 | 5 | `/compact` 運用 | **採用 (恒久情報は docs に書く方針)** | 会話圧縮は `/compact`、恒久的な設計判断は `docs/decisions/` ADR、作業進捗は `docs/TASKS.md`、仕様は `docs/architecture/01_仕様と設計.md` で棲み分け |
 | 6 | 軽微修正は Copilot / 手修正 | **採用 (運用慣習)** | リポ side-effect なし |
@@ -111,11 +111,11 @@ docs/02_移行ロードマップ.md  > docs/TASKS.md  > docs/01_仕様と設計.
 (長期 backlog/index)        (current-sprint)  (機能仕様+設計)         (入口)       (Claude 向けガイド)
 ```
 
-恒久的な判断履歴は `docs/decisions/` (Phase 1/2/6/7 で稼働、ADR 形式)。
+恒久的な判断履歴は `docs/decisions/` (教育用フェーズ初期/2/6/7 で稼働、ADR 形式)。
 
 ### 2.4 検証 (新セッションでの体感確認)
 
-ユーザ本人が新セッションを Phase 7 ルートで開き「次にやることは?」と聞いたとき、Claude が `docs/TASKS.md` を最初に読みに行くか手動確認するのが最も実効的。
+ユーザ本人が新セッションを canonical 構成 ルートで開き「次にやることは?」と聞いたとき、Claude が `docs/TASKS.md` を最初に読みに行くか手動確認するのが最も実効的。
 
 ### 2.5 ファイル名・配置の補足
 

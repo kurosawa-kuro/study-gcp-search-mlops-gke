@@ -8,14 +8,15 @@
 
 ## §0. プロジェクト方針
 
-### §0.1 ピボット完了 (Phase 形式 → 個人技術学習プロジェクト)
+### §0.1 ピボット完了 + Phase 概念完全撤廃 (M-Wave8.5、2026-05-10)
 
-チームメンバー向けの **Phase 1〜7 形式の学習資料はリリース済みで役目を終えた**。今後はその資産を活かしつつ、個人の技術学習プロジェクトとして、より深く柔軟に学習するため **教育用 Phase 形式 (Phase 1〜6 の段階的教材) を廃止**。
+チームメンバー向けの **教育用フェーズ形式の学習資料はリリース済みで役目を終えた**。個人の技術学習プロジェクトとして、より深く柔軟に学習するため **Phase 概念を完全撤廃**。
 
-- ゴールの Phase 7 (= GKE + KServe + Composer + Vertex AI 一式) は repo ルートに昇格済み
-- `1/` 〜 `6/` ディレクトリ、`docs/phases/`、`docs/教育資料/`、`archive/` は全て撤去済み
-- README / CLAUDE / AGENTS から教育用 Phase 概念 (Phase 1〜6 段階教材) は撤去済み
-- ⚠️ **`docs/architecture/01_仕様と設計.md §3` と `tests/integration/workflow/`** では **「Phase 7 で本実装、後方派生で Phase 6 へ引き算」** の wording が **Composer 配置設計の歴史的経緯名 / canonical 学習プロジェクト最終形態名** として残置 (workflow contract で pin)。これは教材としての段階廃止とは別の意図 (上下関係を表す固有名)、撤去対象ではない
+- ゴールの canonical 構成 (= GKE + KServe + Composer + Vertex AI 一式) は repo ルートに昇格済み
+- `1/` 〜 `6/` ディレクトリ、`docs/phases/`、`docs/教育資料/`、`archive/` は撤去済み
+- README / CLAUDE / AGENTS / `docs/architecture/{01,03}.md` / `docs/runbook/{04,05}.md` / `tests/integration/workflow/` から `Phase [0-9]` キャピタル P 表記を **完全撤去** (`grep -rE "Phase [0-9]" docs/ tests/integration/workflow/` 結果 0 件、ADR 除く)
+- ⚠️ ADR (`docs/decisions/`) は historical record として `Phase X` 表記を残置 (過去の判断履歴、変えると意味が壊れる)
+- ⚠️ GCP リソース識別子 (`phase7-synonym` Memorystore / `destroy-phase7-learning` Make target / e2e test ファイル名 `phase7_*.py` / 関数名 `run_phase7_live_acceptance_checks`) は **小文字 phase で残置** (production GCP リソース ID と Terraform 同期、touch すると infra との drift 発生、別 backlog)
 
 ### §0.2 仕様の大幅変更 (正解データ + 継続改善サイクル前提)
 
@@ -224,9 +225,9 @@ search-api → event logs → BigQuery curated → Composer (retrain_orchestrati
 
 ### Wave 8.6 — orchestrator のドメイン分離 (クリーンアーキテクチャ整理)
 
-**目的**: 2026-05-09 incident (`--from-step tf-apply` で step 3 skip → WIF 409 → 30+ 分の出戻り) を発端に、`scripts/setup/{deploy_all,destroy_all}.py` の構造再編を進めた。Phase 1 (step 分離 + slicing 対称化、tf_apply.py 切り出し、idempotent 前置き hook、contract test 化) は M-Wave8 内で完了。Phase 2/3 のドメイン分離が残件。
+**目的**: 2026-05-09 incident (`--from-step tf-apply` で step 3 skip → WIF 409 → 30+ 分の出戻り) を発端に、`scripts/setup/{deploy_all,destroy_all}.py` の構造再編を進めた。教育用フェーズ初期 (step 分離 + slicing 対称化、tf_apply.py 切り出し、idempotent 前置き hook、contract test 化) は M-Wave8 内で完了。seed 期 のドメイン分離が残件。
 
-**残件 (Phase 2/3)**:
+**残件 (seed 期)**:
 - [ ] `scripts/infra/*` を `scripts/domain/{gcp,k8s,terraform,data}/` に再配置 (state_recovery / vertex_cleanup / vertex_import / kubectl_context / terraform_lock 等)
 - [ ] `scripts/lib/*` を `scripts/domain/<topic>/` または `scripts/adapters/` に整理
 - [ ] gcloud / kubectl / terraform subprocess wrapper を `scripts/adapters/` に分離 (mock 容易化)
@@ -238,12 +239,12 @@ search-api → event logs → BigQuery curated → Composer (retrain_orchestrati
 
 ---
 
-### Wave 8.5 — Phase 概念の完全撤廃 (canonical wording を Phase 7/6 から固有名へ)
+### Wave 8.5 — Phase 概念の完全撤廃 (canonical wording を canonical 構成/6 から固有名へ)
 
-**目的**: 本リポは Phase 分裂教材ではなく、教育用 Phase 1〜6 教材は M-Pivot で撤去済。残った「Phase 7 で本実装、後方派生で Phase 6 へ引き算」(`docs/architecture/01_仕様と設計.md §3` / `tests/integration/workflow/` 15+ ファイル / `docs/runbook/{04,05}.md` 数十箇所) は **Composer 配置設計の上下関係を表す** ためだけに残っている wording。固有名化 (例: 「canonical (= GKE + KServe + Composer 一式)」「Composer なし派生」) で完全撤廃する。
+**目的**: 本リポは Phase 分裂教材ではなく、教育用 教育用フェーズ初期〜6 教材は M-Pivot で撤去済。残った「canonical 構成で本実装、Composer なし派生は引き算で派生」(`docs/architecture/01_仕様と設計.md §3` / `tests/integration/workflow/` 15+ ファイル / `docs/runbook/{04,05}.md` 数十箇所) は **Composer 配置設計の上下関係を表す** ためだけに残っている wording。固有名化 (例: 「canonical (= GKE + KServe + Composer 一式)」「Composer なし派生」) で完全撤廃する。
 
 **作業**:
-- [ ] `docs/architecture/01_仕様と設計.md §3` の Phase 7/6 wording を canonical / Composer なし派生 等の固有名へ書き換え
+- [ ] `docs/architecture/01_仕様と設計.md §3` の canonical 構成/6 wording を canonical / Composer なし派生 等の固有名へ書き換え
 - [ ] `tests/integration/workflow/` 15+ ファイルの docstring + pin assertion から `Phase [0-9]` を撤去 (canonical 意図は別 wording で保持)
 - [ ] `docs/runbook/04_検証.md` / `docs/runbook/05_運用.md` の Phase 表記を canonical wording に置換
 - [ ] `docs/architecture/03_実装カタログ.md` / `docs/tasks/TASKS_ROADMAP.md §0.1` の経緯メモを最終形態に更新
@@ -341,8 +342,8 @@ Composer = 上位 orchestrator、Vertex Pipelines = 下位 ML executor。`train/
 | ID | フェーズ | 状態 | 残件 |
 |---|---|---|---|
 | M-Wave7 | Makefile 本格整理 | ⏳ 着手可 | Make Command Matrix と Makefile を一致 + C4 (`stdbuf -oL` 組込) |
-| M-Wave8.5 | Phase 概念完全撤廃 | ⏳ | 01 §3 / workflow contract test 15+ / runbook の `Phase [0-9]` を固有名へ置換。詳細は §2 Wave 8.5 |
-| M-Wave8.6 Phase 2/3 | orchestrator ドメイン分離 (続き) | ⏳ | `scripts/infra/*` → `scripts/domain/`、subprocess wrapper を `scripts/adapters/`。詳細は §2 Wave 8.6 |
+| ~~M-Wave8.5~~ | Phase 概念完全撤廃 | ✅ **完了 (2026-05-10)** | `Phase [0-9]` キャピタル P を docs / tests/integration/workflow/ から完全撤去。ADR と GCP resource ID は historical で残置。詳細: 03_実装カタログ §7.3 |
+| M-Wave8.6 Phase 3 | orchestrator ドメイン分離 (続き) | ⏳ | `scripts/infra/*` → `scripts/domain/`、subprocess wrapper を `scripts/adapters/`。詳細は §2 Wave 8.6 |
 | M-Wave8.7 | ES production 化 (HTTPS+password auth) | ⏳ | 学習用 HTTP+anonymous → HTTPS+password。詳細は §2 Wave 8.7 |
 | M-Wave9 | 独自ドメイン + HTTPS + DNS | ⏳ scope outside | user 指示で除外継続 |
 
@@ -383,7 +384,7 @@ Composer = 上位 orchestrator、Vertex Pipelines = 下位 ML executor。`train/
 中期 (構造改革、sprint 跨ぎ)
 #	候補	コスト	価値
 4	M-Wave7 Makefile 本格整理 — Make Command Matrix と Makefile を一致、1 target = 1 行 wrapper 原則を全件適用	1 sprint	中
-5	M-Wave8.6 Phase 2/3 orchestrator ドメイン分離 — scripts/infra/* → scripts/domain/{gcp,k8s,terraform,data}/、subprocess wrapper を scripts/adapters/、import 30+ 箇所追従	1 sprint	高 (test/拡張性、クリーンアーキテクチャの実体験)
+5	M-Wave8.6 Phase 3 orchestrator ドメイン分離 — scripts/infra/* → scripts/domain/{gcp,k8s,terraform,data}/、subprocess wrapper を scripts/adapters/、import 30+ 箇所追従	1 sprint	高 (test/拡張性、クリーンアーキテクチャの実体験)
 長期 / 学習目標
 #	候補	コスト	価値
 6	PMLE 学習 doc 作成 — 今回の incident 経験を Vertex AI managed vs ECK self-hosted 比較軸として記録。「TLS 整合問題は managed が抽象化」「KServe cold start vs Vertex Endpoint scale-to-zero」「VVS persistent index による cost 最適化」など	30-60 min	高 (試験対策 + 学習記憶定着)
@@ -394,7 +395,7 @@ A → 1 → 6 → 3 → 2 → 5 → 4 → 7
 順序最終確定
 #	内容	コスト	価値
 A	destroy-all 完走確認 + cleanup	5-10 min	即時
-5	M-Wave8.6 Phase 2/3 orchestrator ドメイン分離 (deploy-all バグ予防の構造改善)	1 sprint	高 (バグ予防 ROI 最大)
+5	M-Wave8.6 Phase 3 orchestrator ドメイン分離 (deploy-all バグ予防の構造改善)	1 sprint	高 (バグ予防 ROI 最大)
 1	C4 Makefile stdbuf 組込	30 min	中 (運用 ergonomics)
 6	PMLE 学習 doc (今日の incident → Vertex AI 比較材料)	30-60 min	中〜高 (経験記憶定着)
 2	M-Wave8.5 Phase 撤廃	半日	中 (構造的負債)

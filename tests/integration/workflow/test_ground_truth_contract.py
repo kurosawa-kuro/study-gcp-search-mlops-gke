@@ -1,6 +1,6 @@
-"""Workflow contract for Phase 7 ground-truth data path.
+"""Workflow contract for canonical 構成 ground-truth data path.
 
-Pins the canonical path introduced from Phase 3:
+Pins the canonical path introduced from seed 期:
 
 1. `/search` emits `search_events` and `search_impressions`
 2. `/feedback` emits `user_actions`

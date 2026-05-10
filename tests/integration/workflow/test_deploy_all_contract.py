@@ -1,4 +1,4 @@
-"""Phase 7 workflow contract — `make deploy-all` step sequence + ordering.
+"""canonical 構成 workflow contract — `make deploy-all` step sequence + ordering.
 
 Pin the one-shot PDCA path, ConfigMap overlay → live Vertex outputs, the
 `make run-all-core` validation order, and the local-boot ADC-free contract.
@@ -43,7 +43,7 @@ def test_deploy_all_step_sequence_pins_one_shot_pdca_contract() -> None:
         "overlay-configmap",
         "composer-deploy-dags",
         "deploy-api",
-    ], "deploy-all drifted from the Phase 7 one-shot PDCA path"
+    ], "deploy-all drifted from the canonical 構成 one-shot PDCA path"
     assert [step.number for step in steps] == list(range(1, 16))
 
 

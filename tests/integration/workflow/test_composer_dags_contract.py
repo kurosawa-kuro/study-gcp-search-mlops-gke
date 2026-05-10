@@ -1,4 +1,4 @@
-"""Phase 7 workflow contract — Composer DAG file structural validity.
+"""canonical 構成 workflow contract — Composer DAG file structural validity.
 
 Pin DAG file syntax / dag_id == filename / 5-field cron / >=30min stagger /
 KFP 2.16 module-level import 回避 / referenced scripts existence /

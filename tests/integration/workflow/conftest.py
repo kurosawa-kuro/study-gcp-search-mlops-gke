@@ -1,4 +1,4 @@
-"""Shared fixtures + helpers for Phase 7 workflow contract tests.
+"""Shared fixtures + helpers for canonical 構成 workflow contract tests.
 
 Tests are split into themed files under `tests/integration/workflow/`:
 
@@ -14,7 +14,7 @@ Tests are split into themed files under `tests/integration/workflow/`:
   (schedule / dag_id / KFP 2.16 回避 / script reference)
 - `test_vertex_resources_contract.py` — Vertex Vector Search / Feature Online
   Store / 軽量 trigger 格下げ
-- `test_infra_apis_contract.py` — Phase 7 module ↔ API enablement / region
+- `test_infra_apis_contract.py` — canonical 構成 module ↔ API enablement / region
   consistency / GKE 2-stage apply / manifest image lifecycle / ops-vertex-all
 - `test_docs_canonical_contract.py` — docs canonical wording / cost estimate
 - `test_composer_gcloud_json_contract.py` — gcloud stdout → ``[{`` JSON extraction

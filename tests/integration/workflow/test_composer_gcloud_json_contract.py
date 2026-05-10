@@ -1,4 +1,4 @@
-"""Phase 7 workflow contract — gcloud Composer stdout → JSON array.
+"""canonical 構成 workflow contract — gcloud Composer stdout → JSON array.
 
 Incident (2026-05): ``gcloud composer environments run`` mixes log lines and
 ``Executing the command: [ airflow ... ]`` before the real payload. A naive

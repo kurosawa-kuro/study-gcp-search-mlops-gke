@@ -55,8 +55,8 @@ def test_makefile_has_canonical_ops_targets() -> None:
     assert "ops-search-components:" in makefile
     assert "ops-accuracy-report:" in makefile
     assert "local-accuracy-report:" in makefile
-    assert "python -m scripts.ops.search_components" in makefile
-    assert "python -m scripts.ops.accuracy_report" in makefile
+    assert "python -u -m scripts.ops.search_components" in makefile
+    assert "python -u -m scripts.ops.accuracy_report" in makefile
 
 
 def test_makefile_sync_elasticsearch_passes_required_args() -> None:

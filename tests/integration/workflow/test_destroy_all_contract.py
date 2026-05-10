@@ -1,4 +1,4 @@
-"""Phase 7 workflow contract — `make destroy-all` teardown + reproducibility.
+"""canonical 構成 workflow contract — `make destroy-all` teardown + reproducibility.
 
 Pin the destroy ordering, the Vertex Endpoint deployed-model undeploy, the
 Vector Search deployed-index undeploy guard (PDCA reproducibility),
@@ -313,7 +313,7 @@ def test_destroy_all_persists_vvs_index_and_endpoint() -> None:
 
 
 def test_no_vertex_pipeline_job_schedule_resource_in_terraform() -> None:
-    """カニバリ NG: Vertex `PipelineJobSchedule` は Phase 7 で完全撤去
+    """カニバリ NG: Vertex `PipelineJobSchedule` は canonical 構成 で完全撤去
     (docs/01 §3.6)。Composer DAG schedule との二重起動を防ぐ。"""
     from tests.integration.workflow.conftest import REPO_ROOT
 
@@ -324,7 +324,7 @@ def test_no_vertex_pipeline_job_schedule_resource_in_terraform() -> None:
         for forbidden in forbidden_patterns:
             assert forbidden not in text, (
                 f"{tf_file.relative_to(REPO_ROOT)} contains forbidden {forbidden!r} "
-                "(Phase 7 W2-4 で撤去済、§3.6 カニバリ NG で再導入禁止)"
+                "(W2-4 で撤去済、§3.6 カニバリ NG で再導入禁止)"
             )
 
 

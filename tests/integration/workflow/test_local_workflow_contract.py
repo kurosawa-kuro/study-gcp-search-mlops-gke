@@ -1,4 +1,4 @@
-"""Phase 7 workflow contract - local verification path and canonical endpoint wiring.
+"""canonical 構成 workflow contract - local verification path and canonical endpoint wiring.
 
 This file guards the fast local loop that should stay independent from the
 live-GCP ``deploy-all`` / ``run-all`` path while still exercising the same

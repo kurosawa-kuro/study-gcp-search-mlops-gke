@@ -1,6 +1,6 @@
 # tests/integration/workflow/
 
-Phase 7 の **workflow contract** を pin する pytest 群。
+canonical 構成 の **workflow contract** を pin する pytest 群。
 
 `unit/` が pure logic、`parity/` が lock-step 不変条件を守るのに対して、
 ここは **「PDCA 本線がまだ 1 発で成立するか」** を構造的に守る。

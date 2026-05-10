@@ -57,7 +57,7 @@ kubectl logs -n elastic-system $(kubectl get pods -n elastic-system -l control-p
 make destroy-all
 ```
 
-新 step 分離後 (`docs/architecture/03_実装カタログ.md §7.3 M-Wave8.6 Phase 1`) は 8 step を順次実行。`--from-step` / `--to-step` で 段階的にも可能。
+新 step 分離後 (`docs/architecture/03_実装カタログ.md §7.3 M-Wave8.6 教育用フェーズ初期`) は 8 step を順次実行。`--from-step` / `--to-step` で 段階的にも可能。
 
 ### 3. cost stop 確認
 
@@ -96,7 +96,7 @@ ML pipeline の reconcile stall 系一般に転用できる思考:
 ## 関連
 
 - 設計判断: `docs/tasks/TASKS_ROADMAP.md §3.1` (ゴール劣化禁止) / §4.9 (VVS 永続化 lessons learned)
-- destroy-all step 分離: `docs/architecture/03_実装カタログ.md §7.3` M-Wave8.6 Phase 1
+- destroy-all step 分離: `docs/architecture/03_実装カタログ.md §7.3` M-Wave8.6 教育用フェーズ初期
 - 過去の類似 cost-cut 判断: `docs/tasks/TASKS_ROADMAP.md §4.10` (state recovery 12 type 拡張)
 
 ---

@@ -1,4 +1,4 @@
-"""Elasticsearch workflow contract for Phase 7 canonical lexical lane.
+"""Elasticsearch workflow contract for canonical 構成 canonical lexical lane.
 
 Guard rails for regressions where deploy/run flows stop syncing lexical docs
 or drift back to removed Meilisearch-era wiring.
@@ -16,7 +16,7 @@ def test_makefile_exposes_sync_elasticsearch_canonical_target() -> None:
     assert (
         "sync-elasticsearch: ## Sync feature_mart.properties_cleaned -> Elasticsearch" in makefile
     )
-    assert "uv run python -m scripts.ops.sync_elasticsearch" in makefile
+    assert "uv run python -u -m scripts.ops.sync_elasticsearch" in makefile
 
 
 def test_run_all_core_keeps_sync_elasticsearch_before_search_smokes() -> None:

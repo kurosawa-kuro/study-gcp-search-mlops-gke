@@ -1,4 +1,4 @@
-"""Phase 7 workflow contract — module ↔ API enablement / region consistency /
+"""canonical 構成 workflow contract — module ↔ API enablement / region consistency /
 GKE 2-stage apply / search-api manifest image lifecycle / ops-vertex-all.
 
 長時間 recovery 系の事故 (PERMISSION_DENIED for unenabled API、cross-region

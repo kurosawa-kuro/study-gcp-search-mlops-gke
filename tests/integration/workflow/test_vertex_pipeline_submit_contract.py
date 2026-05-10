@@ -1,4 +1,4 @@
-"""Phase 7 workflow contract — Vertex submit/wait use canonical project resolution.
+"""canonical 構成 workflow contract — Vertex submit/wait use canonical project resolution.
 
 Incident: ``wait_train_succeeded`` failed when only ``GCP_PROJECT`` was set
 (Composer-injected) while scripts read ``PROJECT_ID`` alone. Pin that

@@ -1,4 +1,4 @@
-"""Phase 7 workflow contract — Vertex Vector Search / Feature Online Store /
+"""canonical 構成 workflow contract — Vertex Vector Search / Feature Online Store /
 legacy serverless trigger 格下げ.
 
 Pin VVS deployed_index_id versioning + replica bound + FOS Feature View source

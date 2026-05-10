@@ -1,4 +1,4 @@
-"""Phase 7 workflow contract — Cloud Composer Terraform module + IAM SA + Make targets.
+"""canonical 構成 workflow contract — Cloud Composer Terraform module + IAM SA + Make targets.
 
 Pin the Composer module skeleton, IAM `sa-composer` SA + roles, dev environment
 wiring (variables / outputs / depends_on), Make target inventory, deploy_all
@@ -20,7 +20,7 @@ from tests.integration.workflow.conftest import read_repo_file as _read
 
 
 def test_composer_module_exists_with_required_files() -> None:
-    """Phase 7 W2-4 Stage 1: `infra/terraform/modules/composer/` 必須 4 ファイル。"""
+    """W2-4 Stage 1: `infra/terraform/modules/composer/` 必須 4 ファイル。"""
     assert COMPOSER_MODULE_DIR.is_dir(), "infra/terraform/modules/composer/ is missing"
     for required in ("main.tf", "variables.tf", "outputs.tf", "versions.tf"):
         assert (COMPOSER_MODULE_DIR / required).is_file(), f"composer module missing {required}"
@@ -320,8 +320,8 @@ def test_makefile_exposes_composer_deploy_dags_and_smoke_targets() -> None:
         assert f"{required_target}:" in makefile, f"Make target {required_target} missing"
         assert required_target in makefile.split(".PHONY")[1]
 
-    assert "uv run python -m scripts.deploy.composer_deploy_dags" in makefile
-    assert "uv run python -m scripts.ops.composer_task_states" in makefile
+    assert "uv run python -u -m scripts.deploy.composer_deploy_dags" in makefile
+    assert "uv run python -u -m scripts.ops.composer_task_states" in makefile
     assert "gcloud composer environments run" in makefile
     assert "COMPOSER_ENV  ?= " in makefile
 
