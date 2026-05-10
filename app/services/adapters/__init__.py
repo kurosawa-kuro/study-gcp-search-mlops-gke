@@ -12,6 +12,7 @@ from .gcs_training_dataset_repository import GcsTrainingDatasetRepository
 from .kserve_encoder import KServeEncoder
 from .kserve_reranker import KServeReranker
 from .publisher import PubSubPublisher
+from .pubsub_event_writer import PubSubEventWriter
 from .pubsub_feedback_recorder import PubSubFeedbackRecorder
 from .pubsub_ranking_log_publisher import PubSubRankingLogPublisher
 from .retrain import BigQueryRetrainQueries, create_retrain_queries
@@ -30,6 +31,7 @@ __all__ = [
     "GcsTrainingDatasetRepository",
     "KServeEncoder",
     "KServeReranker",
+    "PubSubEventWriter",
     "PubSubFeedbackRecorder",
     "PubSubPublisher",
     "PubSubRankingLogPublisher",

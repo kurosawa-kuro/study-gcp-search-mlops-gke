@@ -25,6 +25,24 @@ variable "feedback_events_table_id" {
   default     = "feedback_events"
 }
 
+variable "search_events_table_id" {
+  description = "BQ table ID for canonical search_events (Pub/Sub subscription sink — one row per /search request)"
+  type        = string
+  default     = "search_events"
+}
+
+variable "search_impressions_table_id" {
+  description = "BQ table ID for canonical search_impressions (Pub/Sub subscription sink — one row per exposed candidate)"
+  type        = string
+  default     = "search_impressions"
+}
+
+variable "user_actions_table_id" {
+  description = "BQ table ID for canonical user_actions (Pub/Sub subscription sink — click/detail_view/favorite/request_button_click/request_complete)"
+  type        = string
+  default     = "user_actions"
+}
+
 variable "service_accounts" {
   description = "Map of SA resources emitted by the iam module. Uses .email for bindings."
   type        = any

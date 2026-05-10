@@ -13,6 +13,7 @@
 - M-Wave8.6 Phase 1+2+3 + 後段 caller migration 完了 (orchestrator ドメイン分離 / adapters 構造 / `subprocess.run([cli, ...])` → `cli_run(...)` 全件)
 - M-Wave7 Makefile 本格整理 (Phase Support Matrix 撤去 / `mk/base.mk` 削除 / `deploy-all-direct` + `verify-all` legacy alias 撤去 / `destroy-phase7-learning` → `destroy-coast-down` rename / `phase7-ml-base:local` → `mlops-ml-base:local` / `.SHELLFLAGS pipefail` 追加)
 - GCP リソース ID rename: `phase7-synonym` → `mlops-synonym` (Memorystore + Secret + ExternalSecret)
+- EventWriter Pub/Sub 統一 (canonical 3-table emit silent gap 解消): `PubSubEventWriter` + 3 topic / 3 BQ Subscription / 3 IAM 追加、`CloudLoggingEventWriter` は bootstrap fallback
 - C4 Makefile `python -u -m` 統一 (line buffer 強制、bg-pipe 罠予防)
 - PMLE 学習 doc 8 章新設
 

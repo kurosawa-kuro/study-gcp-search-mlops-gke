@@ -18,6 +18,11 @@ class MessagingSettings(BaseModel):
     ranking_log_topic: str
     feedback_topic: str
     retrain_topic: str
+    # canonical 3-table emit (search-api → BQ via Pub/Sub Subscription)。
+    # 全て空のとき build_event_writer は CloudLoggingEventWriter にフォールバック。
+    search_events_topic: str
+    search_impressions_topic: str
+    user_actions_topic: str
 
 
 class KServeSettings(BaseModel):
@@ -46,6 +51,9 @@ class ApiSettings(BaseAppSettings):
     ranking_log_topic: str = "ranking-log"
     feedback_topic: str = "search-feedback"
     retrain_topic: str = "retrain-trigger"
+    search_events_topic: str = "search-events"
+    search_impressions_topic: str = "search-impressions"
+    user_actions_topic: str = "user-actions"
     bq_table_property_embeddings: str = "property_embeddings"
     bq_table_property_features_daily: str = "property_features_daily"
     bq_table_properties_cleaned: str = "properties_cleaned"
@@ -116,6 +124,9 @@ class ApiSettings(BaseAppSettings):
             ranking_log_topic=self.ranking_log_topic,
             feedback_topic=self.feedback_topic,
             retrain_topic=self.retrain_topic,
+            search_events_topic=self.search_events_topic,
+            search_impressions_topic=self.search_impressions_topic,
+            user_actions_topic=self.user_actions_topic,
         )
 
     @cached_property

@@ -36,6 +36,7 @@ def test_container_builder_avoids_gcp_clients_when_search_disabled(
     monkeypatch.setattr("app.container.infra.PubSubPublisher", _forbidden)
     monkeypatch.setattr("app.container.infra.PubSubRankingLogPublisher", _forbidden)
     monkeypatch.setattr("app.container.infra.PubSubFeedbackRecorder", _forbidden)
+    monkeypatch.setattr("app.container.infra.PubSubEventWriter", _forbidden)
 
     container = ContainerBuilder(settings).build()
 

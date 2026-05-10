@@ -18,6 +18,7 @@ from app.services.adapters import (
     BigQueryRetrainQueries,
     CloudLoggingEventWriter,
     GcsTrainingDatasetRepository,
+    PubSubEventWriter,
     PubSubFeedbackRecorder,
     PubSubPublisher,
     PubSubRankingLogPublisher,
@@ -229,9 +230,28 @@ class InfraBuilder:
         )
 
     def build_event_writer(self) -> EventWriter:
+        """Select Pub/Sub adapter when canonical 3 topics are configured.
+
+        Falls back to ``CloudLoggingEventWriter`` only if any topic is empty
+        (= bootstrap before ``module.messaging`` apply, or local-only mode).
+        ``CloudLoggingEventWriter`` does **not** reach BigQuery without a sink,
+        so production must rely on the Pub/Sub path.
+        """
         settings = self._settings
         if not settings.enable_search:
             return NoopEventWriter()
+        messaging = settings.messaging
+        if (
+            messaging.search_events_topic
+            and messaging.search_impressions_topic
+            and messaging.user_actions_topic
+        ):
+            return PubSubEventWriter(
+                project_id=settings.project_id,
+                search_events_topic=messaging.search_events_topic,
+                search_impressions_topic=messaging.search_impressions_topic,
+                user_actions_topic=messaging.user_actions_topic,
+            )
         return CloudLoggingEventWriter()
 
     def build_synonym_expander(self) -> SynonymExpanderPort:

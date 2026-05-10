@@ -158,13 +158,16 @@ module "elasticsearch" {
 module "messaging" {
   source = "../../modules/messaging"
 
-  project_id               = var.project_id
-  region                   = var.region
-  mlops_dataset_id         = module.data.mlops_dataset.dataset_id
-  ranking_log_table_id     = module.data.ranking_log_table.table_id
-  feedback_events_table_id = module.data.feedback_events_table.table_id
-  service_accounts         = module.iam.service_accounts
-  api_external_url         = var.api_external_url
+  project_id                  = var.project_id
+  region                      = var.region
+  mlops_dataset_id            = module.data.mlops_dataset.dataset_id
+  ranking_log_table_id        = module.data.ranking_log_table.table_id
+  feedback_events_table_id    = module.data.feedback_events_table.table_id
+  search_events_table_id      = module.data.search_events_table.table_id
+  search_impressions_table_id = module.data.search_impressions_table.table_id
+  user_actions_table_id       = module.data.user_actions_table.table_id
+  service_accounts            = module.iam.service_accounts
+  api_external_url            = var.api_external_url
 
   depends_on = [
     google_project_service.enabled,

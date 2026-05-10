@@ -20,6 +20,21 @@ resource "google_pubsub_topic" "retrain_trigger" {
   name = "retrain-trigger"
 }
 
+# Canonical 3-table emit (search-api → BQ via BigQuery Subscription).
+# CloudLoggingEventWriter は sink 不在で BQ に到達しなかった silent gap への
+# 構造的対処として追加 (2026-05-10)。
+resource "google_pubsub_topic" "search_events" {
+  name = "search-events"
+}
+
+resource "google_pubsub_topic" "search_impressions" {
+  name = "search-impressions"
+}
+
+resource "google_pubsub_topic" "user_actions" {
+  name = "user-actions"
+}
+
 resource "google_pubsub_topic_iam_member" "api_publish_ranking_log" {
   topic  = google_pubsub_topic.ranking_log.name
   role   = "roles/pubsub.publisher"
@@ -42,6 +57,24 @@ resource "google_pubsub_topic_iam_member" "scheduler_publish_retrain" {
   topic  = google_pubsub_topic.retrain_trigger.name
   role   = "roles/pubsub.publisher"
   member = "serviceAccount:${var.service_accounts.scheduler.email}"
+}
+
+resource "google_pubsub_topic_iam_member" "api_publish_search_events" {
+  topic  = google_pubsub_topic.search_events.name
+  role   = "roles/pubsub.publisher"
+  member = "serviceAccount:${var.service_accounts.api.email}"
+}
+
+resource "google_pubsub_topic_iam_member" "api_publish_search_impressions" {
+  topic  = google_pubsub_topic.search_impressions.name
+  role   = "roles/pubsub.publisher"
+  member = "serviceAccount:${var.service_accounts.api.email}"
+}
+
+resource "google_pubsub_topic_iam_member" "api_publish_user_actions" {
+  topic  = google_pubsub_topic.user_actions.name
+  role   = "roles/pubsub.publisher"
+  member = "serviceAccount:${var.service_accounts.api.email}"
 }
 
 resource "google_pubsub_subscription" "ranking_log_to_bq" {
@@ -70,6 +103,66 @@ resource "google_pubsub_subscription" "search_feedback_to_bq" {
 
   bigquery_config {
     table               = "${var.project_id}.${var.mlops_dataset_id}.${var.feedback_events_table_id}"
+    use_table_schema    = true
+    drop_unknown_fields = true
+    write_metadata      = false
+  }
+
+  ack_deadline_seconds       = 60
+  message_retention_duration = "604800s"
+
+  depends_on = [
+    google_project_iam_member.pubsub_bq_writer,
+    google_project_iam_member.pubsub_bq_metadata_viewer,
+  ]
+}
+
+resource "google_pubsub_subscription" "search_events_to_bq" {
+  name  = "search-events-to-bq"
+  topic = google_pubsub_topic.search_events.name
+
+  bigquery_config {
+    table               = "${var.project_id}.${var.mlops_dataset_id}.${var.search_events_table_id}"
+    use_table_schema    = true
+    drop_unknown_fields = true
+    write_metadata      = false
+  }
+
+  ack_deadline_seconds       = 60
+  message_retention_duration = "604800s"
+
+  depends_on = [
+    google_project_iam_member.pubsub_bq_writer,
+    google_project_iam_member.pubsub_bq_metadata_viewer,
+  ]
+}
+
+resource "google_pubsub_subscription" "search_impressions_to_bq" {
+  name  = "search-impressions-to-bq"
+  topic = google_pubsub_topic.search_impressions.name
+
+  bigquery_config {
+    table               = "${var.project_id}.${var.mlops_dataset_id}.${var.search_impressions_table_id}"
+    use_table_schema    = true
+    drop_unknown_fields = true
+    write_metadata      = false
+  }
+
+  ack_deadline_seconds       = 60
+  message_retention_duration = "604800s"
+
+  depends_on = [
+    google_project_iam_member.pubsub_bq_writer,
+    google_project_iam_member.pubsub_bq_metadata_viewer,
+  ]
+}
+
+resource "google_pubsub_subscription" "user_actions_to_bq" {
+  name  = "user-actions-to-bq"
+  topic = google_pubsub_topic.user_actions.name
+
+  bigquery_config {
+    table               = "${var.project_id}.${var.mlops_dataset_id}.${var.user_actions_table_id}"
     use_table_schema    = true
     drop_unknown_fields = true
     write_metadata      = false
