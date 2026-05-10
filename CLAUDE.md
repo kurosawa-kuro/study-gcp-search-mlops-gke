@@ -114,17 +114,19 @@ tail -30 <output-file> | grep -E "FAILED|Error:|Traceback|exit code [^0]|did not
 
 ヒットした場合は ✅ 報告禁止、原因究明に切り替える。詳細: [`docs/troubleshooting/bg-pipe-fake-exit-zero.md`](docs/troubleshooting/bg-pipe-fake-exit-zero.md)。
 
-推奨パターン (新規 bg 実行時):
+推奨パターン (新規 bg 実行時、2026-05-10 更新):
 
 ```bash
-make foo 2>&1 | tee /tmp/foo.log; exit ${PIPESTATUS[0]}
+bash -c 'set -o pipefail; make foo 2>&1 | stdbuf -oL -eL tee /tmp/foo.log; echo "exit=$?"'
 ```
 
-または:
+これで:
+1. `pipefail` で偽 exit 0 阻止
+2. **`stdbuf -oL`** で line buffer 強制 → block buffer 滞留問題回避 (走行中の visibility 確保)
+3. `tee` で全 output 保存
+4. 末尾 `echo "exit=$?"` で真の exit code を log にも残す
 
-```bash
-bash -c 'set -o pipefail; make foo 2>&1 | tail -100'
-```
+`stdbuf` を抜くと block buffer に 20+ MB 滞留して数十分間 log mtime 更新ゼロ → 「stuck」と誤判定する罠。
 
 ### bg job が予想時間を超えたら proactive に診断 (必須)
 

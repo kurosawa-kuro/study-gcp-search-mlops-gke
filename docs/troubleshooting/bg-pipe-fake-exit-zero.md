@@ -98,6 +98,79 @@ bash -c 'set -o pipefail; make foo 2>&1 | tail -100'
 | 日付 | 事象 | 失われた時間 |
 |---|---|---|
 | 2026-05-10 | step 10 sync-elasticsearch の偽 exit 0 を 3 回見落とし、ECK reconcile stall の root cause 把握まで遅延 | ~30 分 |
+| 2026-05-10 | **`tee` の block buffer で log file が 41 分間 flush せず、stage1 apply が stuck と誤判定しかけた**。実際は Composer creation 待ちで GCP 側は正常進行 | ~10 分 (誤診断と確認時間) |
+
+## tee の block buffer 問題 (visibility ゼロ罠)
+
+### 症状
+
+```bash
+make deploy-all 2>&1 | tee /tmp/deploy-all.log &
+# 41 分後...
+ls -la /tmp/deploy-all.log
+# → mtime: 12:55 (41 分前)、サイズ更新なし
+tail -30 /tmp/deploy-all.log
+# → 41 分前と同じ末尾、何も追記されていない
+```
+
+しかし terraform プロセス自体は alive:
+
+```bash
+ps -o pid,etime,pcpu,wchan -p $(pgrep -f terraform)
+# → ELAPSED 40:30、CPU 0.3%、WCHAN futex_wait_queue
+cat /proc/$(pgrep -f terraform)/io
+# → wchar: 21,835,950 (terraform は 21 MB stdout に書いた)
+```
+
+= terraform は 21 MB stdout に出力済、しかし tee → /tmp/log には 228 KB しか届いてない。
+
+**残り ~20 MB は tee の pipe buffer / 内部 buffer に滞留**。Composer creation のような長時間処理 (10+ 分) では、その間ずっと `Still creating...` が出続けるが flush されない。
+
+### 根本原因
+
+POSIX の標準 buffer 戦略:
+- 出力先が **TTY (端末)** = 行 buffer (改行で flush)
+- 出力先が **pipe / file** = block buffer (4 KB / 8 KB で flush)
+
+`make ... | tee` の場合:
+- `make` の stdout は **pipe** = block buffer
+- block buffer は数十 KB〜数 MB まで溜める実装あり
+- → 短い行が長時間 flush されない
+
+### 対処
+
+**`stdbuf -oL -eL`** で line buffer を強制:
+
+```bash
+make foo 2>&1 | stdbuf -oL -eL tee /tmp/foo.log
+```
+
+または:
+
+```bash
+unbuffer make foo 2>&1 | tee /tmp/foo.log    # tcl-expect の unbuffer
+```
+
+または terraform 限定なら **`-no-color`** で TTY-emulation を切る (もともと色 escape は output 汚染の温床、CI 推奨設定でもある):
+
+```bash
+TF_CLI_ARGS_apply="-no-color" make deploy-all 2>&1 | tee /tmp/log
+```
+
+ただし `-no-color` は色情報が消えるだけで line buffer 化はしない場合あり。最も確実なのは `stdbuf -oL`。
+
+### 推奨パターン更新 (2026-05-10)
+
+```bash
+# bg + line buffer + pipefail + tee
+bash -c 'set -o pipefail; make foo 2>&1 | stdbuf -oL -eL tee /tmp/foo.log; echo "exit=$?"'
+```
+
+これで:
+1. `pipefail` で偽 exit 0 阻止
+2. `stdbuf -oL` で line buffer 化 → 走行中もリアルタイム visibility
+3. `tee` で全 output 保存
+4. 末尾の `echo "exit=$?"` で真の exit code を log にも残す
 
 ## 関連
 
