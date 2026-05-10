@@ -15,7 +15,15 @@ import subprocess
 import sys
 from pathlib import Path
 
-_LOCK_ID_RE = re.compile(r"^\s*ID:\s+(\d+)\s*$", re.MULTILINE)
+# Terraform CLI wraps the lock info table in box-drawing characters (``│``) and
+# ANSI color codes (``\x1b[31m`` etc.). The 2026-05-10 incident showed that the
+# original anchor ``^\s*ID:`` did not match these prefixes — a stale lock could
+# not be parsed even when ``TERRAFORM_STATE_FORCE_UNLOCK=1`` was set, so the
+# auto-recovery silently fell back to "lock ID missing — cannot force-unlock".
+# Fix: strip ANSI first, then anchor on a relaxed line prefix that allows any
+# non-alphanumeric characters (whitespace + ``│`` + residual ANSI bytes).
+_ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-9;]*[a-zA-Z]")
+_LOCK_ID_RE = re.compile(r"^[^A-Za-z0-9]*ID:\s+(\d+)\s*$", re.MULTILINE)
 
 # Opt-in for stale locks only. Checked in order; first set wins.
 _UNLOCK_ENV_NAMES = (
@@ -35,7 +43,14 @@ def should_auto_force_unlock() -> bool:
 
 
 def parse_terraform_lock_id(combined_output: str) -> str | None:
-    m = _LOCK_ID_RE.search(combined_output)
+    """Parse the lock ID from terraform's ``Error acquiring the state lock`` output.
+
+    Strips ANSI color codes before matching so the regex anchor works on lines
+    like ``\\x1b[31m│\\x1b[0m   ID:   1778332028753123`` (terraform CLI default
+    color output, observed 2026-05-10).
+    """
+    cleaned = _ANSI_ESCAPE_RE.sub("", combined_output)
+    m = _LOCK_ID_RE.search(cleaned)
     return m.group(1) if m else None
 
 
