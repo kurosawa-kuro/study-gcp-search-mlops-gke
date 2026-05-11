@@ -1,10 +1,15 @@
-"""canonical 構成 workflow contract — docs canonical wording + cost estimate.
+"""canonical docs contract — section structure + cost estimate + test inventory 整合.
 
-Pin docs/01 §3 canonical wording ("canonical 構成で本実装、後方派生で Composer なし派生 へ
-引き算")、runbook §1.4-bis cost estimate (¥870-1,200 / 3h、当日 destroy 前提)、
-implementation catalog の test inventory 整合。
+2026-05-12 以降の docs 構成:
+- `01_仕様と設計.md` = skeleton (section 見出し + キーワードのみ。詳細は 03 へ集約)
+- `03_実装カタログ.md` = 実装インデックス (現在地 / 実装マップ / API / Data / GCP / Test inventory /
+  Decisions / Completion Log / Milestone Archive / Incident Archive)
+- substantive な不変ルール (Composer 本線 = Vertex PipelineJobSchedule 完全撤去 等) は CLAUDE.md /
+  TASKS_ROADMAP §3 が正本
 
-過去事故: ¥9,000 padding ミス再発防止の contract。
+本 test は (a) 01 が必要 section を保持、(b) 04/05 の canonical gate / PDCA フロー wording 維持、
+(c) 03 の test inventory 整合、(d) runbook §1.4-bis のコスト見積もり (¥870-1,200 / 3h、当日 destroy
+前提 — 過去の ¥9,000 padding ミス再発防止) を pin する。
 """
 
 from __future__ import annotations
@@ -13,18 +18,30 @@ from tests.integration.workflow.conftest import read_repo_file as _read
 
 
 def test_canonical_docs_describe_workflow_contract_goals() -> None:
+    # 2026-05-12 以降の docs 構成: 01 は skeleton (section 見出し + キーワード) に縮約され、
+    # 詳細な実装所在 / 完了ログ / incident は 03 に集約。下記 pin はその新構成に追従。
     spec = _read("docs/architecture/01_仕様と設計.md")
     validation = _read("docs/runbook/04_検証.md")
     operations = _read("docs/runbook/05_運用.md")
     catalog = _read("docs/architecture/03_実装カタログ.md")
+    claude_md = _read("CLAUDE.md")
 
     for required in (
-        "## 8. Workflow Contract が守るべきゴール",
-        "G-W1. PDCA は `deploy-all -> run-all -> destroy-all` の 1 本線で完結する",
-        "G-W4. canonical serving path を検証本線に含める",
-        "FastAPI boot / import / `/livez` 200 は ADC なし local でも成立する",
+        "## 1. 不変条件",
+        "中核",  # 中核5要素 / 中核 5 要素 のどちらの表記でも拾う
+        "ゴール劣化禁止",
+        "## 10. Workflow Contract",
+        "deploy-all -> run-all -> destroy-all",
+        "canonical serving path",
+        "destroy",  # destroy後再現性 / destroy 後再現性
+        "## 11. 実装状態への参照",
     ):
-        assert required in spec, f"spec lost workflow contract requirement: {required}"
+        assert required in spec, (
+            f"spec (01_仕様と設計) lost workflow contract requirement: {required}"
+        )
+    # 01 が薄くなった分、ADC-free /livez boot 契約はコード側 (test_local_boot_contract) と
+    # CLAUDE.md / README が正本になっている。
+    assert "/livez" in claude_md
 
     for required in (
         "G3 | **3 種コンポーネント (load-bearing)**",
@@ -51,21 +68,30 @@ def test_canonical_docs_describe_workflow_contract_goals() -> None:
         "ops/vertex/{models_list,pipeline_status,vector_search,feature_group,monitoring,explain}.py",
     ):
         assert required in catalog, (
-            f"implementation catalog drifted from workflow/test inventory: {required}"
+            f"implementation catalog (03_実装カタログ) drifted from workflow/test inventory: {required}"
         )
 
 
 def test_composer_canonical_doc_section_exists() -> None:
-    """docs/01 §3 が「canonical 構成で本実装、Composer なし派生は引き算で派生」の wording で
-    canonical 起点を宣言していること (Stage 1.1 docs rewrite 結果 pin)。"""
+    """Composer 本線 orchestration の宣言が docs に残っていること。
+
+    01 は skeleton に縮約され「## 4. Composer 本線 orchestration」+ 「禁止事項」だけを残す。
+    substantive な不変ルール (Vertex `PipelineJobSchedule` 完全撤去 = 二重起動禁止) は CLAUDE.md /
+    TASKS_ROADMAP §3.4 が正本なので、そちらで pin する。
+    """
     spec = _read("docs/architecture/01_仕様と設計.md")
-    for required in (
-        "## 3. Cloud Composer の位置づけ (canonical 構成で本実装、Composer なし派生は引き算で派生)",
-        "**canonical 構成 で本線オーケストレーターとして本実装**",
-        "Vertex `PipelineJobSchedule` → **完全撤去**",
-        "### 3.6 canonical / 引き算で派生する Composer なし派生 で禁止する状態",
-    ):
-        assert required in spec, f"docs/01 §3 lost canonical Composer wording: {required!r}"
+    for required in ("## 4. Composer 本線 orchestration", "3 DAG", "禁止事項"):
+        assert required in spec, (
+            f"docs/01 §4 lost Composer 本線 orchestration section: {required!r}"
+        )
+    claude_md = _read("CLAUDE.md")
+    roadmap = _read("docs/tasks/TASKS_ROADMAP.md")
+    assert "完全撤去" in claude_md, (
+        "CLAUDE.md must pin 'Vertex PipelineJobSchedule は完全撤去 (二重起動禁止)'"
+    )
+    assert "PipelineJobSchedule" in roadmap, (
+        "TASKS_ROADMAP must pin the Composer = 上位 / Vertex Pipelines = 下位 / PipelineJobSchedule 併存禁止 rule"
+    )
 
 
 def test_cost_estimate_documented_in_runbook() -> None:
