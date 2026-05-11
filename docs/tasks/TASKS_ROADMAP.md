@@ -40,7 +40,7 @@ Meilisearch を廃止、GKE 上で Elasticsearch (ECK) を稼働。Elastic Cloud
 
 | # | 残 | 関連 | 状態 |
 |---|---|---|---|
-| 1 | M-Wave9 独自ドメイン + HTTPS + DNS (Web 公開基盤) — Step 1-2 (購入 / DNS zone) **完了 2026-05-11**、Step 3-5 コーディング中、Step 6 (smoke) は deploy 後 ([§2 Wave 9](#wave-9--web-公開基盤-独自ドメイン--https--dns)) | §2 Wave 9 | 🔨 着手中 |
+| 1 | M-Wave9 独自ドメイン + HTTPS + DNS (Web 公開基盤) — Step 1-2 (購入 / DNS zone) + Step 3-5 (コード: `module.dns` / gateway certmap+static IP / `_common.resolve_api_target` 公開ドメイン化 / var 配線) **完了 2026-05-11**。残り Step 6 (deploy → `curl -I https://gcp-search-mlops-gke.dev` smoke、cert ACTIVE 確認) のみ ([§2 Wave 9](#wave-9--web-公開基盤-独自ドメイン--https--dns)) | §2 Wave 9 | 🔨 deploy 待ち |
 | 2 | M-Wave8.7 ES production 化 (HTTPS + password auth) — **Step 7-1〜7-5** ([§2 Wave 8.7](#wave-87--es-production-化-https--password-auth)) | §2 Wave 8.7 | ⏸ Wave 9 完了後 (cert + DNS 先) |
 
 実施順は **Wave 9 → Wave 8.7** (cert + DNS が外側、ES auth が内側 — 外側を先に揃えてから内側の認可強化)。両 Wave の具体手順 (gcloud / kubectl / file edit / 検証コマンド) は §2 にステップ展開済。
@@ -69,33 +69,35 @@ Meilisearch を廃止、GKE 上で Elasticsearch (ECK) を稼働。Elastic Cloud
 
 Zone `gcp-search-mlops-gke-dev` (DNS 名 `gcp-search-mlops-gke.dev.`、public、DNSSEC on)。`.dev` は Cloud Domains 購入時に Google 側で NS 委任が自動完了するため別途 NS 書換え不要。Terraform 側は `data "google_dns_managed_zone"` で参照し、record-set のみ管理 (zone は import せず管理外)。確認: `dig NS gcp-search-mlops-gke.dev +short`
 
-#### Step 3 — Gateway: 静的 IP + certmap annotation + hostname 差替え (コード)
+#### Step 3 — Gateway: 静的 IP + certmap annotation + hostname 差替え ✅ コード完了 (2026-05-11)
 
 `infra/manifests/search-api/gateway.yaml`:
 - `spec.addresses: [{type: NamedAddress, value: search-api-ip}]` — `module.dns` の `google_compute_global_address` を pin (ephemeral IP → A record の chicken-and-egg を回避)
-- annotation `networking.gke.io/certmap: search-api-certmap` — Certificate Manager の certmap を bind
+- annotation `networking.gke.io/certmap: search-api-certmap` — Certificate Manager の certmap を bind (実 TLS はこれ)
 - listener `hostname` / HTTPRoute `hostnames` を `gcp-search-mlops-gke.dev` に
-- 旧 `tls.certificateRefs: [Secret search-api-tls]` (self-signed) は削除 → `enable_self_signed_tls=false`
+- listener の `tls.certificateRefs: [Secret search-api-tls]` (self-signed) は **placeholder として残す** — certmap がある時 controller が無視するが、listener が PROGRAMMED になるために必要。`module.kserve` が CN=`var.public_domain` で生成 (`enable_self_signed_tls=true` のまま、`tls_cn=var.public_domain`)
 
 確認: `kubectl get gateway search-api-gateway -n search -o yaml`
 
-#### Step 4 — Certificate Manager (DNS-01 authorization、コード)
+#### Step 4 — Certificate Manager (DNS-01 authorization) ✅ コード完了 (2026-05-11)
 
 新 module `infra/terraform/modules/dns/` で:
-- `google_certificate_manager_dns_authorization` — `gcp-search-mlops-gke.dev` の DNS-01 authorization (LB IP に依存せず発行可能)
-- `google_dns_record_set` (CNAME) — dns_authorization が要求する `_acme-challenge` 相当の検証レコード (`dns_authorization.dns_resource_record` を流し込む)
-- `google_certificate_manager_certificate` (managed) — 上の dns_authorization を参照
+- `google_certificate_manager_dns_authorization` (`location="global"`) — `gcp-search-mlops-gke.dev` の DNS-01 authorization (LB IP に依存せず発行可能)
+- `google_dns_record_set` (CNAME) — dns_authorization が要求する検証レコード (`dns_authorization.dns_resource_record[0].{name,type,data}` を流し込む)
+- `google_certificate_manager_certificate` (managed、`location="global"`) — 上の dns_authorization を参照
 - `google_certificate_manager_certificate_map` + `google_certificate_manager_certificate_map_entry` — hostname `gcp-search-mlops-gke.dev` → cert
 
-GKE Gateway は `networking.gke.io/certmap: <map-name>` annotation で certmap を消費する (classic `google_compute_managed_ssl_certificate` + `pre-shared-certs` は Ingress 用で Gateway API では使えない)。
+GKE Gateway は `networking.gke.io/certmap: <map-name>` annotation で certmap を消費する (classic `google_compute_managed_ssl_certificate` + `pre-shared-certs` は Ingress 用で Gateway API では使えない)。`dns.googleapis.com` を apis.tf に追加 (certificatemanager / networkservices は既存)。
 
-確認: `gcloud certificate-manager certificates describe search-api-cert --project=$PROJECT_ID --format='value(managed.state)'` が `ACTIVE` になるまで待つ (DNS-01 検証 ~数分〜30 min)
+確認 (deploy 後): `gcloud certificate-manager certificates describe search-api-cert --project=$PROJECT_ID --format='value(managed.state)'` が `ACTIVE` になるまで待つ (DNS-01 検証 ~数分〜30 min)
 
-#### Step 5 — A レコードを静的 IP へ (コード)
+#### Step 5 — A レコードを静的 IP へ ✅ コード完了 (2026-05-11)
 
-`infra/terraform/modules/dns/` で `google_dns_record_set` (A) — `gcp-search-mlops-gke.dev.` → `google_compute_global_address.search_api.address`。静的 IP なので Terraform plan 時点で値が確定 (Gateway 起動を待たない)。`AAAA` は IPv6 が要る場合のみ。apex に `CNAME` は張れない。
+`infra/terraform/modules/dns/` の `google_dns_record_set` (A) — `gcp-search-mlops-gke.dev.` → `google_compute_global_address.search_api.address`。静的 IP なので Terraform plan 時点で値が確定 (Gateway 起動を待たない)。`AAAA` は IPv6 が要る場合のみ。apex に `CNAME` は張れない。`module.dns` は `dev/main.tf` で配線、`dev/outputs.tf` に `public_domain` / `gateway_ip_name` / `gateway_ip_address` / `certificate_map_name` / `certificate_name` を expose。
 
-確認: `dig +short gcp-search-mlops-gke.dev`
+確認 (deploy 後): `dig +short gcp-search-mlops-gke.dev`
+
+**Step 3-5 のコード一式 (2026-05-11)**: `env/config/setting.yaml` に `public_domain` / `dns_zone_name` 追加 → Makefile が `-var=public_domain=...` `-var=dns_zone_name=...` を流す (`_common.terraform_var_args()` を canonical な `CANONICAL_TF_VAR_NAMES` 既定にリファクタ、`tf_apply` / `destroy_all` / `recover_wif` / `state_recovery` の caller を `()` 呼びに統一)。`scripts/_common.py::resolve_api_target()` の `TARGET=gcp` を「`PUBLIC_DOMAIN` あり → `https://<domain>` + `verify_tls=True` / なし → Gateway IP fallback」に二段化。`composer/main.tf` の `API_HOST_HEADER` / `API_INSECURE_TLS` 注入と `pipeline/dags/_pod.py` の hardcoded default を撤去 (正規 cert なので不要)。`make check` 818 passed / 2 skipped、`make tf-validate` / `tf-fmt` PASS。新 contract test: `test_public_domain_consistency.py` (gateway.yaml hostname == setting.yaml::public_domain / certmap annotation 存在 / static IP pin / `module.dns` 配線) + `test_resolve_api_target.py` の `TARGET=gcp` セクション書換え。
 
 #### Step 6 — smoke 疎通検証 (deploy 後、runtime)
 
