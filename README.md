@@ -70,7 +70,7 @@ KServe storageUri patch (新 model artifact 反映)
 | モデル管理 | Vertex Model Registry (`staging` / `production` alias) |
 | 監視 | Cloud Monitoring + Vertex Model Monitoring + GMP `PodMonitoring` + SLO (custom_service `k8s_service` 型) + burn-rate alert |
 | serving 層 | GKE Autopilot Deployment (`search-api`) + KServe InferenceService (`property-encoder` / `property-reranker`)。公開 URL `https://gcp-search-mlops-gke.dev` |
-| 公開ドメイン / TLS | Cloud Domains 取得ドメイン `gcp-search-mlops-gke.dev` + Cloud DNS public zone `gcp-search-mlops-gke-dev` + Certificate Manager (DNS-01 authorization、`networking.gke.io/certmap`) + 予約グローバル外部 IP。`.dev` TLD は HSTS preload 強制。`infra/terraform/modules/dns/` |
+| 公開ドメイン / TLS | Cloud Domains 取得ドメイン `gcp-search-mlops-gke.dev` + Cloud DNS public zone `gcp-search-mlops-gke-dev` + Certificate Manager (DNS-01 authorization、`networking.gke.io/certmap`) + 予約グローバル外部 IP。`.dev` TLD は HSTS preload 強制。`infra/terraform/modules/dns/`。✅ 2026-05-11 deploy + cert `managed.state=ACTIVE` + `https://.../api/v1/search` 200 確認済 |
 | 認可 | Gateway API (`gke-l7-global-external-managed`) + IAP (外部) + NetworkPolicy (内部: search → kserve-inference のみ許可) |
 | Secret 管理 | GCP Secret Manager + External Secrets Operator (K8s Secret 自動同期) |
 | IaC | Terraform 1.9+ (14 modules) + Helm provider |
@@ -180,11 +180,13 @@ make verify-local-hybrid       # workflow contract + 上記 2 つ
 
 ```bash
 make deploy-all                # 15 step (tf-bootstrap → 2 段階 apply → seed → elasticsearch-sync → composer-deploy-dags → deploy-api)
-make run-all                   # canonical validation 12 step
-make destroy-all               # no-prompt teardown (4 段)
+make run-all                   # canonical validation 16 step (= run-all-core; orchestrator: scripts/ops/run_all.py)
+make destroy-all               # no-prompt teardown (8 step)
 ```
 
-詳細は [`docs/runbook/05_運用.md`](docs/runbook/05_運用.md) と [`docs/runbook/04_検証.md`](docs/runbook/04_検証.md) を参照。
+`deploy-all` / `run-all` / `destroy-all` は各 step の wall time を `logs/step_timings.csv` (gitignore、`flow` カラム付き) に記録し、起動時に過去 run の median から ETA + 重い step トップ3 を表示する (`scripts/lib/step_timing.py`)。詳細は [`docs/runbook/05_運用.md`](docs/runbook/05_運用.md) と [`docs/runbook/04_検証.md`](docs/runbook/04_検証.md) を参照。
+
+> **実装状態 (2026-05-11)**: M-Wave9 公開ドメイン (`https://gcp-search-mlops-gke.dev` + Certificate Manager) **全 Step 完了** — `make deploy-all` 15/15 完走 / cert `managed.state=ACTIVE` / `make ops-search TARGET=gcp` HTTPS 200 / `make run-all-core` 16/16 完走 (`ndcg=hit_rate=mrr=1.0`)。詳細は [`docs/architecture/03_実装カタログ.md §6 / §7.3`](docs/architecture/03_実装カタログ.md)。
 
 ---
 

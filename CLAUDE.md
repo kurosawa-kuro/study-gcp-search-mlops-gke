@@ -64,10 +64,14 @@ make build-all-local           # = ml-base → search-api / property-encoder / p
 
 # Cloud canonical (実 GCP)
 make deploy-all                # 15 step (tf-bootstrap → 2 段階 apply → seed → sync-elasticsearch → composer-deploy-dags → deploy-api)
-make run-all                   # canonical validation 12 step
+make run-all                   # canonical validation 16 step (= run-all-core; orchestrator: scripts/ops/run_all.py)
 make destroy-all               # no-prompt teardown (8 step、--from-step/--to-step で slicing 可)
 make ops-search                # /api/v1/search smoke (TARGET=gcp なら https://gcp-search-mlops-gke.dev へ)
+# deploy-all / run-all / destroy-all は各 step の wall time を logs/step_timings.csv (gitignore、flow カラム) に記録し
+# 起動時に過去 run の median から ETA + 重い step トップ3 を表示する (scripts/lib/step_timing.py)
 ```
+
+> **実装状態 (2026-05-11)**: M-Wave9 公開ドメイン (`https://gcp-search-mlops-gke.dev` + Certificate Manager) **全 Step 完了** — `make deploy-all` 15/15 / cert `managed.state=ACTIVE` / `make ops-search TARGET=gcp` HTTPS 200 / `make run-all-core` 16/16 (`ndcg=hit_rate=mrr=1.0`)。詳細は `docs/architecture/03_実装カタログ.md §6 / §7.3 / §7.4`。
 
 ## current sprint の正本 (`docs/tasks/TASKS.md`)
 
@@ -160,6 +164,13 @@ pgrep -af <stuck child>     # kubectl / terraform 等の child が hang して�
    grep -rn "<関数名>" tests/  # 呼んでる箇所を全件確認
    ```
 3. **foreground で 1 度走らせて** PASS 確認してから bg 化
+
+### deploy/destroy 専用 callsite は `make check` で踏まれない (2026-05-11 incident 反映)
+
+`make check` の `mypy` は `app ml pipeline` のみ、`pytest` も `terraform`/`gcloud`/`kubectl` を実際には呼ばないため、`scripts/setup/*` `scripts/domain/*` の **deploy/destroy 専用 callsite** はテストで一切踏まれない。M-Wave8.6 reorg がそこに残した 5 件 (`tf_plan.py` の `terraform_var_args()` 漏れ / stdlib `subprocess.run(..., capture=True)` ×3 / `parents[2]` の階層ずれ) は `make deploy-all` を 3 回叩いて 1 件ずつ表面化した (詳細: `docs/architecture/03_実装カタログ.md §7.4`)。対策:
+
+1. **危険な書き方そのものを全域禁止する AST-scan guard test を置く**: `tests/unit/scripts/test_subprocess_run_kwargs_guard.py` (= `subprocess.run(..., capture=...)` を `scripts/app/ml/pipeline` 全域で禁止)、`tests/unit/scripts/test_repo_relative_paths.py` (= `Path(__file__).resolve().parents[N] / "<top-level dir>"` が実在 dir を指すか)。新しい類の罠を踏んだら同様の scan test を 1 本追加する。
+2. **reorg / 大きな move の後は実機 `make deploy-all` / `make run-all-core` / `make destroy-all` を必ず一巡させる**。`make check` 緑だけでは deploy-path の健全性は担保されない。
 
 ### troubleshooting docs を必ず参照 / 追加
 
