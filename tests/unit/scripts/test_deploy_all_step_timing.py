@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import re
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -19,9 +20,12 @@ from scripts.setup import deploy_all as dall
 
 
 @pytest.fixture(autouse=True)
-def _reset_globals() -> None:
+def _reset_globals(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     dall._DEPLOY_ALL_STARTED_AT = None
     dall._STEP_STARTED_AT = None
+    # Isolate the step-timing history CSV so `main()` / `_step_done()` in these
+    # tests never touch the real logs/deploy_timings.csv.
+    monkeypatch.setattr(dall, "_TIMINGS_CSV", tmp_path / "deploy_timings.csv")
 
 
 def test_step_first_call_emits_header_without_elapsed_anchor(
@@ -58,14 +62,16 @@ def test_step_subsequent_calls_emit_elapsed_anchor(
 
 
 def test_step_done_emits_elapsed_line_matching_monitor_contract(
-    capsys: pytest.CaptureFixture[str],
+    capsys: pytest.CaptureFixture[str], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """``scripts.deploy.monitor`` could in the future grep for
     ``deploy-all  step-done elapsed=<n>s``. Pin the exact prefix so refactors
     that change the spacing / label don't silently break log parsing.
     """
+    monkeypatch.setattr(dall, "_TIMINGS_CSV", tmp_path / "deploy_timings.csv")
+    step = dall.DeployStep(1, "tf-bootstrap", "tf-bootstrap", lambda: 0)
     dall._step(1, 2, "tf-bootstrap")
-    dall._step_done()
+    dall._step_done(step)
     out = capsys.readouterr().out
     assert re.search(r"deploy-all\s+step-done\s+elapsed=\d+s", out), (
         f"step-done line missing or format changed:\n{out}"
@@ -77,7 +83,64 @@ def test_step_done_noop_before_any_step() -> None:
     "elapsed=4000000000s" from uninitialized monotonic baseline).
     """
     # No _step called → _STEP_STARTED_AT is None → _step_done silently no-ops.
-    dall._step_done()  # must not raise
+    dall._step_done(dall.DeployStep(1, "x", "x", lambda: 0))  # must not raise
+
+
+def test_fmt_duration_human_readable() -> None:
+    assert dall._fmt_duration(45) == "45s"
+    assert dall._fmt_duration(572) == "9m32s"
+    assert dall._fmt_duration(3490) == "58m10s"
+    assert dall._fmt_duration(3600) == "1h00m"
+    assert dall._fmt_duration(0) == "0s"
+    assert dall._fmt_duration(-3) == "0s"
+
+
+def test_timing_history_records_rows_and_baselines_use_median_of_ok_runs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    csv_path = tmp_path / "deploy_timings.csv"
+    monkeypatch.setattr(dall, "_TIMINGS_CSV", csv_path)
+
+    dall._record_step_timing(6, "tf-apply", 3490.0, "ok")
+    dall._record_step_timing(6, "tf-apply", 3500.0, "ok")
+    dall._record_step_timing(7, "seed-lgbm-model", 8.0, "ok")
+    dall._record_step_timing(5, "tf-plan", 999.0, "failed")  # must not feed the baseline
+
+    # Human-readable CSV with the documented header.
+    rows = csv_path.read_text(encoding="utf-8").splitlines()
+    assert rows[0] == ",".join(dall._TIMINGS_HEADER)
+    assert len(rows) == 1 + 4
+
+    baselines = dall._load_step_baselines()
+    assert baselines["tf-apply"] == 3495.0  # median of [3490, 3500]
+    assert baselines["seed-lgbm-model"] == 8.0
+    assert "tf-plan" not in baselines  # only status == "ok" rows count
+
+
+def test_print_eta_sums_known_step_baselines(
+    capsys: pytest.CaptureFixture[str], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(dall, "_TIMINGS_CSV", tmp_path / "deploy_timings.csv")
+    steps = [
+        dall.DeployStep(1, "alpha", "alpha", lambda: 0),
+        dall.DeployStep(2, "beta", "beta", lambda: 0),
+        dall.DeployStep(3, "gamma", "gamma", lambda: 0),
+    ]
+    baselines = {"alpha": 10.0, "beta": 3500.0}  # gamma has no history
+    dall._print_eta(steps, baselines)
+    out = capsys.readouterr().out
+    assert "deploy-all ETA" in out
+    assert "≥" in out, "estimate must be a lower bound when some steps lack history"
+    assert "beta=58m" in out  # heaviest step surfaced
+    assert "no history yet for: gamma" in out
+
+
+def test_print_eta_no_history(
+    capsys: pytest.CaptureFixture[str], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(dall, "_TIMINGS_CSV", tmp_path / "deploy_timings.csv")
+    dall._print_eta([dall.DeployStep(1, "alpha", "alpha", lambda: 0)], {})
+    assert "no prior timing history" in capsys.readouterr().out
 
 
 def test_resolve_step_ref_accepts_number_and_name() -> None:
