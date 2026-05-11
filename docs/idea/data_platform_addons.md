@@ -58,7 +58,7 @@ feature_mart.property_embeddings
 
 Databricks / Snowflake は、初期段階では本番検索・推論・再学習の必須経路には入れない。
 
-あくまで optional add-on として、BigQuery のデータを外部データ基盤へ連携し、分析・特徴量加工・ML 実験・ガバナンス確認・DWH 統合の観点を検証する。
+あくまで optional add-on として、BigQuery のデータを外部データ基盤へ連携し、分析・データ加工・集約 mart 化・ガバナンス確認・DWH 統合の観点を検証する（ML 本体は GCP 側 Vertex AI / KServe に残し、外部に持ち出すのはデータだけ）。
 
 ---
 
@@ -83,21 +83,20 @@ BigQuery を消すと、既存の GCP MLOps 基盤、検証資産、Terraform / 
 
 ---
 
-### 4.2 Databricks は Lakehouse / ML / Feature Engineering アドオン
+### 4.2 Databricks は Lakehouse / Unity Catalog（データ集約）アドオン
 
 Databricks は以下の責務を持つ。
 
 | 領域                  | 役割                             |
 | ------------------- | ------------------------------ |
 | Lakehouse           | Bronze / Silver / Gold レイヤーの実装 |
-| Feature Engineering | BigQuery 由来の正解データ・特徴量を加工       |
-| MLflow              | LightGBM 等の実験管理 smoke          |
+| データ加工・集約    | BigQuery 由来のログ・正解データ・特徴量を Silver / Gold(集約 mart) に整形・集約 |
 | Notebook            | 分析・探索・業務利用サンプル                 |
 | Unity Catalog 想定    | 権限・lineage・ガバナンス設計の説明対象        |
 
-Databricks では、本番 pipeline を完全再構築しない。
+Databricks でも ML 本体は作らない（ML は GCP 側 Vertex AI / KServe に残す）。本番 pipeline を完全再構築しない。
 
-最初に実装すべきことは、BigQuery から GCS Parquet 経由で Databricks にデータを流し、Bronze / Silver / Gold と MLflow smoke を示すことである。
+最初に実装すべきことは、BigQuery から GCS Parquet 経由で Databricks にデータを流し、Bronze / Silver / Gold(集約 mart) の medallion 構造と parity check を示すことである。ML 本体は GCP 側（Vertex AI / KServe）に残す。
 
 ---
 
@@ -139,10 +138,9 @@ Snowflake では、ML 本体を重く作らない。
         ↓
 [Data Platform Adapter]
         ├─ Databricks
-        │    ├─ Bronze import
-        │    ├─ Silver clean
-        │    ├─ Gold features
-        │    └─ MLflow smoke
+        │    ├─ Bronze import (生)
+        │    ├─ Silver clean (conformed)
+        │    └─ Gold marts (集約・分析)
         │
         └─ Snowflake
              ├─ External Stage
@@ -197,20 +195,20 @@ Count / Schema / Metric Parity Check
 
 ### 8.1 目的
 
-Databricks Add-on の目的は、既存 BigQuery 基盤のデータを Lakehouse / Feature Engineering / MLflow 実験へ接続することである。
+Databricks Add-on の目的は、既存 BigQuery 基盤のデータを Databricks (Lakehouse / Unity Catalog) の medallion (Bronze / Silver / Gold) + 集約 mart へ接続することである。ML はやらない（GCP 側に残す）。
 
 ### 8.2 最小構成
 
 ```text
 GCS Parquet
   ↓
-Databricks Bronze tables
+Databricks Bronze tables (生)
   ↓
-Silver cleaned tables
+Silver cleaned tables (conformed)
   ↓
-Gold feature tables
+Gold marts (集約・分析)
   ↓
-MLflow training smoke
+Parity check (BQ ↔ Databricks)
 ```
 
 ### 8.3 実装対象
@@ -219,8 +217,7 @@ MLflow training smoke
 | ------------- | ------------------------------ |
 | Bronze import | GCS Parquet を読み込む              |
 | Silver clean  | 型、欠損、重複、日付を整える                 |
-| Gold features | 学習・評価に使える特徴量 table を作る         |
-| MLflow smoke  | LightGBM 等で最小 training run を記録 |
+| Gold marts    | 集約・分析 mart を作る (label distribution / feature summary / daily action counts 等) |
 | Parity check  | BigQuery 側との件数・schema・主要指標を比較  |
 
 ### 8.4 やらないこと
@@ -232,6 +229,7 @@ MLflow training smoke
 * KServe / Vertex serving を Databricks Model Serving に置換する
 * BigQuery を廃止する
 * Databricks Feature Store を本格導入する
+* Databricks 側で ML / MLflow / training run を作る（ML は GCP 側 Vertex AI Pipelines / KServe に残す）
 
 ---
 
@@ -285,7 +283,7 @@ Parity check
 | Pub/Sub      | イベント配送                                              |
 | BigQuery     | 既存 DWH 正本、行動ログ、正解データ、特徴量、評価指標                       |
 | GCS          | Parquet export / platform 間受け渡し                     |
-| Databricks   | Lakehouse、Feature Engineering、MLflow、Notebook       |
+| Databricks   | Lakehouse (medallion)、データ加工・集約、Unity Catalog、Notebook       |
 | Snowflake    | Enterprise DWH、BI mart、Governance、Data Sharing      |
 | Vertex AI    | Pipeline、Model Registry、Feature Store、Vector Search |
 | GKE / KServe | 推論 serving                                          |
@@ -305,9 +303,7 @@ Parity check
 │   │   └── parity_check.py
 │   │
 │   ├── databricks/
-│   │   ├── import_from_gcs.py
-│   │   ├── submit_job.py
-│   │   └── parity_check.py
+│   │   └── submit_job.py        # Workflows job を run-now + poll (parity は scripts/data_platform/parity_check.py 共通)
 │   │
 │   └── snowflake/
 │       ├── load_from_gcs.sql
@@ -318,10 +314,9 @@ Parity check
 │   ├── notebooks/
 │   │   ├── 01_bronze_import.py
 │   │   ├── 02_silver_clean.py
-│   │   ├── 03_gold_features.py
-│   │   └── 04_mlflow_train_smoke.py
+│   │   └── 03_gold_marts.py
 │   └── jobs/
-│       └── feature_engineering_job.yml
+│       └── data_aggregation_job.yml
 │
 ├── snowflake/
 │   ├── sql/
@@ -429,7 +424,7 @@ Databricks 向けには、以下を訴求する。
 ```text
 既存 BigQuery 基盤の行動ログ・正解データ・特徴量を、
 GCS Parquet 経由で Databricks に取り込み、
-Bronze / Silver / Gold と MLflow 実験に接続できる。
+Bronze / Silver / Gold の medallion 構造と集約 mart に接続できる（ML 本体は GCP 側 Vertex AI / KServe に残す）。
 ```
 
 Snowflake 向けには、以下を訴求する。
@@ -450,9 +445,10 @@ Enterprise DWH / BI mart / Governance の検証に接続できる。
 2. BigQuery を廃止するように見せてしまい、既存 GCP MLOps 基盤の価値が消える
 3. Databricks と Snowflake を同じものとして説明してしまう
 4. 接続だけで終わり、parity check がない
-5. Databricks 側で MLflow / Bronze / Silver / Gold の最低限の処理がない
+5. Databricks 側で Bronze / Silver / Gold(集約 mart) の最低限の処理がない
 6. Snowflake 側で Stage / COPY INTO / Mart / validation の最低限の処理がない
 7. `run-all-core` に混ぜて、本線の安定性を落とす
+8. Databricks 側で ML をやり始めて Snowflake と非対称になる / GCP 側 ML と二重管理になる（ML は GCP 側 Vertex AI / KServe に残す）
 
 ---
 
@@ -465,12 +461,13 @@ Enterprise DWH / BI mart / Governance の検証に接続できる。
 | 10A | BigQuery → GCS Parquet Export           | 高   |
 | 10B | Export manifest / metadata              | 高   |
 | 10C | Databricks Bronze / Silver / Gold smoke | 高   |
-| 10D | Databricks MLflow train smoke           | 中   |
 | 10E | Snowflake Stage / COPY INTO smoke       | 高   |
 | 10F | Snowflake mart smoke                    | 中   |
 | 10G | Databricks parity check                 | 高   |
 | 10H | Snowflake parity check                  | 高   |
 | 10I | Docs / runbook / architecture update    | 高   |
+
+> 旧 `10D Databricks MLflow train smoke` は削除 — **Databricks 側で ML はやらない**（ML は GCP 側 Vertex AI Pipelines / KServe に残す）。10E〜10I の ID はそのまま。
 
 ---
 
@@ -485,7 +482,8 @@ M-Wave10 の最小完成条件は以下。
 5. BigQuery と Databricks の row count / schema parity を確認できる
 6. BigQuery と Snowflake の row count / schema parity を確認できる
 7. 既存 `run-all-core` は変更しない
-8. ドキュメント上で BigQuery / Databricks / Snowflake の責務分担が説明されている
+8. ドキュメント上で BigQuery / Databricks(Lakehouse) / Snowflake(Enterprise DWH) の責務分担が説明されている
+9. Databricks 側に ML / MLflow / training は作らない（ML は GCP 側に残す）
 
 ---
 
