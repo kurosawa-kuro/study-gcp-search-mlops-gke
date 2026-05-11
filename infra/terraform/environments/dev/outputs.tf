@@ -99,7 +99,7 @@ output "vertex_feature_group_property_features" {
 }
 
 # =========================================================================
-# Vertex AI Vector Search (Phase 7 Wave 2 W2-1) — search-api ConfigMap (W2-5) と
+# Vertex AI Vector Search — search-api ConfigMap と
 # embed pipeline VVS upsert step (Wave 1 PR-3) が outputs を参照する。
 # =========================================================================
 
@@ -109,7 +109,7 @@ output "vertex_feature_online_store_id" {
 }
 
 output "vertex_feature_view_id" {
-  description = "Vertex AI Feature View name. Phase 7 固有 = KServe → FOS の Feature View 経由 opt-in 参照経路。Empty string when disabled. Consumed by search-api via VERTEX_FEATURE_VIEW_ID env."
+  description = "Vertex AI Feature View name. 本構成固有 = KServe → FOS の Feature View 経由 opt-in 参照経路。Empty string when disabled. Consumed by search-api via VERTEX_FEATURE_VIEW_ID env."
   value       = module.vertex.feature_view_id
 }
 
@@ -198,7 +198,7 @@ output "kserve_inference_namespace" {
   value       = module.kserve.inference_namespace
 }
 
-# Phase 7 W2-4: Cloud Composer outputs — consumed by
+# Cloud Composer outputs — consumed by
 # `scripts/deploy/composer_deploy_dags.py` (DAG bucket) and
 # `make ops-composer-trigger` / `ops-composer-list-runs` smoke targets.
 output "composer_dag_bucket" {
@@ -217,7 +217,7 @@ output "composer_environment_name" {
 }
 
 # =========================================================================
-# Phase 7 SYN-1 — Redis synonym dictionary outputs
+# Redis synonym dictionary outputs
 # =========================================================================
 
 output "synonym_redis_url" {

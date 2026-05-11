@@ -126,7 +126,7 @@ resource "google_project_iam_member" "api_bq_job_user" {
 }
 
 # GKE Autopilot's Managed Prometheus collector runs in the gke-gmp-system
-# namespace using the node's default compute engine SA. Phase 7's IAM
+# namespace using the node's default compute engine SA. 本構成の IAM
 # lockdown stripped the project's default `roles/monitoring.metricWriter`
 # binding, which causes GMP to silently drop all `prometheus.googleapis.com/*`
 # metrics — the upstream cause of `module.slo` apply failing with
@@ -250,7 +250,7 @@ resource "google_project_iam_member" "endpoint_reranker_logging_writer" {
 }
 
 # =========================================================================
-# Phase 7 Wave 2 W2-3: KServe pod (reranker) → Feature Online Store の
+# KServe pod (reranker) → Feature Online Store の
 # Feature View 経由 opt-in 参照経路で必要な権限。
 #
 # search-api SA (`api`) は既に roles/aiplatform.user 付与済 (line 148-152)
@@ -260,7 +260,7 @@ resource "google_project_iam_member" "endpoint_reranker_logging_writer" {
 #
 # - encoder: ME5 で encode するだけなので、Vertex API 呼び出し不要。
 #   roles/aiplatform.user は付与しない (最小権限)。
-# - reranker: Phase 7 固有経路で `FEATURE_FETCHER_BACKEND=online_store`
+# - reranker: 本構成固有経路で `FEATURE_FETCHER_BACKEND=online_store`
 #   のときに Feature View 経由で fetch する想定。default off (= Wave 2 W2-8 まで
 #   観測されない) だが、TF レベルでは provision 時に bind 済の方が
 #   一括 PDCA で扱いやすい。
@@ -273,10 +273,10 @@ resource "google_project_iam_member" "endpoint_reranker_aiplatform_user" {
 }
 
 # =========================================================================
-# Phase 7 W2-4 (Composer canonical): Cloud Composer environment runtime SA.
+# Cloud Composer environment runtime SA (canonical orchestration).
 #
 # Composer Gen 3 環境本体が Airflow scheduler / web_server / worker pod を
-# 動かすために使う SA。Phase 7 docs/architecture/01_仕様と設計.md §3 で
+# 動かすために使う SA。docs/architecture/01_仕様と設計.md §3 で
 # Composer は **上位 orchestrator** として位置付けられ、3 本 DAG
 # (`daily_feature_refresh` / `retrain_orchestration` / `monitoring_validation`)
 # が Vertex Pipelines submit / BigQuery monitoring query / Feature View sync
@@ -292,7 +292,7 @@ resource "google_project_iam_member" "endpoint_reranker_aiplatform_user" {
 
 resource "google_service_account" "composer" {
   account_id   = "sa-composer"
-  display_name = "Cloud Composer environment runtime SA (Phase 7 canonical orchestrator)"
+  display_name = "Cloud Composer environment runtime SA (canonical 本線 orchestrator)"
 }
 
 resource "google_project_iam_member" "composer_worker" {

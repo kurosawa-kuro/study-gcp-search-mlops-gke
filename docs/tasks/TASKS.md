@@ -15,17 +15,20 @@
 - step-timing 計測 + `run-all-core` orchestrator 化 (2026-05-11) — `logs/step_timings.csv` への per-step 記録 + 起動時 ETA、`run-all-core` を `scripts/ops/run_all.py` 化 (step 順も `ops-label-seed → label-build → ops-train-now` に修正)
 - 完了済 milestone (M-Wave5 継続改善サイクル MVP / M-Wave6 ES 移行 / M-Wave7 Makefile canonical 化 / M-Wave8.5 Phase 撤廃 / M-Wave8.6 scripts reorg + adapters / EventWriter Pub/Sub 統一 / GCP リソース ID rename / PMLE 学習 doc / 等) の一覧と証跡は 03 §7.3。
 
-cluster は **稼働中** (`make deploy-all` + `make run-all-core` 成功直後、`destroy-all` 未実施 — コスト発生中)。`make destroy-all` で永続 VVS Index/Endpoint のみ残してゼロに戻せる。
+cluster: `make destroy-all` で永続 VVS Index/Endpoint のみ残してゼロに戻せる（PDCA loop。`deploy-all` で復活、`destroy-all` で止血）。
 
 ## 残課題 (優先度順)
 
 | # | 内容 | コスト | 状態 |
 |---|---|---|---|
-| 1 | M-Wave8.7 ES production 化 (HTTPS + password auth、Step 7-1〜7-5) — ECK の `<cluster>-es-elastic-user` Secret 経由 password auth + `xpack.security.authc.anonymous.*` / `selfSignedCertificate.disabled` 撤去 + canonical URL を https へ + contract test 反転 + deploy で疎通検証。**ES の認可ポスチャを live cluster で変える変更**なので着手前に確認推奨 | 半 sprint | ⏸ M-Wave9 完了済 → 着手可 |
-| 2 | `infra/` 配下の Phase 残骸 scrub (`grep -rE "Phase [0-9]\|phase7" infra/` で **~112 occurrence** — Terraform module / manifest / Dockerfile / cloudbuild の **コメント・description のみ**、コード影響なし。M-Wave8.5 が docs/ + tests/ だけだった分。固有名 (`canonical 構成` / `本線 orchestrator` 等) へ一括置換) | 中 (~112 箇所) | ⏳ 着手可 |
-| 3 | (任意) Helm provider 3.x 移行 (`versions.tf` `~> 3.0` + `kubernetes { }` → `kubernetes = { }`) | 軽 | ⏸ |
+| 1 | (任意) Helm provider 3.x 移行 (`versions.tf` `~> 3.0` + `provider "helm" { kubernetes { … } }` → `kubernetes = { … }` 属性記法)。**放置で致命的問題なし**（provider 2.x で現状動作。helm 2.17 が最終 = メンテ終了、将来 terraform / 他 provider を上げる時の足かせ回避が唯一の動機） | 軽 | ⏸ 低優先 / スキップ可 |
 
-具体手順は [`TASKS_ROADMAP.md §2 Wave 8.7`](TASKS_ROADMAP.md#2-残-wave-詳細) に gcloud / kubectl / file edit / 検証コマンド単位で展開済。`run-all-core` step 順 / step-timing CSV の doc 同期 (`04_検証.md` / `05_運用.md` / `Makefile規約.md`) は **2026-05-11 完了**。
+**次のアクティブ作業候補**（詳細はユーザ側で展開）: Vector Search 3 層永続化 PR（`vector_search` stack 分離）/ `ml/` ディレクトリ再編。
+
+**parked / 完了** (2026-05-11):
+- ES production 化 (旧 M-Wave8.7、Step 7-1〜7-5) → active backlog から外し parked。学習リポジトリは production hardening を追わない判断。手順 + 判断記録 + 破綻条件は [`../backlog/production-hardening.md`](../backlog/production-hardening.md)。contract test `test_es_manifest_pins_http_and_anonymous_auth` は現行 pin (HTTP + anonymous superuser = 学習用) のまま残る
+- `infra/` Phase 残骸 scrub（~120 occurrence、コメント / description のみ → 固有名）: 完了
+- `run-all-core` step 順 / step-timing CSV の doc 同期（`04_検証.md` / `05_運用.md` / `Makefile規約.md`）: 完了
 
 ## 参照
 

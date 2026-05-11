@@ -1,5 +1,5 @@
 # Cloud Build for the Vertex CPR LightGBM reranker server (`ml/serving/reranker.py`).
-# Phase 7 deploys this image as a separate Pod in `kserve-inference` namespace
+# Cloud Build deploys this image as a separate Pod in `kserve-inference` namespace
 # (NOT via KServe ISVC) so /search?explain=true can call its `/explain` route
 # for TreeSHAP attributions. The KServe stock LightGBM v2 runtime does NOT
 # support attributions — see B19 + Run 2 docs.

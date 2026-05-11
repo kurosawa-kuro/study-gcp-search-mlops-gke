@@ -132,7 +132,7 @@ resource "helm_release" "external_secrets" {
 
 # ----- KServe (RawDeployment mode — Knative 非依存) -----
 #
-# Phase 6 は Knative Serving を載せない RawDeployment (K8s Deployment +
+# RawDeployment (Knative Serving は載せない) (K8s Deployment +
 # HPA + Gateway API) を採用。Autopilot の互換性と 0→N スケールに
 # 依存しない前提のため。
 # -------------------------------------------------------------------------

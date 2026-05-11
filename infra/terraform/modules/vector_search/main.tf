@@ -1,10 +1,10 @@
 # =========================================================================
-# Vertex AI Vector Search — Phase 7 Wave 2 (W2-1).
+# Vertex AI Vector Search.
 #
 # ME5 ベクトル検索の本番 serving index。embedding 生成履歴・メタデータの
 # 正本は BigQuery 側 (`feature_mart.property_embeddings`) に置き続け、
 # 本 module は serving 用 ANN index のみを provision する (data lake +
-# serving index の二層構造、本 phase docs/01 §0 / §2)。
+# serving index の二層構造、docs/01 §0 / §2)。
 #
 # Strangler 性質: Wave 1 PR-1 で adapter
 # (`app/services/adapters/vertex_vector_search_semantic_search.py`) と

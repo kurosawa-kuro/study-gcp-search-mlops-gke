@@ -1,4 +1,4 @@
-# Cloud Build config for the composer-runner image — Phase 7 V5 fix (2026-05-03)。
+# Cloud Build config for the composer-runner image。
 # DAG が KubernetesPodOperator から `python -m <module>` を呼ぶ runner image。
 # Substitution `_IMAGE_URI` は `<sha>-<epoch>` 付き immutable tag。
 # scripts/deploy/composer_runner.py から渡される。

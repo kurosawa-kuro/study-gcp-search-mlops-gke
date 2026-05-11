@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-# Composer DAG runner image — Phase 7 V5 fix (2026-05-03)。
+# Composer DAG runner image (composer-runner)。
 #
 # **背景**: 過去 session の Claude が DAG を `BashOperator: uv run python -m scripts.X`
 # で書いたが、Composer worker は uv 不在 / repo source 不在のため `task SUCCEEDED`

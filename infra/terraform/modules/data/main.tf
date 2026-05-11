@@ -39,10 +39,10 @@ resource "google_bigquery_table" "training_runs" {
     { name = "git_sha", type = "STRING", mode = "NULLABLE" },
     { name = "dataset_version", type = "STRING", mode = "NULLABLE" },
     {
-      # Ranker metrics (Phase 10c final state).
+      # Ranker metrics (現行 schema).
       # BigQuery does not support dropping RECORD sub-fields in-place; the legacy
       # regression fields (rmse / mae / r2 / best_iteration) that previously
-      # lived here were consumed by no post-Phase-10b writer, so they are simply
+      # lived here were consumed by no current writer, so they are simply
       # omitted from the schema going forward. Operators recreating the table
       # via `bq rm -f` + apply land on the clean shape below.
       name = "metrics", type = "RECORD", mode = "NULLABLE",
@@ -70,7 +70,7 @@ resource "google_bigquery_table" "training_runs" {
 }
 
 # =========================================================================
-# Phase 10c removed: google_bigquery_table.predictions_log
+# removed: google_bigquery_table.predictions_log
 #
 # The legacy California single-value prediction log is fully retired. Operators
 # performing the in-place migration on an existing project must run:
@@ -85,7 +85,7 @@ resource "google_bigquery_table" "training_runs" {
 # =========================================================================
 
 # =========================================================================
-# Real-estate hybrid search tables (Phase 1+, authoritative after Phase 10c).
+# Real-estate hybrid search tables (現行 hybrid-search schema、authoritative).
 #
 #   feature_mart.property_features_daily — Dataform-managed daily aggregates
 #                                          (ctr / fav_rate / inquiry_rate).
@@ -206,7 +206,7 @@ resource "google_bigquery_table" "search_logs" {
     },
     { name = "top_k", type = "INT64", mode = "REQUIRED" },
     { name = "result_property_ids", type = "STRING", mode = "REPEATED" },
-    { name = "model_path", type = "STRING", mode = "NULLABLE", description = "NULL while rerank is disabled (Phase 4 minimum). Populated once booster is wired in." },
+    { name = "model_path", type = "STRING", mode = "NULLABLE", description = "NULL while rerank is disabled (rerank 無効時). Populated once booster is wired in." },
     { name = "latency_ms", type = "FLOAT64", mode = "NULLABLE" },
   ])
 }
@@ -230,7 +230,7 @@ resource "google_bigquery_table" "ranking_log" {
     { name = "lexical_rank", type = "INT64", mode = "REQUIRED", description = "Initial rank from lexical retrieval (Elasticsearch BM25; legacy Meilisearch)" },
     { name = "semantic_rank", type = "INT64", mode = "NULLABLE", description = "Initial rank from BigQuery VECTOR_SEARCH" },
     { name = "rrf_rank", type = "INT64", mode = "NULLABLE", description = "Rank after RRF fusion before LambdaRank rerank" },
-    { name = "final_rank", type = "INT64", mode = "NULLABLE", description = "Post-rerank rank. Equals lexical_rank until Phase 6 wires the booster." },
+    { name = "final_rank", type = "INT64", mode = "NULLABLE", description = "Post-rerank rank. Equals lexical_rank until the booster is wired in." },
     { name = "score", type = "FLOAT64", mode = "NULLABLE", description = "booster.predict() output; NULL while rerank disabled" },
     { name = "me5_score", type = "FLOAT64", mode = "NULLABLE", description = "cosine(query_vec, property_vec)" },
     {
@@ -410,7 +410,7 @@ resource "google_bigquery_table" "model_monitoring_alerts" {
   dataset_id          = google_bigquery_dataset.mlops.dataset_id
   table_id            = "model_monitoring_alerts"
   deletion_protection = var.enable_deletion_protection
-  description         = "Phase 7 drift alert sink. Legacy Vertex Model Monitoring v2 writes may still arrive if endpoint-based monitoring is re-enabled; current primary writer is the self-managed Scheduled Query that derives KServe drift signals from mlops.ranking_log."
+  description         = "Self-managed drift alert sink. Legacy Vertex Model Monitoring v2 writes may still arrive if endpoint-based monitoring is re-enabled; current primary writer is the self-managed Scheduled Query that derives KServe drift signals from mlops.ranking_log."
 
   time_partitioning {
     type  = "DAY"
@@ -428,7 +428,7 @@ resource "google_bigquery_table" "model_monitoring_alerts" {
   ])
 }
 
-# Phase 6 T2 — Dataflow streaming sink. ranking-log events are aggregated
+# Dataflow streaming sink. ranking-log events are aggregated
 # in 1-hour tumbling windows into this table; runs alongside the existing
 # BQ Subscription-based mlops.ranking_log raw writes.
 resource "google_bigquery_table" "ranking_log_hourly_ctr" {

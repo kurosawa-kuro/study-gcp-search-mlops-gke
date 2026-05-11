@@ -82,7 +82,7 @@ variable "enable_feature_group" {
 }
 
 variable "enable_feature_online_store" {
-  description = "When true, declare the Vertex AI Feature Online Store + FeatureView so search-api / KServe pods can fetch featureValues via Feature View 経由 (training-serving skew prevention). Phase 7 Wave 2 W2-2 で default を true に flip — Phase 5 必須要素として canonical (本 phase docs/01 §0)。`mlops-dev-a` PDCA でコストを抑えたいときは terraform.tfvars で false に override 可能。"
+  description = "When true, declare the Vertex AI Feature Online Store + FeatureView so search-api / KServe pods can fetch featureValues via Feature View 経由 (training-serving skew prevention). default を true に flip — 中核要素として canonical (docs/01 §0)。`mlops-dev-a` PDCA でコストを抑えたいときは terraform.tfvars で false に override 可能。"
   type        = bool
   default     = true
 }
@@ -94,13 +94,13 @@ variable "feature_online_store_id" {
 }
 
 variable "feature_view_id" {
-  description = "Vertex AI Feature View name (under the Online Store) that wraps the property_features Feature Group. Phase 7 固有 = KServe pod から **Feature View 経由で** Feature Online Store を opt-in 参照する経路 (本 phase docs/01 §0)。Must match VERTEX_FEATURE_VIEW_ID env consumed by search-api adapter (FeatureOnlineStoreFetcher)."
+  description = "Vertex AI Feature View name (under the Online Store) that wraps the property_features Feature Group. 本構成固有 = KServe pod から **Feature View 経由で** Feature Online Store を opt-in 参照する経路 (docs/01 §0)。Must match VERTEX_FEATURE_VIEW_ID env consumed by search-api adapter (FeatureOnlineStoreFetcher)."
   type        = string
   default     = "property_features"
 }
 
 variable "enable_vertex_endpoint_shell" {
-  description = "When true, declare the encoder + reranker Vertex AI Endpoint shells. Default false in Phase 7 because serving runs on GKE + KServe; enable only when an empty endpoint scaffold is intentionally needed."
+  description = "When true, declare the encoder + reranker Vertex AI Endpoint shells. Default false in because serving runs on GKE + KServe; enable only when an empty endpoint scaffold is intentionally needed."
   type        = bool
   default     = false
 }

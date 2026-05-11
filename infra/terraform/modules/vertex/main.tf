@@ -114,14 +114,14 @@ resource "google_storage_bucket_object" "pipeline_trigger_zip" {
 }
 
 # =========================================================================
-# **[Phase 7 W2-4 Stage 3 で smoke / 軽量代替経路として残置]**
+# **[smoke / 軽量代替経路として残置 — 本線 orchestration は Composer DAG]**
 #
 # 本線 retrain trigger は Cloud Composer `retrain_orchestration` DAG
 # (canonical = docs/01 §3 / §3.6)。本 Cloud Function + Eventarc 2 本は
 # Pub/Sub `retrain-trigger` topic から Vertex Pipelines を直接叩く軽量代替
 # 経路として残置 (Composer 経由 vs Pub/Sub 直叩きの比較教材)。
 #
-# リソース削除はしない (Phase 4-5 派生時に再導入されるため)。
+# リソース削除はしない (Composer なし派生で再導入されるため)。
 # 本線重複防止のため、同一 retrain job を 2 経路から起動しないことが契約。
 # =========================================================================
 resource "google_cloudfunctions2_function" "pipeline_trigger" {
@@ -271,7 +271,7 @@ resource "google_vertex_ai_feature_group_feature" "property_features" {
 }
 
 # =========================================================================
-# Feature Online Store + FeatureView — Phase 7 で追加。
+# Feature Online Store + FeatureView。
 # `vertex_feature_group.py` script が `FetchFeatureValuesRequest` で
 # 1 entity の最新 feature 値を引くために必要。Feature Group (offline、上)
 # だけでは online fetch endpoint が立たないので 501 Not Implemented になる。

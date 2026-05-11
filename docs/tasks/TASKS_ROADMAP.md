@@ -26,7 +26,7 @@
 
 ### §0.3 検索基盤 (Elasticsearch on GKE)
 
-Meilisearch を廃止、GKE 上で Elasticsearch (ECK) を稼働。Elastic Cloud は不採用。**M-Wave6 で完了**、**M-Wave8.7 で HTTPS+password auth へ production 化** (backlog)。
+Meilisearch を廃止、GKE 上で Elasticsearch (ECK) を稼働。Elastic Cloud は不採用。**M-Wave6 で完了**。production 化 (HTTPS + password auth) は **active backlog から外し parked** — 学習リポジトリは production hardening を追わない判断 (2026-05-11)。手順 + 判断記録 + 破綻条件は [`../backlog/production-hardening.md`](../backlog/production-hardening.md)。自己拘束として contract test `test_es_manifest_pins_http_and_anonymous_auth` が現行の HTTP + anonymous superuser (学習用 (a') 解) を pin したまま残る。
 
 ### §0.4 公開ドメイン (M-Wave9、2026-05-11 — **全 Step 完了**)
 
@@ -41,12 +41,16 @@ Meilisearch を廃止、GKE 上で Elasticsearch (ECK) を稼働。Elastic Cloud
 
 | # | 残 | 関連 | 状態 |
 |---|---|---|---|
-| 1 | M-Wave8.7 ES production 化 (HTTPS + password auth) — **Step 7-1〜7-5** ([§2 Wave 8.7](#wave-87--es-production-化-https--password-auth))。ES の認可ポスチャを live cluster で変える変更なので着手前に確認推奨 | §2 Wave 8.7 | ⏳ M-Wave9 完了済 → 着手可 (cert + DNS は揃った) |
-| 2 | `infra/` 配下の Phase 残骸 scrub — `grep -rE "Phase [0-9]\|phase7" infra/` で **~112 occurrence** (Terraform module / manifest / Dockerfile / cloudbuild の **コメント・description のみ**、コード影響なし)。M-Wave8.5 が docs/ + tests/ だけだった分を固有名へ一括置換 | infra | ⏳ 着手可 |
+| 1 | (任意) Helm provider 3.x 移行 — `versions.tf` `~> 3.0` + `provider "helm" { kubernetes { … } }` → `kubernetes = { … }` 属性記法 + `terraform init -upgrade` + `tf-validate` / `deploy-all` で回帰確認。**放置で致命的問題は無い** (provider 2.x で現状動作。helm 2.17 が最終でメンテ終了 = security fix 来ず、将来 terraform 本体 / 他 provider を上げる時の依存解決の足かせになりうる、というのが唯一の動機) | `versions.tf` (dev + kserve module) | ⏸ 低優先 / スキップ可 |
 
-`run-all-core` step 順 / step-timing CSV の doc 同期 (`04_検証.md` / `05_運用.md` / `Makefile規約.md`) は **2026-05-11 完了**。Wave 8.7 の具体手順 (gcloud / kubectl / file edit / 検証コマンド) は §2 にステップ展開済。
+**次のアクティブ作業候補** (詳細はユーザ側で展開): Vector Search 3 層永続化 PR (`vector_search` stack 分離) / `ml/` ディレクトリ再編。
 
-完了済 Wave (0/1/2/3/4/5/6/7/8 / M-Pivot / M-RunbookLocal / M-Wave8.5 / M-Wave8.6 Phase 1-3 + 後段 caller migration + adapter 移行漏れ後処理 / Step.precondition framework / C4 Makefile python -u / PMLE doc / GCP ID rename `phase7-*` → `mlops-*` / `destroy-coast-down` / EventWriter Pub/Sub 統一 / **M-Wave9 公開ドメイン 全 Step (1-6)** / step-timing 計測 + run-all-core orchestrator 化) は [03_実装カタログ §7.3](../architecture/03_実装カタログ.md) を正本。
+**parked / 完了**:
+- ES production 化 (旧 M-Wave8.7、Step 7-1〜7-5): active backlog から外し parked — 学習リポジトリは production hardening を追わない判断 (2026-05-11)。手順 + 判断記録 + 破綻条件 → [`../backlog/production-hardening.md`](../backlog/production-hardening.md)
+- `infra/` Phase 残骸 scrub (~120 occurrence、コメント / description のみ → 固有名へ): **2026-05-11 完了**
+- `run-all-core` step 順 / step-timing CSV の doc 同期 (`04_検証.md` / `05_運用.md` / `Makefile規約.md`): **2026-05-11 完了**
+
+完了済 Wave (0/1/2/3/4/5/6/7/8 / M-Pivot / M-RunbookLocal / M-Wave8.5 / M-Wave8.6 Phase 1-3 + 後段 caller migration + adapter 移行漏れ後処理 / Step.precondition framework / C4 Makefile python -u / PMLE doc / GCP ID rename `phase7-*` → `mlops-*` / `destroy-coast-down` / EventWriter Pub/Sub 統一 / **M-Wave9 公開ドメイン 全 Step (1-6)** / step-timing 計測 + run-all-core orchestrator 化 / infra Phase scrub) は [03_実装カタログ §7.3](../architecture/03_実装カタログ.md) を正本。
 
 ---
 
@@ -58,56 +62,9 @@ Meilisearch を廃止、GKE 上で Elasticsearch (ECK) を稼働。Elastic Cloud
 
 ---
 
-### Wave 8.7 — ES production 化 (HTTPS + password auth)
+### ES production 化 (HTTPS + password auth) — active backlog から外し parked (2026-05-11)
 
-**目的**: 学習用 (a') 解 (HTTP + anonymous superuser) を production grade へ移行。**Wave 9 完了後に着手** (Gateway HTTPS が外側、ES auth が内側 — 内側の認可強化は外側 cert 完成後でないと差分検証が混ざる)。
-
-#### Step 7-1 — canonical URL の http/https 切替
-
-```bash
-# `scripts/ops/sync_elasticsearch.py`
-#   --es-url default を https://elasticsearch.search.svc.cluster.local:9200 に
-# `infra/manifests/search-api/configmap.yaml`
-#   ELASTICSEARCH_URL を環境変数 ELASTIC_URL_SCHEME=https/http で切替可能に
-```
-
-#### Step 7-2 — ECK secret 経由 password fetch
-
-ECK が `<cluster-name>-es-elastic-user` という Secret に `elastic` ユーザの初期 password を auto-generate する。`scripts/ops/sync_elasticsearch.py::_run_sync_elasticsearch` 冒頭で:
-
-```python
-auth_secret = kubectl_run(
-    "get", "secret", "elasticsearch-es-elastic-user",
-    f"--namespace={ES_NAMESPACE}",
-    "-o", "jsonpath={.data.elastic}",
-    capture=True,
-)
-import base64
-es_password = base64.b64decode(auth_secret.stdout).decode()
-```
-
-これを httpx の `auth=("elastic", es_password)` に渡す。CI / search-api 側は ExternalSecret + KSA 経由で同 Secret を Pod 内に mount。
-
-#### Step 7-3 — `xpack.security.authc.anonymous.*` 削除
-
-```bash
-# infra/manifests/elasticsearch/elasticsearch.yaml
-#   spec.config から xpack.security.authc.anonymous.{username,roles,authz_exception} を削除
-#   spec.http.tls.selfSignedCertificate.disabled: true も削除 (= ECK default の HTTPS+self-signed cert に戻る)
-```
-
-#### Step 7-4 — contract test を HTTPS+auth pin に更新
-
-```bash
-# tests/integration/parity/test_codebase_invariants.py::test_es_manifest_pins_http_and_anonymous_auth
-#   anonymous.* token が manifest に **無い** ことを assert (現行の「ある」から反転)
-```
-
-#### Step 7-5 — CLAUDE.md / README で学習用 anonymous の禁忌を明記
-
-「(a') 解の HTTP + anonymous superuser は学習プロジェクト前提。production では `xpack.security.authc.anonymous.*` を絶対に有効化しない」を追記。
-
-**完了条件**: ES が ECK default の HTTPS+auth で動作、`make verify-live-acceptance` PASS、`test_es_manifest_pins_http_and_anonymous_auth` が新 pin で green。
+学習リポジトリは production hardening を追わない判断 (理由: PMLE 範囲外 / 実務転用時の差分は検索品質・特徴量・ランキング学習側 / ECK reconcile stall 再現リスクが学習価値に見合わない / 「評価が運用に先行する」順序原則)。手順 (Step 7-1〜7-5) + 判断記録 + 破綻条件 (portfolio 外部公開 / 実務クラスタ転用 / 第三者ワークロード同居 / PMLE 範囲入り) は [`../backlog/production-hardening.md`](../backlog/production-hardening.md) を正本。自己拘束: contract test `test_es_manifest_pins_http_and_anonymous_auth` を現行の HTTP + anonymous superuser (学習用 (a') 解) のまま残し、その反転 = production 化に踏み切る宣言とする。
 
 ---
 
@@ -171,11 +128,13 @@ Composer = 上位 orchestrator、Vertex Pipelines = 下位 ML executor。`train/
 
 | ID | 内容 | 状態 |
 |---|---|---|
-| M-Wave9 | 独自ドメイン + HTTPS + DNS — Step 1-5 (購入 / DNS zone / `module.dns` / gateway certmap+static IP / var 配線 + `resolve_api_target` 公開ドメイン化) **完了 2026-05-11**。残り Step 6 (deploy → smoke、cert ACTIVE 確認) のみ | 🔨 deploy 待ち |
-| M-Wave8.7 | ES production 化 (HTTPS + password auth) | ⏸ M-Wave9 完了後 |
-| `infra/` Phase 残骸 scrub | Terraform module + manifest のコメント ~25 箇所 (M-Wave8.5 が docs/ + tests/ のみだった分)。コード影響なし | ⏳ 着手可 |
+| M-Wave9 | 独自ドメイン + HTTPS + DNS — 全 Step (1-6) | ✅ 完了 2026-05-11 |
+| step-timing 計測 + run-all-core orchestrator 化 | per-step CSV 記録 + ETA、`run-all-core` を `scripts/ops/run_all.py` 化 + step 順修正 | ✅ 完了 2026-05-11 |
+| `infra/` Phase 残骸 scrub | ~120 occurrence (コメント / description のみ) を固有名へ | ✅ 完了 2026-05-11 |
+| ES production 化 (旧 M-Wave8.7) | HTTPS + password auth | ⏸ active backlog から外し parked → [`../backlog/production-hardening.md`](../backlog/production-hardening.md) |
+| Helm provider 3.x 移行 | `~> 3.0` + `kubernetes = { }` 属性記法 | ⏸ 低優先 / スキップ可 (放置で致命的問題なし) |
 
-完了済は [`../architecture/03_実装カタログ.md`](../architecture/03_実装カタログ.md) §7.3 を正本。
+完了済の詳細・証跡は [`../architecture/03_実装カタログ.md`](../architecture/03_実装カタログ.md) §6 / §7.3 / §7.4 を正本。次のアクティブ作業候補は §1 参照。
 
 ---
 

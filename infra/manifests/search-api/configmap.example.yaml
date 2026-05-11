@@ -2,7 +2,7 @@
 # Run `make sync-configmap` to regenerate after changing setting.yaml.
 # `elasticsearch_url` is cluster-local DNS by default — overlay before apply.
 #
-# Phase 7 W2-8 完了後 ConfigMap は Vertex Vector Search / Feature
+# ConfigMap は Vertex Vector Search / Feature
 # Online Store の resource ID / endpoint だけを持つ。`semantic_backend`
 # / `feature_fetcher_backend` のような backend 切替 selector は撤去済。
 apiVersion: v1

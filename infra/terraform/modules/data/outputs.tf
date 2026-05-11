@@ -66,7 +66,7 @@ output "evaluation_metrics_table" {
   value = google_bigquery_table.evaluation_metrics
 }
 
-# Phase 6 T2 — Dataflow streaming aggregate sink.
+# Dataflow streaming aggregate sink.
 output "ranking_log_hourly_ctr_table" {
   value = google_bigquery_table.ranking_log_hourly_ctr
 }

@@ -2,7 +2,7 @@
 # GKE Deployment: search-api (FastAPI、KServe encoder/reranker への HTTP 委譲)。
 # Build context: repository root。
 #
-# 重要: Phase 7 では encoder/reranker は KServe 側で動かすので、search-api image は
+# 重要: encoder/reranker は KServe 側で動かすので、search-api image は
 # `[ml]` extra (lightgbm + sentence-transformers + torch transitive) と
 # `[pipelines]` extra (kfp + google-cloud-pipeline-components) を install しない。
 # 結果: venv が ~5.4GB → ~457MB に縮む。pyproject.toml の optional-dependencies 参照。

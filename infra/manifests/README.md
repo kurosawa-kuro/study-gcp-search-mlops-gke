@@ -1,4 +1,4 @@
-# K8s manifests (Phase 7)
+# K8s manifests
 
 `infra/terraform/modules/{gke,kserve}` が作ったクラスタに、アプリケーション
 層（`search-api` + KServe `InferenceService`）を `kubectl apply -k .` で

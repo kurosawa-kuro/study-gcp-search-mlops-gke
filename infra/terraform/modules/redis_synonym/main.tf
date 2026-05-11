@@ -1,6 +1,6 @@
 # =========================================================================
 # Cloud Memorystore for Redis — synonym dictionary backing the
-# `SynonymExpanderPort` (Phase 7 SYN-1). Architecture:
+# `SynonymExpanderPort`. Architecture:
 # `docs/architecture/01_仕様と設計.md` §2.2.1 places ``Syn[Redis 同義語辞書]``
 # in the lexical lane between the API and Meilisearch BM25.
 #
@@ -28,7 +28,7 @@ resource "google_redis_instance" "synonym" {
     maxmemory-policy = "allkeys-lru"
   }
 
-  display_name = "Phase 7 synonym dictionary (lexical query expansion)"
+  display_name = "MLOps synonym dictionary (lexical query expansion)"
   labels = {
     phase = "7"
     role  = "synonym-dict"

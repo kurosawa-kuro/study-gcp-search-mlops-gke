@@ -1,4 +1,4 @@
-# Phase 5 — log-based metrics, alert policies, + mean-drift Scheduled Query.
+# log-based metrics, alert policies, + mean-drift Scheduled Query.
 
 # =========================================================================
 # Log-based metrics
@@ -143,7 +143,7 @@ resource "google_monitoring_alert_policy" "api_p95_latency" {
 # =========================================================================
 # Scheduled Query — ranker feature skew check (daily JST 05:00).
 #
-# Phase 10c removed: ``california_housing_skew_check`` transfer config.
+# removed: ``california_housing_skew_check`` transfer config.
 # Operators on an existing project must delete the old transfer via
 # ``bq rm --transfer_config <name>`` *before* the next ``terraform apply``,
 # otherwise the destroy leaves the config orphaned. See ``docs/runbook/05_運用.md

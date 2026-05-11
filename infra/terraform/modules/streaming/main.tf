@@ -1,4 +1,4 @@
-# Phase 6 T2 — Dataflow streaming module.
+# — Dataflow streaming module.
 #
 # Provisions the Service Account (sa-dataflow) + IAM plumbing for a Flex
 # Template streaming job that aggregates ranking-log events into hourly
@@ -21,7 +21,7 @@ resource "google_service_account" "dataflow" {
 
   project      = var.project_id
   account_id   = local.sa_account_id
-  display_name = "Dataflow streaming worker (Phase 6 T2)"
+  display_name = "Dataflow streaming worker"
   description  = "Runs the ranking-log-hourly-ctr Flex Template streaming job. Pub/Sub subscriber + BQ data editor + Dataflow worker."
 }
 

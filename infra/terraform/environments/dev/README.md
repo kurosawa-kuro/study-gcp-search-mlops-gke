@@ -1,4 +1,4 @@
-# infra/ — Terraform (Phase 1)
+# infra/ — Terraform
 
 責務をモジュール単位で分離。ルートは API 有効化と backend + 4 モジュールへの dispatch のみ。
 
@@ -30,7 +30,7 @@ apis.enabled
               └─▶ monitoring (log metrics / alerts / skew scheduled query)
 ```
 
-## 前提 (Phase 0、`make tf-bootstrap` で半自動化)
+## 前提 (`make tf-bootstrap` で半自動化)
 
 - プロジェクト `mlops-dev-a` 作成済み
 - tfstate バケット `gs://mlops-dev-a-tfstate` 作成済み (uniform access + versioning)
@@ -41,7 +41,7 @@ apis.enabled
 
 ```bash
 cd ..
-make tf-bootstrap                        # Phase 0 (冪等)
+make tf-bootstrap                        # (冪等)
 make tf-init
 make tf-plan GITHUB_REPO=<owner>/<name>
 terraform -chdir=infra apply

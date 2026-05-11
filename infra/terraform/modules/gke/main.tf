@@ -1,7 +1,7 @@
 # =========================================================================
 # GKE Autopilot cluster — hybrid-search serving layer
 #
-# Phase 6 の serving 層 (search-api + encoder / reranker の KServe InferenceService)
+# serving 層 (search-api + encoder / reranker の KServe InferenceService)
 # を収容する唯一の GKE クラスタ。Autopilot を採用して node-pool 管理を持たない。
 # Gateway API は Autopilot 1.29+ で既定有効、Workload Identity も既定。
 # =========================================================================
@@ -40,9 +40,9 @@ resource "google_container_cluster" "hybrid_search" {
 }
 
 # =========================================================================
-# Workload Identity bindings — GSA (Phase 5 継承) ↔ KSA (GKE 側)
+# Workload Identity bindings — GSA ↔ KSA (GKE 側)
 #
-# Phase 5 の 3 SA (sa-api / sa-endpoint-encoder / sa-endpoint-reranker) を
+# 既存の 3 SA (sa-api / sa-endpoint-encoder / sa-endpoint-reranker) を
 # そのまま使い回すため、各 GSA に対して対応 KSA からの
 # workloadIdentityUser を付与する。
 # =========================================================================

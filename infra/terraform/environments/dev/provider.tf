@@ -12,7 +12,7 @@ data "google_project" "current" {}
 
 # ----- kubernetes / helm providers for module.kserve -----
 #
-# Phase 7 W3 cleanup: providers now read endpoint + token from the **local
+# providers now read endpoint + token from the **local
 # kubeconfig** instead of `data.google_container_cluster.hybrid_search`. The
 # previous data-source-based config produced
 #   ``Get "http://localhost/api/v1/namespaces/...": dial tcp 127.0.0.1:80: connect: connection refused``

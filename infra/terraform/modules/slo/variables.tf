@@ -9,13 +9,13 @@ variable "region" {
 }
 
 variable "service_name" {
-  description = "Target service name (Phase 5 search-api by default). For service_type=\"cloud_run\", this is the Cloud Run v2 service name; for service_type=\"k8s_service\", this is the GKE Service name (namespace is passed via k8s_namespace)."
+  description = "Target service name (search-api by default). For service_type=\"cloud_run\", this is the Cloud Run v2 service name; for service_type=\"k8s_service\", this is the GKE Service name (namespace is passed via k8s_namespace)."
   type        = string
   default     = "search-api"
 }
 
 variable "service_type" {
-  description = "Which serving layer the SLOs attach to. \"cloud_run\" uses run.googleapis.com/* metrics + cloud_run_revision resource filter (Phase 5/6). \"k8s_service\" uses kubernetes.io/* metrics + k8s_container resource filter (Phase 7 GKE + KServe)."
+  description = "Which serving layer the SLOs attach to. \"cloud_run\" uses run.googleapis.com/* metrics + cloud_run_revision resource filter. \"k8s_service\" uses kubernetes.io/* metrics + k8s_container resource filter (GKE + KServe)."
   type        = string
   default     = "cloud_run"
 
@@ -61,7 +61,7 @@ variable "availability_goal" {
 }
 
 variable "latency_threshold_ms" {
-  description = "Latency threshold (milliseconds) for the latency SLO's distribution_cut range.max. Default 500ms matches the existing Phase 5 p95 alert."
+  description = "Latency threshold (milliseconds) for the latency SLO's distribution_cut range.max. Default 500ms matches the existing p95 alert."
   type        = number
   default     = 500
 }

@@ -1,14 +1,14 @@
 # =========================================================================
-# Root module (Phase 7: GKE + KServe) — orchestrates sub-modules:
+# Root module (GKE + KServe) — orchestrates sub-modules:
 #   iam          → Service Accounts / WIF / project-level role bindings
 #   data         → BigQuery / GCS / Artifact Registry / Secret Manager + data IAM
-#   vertex       → Vertex AI Pipelines / Feature Group / Model Registry (inherited from Phase 5)
+#   vertex       → Vertex AI Pipelines / Feature Group / Model Registry (Vertex AI 系から継承)
 #   gke          → GKE Autopilot cluster + Workload Identity bindings
 #   kserve       → KServe + cert-manager + 3 KSA (api / encoder / reranker)
 #   messaging    → Pub/Sub + BQ subscription + Cloud Scheduler (Cloud Run Service を持たない)
 #   monitoring   → log-based metrics / alert policies / mean-drift Scheduled Query
-#   streaming    → Phase 6 T2: Dataflow streaming job scaffold
-#   slo          → Phase 6 T5: formal SLOs + burn-rate alerts
+#   streaming    → Dataflow streaming job scaffold
+#   slo          → formal SLOs + burn-rate alerts
 #
 # Shared preconditions (API enablement) live in apis.tf and are enforced via
 # `depends_on = [google_project_service.enabled]` on each module call.
@@ -57,7 +57,7 @@ module "vector_search" {
   depends_on = [google_project_service.enabled]
 }
 
-# Phase 7 W2-4: Cloud Composer (Managed Airflow Gen 3) — canonical
+# Cloud Composer (Managed Airflow Gen 3) — canonical
 # orchestrator. 3 DAG (`daily_feature_refresh` / `retrain_orchestration`
 # / `monitoring_validation`) を本線 schedule として走らせる。docs §3 上下
 # 関係 (Composer = 上位 / Vertex Pipelines = 下位) の上位側実体。
@@ -194,7 +194,7 @@ module "messaging" {
   ]
 }
 
-# Phase 7 SYN-1 — Redis-backed synonym dictionary (lexical query expansion).
+# Redis-backed synonym dictionary (lexical query expansion).
 # Disabled by default; flip ``enable_redis_synonym=true`` (variables.tf) +
 # supply ``vpc_network`` to provision Cloud Memorystore. The search-api
 # ConfigMap consumes ``module.redis_synonym.redis_url`` via the
@@ -227,7 +227,7 @@ module "monitoring" {
   ]
 }
 
-# Phase 6 T2 — Dataflow streaming job scaffold (ranking-log hourly CTR).
+# Dataflow streaming job scaffold (ranking-log hourly CTR).
 # The Flex Template image + spec JSON are built out of band; module
 # creates sa-dataflow + IAM. Flip enable_streaming_job=true after the
 # template is in GCS to register the streaming job itself.
@@ -251,7 +251,7 @@ module "streaming" {
   ]
 }
 
-# Phase 6 T5 — formal SLOs (availability + latency) + burn-rate alerts on
+# formal SLOs (availability + latency) + burn-rate alerts on
 # search-api GKE service. Reuses the notification channel created by
 # module.monitoring so operators do not receive duplicate emails.
 module "slo" {
@@ -261,7 +261,7 @@ module "slo" {
   region       = var.region
   service_name = "search-api"
 
-  # Phase 7: attach SLOs to the GKE Deployment/Service, not Cloud Run. The SLI
+  # attach SLOs to the GKE Deployment/Service, not Cloud Run. The SLI
   # filters switch to prometheus.googleapis.com/http_requests_total (exported
   # by PodMonitoring → GMP) and the telemetry anchor points at the k8s Service
   # inside the GKE Autopilot cluster.

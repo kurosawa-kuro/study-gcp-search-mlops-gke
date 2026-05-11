@@ -1,4 +1,4 @@
-# monitoring/ — Phase 5
+# monitoring/ — drift / accuracy 監視 SQL
 
 ## 構成物
 
@@ -14,4 +14,4 @@
 ## 精度追跡
 
 遅延ラベル到着時に UPDATE で `predictions_log.label` を埋め、別 Scheduled Query で
-過去 7 日と過去 14 日の MAE 差分を計算 → `validation_results` に `metric='accuracy_degradation'` で書き込み。Phase 6 の再学習判定で使用。
+過去 7 日と過去 14 日の MAE 差分を計算 → `validation_results` に `metric='accuracy_degradation'` で書き込み。再学習判定で使用。

@@ -1,8 +1,8 @@
 # =========================================================================
 # messaging module — Pub/Sub + Scheduler (API is served from GKE, not Cloud Run)
 #
-# Phase 5 の Cloud Run Service (search-api) はこのモジュールから抜けた。
-# Phase 6 では search-api は GKE に載るため、Cloud Run 関連リソースはここには
+# 旧 Cloud Run Service (search-api) はこのモジュールから抜けた。
+# search-api は GKE に載るため、Cloud Run 関連リソースはここには
 # 置かない。Scheduler は GKE Gateway 経由で /ops/jobs/check-retrain を叩く。
 # =========================================================================
 
@@ -194,14 +194,14 @@ resource "google_project_iam_member" "pubsub_bq_metadata_viewer" {
 }
 
 # =========================================================================
-# **[Phase 7 W2-4 Stage 3 で smoke / 比較教材用に格下げ]**
+# **[smoke / 比較教材用に格下げ — 本線 orchestration は Composer DAG]**
 #
 # 本線 retrain schedule は Cloud Composer `retrain_orchestration` DAG
-# (schedule "0 19 * * *" UTC = 04:00 JST、本 phase canonical = docs/01 §3.6)。
+# (schedule "0 19 * * *" UTC = 04:00 JST、canonical = docs/01 §3.6)。
 # 本 Cloud Scheduler は本線から外れた **smoke / 軽量代替経路** として残置。
 # schedule は月 1 回 04:00 JST に格下げし、dead-trigger 化を防ぐ最小頻度で
 # 「Composer 経由 vs Cloud Scheduler 直叩き」の比較教材として動く状態を
-# 維持する。リソース削除はしない (Phase 4-5 派生時に再導入されるため)。
+# 維持する。リソース削除はしない (Composer なし派生で再導入されるため)。
 # =========================================================================
 resource "google_cloud_scheduler_job" "check_retrain_daily" {
   count = var.api_external_url == "" ? 0 : 1

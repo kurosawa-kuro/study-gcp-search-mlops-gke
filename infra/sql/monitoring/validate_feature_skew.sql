@@ -8,7 +8,7 @@
 --
 -- Feature list MUST match common/src/common/schema/feature_schema.py::
 -- FEATURE_COLS_RANKER. The pytest test `tests/test_feature_parity_sql.py`
--- enforces this at CI time (added by Phase 5).
+-- enforces this at CI time (CI guard).
 
 DECLARE today DATE DEFAULT CURRENT_DATE("Asia/Tokyo");
 DECLARE training_start DATE DEFAULT DATE_SUB(today, INTERVAL 90 DAY);

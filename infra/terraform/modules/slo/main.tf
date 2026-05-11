@@ -1,7 +1,7 @@
-# Phase 6 T5 — Cloud Monitoring Service + SLO + burn-rate AlertPolicy.
+# — Cloud Monitoring Service + SLO + burn-rate AlertPolicy.
 #
-# Phase 5 already ships two log-based alert policies (5xx, p95 latency) via
-# module.monitoring. Phase 6 adds *formal SLOs* on top of Cloud Run's built-in
+# already ships two log-based alert policies (5xx, p95 latency) via
+# module.monitoring. adds *formal SLOs* on top of Cloud Run's built-in
 # metrics (run.googleapis.com/request_count + request_latencies) so PMLE-style
 # SLI / SLO / Error-Budget / Burn-Rate concepts are learnable against real
 # telemetry from the same search-api service.
@@ -150,7 +150,7 @@ resource "google_monitoring_slo" "latency" {
 # Burn-rate alert policies — fast burn (2% of budget in 1h) + slow burn
 # (10% of budget in 1d). Multipliers configurable via *_burn_threshold vars.
 #
-# Phase 6 Run 2 修正: GCP Monitoring は alert policy の
+# 修正: GCP Monitoring は alert policy の
 # `condition_threshold.filter` に渡す time window を **24h 以下** に制限する
 # (`Durations longer than 24h are not supported`)。Google SRE Workbook の
 # 推奨する 3 日窓はそのままでは受理されないので、slow-burn は 24h 窓に縮めて

@@ -1,14 +1,13 @@
 """ConfigMap schema — single source for sync_configmap.py and deploy_all overlay.
 
-Phase 7 W2-5 で `scripts/setup/deploy_all.py::_run_overlay_configmap` と
-`scripts/ci/sync_configmap.py::render` が独立に key を手書きしていた drift
-事故への構造的対策として、本モジュールがキー列・default 値・YAML 出力を
-**唯一定義**する。新キー追加時の更新箇所を 1 つに固定する。
+`scripts/setup/deploy_all.py::_run_overlay_configmap` と `scripts/ci/sync_configmap.py::render`
+が独立に key を手書きして drift した事故への構造的対策として、本モジュールが
+キー列・default 値・YAML 出力を **唯一定義**する。新キー追加時の更新箇所を 1 つに固定する。
 
-W2-8 で BQ semantic / BQ feature fetcher の互換レイヤを撤去後、ConfigMap は
-Vertex Vector Search / Feature Online Store の resource ID / endpoint だけを
-持つ。`semantic_backend` / `feature_fetcher_backend` のような backend 切替
-selector はもう存在しない (canonical 1 経路に収束)。
+BQ semantic / BQ feature fetcher の互換レイヤ撤去後、ConfigMap は Vertex Vector Search /
+Feature Online Store の resource ID / endpoint だけを持つ。`semantic_backend` /
+`feature_fetcher_backend` のような backend 切替 selector はもう存在しない
+(canonical 1 経路に収束)。
 
 I/O は行わない (subprocess / network / filesystem 不可) — 純粋データ層。
 """
@@ -113,7 +112,7 @@ def render_configmap_yaml(data: dict[str, str], *, with_header: bool = False) ->
             "# Run `make sync-configmap` to regenerate after changing setting.yaml.\n"
             "# `elasticsearch_url` is cluster-local DNS by default — overlay before apply.\n"
             "#\n"
-            "# Phase 7 W2-8 完了後 ConfigMap は Vertex Vector Search / Feature\n"
+            "# ConfigMap は Vertex Vector Search / Feature\n"
             "# Online Store の resource ID / endpoint だけを持つ。`semantic_backend`\n"
             "# / `feature_fetcher_backend` のような backend 切替 selector は撤去済。\n"
         )

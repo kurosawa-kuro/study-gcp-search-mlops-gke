@@ -1,11 +1,11 @@
 # =========================================================================
-# Cloud Composer (Managed Airflow Gen 3) — Phase 7 canonical orchestrator.
+# Cloud Composer (Managed Airflow Gen 3) — canonical 本線 orchestrator.
 #
-# 本 module は Phase 7 の **本線 orchestration** を提供する (= 親
+# 本 module は **本線 orchestration** を提供する (= 親
 # README §「Cloud Composer の位置づけ」 / docs/architecture/01_仕様と設計.md
-# §3 が canonical と謳う Composer DAG 経路の実体)。Phase 7 を canonical 起点
-# とし、Phase 6 への引き算反映は別 phase 作業で行う (= ユーザ訂正 2026-05-02:
-# 「Phase 7 で作った教材コード完成版を引き算して Phase 6 を後日修正する」)。
+# §3 が canonical と謳う Composer DAG 経路の実体)。canonical 構成を本実装の起点
+# とし、Composer なし派生は引き算で別途導出する (= ユーザ訂正 2026-05-02:
+# 「canonical 構成の完成版を引き算して Composer なし派生を後日導出する」)。
 #
 # 学習用 dev (mlops-dev-a) の PDCA サイクル前提で **Composer Gen 3 SMALL**
 # を選ぶ。Gen 3 image (`composer-3-airflow-2.10.5`) は Autopilot worker で

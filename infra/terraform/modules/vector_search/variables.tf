@@ -15,7 +15,7 @@ variable "enable_vector_search" {
 }
 
 variable "index_display_name" {
-  description = "Vertex AI Vector Search index display name. Phase 7 canonical = `property-embeddings` (matches embed pipeline output)."
+  description = "Vertex AI Vector Search index display name. canonical = `property-embeddings` (matches embed pipeline output)."
   type        = string
   default     = "property-embeddings"
 }

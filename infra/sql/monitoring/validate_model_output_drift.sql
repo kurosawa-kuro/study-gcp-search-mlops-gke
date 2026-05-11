@@ -1,4 +1,4 @@
--- Daily self-managed drift check for Phase 7 GKE + KServe serving.
+-- Daily self-managed drift check for GKE + KServe serving.
 --
 -- Vertex Model Monitoring v2 no longer attaches to live traffic because
 -- encoder / reranker serve behind KServe, not Vertex Endpoints. As a

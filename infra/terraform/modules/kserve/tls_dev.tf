@@ -6,7 +6,7 @@
 # 2. `destroy-all → deploy-all` is the PDCA dev loop: with TF-managed
 #    state, `tfstate` carries the cert + key over re-apply (no churn) and
 #    `destroy-all` cleanly removes them too.
-# 3. Phase 7 Run 1 wedged at `Gateway PROGRAMMED=False` because the listener
+# 3. 過去 incident: Gateway が `PROGRAMMED=False` で wedge した because the listener
 #    referenced `Secret search/search-api-tls` that didn't exist. Bootstrapping
 #    a self-signed cert here closes the gap so `make deploy-all` is one-shot.
 #

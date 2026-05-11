@@ -96,6 +96,7 @@ KServe storageUri patch (新 model artifact 反映)
   - synthetic 注入は `definitions/labeling/synthetic_actions.yaml` から `ranking_labels.label_source='synthetic_*'` で擬似正解データを書き込む。`ml/labeling/` は psycopg / google.cloud import 禁止で純粋ロジック維持
 - **LightGBM 接続前提**: `ranking_labels` を集めても、`pipeline/training_job/main.py` から `ml/data/loaders/ranker_repository.py` (BigQuery loader) を呼ぶ配線実装が完了していない限り LightGBM 学習に流れない。**canonical 死守ライン** (詳細は [`docs/architecture/01_仕様と設計.md §8`](docs/architecture/01_仕様と設計.md))
 - **実案件 reference architecture**: Elasticsearch + Redis 同義語辞書 + ME5 + Vertex Vector Search + LightGBM。教材構成も lexical lane は Elasticsearch を canonical とする
+- ⚠️ **ES は学習用 (a') 解 (HTTP + anonymous superuser)**: `infra/manifests/elasticsearch/elasticsearch.yaml` は HTTP + anonymous superuser で運用 (学習プロジェクト前提の意図的設定)。production 化 (HTTPS + password auth) の手順は [`docs/backlog/production-hardening.md`](docs/backlog/production-hardening.md) を参照（active backlog からは外し parked）。**商用展開時は必ず `xpack.security.authc.anonymous.*` を無効化すること**。`test_es_manifest_pins_http_and_anonymous_auth` がこの状態を pin（= 学習用途の自己拘束）
 
 ---
 

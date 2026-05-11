@@ -4,7 +4,7 @@
 #
 # Build context = repository root。Dockerfile は infra/run/services/search_api/Dockerfile。
 #
-# Phase 7 で kaniko に切り替えた:
+# kaniko に切り替えた:
 #   - 1 回目: ~12-15 分 (pyproject.toml split で venv が ~5GB → ~500MB に縮んだので
 #     upload bandwidth bound だった部分が短縮)
 #   - 2 回目以降 (app コードのみ変更): kaniko layer cache hit で ~3-5 分

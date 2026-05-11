@@ -96,36 +96,36 @@ variable "enable_deletion_protection" {
 }
 
 variable "vertex_location" {
-  description = "Vertex AI location for Pipelines / Feature Group / Model Registry (inherited from Phase 5)"
+  description = "Vertex AI location for Pipelines / Feature Group / Model Registry (Vertex AI 系から継承)"
   type        = string
   default     = "asia-northeast1"
 }
 
 variable "vertex_encoder_endpoint_id" {
-  description = "Vertex AI encoder endpoint ID (legacy — retained for Phase 5 compatibility; Phase 7 uses KServe)"
+  description = "Vertex AI encoder endpoint ID (legacy — 旧 Vertex Endpoint serving 用に残置 (現行は GKE + KServe))"
   type        = string
   default     = ""
 }
 
 variable "vertex_reranker_endpoint_id" {
-  description = "Vertex AI reranker endpoint ID (legacy — retained for Phase 5 compatibility; Phase 7 uses KServe)"
+  description = "Vertex AI reranker endpoint ID (legacy — 旧 Vertex Endpoint serving 用に残置 (現行は GKE + KServe))"
   type        = string
   default     = ""
 }
 
 variable "enable_vertex_endpoint_shell" {
-  description = "When true, create empty Vertex AI Endpoint shells for encoder/reranker. Default false because Phase 7 serves via GKE + KServe."
+  description = "When true, create empty Vertex AI Endpoint shells for encoder/reranker. Default false (serving は GKE + KServe)."
   type        = bool
   default     = false
 }
 
 variable "gke_cluster_name" {
-  description = "GKE Autopilot cluster name for Phase 7 serving"
+  description = "GKE Autopilot cluster name (serving)"
   type        = string
   default     = "hybrid-search"
 }
 
-## Phase 7 W3 cleanup: `k8s_use_data_source` is deprecated. The kubernetes /
+## `k8s_use_data_source` is deprecated. The kubernetes /
 ## helm providers now read endpoint+token from the local kubeconfig
 ## (`scripts/infra/kubectl_context.py::ensure` is invoked before any K8s
 ## terraform op runs), removing the data-source ↔ provider-config evaluation
@@ -142,7 +142,7 @@ variable "api_external_url" {
 }
 
 # =========================================================================
-# Phase 6 T5 — SLO tunables forwarded to module.slo.
+# SLO tunables forwarded to module.slo.
 # =========================================================================
 
 variable "slo_availability_goal" {
@@ -170,7 +170,7 @@ variable "slo_rolling_period_days" {
 }
 
 # =========================================================================
-# Phase 6 T2 — Dataflow streaming toggles.
+# Dataflow streaming toggles.
 # =========================================================================
 
 variable "enable_streaming" {
@@ -192,7 +192,7 @@ variable "streaming_flex_template_gcs_path" {
 }
 
 # =========================================================================
-# Vertex AI Feature Online Store toggle (Phase 7 — vertex_feature_group.py).
+# Vertex AI Feature Online Store toggle (vertex_feature_group.py).
 # =========================================================================
 
 variable "enable_feature_online_store" {
@@ -202,22 +202,22 @@ variable "enable_feature_online_store" {
 }
 
 # =========================================================================
-# Vertex AI Vector Search toggle (Phase 7 Wave 2 W2-1) — module "vector_search"
+# Vertex AI Vector Search toggle — module "vector_search"
 # が ME5 ベクトル検索の本番 serving index を provision する。embedding 履歴
 # 正本は BigQuery feature_mart.property_embeddings に残る (二層構造)。
 # =========================================================================
 
 variable "enable_vector_search" {
-  description = "Provision the Vertex AI Vector Search index + endpoint + deployed index. Default true for the dev PDCA environment so `make deploy-all` provisions the canonical Phase 7 semantic-search backend without TF_VAR overrides; rely on `make destroy-all` between PDCA cycles to bound replica cost."
+  description = "Provision the Vertex AI Vector Search index + endpoint + deployed index. Default true for the dev PDCA environment so `make deploy-all` provisions the canonical semantic-search backend without TF_VAR overrides; rely on `make destroy-all` between PDCA cycles to bound replica cost."
   type        = bool
   default     = true
 }
 
 # =========================================================================
-# Cloud Composer toggle (Phase 7 W2-4) — module "composer" provisions the
+# Cloud Composer toggle — module "composer" provisions the
 # canonical Managed Airflow Gen 3 environment that runs the 3 main DAGs
 # (`daily_feature_refresh` / `retrain_orchestration` / `monitoring_validation`).
-# Cost (Gen 3 DCU-hour 課金): Composer 単体でも常駐課金がある。Phase 7 full を
+# Cost (Gen 3 DCU-hour 課金): Composer 単体でも常駐課金がある。full 構成を
 # 3h 学習セッションで回すと全体で概ね ~¥870-1,200 レンジを見込む一方、真の
 # リスクは destroy leak (24h leak ≒ ~¥4,000-6,000, multi-day / monthly は
 # さらに増える)。Stage 1 keeps default=false to preserve current deploy-all
@@ -225,7 +225,7 @@ variable "enable_vector_search" {
 # =========================================================================
 
 variable "enable_composer" {
-  description = "Provision the Cloud Composer (Gen 3) environment. Default true (Stage 3 flip 2026-05-02): Phase 7 = canonical 起点として `make deploy-all` で Composer 環境を立ち上げる本線運用。現設定の 3h 学習 1 回では full 構成全体で ~¥870-1,200 が目安 (詳細 docs/runbook/05_運用.md §1.4-bis)。`enable_composer=false` で provisioning skip も可 (Composer 不要な作業時)。"
+  description = "Provision the Cloud Composer (Gen 3) environment. Default true (Stage 3 flip 2026-05-02): canonical 構成では `make deploy-all` で Composer 環境を立ち上げる本線運用。現設定の 3h 学習 1 回では full 構成全体で ~¥870-1,200 が目安 (詳細 docs/runbook/05_運用.md §1.4-bis)。`enable_composer=false` で provisioning skip も可 (Composer 不要な作業時)。"
   type        = bool
   default     = true
 }
@@ -249,11 +249,11 @@ variable "composer_runner_image" {
 }
 
 # =========================================================================
-# Phase 7 SYN-1 — Redis synonym dictionary (lexical query expansion)
+# Redis synonym dictionary (lexical query expansion)
 # =========================================================================
 
 variable "enable_redis_synonym" {
-  description = "Provision Cloud Memorystore for Redis backing the lexical synonym dictionary (SynonymExpanderPort, Phase 7 SYN-1). Default false: ``synonym_backend=none`` keeps Phase 5/6 behaviour. Flip to true to opt in; the search-api ConfigMap then consumes ``module.redis_synonym.redis_url`` via the ``configmap_overlay`` deploy step."
+  description = "Provision Cloud Memorystore for Redis backing the lexical synonym dictionary (SynonymExpanderPort). Default false: ``synonym_backend=none`` keeps the synonym-disabled behaviour. Flip to true to opt in; the search-api ConfigMap then consumes ``module.redis_synonym.redis_url`` via the ``configmap_overlay`` deploy step."
   type        = bool
   default     = false
 }

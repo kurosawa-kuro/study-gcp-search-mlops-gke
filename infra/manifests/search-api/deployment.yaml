@@ -78,15 +78,15 @@ spec:
               value: "true"
             # KServe InferenceService の cluster-local エンドポイント
             # KServe RawDeployment が作る Service は `<isvc-name>-predictor`
-            # 命名 (Phase 7 Run 1 B15+) — `property-encoder` ではなく
+            # 命名規約: `property-encoder` ではなく
             # `property-encoder-predictor` を指す必要がある。
-            # encoder は Phase 7 Run 2 で KServe HuggingFace stock runtime
+            # encoder は KServe HuggingFace stock runtime
             # (`kserve/huggingfaceserver`, task=text_embedding) に切替済み
             # → v1 protocol path (`/v1/models/model:predict`、HF runtime default
             # の model_name=`model`)。旧 Vertex CPR 規約の `/predict` は
             # 404 を返す (infra/manifests/kserve/encoder.yaml の切替コメント参照)。
             # reranker は KServe stock MLServer LightGBM runtime → v2 protocol
-            # (`/v2/models/<name>/infer`、Phase 7 Run 1 B18 で v1 から修正)。
+            # (`/v2/models/<name>/infer`、v1 から修正済)。
             # TreeSHAP explain は stock runtime では返らないため、専用の
             # `property-reranker-explain` Service へ別 URL で逃がす。
             - name: KSERVE_ENCODER_URL
@@ -98,7 +98,7 @@ spec:
             - name: KSERVE_PREDICT_TIMEOUT_SECONDS
               value: "30.0"
             # =================================================================
-            # Phase 7 W2-8 完了: Vertex Vector Search / Feature Online Store の
+            # Vertex Vector Search / Feature Online Store の
             # canonical 経路の resource ID / endpoint だけを ConfigMap から注入。
             # `semantic_backend` / `feature_fetcher_backend` のような backend
             # 切替 selector は撤去済。空のまま起動すると container build 時に
@@ -130,9 +130,9 @@ spec:
                   name: search-api-config
                   key: vertex_feature_online_store_endpoint
             # =================================================================
-            # Phase 7 SYN-1: Redis 同義語辞書 (lexical query expansion)。
+            # Redis 同義語辞書 (lexical query expansion)。
             # ``synonym_backend`` が `none` のとき URL 空 → ``NoopSynonymExpander``
-            # が選択され、Phase 5 / 6 と同等挙動。Cloud Memorystore を有効化
+            # が選択され、synonym 無効時と同等挙動。Cloud Memorystore を有効化
             # するには Terraform で ``enable_redis_synonym=true`` にし、
             # ``configmap_overlay`` step が ``synonym_redis_url`` を ConfigMap
             # に流し込む。AUTH 文字列は Memorystore が生成 → Secret Manager に
