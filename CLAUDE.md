@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## このリポジトリの性質
 
-不動産ハイブリッド検索 + 継続改善 MLOps サイクルの個人技術学習プロジェクト。題材は不動産検索、技術スタックは **Cloud Composer 本線 orchestration + Vertex AI Pipelines / Feature Store / Vector Search / Model Registry + GKE Deployment + KServe InferenceService + PMLE 統合技術 (BQML / Dataflow / TreeSHAP / Monitoring SLO)**。
+不動産ハイブリッド検索 + 継続改善 MLOps サイクルの個人技術学習プロジェクト。題材は不動産検索、技術スタックは **Cloud Composer 本線 orchestration + Vertex AI Pipelines / Feature Store / Vector Search / Model Registry + GKE Deployment + KServe InferenceService + PMLE 統合技術 (BQML / Dataflow / TreeSHAP / Monitoring SLO)**。公開エンドポイントは `https://gcp-search-mlops-gke.dev` (Cloud Domains + Cloud DNS public zone `gcp-search-mlops-gke-dev` + GKE Gateway + Certificate Manager の Google-managed cert)。
 
 最初に読むべきファイル:
 
@@ -29,6 +29,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - `action_type` enum 8 種: アプリ emit 5 種 (`click` / `detail_view` / `favorite` / `request_button_click` / `request_complete`) + synthetic 注入専用 3 種 (`inquiry_complete` / `contract` / `bounce`)
   - 重み付き relevance label: `click`=1, `detail_view`=2, `favorite`=3, `request_button_click`=4, `request_complete`=5, `inquiry_complete`=7, `contract`=10, `no_action`=0, `bounce`=0/-1
   - **クリックは「完全な正解」ではなく弱教師信号**として扱う。複合ラベルで LightGBM LambdaRank 用 relevance label に変換するのが canonical
+  - **アプリ → BigQuery への書込みは Pub/Sub topic → BigQuery Subscription 経由が canonical**: `search-events` / `search-impressions` / `user-actions` → `mlops.{search_events,search_impressions,user_actions}` (`PubSubEventWriter`)、`search-feedback` → `mlops.feedback_events` (`PubSubFeedbackRecorder`)、`ranking-log` → `mlops.ranking_log` (`PubSubRankingLogPublisher`)。`CloudLoggingEventWriter` は 3 topic 未設定時の bootstrap fallback のみ (downstream sink 不在で空のまま = silent gap になるため canonical では使わない)
   - synthetic 注入は `definitions/labeling/synthetic_actions.yaml` から `ranking_labels.label_source='synthetic_*'` で擬似正解データを書き込む。`ml/labeling/` は psycopg / google.cloud import 禁止で純粋ロジック維持
 - ⚠️ **canonical 死守ライン (LightGBM 接続)**: `pipeline/training_job/main.py` から Repository 経由で実データを trainer に渡す配線を維持し、synthetic-only 学習へ退行させない
 
@@ -59,7 +60,8 @@ make verify-local-hybrid       # verify-local-parity + ground-truth contract + v
 # Cloud canonical (実 GCP)
 make deploy-all                # 15 step (tf-bootstrap → 2 段階 apply → seed → sync-elasticsearch → composer-deploy-dags → deploy-api)
 make run-all                   # canonical validation 12 step
-make destroy-all               # no-prompt teardown (4 段)
+make destroy-all               # no-prompt teardown (8 step、--from-step/--to-step で slicing 可)
+make ops-search                # /api/v1/search smoke (TARGET=gcp なら https://gcp-search-mlops-gke.dev へ)
 ```
 
 ## current sprint の正本 (`docs/tasks/TASKS.md`)

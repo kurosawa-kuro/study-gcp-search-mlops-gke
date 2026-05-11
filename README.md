@@ -64,15 +64,16 @@ KServe storageUri patch (新 model artifact 反映)
 | 候補融合 | RRF (Reciprocal Rank Fusion) |
 | Rerank | LightGBM LambdaRank (KServe InferenceService、MLServer runtime) |
 | 特徴量管理 | Vertex AI Feature Store (Feature Group / Feature View / Feature Online Store、Optimized 型、training-serving skew 防止) |
-| ranking log | Pub/Sub (`ranking-log` / `search-feedback`) → BQ Subscription → BigQuery (`mlops.ranking_log` / `mlops.feedback_events`) |
+| 検索ログ → BigQuery | Pub/Sub topic → BigQuery Subscription (`use_table_schema`): `ranking-log` → `mlops.ranking_log` / `search-feedback` → `mlops.feedback_events` / `search-events` → `mlops.search_events` / `search-impressions` → `mlops.search_impressions` / `user-actions` → `mlops.user_actions`。`EventWriter` canonical = `PubSubEventWriter`、3 topic 未設定時のみ `CloudLoggingEventWriter` fallback |
 | 再学習 trigger | **Cloud Composer DAG** (`retrain_orchestration`、本線)。Cloud Scheduler / Eventarc / Cloud Function は smoke / manual trigger 用 |
 | ML pipeline | Vertex AI Pipelines (KFP v2、`pipeline/{data_job,training_job,evaluation_job,batch_serving_job}/`) |
 | モデル管理 | Vertex Model Registry (`staging` / `production` alias) |
 | 監視 | Cloud Monitoring + Vertex Model Monitoring + GMP `PodMonitoring` + SLO (custom_service `k8s_service` 型) + burn-rate alert |
-| serving 層 | GKE Autopilot Deployment (`search-api`) + KServe InferenceService (`property-encoder` / `property-reranker`) |
-| 認可 | Gateway API + IAP (外部) + NetworkPolicy (内部: search → kserve-inference のみ許可) |
+| serving 層 | GKE Autopilot Deployment (`search-api`) + KServe InferenceService (`property-encoder` / `property-reranker`)。公開 URL `https://gcp-search-mlops-gke.dev` |
+| 公開ドメイン / TLS | Cloud Domains 取得ドメイン `gcp-search-mlops-gke.dev` + Cloud DNS public zone `gcp-search-mlops-gke-dev` + Certificate Manager (DNS-01 authorization、`networking.gke.io/certmap`) + 予約グローバル外部 IP。`.dev` TLD は HSTS preload 強制。`infra/terraform/modules/dns/` |
+| 認可 | Gateway API (`gke-l7-global-external-managed`) + IAP (外部) + NetworkPolicy (内部: search → kserve-inference のみ許可) |
 | Secret 管理 | GCP Secret Manager + External Secrets Operator (K8s Secret 自動同期) |
-| IaC | Terraform 1.9+ (12 modules) + Helm provider |
+| IaC | Terraform 1.9+ (14 modules) + Helm provider |
 | CI/CD | GitHub Actions + Workload Identity Federation (SA Key 禁止) |
 | PMLE 統合技術 | BQML popularity / Dataflow Flex Template / TreeSHAP Explainability / Monitoring SLO + burn-rate / Composer-managed BigQuery monitoring query |
 
@@ -91,6 +92,7 @@ KServe storageUri patch (新 model artifact 反映)
   - `search_impressions` (`event_id` / `search_id` / `property_id` / `rank` / `lexical_score` / `vector_score` / `rrf_score` / `rerank_score` / `timestamp`)
   - `user_actions` (`event_id` / `search_id` / `property_id` / `action_type` / `action_value` / `timestamp`)
   - `action_type` enum 8 種: アプリ emit 5 種 (`click`=1, `detail_view`=2, `favorite`=3, `request_button_click`=4, `request_complete`=5) + synthetic 注入専用 3 種 (`inquiry_complete`=7, `contract`=10, `bounce`=0/-1)
+  - アプリ → BigQuery への書込みは **Pub/Sub topic → BigQuery Subscription 経由** (`PubSubEventWriter` / `PubSubFeedbackRecorder` / `PubSubRankingLogPublisher`)。`CloudLoggingEventWriter` は 3 topic 未設定時の bootstrap fallback のみ
   - synthetic 注入は `definitions/labeling/synthetic_actions.yaml` から `ranking_labels.label_source='synthetic_*'` で擬似正解データを書き込む。`ml/labeling/` は psycopg / google.cloud import 禁止で純粋ロジック維持
 - **LightGBM 接続前提**: `ranking_labels` を集めても、`pipeline/training_job/main.py` から `ml/data/loaders/ranker_repository.py` (BigQuery loader) を呼ぶ配線実装が完了していない限り LightGBM 学習に流れない。**canonical 死守ライン** (詳細は [`docs/architecture/01_仕様と設計.md §8`](docs/architecture/01_仕様と設計.md))
 - **実案件 reference architecture**: Elasticsearch + Redis 同義語辞書 + ME5 + Vertex Vector Search + LightGBM。教材構成も lexical lane は Elasticsearch を canonical とする
@@ -132,7 +134,7 @@ KServe storageUri patch (新 model artifact 反映)
 │   ├── workflow/              # KFP compile + Cloud Function trigger
 │   └── dags/                  # Composer DAG 3 本 + _pod.py helper
 ├── infra/
-│   ├── terraform/             # 12 modules (iam / data / messaging / monitoring / vertex / slo / streaming / vector_search / gke / kserve / composer / elasticsearch)
+│   ├── terraform/             # 14 modules (iam / data / messaging / monitoring / vertex / slo / streaming / vector_search / gke / kserve / composer / elasticsearch / redis_synonym / dns)
 │   ├── manifests/             # K8s manifests (`kubectl apply -k`)
 │   ├── sql/                   # monitoring SQL (skew / drift)
 │   └── run/services/          # Cloud Build 定義 + Dockerfile (svc ごとに co-located)
@@ -202,9 +204,9 @@ make destroy-all               # no-prompt teardown (4 段)
 
 ## 7. 設定とシークレット
 
-- `env/config/setting.yaml` = 単一の設定正本 (非秘密値のみ、`project_id` / `region` / `api_service` / Vertex location 等)
+- `env/config/setting.yaml` = 単一の設定正本 (非秘密値のみ、`project_id` / `region` / `api_service` / Vertex location / `public_domain` (`gcp-search-mlops-gke.dev`) / `dns_zone_name` (`gcp-search-mlops-gke-dev`) 等)。Makefile が awk で読んで `-var=...` を Terraform へ流す (`github_repo` / `oncall_email` / `public_domain` / `dns_zone_name` = `CANONICAL_TF_VAR_NAMES`)
 - `env/secret/credential.yaml` = ローカル用の秘密値 (gitignore 対象)
-- 本番 secret は GCP Secret Manager 正本 (`search-api-iap-oauth-client-secret`)、External Secrets Operator が K8s Secret に自動同期
+- 本番 secret は GCP Secret Manager 正本 (`search-api-iap-oauth-client-secret` / `mlops-synonym-redis-auth`)、External Secrets Operator が K8s Secret に自動同期
 
 `pydantic-settings` で `env > setting.yaml` の優先順で読む。
 
@@ -214,7 +216,7 @@ make destroy-all               # no-prompt teardown (4 段)
 
 - GitHub Actions (`.github/workflows/`、8 本): `ci.yml` / `terraform.yml` / `deploy-api.yml` / `deploy-dataform.yml` / `deploy-encoder-image.yml` / `deploy-reranker-image.yml` / `deploy-trainer-image.yml` / `deploy-pipeline.yml`
 - 認証: Workload Identity Federation のみ (SA Key 禁止)。`sa-github-deployer` が WIF 経由で各 SA に impersonate
-- Terraform: 12 modules、`tests/integration/infra/test_terraform_module_structure.py` が 4 ファイル構成 (`main.tf` / `variables.tf` / `outputs.tf` / `versions.tf`) + variable description を構造検証
+- Terraform: 14 modules、`tests/integration/infra/test_terraform_module_structure.py` が 4 ファイル構成 (`main.tf` / `variables.tf` / `outputs.tf` / `versions.tf`) + variable description を構造検証
 
 ---
 

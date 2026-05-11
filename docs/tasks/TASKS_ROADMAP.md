@@ -45,7 +45,7 @@ Meilisearch を廃止、GKE 上で Elasticsearch (ECK) を稼働。Elastic Cloud
 
 実施順は **Wave 9 → Wave 8.7** (cert + DNS が外側、ES auth が内側 — 外側を先に揃えてから内側の認可強化)。両 Wave の具体手順 (gcloud / kubectl / file edit / 検証コマンド) は §2 にステップ展開済。
 
-完了済 Wave (0/1/2/3/4/5/6/7/8 / M-Pivot / M-RunbookLocal / M-Wave8.5 / M-Wave8.6 Phase 1-3 + 後段 caller migration / Step.precondition framework / C4 Makefile python -u / PMLE doc / GCP ID rename `phase7-*` → `mlops-*` / `destroy-coast-down`) は [03_実装カタログ §7.3](../architecture/03_実装カタログ.md) を正本。
+完了済 Wave (0/1/2/3/4/5/6/7/8 / M-Pivot / M-RunbookLocal / M-Wave8.5 / M-Wave8.6 Phase 1-3 + 後段 caller migration + adapter 移行漏れ後処理 / Step.precondition framework / C4 Makefile python -u / PMLE doc / GCP ID rename `phase7-*` → `mlops-*` / `destroy-coast-down` / EventWriter Pub/Sub 統一 / M-Wave9 Step 1-5 公開ドメイン) は [03_実装カタログ §7.3](../architecture/03_実装カタログ.md) を正本。
 
 ---
 
@@ -227,8 +227,9 @@ Composer = 上位 orchestrator、Vertex Pipelines = 下位 ML executor。`train/
 
 | ID | 内容 | 状態 |
 |---|---|---|
-| M-Wave8.7 | ES production 化 (HTTPS + password) | ⏸ ドメイン購入後 (M-Wave9 と同時推奨) |
-| M-Wave9 | 独自ドメイン + HTTPS + DNS | ⏸ scope outside |
+| M-Wave9 | 独自ドメイン + HTTPS + DNS — Step 1-5 (購入 / DNS zone / `module.dns` / gateway certmap+static IP / var 配線 + `resolve_api_target` 公開ドメイン化) **完了 2026-05-11**。残り Step 6 (deploy → smoke、cert ACTIVE 確認) のみ | 🔨 deploy 待ち |
+| M-Wave8.7 | ES production 化 (HTTPS + password auth) | ⏸ M-Wave9 完了後 |
+| `infra/` Phase 残骸 scrub | Terraform module + manifest のコメント ~25 箇所 (M-Wave8.5 が docs/ + tests/ のみだった分)。コード影響なし | ⏳ 着手可 |
 
 完了済は [`../architecture/03_実装カタログ.md`](../architecture/03_実装カタログ.md) §7.3 を正本。
 
