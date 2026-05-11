@@ -67,10 +67,12 @@ def test_feature_view_online_serving_source_is_direct_bigquery() -> None:
         in data_tf
     )
     assert 'WHERE event_date = CURRENT_DATE("Asia/Tokyo")' in data_tf
-    assert (
-        'uri = "bq://${var.project_id}.${var.feature_mart_dataset_id}.property_features_online_latest"'
-        in vertex_tf
-    )
+    # terraform fmt aligns `=` within the big_query_source { } block, so match
+    # whitespace-tolerantly rather than pinning the exact column.
+    assert re.search(
+        r'uri\s+=\s+"bq://\$\{var\.project_id\}\.\$\{var\.feature_mart_dataset_id\}\.property_features_online_latest"',
+        vertex_tf,
+    ), "Feature View big_query_source.uri must point at bq://...property_features_online_latest"
     assert 'entity_id_columns = ["property_id"]' in vertex_tf
     assert "feature_registry_source {" not in vertex_tf
     assert "TF_APPLY_STAGE1_TARGETS" in stage_apply_py
