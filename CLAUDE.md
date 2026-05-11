@@ -57,6 +57,11 @@ make verify-local-app          # FastAPI boot + DI + API contract
 make verify-local-ml           # ML / pipeline 単体 + smoke train
 make verify-local-hybrid       # verify-local-parity + ground-truth contract + verify-local-app + verify-local-ml (live なし全 PASS)
 
+# ★ローカルビルド = この 1 コマンドで 5 image 全部。search-api 単体だけ build して「ビルド完了」と報告しない
+make build-all-local           # = ml-base → search-api / property-encoder / property-reranker / composer-runner を docker buildx で no-push build
+                               #   ビルド対象 Dockerfile は infra/run/services/{search_api,ml_base,encoder,reranker,composer_runner}/Dockerfile の 5 個
+                               #   各 image の起動 smoke (import + /livez 200) は docs/runbook/04_検証.md「ローカル build 対象 (5 image)」節
+
 # Cloud canonical (実 GCP)
 make deploy-all                # 15 step (tf-bootstrap → 2 段階 apply → seed → sync-elasticsearch → composer-deploy-dags → deploy-api)
 make run-all                   # canonical validation 12 step

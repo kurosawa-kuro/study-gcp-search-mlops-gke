@@ -51,7 +51,7 @@ export PROJECT_ID REGION API_SERVICE ARTIFACT_REPO VERTEX_LOCATION PIPELINE_ROOT
         sync-elasticsearch sync-synonyms \
         label-build build-training-dataset train-smoke train-smoke-persist api-dev api-dev-hybrid \
         verify-local-parity verify-local-app verify-local-ml verify-local-hybrid clean \
-        docker-auth build-ml-base-local deploy-api deploy-api-local deploy-kserve-images deploy-kserve-images-local deploy-kserve-models kube-creds \
+        docker-auth build-ml-base-local build-all-local deploy-api deploy-api-local deploy-kserve-images deploy-kserve-images-local deploy-kserve-models kube-creds \
         composer-deploy-dags build-composer-runner ops-composer-trigger ops-composer-list-runs ops-composer-task-states \
         ops-deploy-monitor ops-run-all-monitor \
         ops-api-url ops-daily ops-livez ops-search ops-search-components ops-ranking ops-feedback \
@@ -236,9 +236,9 @@ verify-local-parity: ## Offline parity + codebase invariants (no GCP; catches do
 
 verify-local-app: ## Fast local app loop (layer check + app/script unit tests, no live GCP)
 	$(MAKE) check-layers
-	uv run ruff check app tests/unit/app tests/unit/scripts/test_local_hybrid.py scripts/setup/local_hybrid.py scripts/deploy/api_gke_local.py scripts/deploy/build_kserve_images_local.py
-	uv run ruff format --check app tests/unit/app tests/unit/scripts/test_local_hybrid.py scripts/setup/local_hybrid.py scripts/deploy/api_gke_local.py scripts/deploy/build_kserve_images_local.py
-	uv run mypy app scripts/setup/local_hybrid.py scripts/deploy/api_gke_local.py scripts/deploy/build_kserve_images_local.py
+	uv run ruff check app tests/unit/app tests/unit/scripts/test_local_hybrid.py scripts/setup/local_hybrid.py scripts/deploy/api_gke_local.py scripts/deploy/build_kserve_images_local.py scripts/deploy/build_all_local.py
+	uv run ruff format --check app tests/unit/app tests/unit/scripts/test_local_hybrid.py scripts/setup/local_hybrid.py scripts/deploy/api_gke_local.py scripts/deploy/build_kserve_images_local.py scripts/deploy/build_all_local.py
+	uv run mypy app scripts/setup/local_hybrid.py scripts/deploy/api_gke_local.py scripts/deploy/build_kserve_images_local.py scripts/deploy/build_all_local.py
 	uv run pytest tests/unit/app tests/unit/scripts/test_local_hybrid.py -q
 
 verify-local-ml: ## Fast local ML loop (ML/pipeline unit tests + smoke train, no deploy)
@@ -261,6 +261,14 @@ docker-auth: ## (Optional) configure local docker for Artifact Registry
 
 build-ml-base-local: ## Local docker buildx cache base for encoder/reranker builder stages
 	docker buildx build --file infra/run/services/ml_base/Dockerfile --load -t mlops-ml-base:local .
+
+# 「ローカルビルド」「ビルドして」= この 5 image 全部 (ml-base → search-api / encoder /
+# reranker / composer-runner)。search-api 単体では不足。実装は scripts/deploy/build_all_local.py
+# (Makefile 破綻防止仕様: 複数行アクションは script に切り出して 1 行で呼ぶ)。
+# 対象 Dockerfile は infra/run/services/{ml_base,search_api,encoder,reranker,composer_runner}/Dockerfile。
+# 詳細手順 + 起動 smoke は docs/runbook/04_検証.md「ローカル build 対象 = 5 image」節。
+build-all-local: ## ★ローカルビルド = 5 image 全部 (no push): ml-base / search-api / encoder / reranker / composer-runner
+	uv run python -u -m scripts.deploy.build_all_local
 
 kube-creds: ## Fetch kubeconfig for the GKE Autopilot cluster
 	gcloud container clusters get-credentials $${GKE_CLUSTER_NAME:-hybrid-search} --region=$(REGION) --project=$(PROJECT_ID)
