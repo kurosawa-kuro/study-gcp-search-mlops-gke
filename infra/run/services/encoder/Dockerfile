@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 # KServe InferenceService: multilingual-e5-base encoder。
-# Local build では ML_BUILDER_IMAGE=phase7-ml-base:local を渡すことで、
+# Local build では ML_BUILDER_IMAGE=mlops-ml-base:local を渡すことで、
 # base deps 解決済み builder から sentence-transformers 分だけ差分 install する。
 
 ARG ML_BUILDER_IMAGE=ghcr.io/astral-sh/uv:0.5.4-python3.12-bookworm-slim
