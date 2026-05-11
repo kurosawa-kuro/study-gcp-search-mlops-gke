@@ -54,18 +54,34 @@ def _step(msg: str) -> None:
 def _build(name: str, dockerfile: str, image_tag: str, extra_args: list[str]) -> bool:
     _step(f"[{name}] docker buildx build -f {dockerfile} -t {image_tag}")
     started = time.monotonic()
-    cmd = ["docker", "buildx", "build", "--file", dockerfile, *extra_args, "--load", "-t", image_tag, "."]
+    cmd = [
+        "docker",
+        "buildx",
+        "build",
+        "--file",
+        dockerfile,
+        *extra_args,
+        "--load",
+        "-t",
+        image_tag,
+        ".",
+    ]
     proc = subprocess.run(cmd, check=False)
     elapsed = time.monotonic() - started
     if proc.returncode != 0:
-        print(f"[error] [{name}] build FAILED rc={proc.returncode} elapsed={elapsed:.0f}s", file=sys.stderr)
+        print(
+            f"[error] [{name}] build FAILED rc={proc.returncode} elapsed={elapsed:.0f}s",
+            file=sys.stderr,
+        )
         return False
     _step(f"[{name}] DONE {image_tag} elapsed={elapsed:.0f}s")
     return True
 
 
 def main() -> int:
-    _step(f"build-all-local start ({len(_IMAGES)} image): " + " / ".join(t for _, _, t, _ in _IMAGES))
+    _step(
+        f"build-all-local start ({len(_IMAGES)} image): " + " / ".join(t for _, _, t, _ in _IMAGES)
+    )
     for name, dockerfile, image_tag, extra_args in _IMAGES:
         if not _build(name, dockerfile, image_tag, extra_args):
             # ml-base failure → encoder/reranker can't layer on it; abort the rest.
