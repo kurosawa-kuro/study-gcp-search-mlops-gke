@@ -1,10 +1,13 @@
 """`terraform plan` wrapper that validates required vars + saves the plan to
 infra/tfplan so the follow-up `terraform apply tfplan` is reproducible.
 
-Defaults come from `env/config/setting.yaml` (`github_repo` / `oncall_email`)
-via `scripts._common.DEFAULTS`. Override at the CLI with env vars
-`GITHUB_REPO=...` / `ONCALL_EMAIL=...` for ad-hoc plans against another
-repo / oncall address.
+Defaults come from `env/config/setting.yaml` (`github_repo` / `oncall_email` /
+`public_domain` / `dns_zone_name`) via `scripts._common`. The canonical
+`-var=...` set is built by `terraform_var_args()` (single source of truth shared
+with tf_apply / destroy_all / recover_wif / state_recovery) — adding a var name
+to `CANONICAL_TF_VAR_NAMES` propagates here automatically. Override at the CLI
+with env vars `GITHUB_REPO=...` / `ONCALL_EMAIL=...` for ad-hoc plans against
+another repo / oncall address.
 """
 
 from __future__ import annotations
@@ -13,7 +16,7 @@ import json
 import os
 from pathlib import Path
 
-from scripts._common import DEFAULTS, _load_list_setting, fail
+from scripts._common import DEFAULTS, _load_list_setting, fail, terraform_var_args
 from scripts.domain.terraform.lock import run_terraform_streaming_with_lock_retry
 
 INFRA = Path(__file__).resolve().parents[2] / "infra" / "terraform" / "environments" / "dev"
@@ -46,8 +49,7 @@ def main() -> int:
             "terraform",
             f"-chdir={INFRA}",
             "plan",
-            f"-var=github_repo={github_repo}",
-            f"-var=oncall_email={oncall_email}",
+            *terraform_var_args(),
             f"-var=admin_user_emails={json.dumps(admin_user_emails)}",
             "-out=tfplan",
         ],

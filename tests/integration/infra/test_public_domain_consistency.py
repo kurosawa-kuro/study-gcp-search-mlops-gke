@@ -157,6 +157,26 @@ def test_makefile_exports_public_domain_and_zone() -> None:
     assert "PUBLIC_DOMAIN" in export_line and "DNS_ZONE_NAME" in export_line
 
 
+def test_tf_plan_feeds_terraform_the_canonical_var_set() -> None:
+    """`make deploy-all` step 5 (tf-plan) must hand terraform the canonical
+    `-var=...` set (= `terraform_var_args()`, incl. public_domain / dns_zone_name).
+
+    Regression guard for the M-Wave9 incident where tf_plan.py kept a hand-rolled
+    `-var=github_repo=... -var=oncall_email=...` list and `terraform plan` aborted
+    with "No value for required variable public_domain" — only tf_apply / destroy_all
+    / recover_wif / state_recovery had been migrated to the shared builder.
+    """
+    tf_plan = _read("scripts/setup/tf_plan.py")
+    assert "terraform_var_args" in tf_plan, "tf_plan.py must import the canonical -var builder"
+    assert "*terraform_var_args()" in tf_plan, (
+        "tf_plan.py must splat terraform_var_args() into the plan command"
+    )
+    # the hand-rolled per-var lines must be gone (admin_user_emails stays — it is a
+    # YAML block list handled separately, not part of CANONICAL_TF_VAR_NAMES).
+    assert "-var=github_repo=" not in tf_plan
+    assert "-var=oncall_email=" not in tf_plan
+
+
 def test_tf_apply_stage1_targets_includes_module_dns() -> None:
     """`module.dns` は `TF_APPLY_STAGE1_TARGETS` に含まれること — Certificate Manager の
     DNS-01 検証を deploy の残り (kserve / configmap / composer-dags / deploy-api) の間に
