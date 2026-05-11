@@ -245,3 +245,8 @@ Composer = 上位 orchestrator、Vertex Pipelines = 下位 ML executor。`train/
 - [`../troubleshooting/`](../troubleshooting/) — incident memo (eck-license-reconcile-stall / terraform-lock-stale-after-bg-kill / bg-pipe-fake-exit-zero)
 - [`../pmle-learning-notes.md`](../pmle-learning-notes.md) — PMLE 学習 doc (試験対策、本リポ実体験起点)
 - [`../conventions/`](../conventions/) — 命名 / 配置 / Make / Docker 規約
+
+
+これ、今からでもcsvに掛かった時間を記録する仕組みすべきだと思う
+> それぞれに掛かった時間は計測しているよね
+次にdeploy-allした時に、予測完了見込み時間を出せるように計測しているよね？

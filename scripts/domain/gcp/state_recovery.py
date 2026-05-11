@@ -675,7 +675,9 @@ def main(argv: list[str] | None = None) -> int:
 
     project_id = os.environ.get("PROJECT_ID", "mlops-dev-a")
     region = os.environ.get("VERTEX_LOCATION") or os.environ.get("REGION") or "asia-northeast1"
-    infra_dir = Path(__file__).resolve().parents[2] / "infra" / "terraform" / "environments" / "dev"
+    # scripts/domain/gcp/state_recovery.py → repo root is parents[3]
+    # (parents[0]=scripts/domain/gcp, [1]=scripts/domain, [2]=scripts, [3]=<repo root>).
+    infra_dir = Path(__file__).resolve().parents[3] / "infra" / "terraform" / "environments" / "dev"
     # Mirror the canonical -var set (github_repo / oncall_email / public_domain /
     # dns_zone_name). Each is `-var=k=v` (two argv items) so terraform receives
     # them the same way `_common.terraform_var_args()` produces.

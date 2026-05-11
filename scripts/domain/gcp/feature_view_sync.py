@@ -24,7 +24,9 @@ from scripts._common import env
 from scripts.adapters.gcloud import gcloud_run
 from scripts.adapters.terraform import terraform_run
 
-INFRA = Path(__file__).resolve().parents[2] / "infra" / "terraform" / "environments" / "dev"
+# scripts/domain/gcp/feature_view_sync.py → repo root is parents[3]
+# (parents[0]=scripts/domain/gcp, [1]=scripts/domain, [2]=scripts, [3]=<repo root>).
+INFRA = Path(__file__).resolve().parents[3] / "infra" / "terraform" / "environments" / "dev"
 
 
 def _terraform_output_map() -> dict[str, str]:
