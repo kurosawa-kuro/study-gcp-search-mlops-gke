@@ -73,9 +73,11 @@ from scripts.domain.terraform.state import (
     state_rm,
     state_size,
 )
+from scripts.lib import step_timing
 from scripts.setup.seed_minimal_clean import main as seed_clean_main
 
 INFRA = Path(__file__).resolve().parents[2] / "infra" / "terraform" / "environments" / "dev"
+_FLOW = "destroy-all"
 
 # Resource addresses that carry **server-side `deletion_protection`** —
 # Terraform refuses to destroy these while the attribute is `true`. Step
@@ -172,12 +174,17 @@ def _step(n: int, total: int, label: str) -> None:
     print("================================================================")
 
 
-def _step_done() -> None:
-    """Emit a `step-done` line with elapsed seconds for the step just finished."""
+def _elapsed_since_step_start() -> float:
+    return 0.0 if _STEP_STARTED_AT is None else time.monotonic() - _STEP_STARTED_AT
+
+
+def _step_done(step: DestroyStep) -> None:
+    """Emit a `step-done` line and append the step's wall-clock time to the history CSV."""
     if _STEP_STARTED_AT is None:
         return
-    elapsed = time.monotonic() - _STEP_STARTED_AT
+    elapsed = _elapsed_since_step_start()
     print(f" destroy-all  step-done elapsed={elapsed:.0f}s")
+    step_timing.record(_FLOW, step.number, step.name, elapsed, "ok")
 
 
 # ---- common vars (terraform 引数共通化、散防止) -----------------------------
@@ -492,6 +499,7 @@ def main() -> int:
         f"==> destroy-all selection: from_step={from_step} to_step={to_step} "
         f"steps={[step.name for step in selected]}"
     )
+    step_timing.print_eta(_FLOW, [step.name for step in selected])
 
     current_step: DestroyStep | None = None
     try:
@@ -507,13 +515,19 @@ def main() -> int:
                 step.precondition()
             rc = step.run()
             if rc != 0:
+                step_timing.record(
+                    _FLOW, step.number, step.name, _elapsed_since_step_start(), "failed"
+                )
                 print(
                     f"==> destroy-all FAILED at step {step.number} ({step.name}) — see logs above"
                 )
                 return rc
-            _step_done()
+            _step_done(step)
     except BaseException:
         if current_step is not None:
+            step_timing.record(
+                _FLOW, current_step.number, current_step.name, _elapsed_since_step_start(), "failed"
+            )
             print(
                 f"==> destroy-all FAILED at step {current_step.number} ({current_step.name}) "
                 "— see traceback above"
@@ -523,7 +537,10 @@ def main() -> int:
     if _DESTROY_ALL_STARTED_AT is not None:
         total_elapsed = time.monotonic() - _DESTROY_ALL_STARTED_AT
         print()
-        print(f"==> destroy-all complete. total_elapsed={total_elapsed:.0f}s")
+        print(
+            f"==> destroy-all complete. total_elapsed={total_elapsed:.0f}s "
+            f"({step_timing.fmt_duration(total_elapsed)})"
+        )
     else:
         print()
         print("==> destroy-all complete.")

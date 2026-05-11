@@ -6,8 +6,6 @@ or drift back to removed Meilisearch-era wiring.
 
 from __future__ import annotations
 
-import re
-
 from tests.integration.workflow.conftest import read_repo_file as _read
 
 
@@ -20,20 +18,18 @@ def test_makefile_exposes_sync_elasticsearch_canonical_target() -> None:
 
 
 def test_run_all_core_keeps_sync_elasticsearch_before_search_smokes() -> None:
-    makefile = _read("Makefile")
-    run_all_core_match = re.search(
-        r"^run-all-core:.*?(?=^\S|^$)",
-        makefile,
-        flags=re.DOTALL | re.MULTILINE,
-    )
-    assert run_all_core_match is not None, "run-all-core target not found in Makefile"
-    recipe = run_all_core_match.group(0)
-    assert "$(MAKE) sync-elasticsearch" in recipe, (
+    # run-all-core's step list moved to scripts/ops/run_all.py (Makefile recipe
+    # just delegates) — keep the lexical-sync-before-search-smoke ordering there.
+    from scripts.ops.run_all import STEPS
+
+    assert "sync-elasticsearch" in STEPS, (
         "run-all-core must sync lexical index before search smoke checks"
     )
-    assert recipe.index("$(MAKE) sync-elasticsearch") < recipe.index("$(MAKE) ops-search"), (
+    assert STEPS.index("sync-elasticsearch") < STEPS.index("ops-search"), (
         "sync-elasticsearch must run before ops-search in run-all-core"
     )
+    makefile = _read("Makefile")
+    assert "run-all-core:" in makefile and "scripts.ops.run_all" in makefile
 
 
 def test_deploy_all_sync_elasticsearch_step_wiring_stays_canonical() -> None:

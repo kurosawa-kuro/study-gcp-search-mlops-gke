@@ -56,9 +56,6 @@ moment infra is created. See CLAUDE.md non-negotiables.
 from __future__ import annotations
 
 import argparse
-import csv
-import datetime as _dt
-import statistics
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -74,6 +71,7 @@ from scripts.deploy.seed_lgbm_model import main as seed_lgbm_main
 from scripts.domain.gcp.feature_view_sync import main as feature_view_sync_main
 from scripts.domain.k8s.elasticsearch_wait import wait_until_es_healthy
 from scripts.domain.k8s.kubectl_context import ensure as ensure_kubectl_context
+from scripts.lib import step_timing
 from scripts.ops.sync_elasticsearch import run as sync_elasticsearch_run
 from scripts.setup.backfill_vector_search_index import main as backfill_vector_search_main
 from scripts.setup.recover_wif import main as recover_wif_main
@@ -85,21 +83,16 @@ from scripts.setup.tf_plan import main as tf_plan_main
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 MANIFESTS = _REPO_ROOT / "infra" / "manifests"
+_FLOW = "deploy-all"
 
 # Overall start time; per-step timing relates elapsed time to the wall-clock
 # position in the deploy-all sequence so operators can see WHICH step is slow
-# when a rollout hangs (e.g. Cloud Build wait dominating step 7).
+# when a rollout hangs (e.g. Cloud Build wait dominating step 7). Per-step wall
+# times are also appended to logs/step_timings.csv (see scripts/lib/step_timing.py)
+# so the next run prints an ETA — the 58 min step 6 incident showed how easily
+# "is it stuck?" gets misjudged without a baseline.
 _DEPLOY_ALL_STARTED_AT: float | None = None
 _STEP_STARTED_AT: float | None = None
-
-# Per-step wall-clock history (machine-local; logs/ is gitignored). Every
-# completed step appends one row; at the start of a run we read it back to print
-# an ETA derived from the median of recent successful runs on this host. The 58 min
-# step 6 incident showed how easily "is it stuck?" gets misjudged without a baseline.
-_TIMINGS_CSV = _REPO_ROOT / "logs" / "deploy_timings.csv"
-_TIMINGS_HEADER = ("recorded_at_utc", "step_number", "step_name", "elapsed_sec", "status")
-_TIMINGS_KEEP_PER_STEP = 10  # median over the most recent N successful runs
-_TIMINGS_MAX_ROWS = 4000  # soft cap; oldest rows trimmed on append
 
 
 @dataclass(frozen=True)
@@ -145,112 +138,7 @@ def _step_done(step: DeployStep) -> None:
         return
     elapsed = _elapsed_since_step_start()
     print(f" deploy-all  step-done elapsed={elapsed:.0f}s")
-    _record_step_timing(step.number, step.name, elapsed, "ok")
-
-
-# ---------------------------------------------------------------------------
-# step-timing history (CSV) + ETA
-# ---------------------------------------------------------------------------
-
-
-def _fmt_duration(sec: float) -> str:
-    total = max(0, round(sec))
-    h, rem = divmod(total, 3600)
-    m, s = divmod(rem, 60)
-    if h:
-        return f"{h}h{m:02d}m"
-    if m:
-        return f"{m}m{s:02d}s"
-    return f"{s}s"
-
-
-def _record_step_timing(step_number: int, step_name: str, elapsed_sec: float, status: str) -> None:
-    """Append one row to ``logs/deploy_timings.csv`` (best-effort; never fails the run)."""
-    try:
-        _TIMINGS_CSV.parent.mkdir(parents=True, exist_ok=True)
-        new_file = not _TIMINGS_CSV.exists()
-        row = [
-            _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
-            str(step_number),
-            step_name,
-            f"{elapsed_sec:.1f}",
-            status,
-        ]
-        with _TIMINGS_CSV.open("a", newline="", encoding="utf-8") as fh:
-            writer = csv.writer(fh)
-            if new_file:
-                writer.writerow(_TIMINGS_HEADER)
-            writer.writerow(row)
-        _trim_timings_csv()
-    except OSError:
-        pass  # timing history is a convenience, not a requirement
-
-
-def _trim_timings_csv() -> None:
-    try:
-        with _TIMINGS_CSV.open(newline="", encoding="utf-8") as fh:
-            rows = list(csv.reader(fh))
-        if len(rows) <= _TIMINGS_MAX_ROWS + 1:  # +1 for header
-            return
-        header, body = rows[0], rows[1:]
-        body = body[-_TIMINGS_MAX_ROWS:]
-        with _TIMINGS_CSV.open("w", newline="", encoding="utf-8") as fh:
-            writer = csv.writer(fh)
-            writer.writerow(header)
-            writer.writerows(body)
-    except OSError:
-        pass
-
-
-def _load_step_baselines() -> dict[str, float]:
-    """Median elapsed-seconds per step name over the most recent successful runs."""
-    samples: dict[str, list[float]] = {}
-    try:
-        if not _TIMINGS_CSV.exists():
-            return {}
-        with _TIMINGS_CSV.open(newline="", encoding="utf-8") as fh:
-            for rec in csv.DictReader(fh):
-                if rec.get("status") != "ok":
-                    continue
-                name = rec.get("step_name") or ""
-                try:
-                    samples.setdefault(name, []).append(float(rec.get("elapsed_sec") or 0.0))
-                except ValueError:
-                    continue
-    except OSError:
-        return {}
-    return {
-        name: statistics.median(vals[-_TIMINGS_KEEP_PER_STEP:])
-        for name, vals in samples.items()
-        if vals
-    }
-
-
-def _print_eta(selected: list[DeployStep], baselines: dict[str, float]) -> None:
-    if not baselines:
-        print(
-            "==> deploy-all ETA: no prior timing history yet (logs/deploy_timings.csv) — "
-            "this run will seed it"
-        )
-        return
-    known = [baselines[s.name] for s in selected if s.name in baselines]
-    missing = [s.name for s in selected if s.name not in baselines]
-    total = sum(known)
-    prefix = "~" if not missing else "≥"
-    print(
-        f"==> deploy-all ETA: {prefix}{_fmt_duration(total)} for {len(selected)} step(s) "
-        f"(median of recent runs; {len(known)}/{len(selected)} steps have history)"
-    )
-    # surface the heavy hitters so the operator knows which wait dominates.
-    heavy = sorted(
-        ((s.name, baselines[s.name]) for s in selected if s.name in baselines),
-        key=lambda kv: kv[1],
-        reverse=True,
-    )[:3]
-    if heavy:
-        print("    biggest: " + ", ".join(f"{name}={_fmt_duration(sec)}" for name, sec in heavy))
-    if missing:
-        print(f"    no history yet for: {', '.join(missing)}")
+    step_timing.record(_FLOW, step.number, step.name, elapsed, "ok")
 
 
 def _run_tf_bootstrap() -> int:
@@ -474,7 +362,7 @@ def main() -> int:
         f"==> deploy-all selection: from_step={from_step} to_step={to_step} "
         f"steps={[step.name for step in selected]}"
     )
-    _print_eta(selected, _load_step_baselines())
+    step_timing.print_eta(_FLOW, [step.name for step in selected])
 
     current_step: DeployStep | None = None
     try:
@@ -490,14 +378,16 @@ def main() -> int:
                 step.precondition()
             rc = step.run()
             if rc != 0:
-                _record_step_timing(step.number, step.name, _elapsed_since_step_start(), "failed")
+                step_timing.record(
+                    _FLOW, step.number, step.name, _elapsed_since_step_start(), "failed"
+                )
                 print(f"==> deploy-all FAILED at step {step.number} ({step.name}) — see logs above")
                 return rc
             _step_done(step)
     except BaseException:
         if current_step is not None:
-            _record_step_timing(
-                current_step.number, current_step.name, _elapsed_since_step_start(), "failed"
+            step_timing.record(
+                _FLOW, current_step.number, current_step.name, _elapsed_since_step_start(), "failed"
             )
             print(
                 f"==> deploy-all FAILED at step {current_step.number} ({current_step.name}) "
@@ -510,7 +400,7 @@ def main() -> int:
         print()
         print(
             f"==> deploy-all complete. total_elapsed={total_elapsed:.0f}s "
-            f"({_fmt_duration(total_elapsed)})"
+            f"({step_timing.fmt_duration(total_elapsed)})"
         )
     else:
         print()

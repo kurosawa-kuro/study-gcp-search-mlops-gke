@@ -158,22 +158,8 @@ ops-deploy-monitor: ## Real-time monitor: runs deploy-all and reports live step/
 run-all: ## End-to-end validation flow after deploy (layer check → seed → train pipeline submit → smoke APIs → daily ops)
 	$(MAKE) ops-run-all-monitor
 
-run-all-core: ## Core validation flow after deploy (no monitor wrapper)
-	$(MAKE) check-layers
-	$(MAKE) seed-test
-	$(MAKE) sync-elasticsearch
-	$(MAKE) ops-train-now
-	$(MAKE) ops-train-wait
-	$(MAKE) ops-livez
-	$(MAKE) ops-search
-	$(MAKE) ops-search-components
-	$(MAKE) ops-vertex-vector-search-smoke
-	$(MAKE) ops-vertex-feature-group
-	$(MAKE) ops-feedback
-	$(MAKE) ops-ranking
-	$(MAKE) ops-label-seed
-	$(MAKE) ops-daily
-	$(MAKE) ops-accuracy-report
+run-all-core: ## Core validation flow after deploy (no monitor wrapper); step order + per-step timing in scripts/ops/run_all.py
+	uv run python -u -m scripts.ops.run_all
 
 ops-run-all-monitor: ## Real-time monitor for run-all-core
 	uv run python -u -m scripts.deploy.monitor --label run-all -- make run-all-core

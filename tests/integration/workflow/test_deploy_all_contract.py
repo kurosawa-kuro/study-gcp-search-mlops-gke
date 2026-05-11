@@ -195,30 +195,45 @@ def test_local_boot_contract_does_not_require_adc_when_search_disabled(monkeypat
     assert isinstance(container.feedback_recorder, NoopFeedbackRecorder)
 
 
-def test_run_all_core_recipe_pins_canonical_validation_path() -> None:
-    makefile = _read("Makefile")
-    expected_lines = [
-        "$(MAKE) check-layers",
-        "$(MAKE) seed-test",
-        "$(MAKE) sync-elasticsearch",
-        "$(MAKE) ops-train-now",
-        "$(MAKE) ops-train-wait",
-        "$(MAKE) ops-livez",
-        "$(MAKE) ops-search",
-        "$(MAKE) ops-search-components",
-        "$(MAKE) ops-vertex-vector-search-smoke",
-        "$(MAKE) ops-vertex-feature-group",
-        "$(MAKE) ops-feedback",
-        "$(MAKE) ops-ranking",
-        "$(MAKE) ops-label-seed",
-        "$(MAKE) ops-daily",
-        "$(MAKE) ops-accuracy-report",
+def test_run_all_core_pins_canonical_validation_path() -> None:
+    # The canonical validation step list lives in scripts/ops/run_all.py (the
+    # Makefile `run-all-core:` recipe just delegates to it so per-step timing +
+    # ETA work the same as deploy-all / destroy-all).
+    from scripts.ops.run_all import STEPS
+
+    expected_order = [
+        "check-layers",
+        "seed-test",
+        "sync-elasticsearch",
+        "ops-livez",
+        "ops-search",
+        "ops-search-components",
+        "ops-vertex-vector-search-smoke",
+        "ops-vertex-feature-group",
+        "ops-feedback",
+        "ops-ranking",
+        "ops-label-seed",
+        "label-build",
+        "ops-train-now",
+        "ops-train-wait",
+        "ops-daily",
+        "ops-accuracy-report",
     ]
-    positions = [makefile.index(line) for line in expected_lines]
-    assert positions == sorted(positions), (
-        "run-all-core drifted from the canonical validation order"
+    assert list(STEPS) == expected_order, "run-all-core drifted from the canonical validation order"
+    # The invariant the 2026-05-11 incident taught us: behavior seeding +
+    # ranking_labels materialization MUST precede ops-train-now, otherwise
+    # load_features hands train-reranker an empty training frame and it crashes.
+    assert STEPS.index("ops-label-seed") < STEPS.index("ops-train-now"), (
+        "ops-label-seed must run before ops-train-now (training needs logged behavior)"
     )
+    assert STEPS.index("label-build") < STEPS.index("ops-train-now"), (
+        "label-build (ranking_labels materialization) must run before ops-train-now"
+    )
+    makefile = _read("Makefile")
     assert "run-all-core:" in makefile
+    assert "scripts.ops.run_all" in makefile, (
+        "run-all-core recipe must delegate to scripts.ops.run_all"
+    )
     assert "verify-all:" not in makefile, "Legacy cross-phase alias leaked back in"
 
 
@@ -253,22 +268,16 @@ def test_deploy_all_waits_vertex_feature_store_and_retries_stage1_on_409() -> No
     assert "terraform_apply_stage1_with_retries" in stage_py
 
 
-def test_makefile_run_all_core_targets_all_exist() -> None:
-    """`make run-all-core` recipe が `$(MAKE) <target>` で呼ぶ全 target が
-    Makefile に実在 (typo / drift で recipe が誤った target を呼ぶ事故を防ぐ)。"""
-    makefile = _read("Makefile")
-    run_all_core_match = re.search(
-        r"^run-all-core:.*?(?=^\S|^$)",
-        makefile,
-        flags=re.DOTALL | re.MULTILINE,
-    )
-    assert run_all_core_match is not None, "run-all-core target not found in Makefile"
-    recipe = run_all_core_match.group(0)
-    invoked = re.findall(r"\$\(MAKE\)\s+([\w-]+)", recipe)
-    assert invoked, "run-all-core recipe contains no $(MAKE) ... invocations"
+def test_run_all_core_steps_all_have_makefile_targets() -> None:
+    """Every step name in `scripts.ops.run_all.STEPS` must be a real `<name>:`
+    rule in the Makefile — `run_all.py` shells out via `make <step>`, so a typo
+    / drift in STEPS would only fail at live-run time without this guard."""
+    from scripts.ops.run_all import STEPS
 
-    for target in invoked:
+    makefile = _read("Makefile")
+    assert STEPS, "run-all STEPS list is empty"
+    for target in STEPS:
         target_pattern = re.compile(rf"^{re.escape(target)}:", re.MULTILINE)
         assert target_pattern.search(makefile), (
-            f"run-all-core invokes '$(MAKE) {target}' but no '{target}:' rule found in Makefile"
+            f"run-all step {target!r} has no '{target}:' rule in Makefile"
         )
