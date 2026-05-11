@@ -55,7 +55,7 @@ Do not hand-edit; re-run the generator after Make target changes.
 | `state-recover` | Import orphan GCP resources back into tfstate (緊急 cleanup 後の "alreadyExists" fail 回避、`docs/tasks/TASKS_ROADMAP.md §4.10`) |
 | `ops-deploy-monitor` | Real-time monitor: runs deploy-all and reports live step/build stall status |
 | `run-all` | End-to-end validation flow after deploy (layer check → seed → train pipeline submit → smoke APIs → daily ops) |
-| `run-all-core` | Core validation flow after deploy (no monitor wrapper) |
+| `run-all-core` | Core validation flow after deploy (no monitor wrapper); step order + per-step timing in scripts/ops/run_all.py |
 | `ops-run-all-monitor` | Real-time monitor for run-all-core |
 | `destroy-all` | Tear down every Terraform-managed resource (no prompt — PDCA loop, pair with deploy-all) |
 | `verify-destroy-all` | Run destroy-all and aggregate stdout/stderr under logs/verification/ |
@@ -89,6 +89,7 @@ Do not hand-edit; re-run the generator after Make target changes.
 |---|---|
 | `docker-auth` | (Optional) configure local docker for Artifact Registry |
 | `build-ml-base-local` | Local docker buildx cache base for encoder/reranker builder stages |
+| `build-all-local` | ★ローカルビルド = 5 image 全部 (no push): ml-base / search-api / encoder / reranker / composer-runner |
 | `kube-creds` | Fetch kubeconfig for the GKE Autopilot cluster |
 | `deploy-api` | Cloud Build (kaniko cache) + `kubectl set image` for search-api |
 | `deploy-api-local` | ローカル docker buildx + push + rollout (BuildKit cache mount で 2 回目以降が高速) |

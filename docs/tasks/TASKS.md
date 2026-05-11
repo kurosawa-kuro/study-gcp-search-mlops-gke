@@ -21,12 +21,11 @@ cluster は **稼働中** (`make deploy-all` + `make run-all-core` 成功直後�
 
 | # | 内容 | コスト | 状態 |
 |---|---|---|---|
-| 1 | M-Wave8.7 ES production 化 (HTTPS + password auth、Step 7-1〜7-5) | 半 sprint | ⏸ M-Wave9 完了済 → 着手可 |
-| 2 | `infra/` 配下の Phase 残骸 ~25 箇所 scrub (Terraform module コメント + manifest コメント、M-Wave8.5 が docs/ + tests/ のみだった分。コード影響なし、全てコメント) | 軽 | ⏳ 着手可 |
-| 3 | doc 同期 (`docs/runbook/04_検証.md` / `05_運用.md` / `docs/conventions/Makefile規約.md` の `run-all-core` step 順記述を新 16-step orchestrator (`scripts/ops/run_all.py`) に追従、`make run-all-core` を `uv run python -u -m scripts.ops.run_all` 経由に表記更新、step-timing CSV の運用メモ追記) | 軽 | ⏳ 着手可 |
-| 4 | (任意) Helm provider 3.x 移行 (`versions.tf` `~> 3.0` + `kubernetes { }` → `kubernetes = { }`) | 軽 | ⏸ |
+| 1 | M-Wave8.7 ES production 化 (HTTPS + password auth、Step 7-1〜7-5) — ECK の `<cluster>-es-elastic-user` Secret 経由 password auth + `xpack.security.authc.anonymous.*` / `selfSignedCertificate.disabled` 撤去 + canonical URL を https へ + contract test 反転 + deploy で疎通検証。**ES の認可ポスチャを live cluster で変える変更**なので着手前に確認推奨 | 半 sprint | ⏸ M-Wave9 完了済 → 着手可 |
+| 2 | `infra/` 配下の Phase 残骸 scrub (`grep -rE "Phase [0-9]\|phase7" infra/` で **~112 occurrence** — Terraform module / manifest / Dockerfile / cloudbuild の **コメント・description のみ**、コード影響なし。M-Wave8.5 が docs/ + tests/ だけだった分。固有名 (`canonical 構成` / `本線 orchestrator` 等) へ一括置換) | 中 (~112 箇所) | ⏳ 着手可 |
+| 3 | (任意) Helm provider 3.x 移行 (`versions.tf` `~> 3.0` + `kubernetes { }` → `kubernetes = { }`) | 軽 | ⏸ |
 
-具体手順は [`TASKS_ROADMAP.md §2 Wave 8.7`](TASKS_ROADMAP.md#2-残-wave-詳細) に gcloud / kubectl / file edit / 検証コマンド単位で展開済。
+具体手順は [`TASKS_ROADMAP.md §2 Wave 8.7`](TASKS_ROADMAP.md#2-残-wave-詳細) に gcloud / kubectl / file edit / 検証コマンド単位で展開済。`run-all-core` step 順 / step-timing CSV の doc 同期 (`04_検証.md` / `05_運用.md` / `Makefile規約.md`) は **2026-05-11 完了**。
 
 ## 参照
 

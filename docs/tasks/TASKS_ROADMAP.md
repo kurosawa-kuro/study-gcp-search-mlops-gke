@@ -41,11 +41,10 @@ Meilisearch を廃止、GKE 上で Elasticsearch (ECK) を稼働。Elastic Cloud
 
 | # | 残 | 関連 | 状態 |
 |---|---|---|---|
-| 1 | M-Wave8.7 ES production 化 (HTTPS + password auth) — **Step 7-1〜7-5** ([§2 Wave 8.7](#wave-87--es-production-化-https--password-auth)) | §2 Wave 8.7 | ⏳ M-Wave9 完了済 → 着手可 (cert + DNS は揃った) |
-| 2 | doc 同期 — `docs/runbook/04_検証.md` / `05_運用.md` / `docs/conventions/Makefile規約.md` の `run-all-core` step 順記述を新 16-step orchestrator (`scripts/ops/run_all.py`、`ops-label-seed → label-build → ops-train-now` 順) に追従、`run-all-core` recipe を `uv run python -u -m scripts.ops.run_all` 表記に更新、`logs/step_timings.csv` (per-step ETA) の運用メモ追記 | runbook / conventions | ⏳ 着手可 |
-| 3 | `infra/` 配下の Phase 残骸 ~25 箇所 scrub (Terraform module コメント + manifest コメント、コード影響なし) | infra | ⏳ 着手可 |
+| 1 | M-Wave8.7 ES production 化 (HTTPS + password auth) — **Step 7-1〜7-5** ([§2 Wave 8.7](#wave-87--es-production-化-https--password-auth))。ES の認可ポスチャを live cluster で変える変更なので着手前に確認推奨 | §2 Wave 8.7 | ⏳ M-Wave9 完了済 → 着手可 (cert + DNS は揃った) |
+| 2 | `infra/` 配下の Phase 残骸 scrub — `grep -rE "Phase [0-9]\|phase7" infra/` で **~112 occurrence** (Terraform module / manifest / Dockerfile / cloudbuild の **コメント・description のみ**、コード影響なし)。M-Wave8.5 が docs/ + tests/ だけだった分を固有名へ一括置換 | infra | ⏳ 着手可 |
 
-両 Wave の具体手順 (gcloud / kubectl / file edit / 検証コマンド) は §2 にステップ展開済。
+`run-all-core` step 順 / step-timing CSV の doc 同期 (`04_検証.md` / `05_運用.md` / `Makefile規約.md`) は **2026-05-11 完了**。Wave 8.7 の具体手順 (gcloud / kubectl / file edit / 検証コマンド) は §2 にステップ展開済。
 
 完了済 Wave (0/1/2/3/4/5/6/7/8 / M-Pivot / M-RunbookLocal / M-Wave8.5 / M-Wave8.6 Phase 1-3 + 後段 caller migration + adapter 移行漏れ後処理 / Step.precondition framework / C4 Makefile python -u / PMLE doc / GCP ID rename `phase7-*` → `mlops-*` / `destroy-coast-down` / EventWriter Pub/Sub 統一 / **M-Wave9 公開ドメイン 全 Step (1-6)** / step-timing 計測 + run-all-core orchestrator 化) は [03_実装カタログ §7.3](../architecture/03_実装カタログ.md) を正本。
 
