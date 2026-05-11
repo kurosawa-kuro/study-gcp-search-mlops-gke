@@ -29,6 +29,11 @@ TF_APPLY_STAGE1_TARGETS = (
     "module.monitoring",
     "module.slo",
     "module.composer",
+    # M-Wave9: 静的 IP + Certificate Manager (DNS-01) を stage1 で先に作る。
+    # cert の DNS-01 検証が deploy の残り (kserve / configmap / composer-dags /
+    # deploy-api) の間に進み、`kubectl apply -k` で Gateway が certmap を bind
+    # する頃には ACTIVE になっている。kube provider に依存しない GCP-only module。
+    "module.dns",
 )
 
 

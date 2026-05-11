@@ -155,3 +155,26 @@ def test_makefile_exports_public_domain_and_zone() -> None:
     # both must be on the `export` line so terraform_var_args() / env() see them.
     export_line = next(line for line in makefile.splitlines() if line.startswith("export "))
     assert "PUBLIC_DOMAIN" in export_line and "DNS_ZONE_NAME" in export_line
+
+
+def test_tf_apply_stage1_targets_includes_module_dns() -> None:
+    """`module.dns` は `TF_APPLY_STAGE1_TARGETS` に含まれること — Certificate Manager の
+    DNS-01 検証を deploy の残り (kserve / configmap / composer-dags / deploy-api) の間に
+    進ませ、`kubectl apply -k` で Gateway が certmap を bind する頃には cert が ACTIVE に
+    なっているようにするため (module.composer と同じ理由)。"""
+    from scripts.domain.terraform.stage_apply import TF_APPLY_STAGE1_TARGETS
+
+    assert "module.dns" in TF_APPLY_STAGE1_TARGETS
+
+
+def test_build_all_local_is_single_line_script_call() -> None:
+    """Makefile 破綻防止仕様: 複数行アクションは禁止 — `build-all-local` は
+    `scripts/deploy/build_all_local.py` を 1 行で呼ぶだけ。"""
+    makefile = _read("Makefile")
+    m = re.search(r"^build-all-local:.*?\n((?:\t.*\n)+)", makefile, re.MULTILINE)
+    assert m, "build-all-local target not found"
+    recipe_lines = [ln for ln in m.group(1).splitlines() if ln.strip()]
+    assert recipe_lines == ["\tuv run python -u -m scripts.deploy.build_all_local"], (
+        f"build-all-local must be a single-line script call, got: {recipe_lines}"
+    )
+    assert (REPO_ROOT / "scripts" / "deploy" / "build_all_local.py").is_file()
