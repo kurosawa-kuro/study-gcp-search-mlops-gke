@@ -28,11 +28,12 @@
 
 Meilisearch を廃止、GKE 上で Elasticsearch (ECK) を稼働。Elastic Cloud は不採用。**M-Wave6 で完了**、**M-Wave8.7 で HTTPS+password auth へ production 化** (backlog)。
 
-### §0.4 公開ドメイン (M-Wave9、2026-05-11 購入)
+### §0.4 公開ドメイン (M-Wave9、2026-05-11 — **全 Step 完了**)
 
 - ドメイン: **`gcp-search-mlops-gke.dev`** (Cloud Domains で購入。`.dev` TLD = Google が運用、**HSTS preload 強制 → HTTPS 必須** — HTTP-only でブラウザ到達不可、`curl` は HTTP でも可)
 - Cloud DNS public zone: **`gcp-search-mlops-gke-dev`** (DNS 名 `gcp-search-mlops-gke.dev.`、DNSSEC on、ゾーンタイプ 公開)。**console で手動作成済** — Terraform 側は `data "google_dns_managed_zone"` で参照 (zone 自体は import せず管理外、record-set のみ Terraform 管理)
 - GKE Gateway TLS は **Certificate Manager** 経由 (DNS-01 authorization + certmap annotation)。旧 self-signed Secret (`kserve/tls_dev.tf`) は `enable_self_signed_tls=false` で無効化、`api_insecure_tls` も解除
+- ✅ **2026-05-11 deploy + 疎通検証済**: `make deploy-all` 15/15 完走 / cert `search-api-cert` `managed.state=ACTIVE` / `dig +short gcp-search-mlops-gke.dev` = 静的グローバル IP / `make ops-search TARGET=gcp` (= `https://gcp-search-mlops-gke.dev/api/v1/search`) HTTPS 200 / `curl -I` HTTP/2 + Google Trust Services cert。M-Wave9 全 Step (1-6) クローズ — 詳細 [`../architecture/03_実装カタログ.md §6 / §7.3`](../architecture/03_実装カタログ.md)
 
 ---
 
@@ -40,12 +41,13 @@ Meilisearch を廃止、GKE 上で Elasticsearch (ECK) を稼働。Elastic Cloud
 
 | # | 残 | 関連 | 状態 |
 |---|---|---|---|
-| 1 | M-Wave9 独自ドメイン + HTTPS + DNS (Web 公開基盤) — Step 1-2 (購入 / DNS zone) + Step 3-5 (コード: `module.dns` / gateway certmap+static IP / `_common.resolve_api_target` 公開ドメイン化 / var 配線) **完了 2026-05-11**。残り Step 6 (deploy → `curl -I https://gcp-search-mlops-gke.dev` smoke、cert ACTIVE 確認) のみ ([§2 Wave 9](#wave-9--web-公開基盤-独自ドメイン--https--dns)) | §2 Wave 9 | 🔨 deploy 待ち |
-| 2 | M-Wave8.7 ES production 化 (HTTPS + password auth) — **Step 7-1〜7-5** ([§2 Wave 8.7](#wave-87--es-production-化-https--password-auth)) | §2 Wave 8.7 | ⏸ Wave 9 完了後 (cert + DNS 先) |
+| 1 | M-Wave8.7 ES production 化 (HTTPS + password auth) — **Step 7-1〜7-5** ([§2 Wave 8.7](#wave-87--es-production-化-https--password-auth)) | §2 Wave 8.7 | ⏳ M-Wave9 完了済 → 着手可 (cert + DNS は揃った) |
+| 2 | doc 同期 — `docs/runbook/04_検証.md` / `05_運用.md` / `docs/conventions/Makefile規約.md` の `run-all-core` step 順記述を新 16-step orchestrator (`scripts/ops/run_all.py`、`ops-label-seed → label-build → ops-train-now` 順) に追従、`run-all-core` recipe を `uv run python -u -m scripts.ops.run_all` 表記に更新、`logs/step_timings.csv` (per-step ETA) の運用メモ追記 | runbook / conventions | ⏳ 着手可 |
+| 3 | `infra/` 配下の Phase 残骸 ~25 箇所 scrub (Terraform module コメント + manifest コメント、コード影響なし) | infra | ⏳ 着手可 |
 
-実施順は **Wave 9 → Wave 8.7** (cert + DNS が外側、ES auth が内側 — 外側を先に揃えてから内側の認可強化)。両 Wave の具体手順 (gcloud / kubectl / file edit / 検証コマンド) は §2 にステップ展開済。
+両 Wave の具体手順 (gcloud / kubectl / file edit / 検証コマンド) は §2 にステップ展開済。
 
-完了済 Wave (0/1/2/3/4/5/6/7/8 / M-Pivot / M-RunbookLocal / M-Wave8.5 / M-Wave8.6 Phase 1-3 + 後段 caller migration + adapter 移行漏れ後処理 / Step.precondition framework / C4 Makefile python -u / PMLE doc / GCP ID rename `phase7-*` → `mlops-*` / `destroy-coast-down` / EventWriter Pub/Sub 統一 / M-Wave9 Step 1-5 公開ドメイン) は [03_実装カタログ §7.3](../architecture/03_実装カタログ.md) を正本。
+完了済 Wave (0/1/2/3/4/5/6/7/8 / M-Pivot / M-RunbookLocal / M-Wave8.5 / M-Wave8.6 Phase 1-3 + 後段 caller migration + adapter 移行漏れ後処理 / Step.precondition framework / C4 Makefile python -u / PMLE doc / GCP ID rename `phase7-*` → `mlops-*` / `destroy-coast-down` / EventWriter Pub/Sub 統一 / **M-Wave9 公開ドメイン 全 Step (1-6)** / step-timing 計測 + run-all-core orchestrator 化) は [03_実装カタログ §7.3](../architecture/03_実装カタログ.md) を正本。
 
 ---
 
@@ -99,18 +101,20 @@ GKE Gateway は `networking.gke.io/certmap: <map-name>` annotation で certmap �
 
 **Step 3-5 のコード一式 (2026-05-11)**: `env/config/setting.yaml` に `public_domain` / `dns_zone_name` 追加 → Makefile が `-var=public_domain=...` `-var=dns_zone_name=...` を流す (`_common.terraform_var_args()` を canonical な `CANONICAL_TF_VAR_NAMES` 既定にリファクタ、`tf_apply` / `destroy_all` / `recover_wif` / `state_recovery` の caller を `()` 呼びに統一)。`scripts/_common.py::resolve_api_target()` の `TARGET=gcp` を「`PUBLIC_DOMAIN` あり → `https://<domain>` + `verify_tls=True` / なし → Gateway IP fallback」に二段化。`composer/main.tf` の `API_HOST_HEADER` / `API_INSECURE_TLS` 注入と `pipeline/dags/_pod.py` の hardcoded default を撤去 (正規 cert なので不要)。`make check` 818 passed / 2 skipped、`make tf-validate` / `tf-fmt` PASS。新 contract test: `test_public_domain_consistency.py` (gateway.yaml hostname == setting.yaml::public_domain / certmap annotation 存在 / static IP pin / `module.dns` 配線) + `test_resolve_api_target.py` の `TARGET=gcp` セクション書換え。
 
-#### Step 6 — smoke 疎通検証 (deploy 後、runtime)
+#### Step 6 — smoke 疎通検証 (deploy 後、runtime) ✅ 完了 (2026-05-11)
 
 ```bash
 curl -I https://gcp-search-mlops-gke.dev                 # 200 + Google Trust Services cert
 openssl s_client -connect gcp-search-mlops-gke.dev:443 -servername gcp-search-mlops-gke.dev </dev/null \
   | openssl x509 -noout -issuer -dates
-API_URL=https://gcp-search-mlops-gke.dev API_REQUIRE_TOKEN=false make ops-search
+gcloud certificate-manager certificates describe search-api-cert --project=$PROJECT_ID --format='value(managed.state)'  # ACTIVE
+dig +short gcp-search-mlops-gke.dev                       # = 予約済グローバル IP
+make ops-search TARGET=gcp                                # = https://gcp-search-mlops-gke.dev/api/v1/search → HTTPS 200
 ```
 
-`_common.py` の `resolve_api_target()` は `TARGET=gcp` 時 `gateway_url()` (= `kubectl get gateway` の external IP) を返すが、Wave 9 後は **静的 IP + 正規 cert + 正規 hostname** になるため `DEFAULT_GATEWAY_HOST_HEADER` を `gcp-search-mlops-gke.dev` に、`verify_tls` を `True` に切替える (self-signed 時代の Host ヘッダ偽装 + TLS 検証スキップが不要に)。
+`_common.py::resolve_api_target()` は `TARGET=gcp` 時 `PUBLIC_DOMAIN`（setting.yaml）があれば `https://<domain>` + `verify_tls=True` を返す（self-signed 時代の Host ヘッダ偽装 + TLS 検証スキップは不要に）。M-Wave9 Step 1-5 の `resolve_api_target` 二段化で実装済。
 
-**完了条件**: `https://gcp-search-mlops-gke.dev/api/v1/search` が HTTPS 200、`certificate_manager` の `managed.state=ACTIVE` で自動更新、`make ops-search` が `TARGET=gcp` (= 正規ドメイン) で通る。
+**完了** (2026-05-11): `make deploy-all` 15/15 完走 → cert `search-api-cert` `managed.state=ACTIVE` / `dig +short` = 静的グローバル IP / `make ops-search TARGET=gcp` HTTPS 200（初回は KServe encoder cold start で 504、warm 後 200）/ `curl -I` HTTP/2 + Google Trust Services cert / `make ops-search-components` `lexical=4 semantic=3 rerank=5`。**deploy 前置きで判明した deploy-path regression 5 件 + `run-all-core` step 順バグ も同時修正**（詳細 [`../architecture/03_実装カタログ.md §7.4`](../architecture/03_実装カタログ.md)）。`make run-all-core` も 16/16 完走（`label-build` で `ranking_labels` 61 件 materialize → Vertex pipeline `state=SUCCEEDED` → `ndcg=hit_rate=mrr=1.0`）。
 
 ---
 
