@@ -27,7 +27,7 @@ ECK 8.13.4 を GKE 上に展開。2 回連続で `Phase=ApplyingChanges Health=u
 |---|---|
 | 「self-managed open-source vs Google managed の選択」 | **TLS / auth / NetworkPolicy の整合コスト**は managed が抽象化している。学習や検索精度比較では self が有利、production 安定運用は managed が ROI 高い |
 | 「Vertex AI Vector Search vs OpenSearch / Elasticsearch on GKE」 | VVS は「Index 自体は無料、deployed_index のみ課金」の非対称構造を持ち、PDCA cycle で **Index/Endpoint persistent + deployed_index のみ作り直し** = `state rm + GCP 残置` pattern が cost 最適化の鍵 |
-| 「production deployment 境界」 | HTTP + anonymous は学習用、HTTPS + password auth は production の最低ライン。本リポは M-Wave8.7 で境界を明示 |
+| 「production deployment 境界」 | HTTP + anonymous は学習用、HTTPS + password auth は production の最低ライン。本リポは学習リポジトリとして HTTP + anonymous のまま (production hardening は active backlog から外し parked)、境界は contract test `test_es_manifest_pins_http_and_anonymous_auth` + `docs/backlog/production-hardening.md` で明示 |
 
 ### 一般化
 

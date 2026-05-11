@@ -142,13 +142,9 @@ Bug 1 は ECK Operator 側、Bug 2 は client 側 (`sync_elasticsearch.py` 経�
 - Wave 8 contract test 無修正
 - ES `health=green` + HTTP 200 (anonymous accepted) で sync 通過
 
-### production 化のための backlog (TASKS_ROADMAP §「ES production 化」)
+### production 化の手順 → [`docs/backlog/production-hardening.md`](../backlog/production-hardening.md) に保管 (active backlog からは外し parked、2026-05-11)
 
-- canonical URL を環境変数で http/https 切り替え可能に
-- ECK auto-generated `elasticsearch-es-elastic-user` secret から password fetch 経路を `_run_sync_elasticsearch` に組込
-- `xpack.security.authc.anonymous` を削除 → `--username/--password` を渡す形へ移行
-- Wave 8 contract test を https+auth header 対応に拡張
-- 学習用 anonymous superuser は **production 厳禁** であることを CLAUDE.md / README で明示
+学習リポジトリは production hardening を追わない判断。手順 (canonical URL の http/https 切替 / ECK `elasticsearch-es-elastic-user` secret から password fetch / `xpack.security.authc.anonymous.*` 削除 / contract test 反転 / docs 注記) + 判断記録 + 破綻条件は上記ファイルを正本。学習用 anonymous superuser が **production 厳禁** である旨は CLAUDE.md / README に明示済 (contract test `test_es_manifest_pins_http_and_anonymous_auth` が現行 pin として自己拘束)。
 
 ### 教訓
 
@@ -175,10 +171,10 @@ readyz_rerank_enabled=True
 model_path=property-reranker-predictor.kserve-inference.svc.cluster.local/v2/models/property-reranker/infer
 ```
 
-= **HTTP + anonymous superuser が中核 5 要素を阻害しない** ことを実測。本 incident は **doc 化 + contract test 化 + production 化 backlog (M-Wave8.7)** で完全 close。
+= **HTTP + anonymous superuser が中核 5 要素を阻害しない** ことを実測。本 incident は **doc 化 + contract test 化 + production 化手順を `docs/backlog/production-hardening.md` に保管 (active backlog からは外し parked)** で完全 close。
 
 ### 「次の自分への手紙」
 
-- **HTTP + anonymous は学習限定の意図的選択**。production では HTTPS + password auth (M-Wave8.7) へ移行する
+- **HTTP + anonymous は学習限定の意図的選択**。production 化する場合は HTTPS + password auth へ移行（手順: `docs/backlog/production-hardening.md`）。学習リポジトリでは追わない判断 (2026-05-11)
 - **KServe cold start 由来の T1 timeout** = 初回 e2e は warm-up retry が必要。CI では `make ops-livez` 後に `sleep 30` を挟むのが安全。今回は 1 回目 timeout → 2 回目 22.68s で PASS
 - **deploy-all resume 497s** が persistent stack 設計 (VVS Index/Endpoint 残置) の有効性実測値、次回比較ベースライン
