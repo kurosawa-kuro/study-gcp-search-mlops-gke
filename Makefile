@@ -26,6 +26,10 @@ COMPOSER_ENV  ?= hybrid-search-orchestrator
 GITHUB_REPO   ?= $(call _yaml_get,github_repo)
 ONCALL_EMAIL  ?= $(call _yaml_get,oncall_email)
 
+# Public domain (M-Wave9) + the Cloud DNS managed zone that hosts it.
+PUBLIC_DOMAIN ?= $(call _yaml_get,public_domain)
+DNS_ZONE_NAME ?= $(call _yaml_get,dns_zone_name)
+
 # Local model path produced by `make train-smoke-persist`.
 MODEL_PATH_OVERRIDE ?= /tmp/hybrid-search-cloud-smoke-model.txt
 
@@ -34,7 +38,7 @@ LOG_ROOT ?= $(ROOT)/logs
 MONITOR_LOG_DIR ?= $(LOG_ROOT)/deploy-monitor
 VERIFY_LOG_DIR ?= $(LOG_ROOT)/verification
 
-export PROJECT_ID REGION API_SERVICE ARTIFACT_REPO VERTEX_LOCATION PIPELINE_ROOT_BUCKET PIPELINE_TEMPLATE_GCS_PATH
+export PROJECT_ID REGION API_SERVICE ARTIFACT_REPO VERTEX_LOCATION PIPELINE_ROOT_BUCKET PIPELINE_TEMPLATE_GCS_PATH PUBLIC_DOMAIN DNS_ZONE_NAME
 
 .PHONY: help doctor sync sync-app sync-ml sync-pipelines test lint fmt fmt-check typecheck check \
         check-layers sync-dataform-config sync-configmap \

@@ -147,7 +147,7 @@ resource "google_bigquery_table" "property_features_online_latest" {
 
   view {
     use_legacy_sql = false
-    query = <<-SQL
+    query          = <<-SQL
       SELECT
         property_id,
         rent,

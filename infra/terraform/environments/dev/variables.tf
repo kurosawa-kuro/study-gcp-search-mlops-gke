@@ -63,6 +63,32 @@ variable "oncall_email" {
   }
 }
 
+# =========================================================================
+# Wave 9 — public domain + Cloud DNS + Certificate Manager
+# Supplied from env/config/setting.yaml via -var (`make tf-plan` / deploy-all).
+# No default on purpose — fail loud if a deploy path forgets to pass them.
+# =========================================================================
+
+variable "public_domain" {
+  description = "Public domain serving the search-api (Cloud Domains registered). Used as the GKE Gateway listener hostname / HTTPRoute hostnames / Certificate Manager target domain. `.dev` TLD is HSTS-preloaded (HTTPS mandatory)."
+  type        = string
+
+  validation {
+    condition     = length(var.public_domain) > 0 && can(regex("^[a-z0-9.-]+\\.[a-z]+$", var.public_domain))
+    error_message = "public_domain must be a non-empty bare domain like 'example.dev'."
+  }
+}
+
+variable "dns_zone_name" {
+  description = "Cloud DNS managed-zone resource name that hosts public_domain. The zone is created out-of-band (console); Terraform reads it via data source and only manages record-sets + the Certificate Manager DNS authorization CNAME."
+  type        = string
+
+  validation {
+    condition     = length(var.dns_zone_name) > 0
+    error_message = "dns_zone_name must be a non-empty Cloud DNS managed-zone name."
+  }
+}
+
 variable "enable_deletion_protection" {
   description = "Toggle BQ table deletion_protection across the data module. Default true (production-safe). `make destroy-all` runs `terraform apply -var=enable_deletion_protection=false` first so the subsequent destroy can proceed (Terraform refuses to destroy a table whose state still says deletion_protection=true)."
   type        = bool

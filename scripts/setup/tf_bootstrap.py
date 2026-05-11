@@ -5,7 +5,6 @@ caller. Re-running is safe; both ops are no-ops when already in place.
 
 from __future__ import annotations
 
-import subprocess
 import sys
 
 from scripts._common import env, gcloud
@@ -39,14 +38,15 @@ def main() -> int:
     gcloud_run("services", "enable", f"--project={project_id}", *REQUIRED_APIS)
 
     print(f"==> Creating gs://{bucket} if absent...", flush=True)
+    # `capture=True` suppresses both stdout and the "not found" stderr of
+    # `gcloud storage buckets describe`; only the return code matters here.
     exists = gcloud_run(
         "storage",
         "buckets",
         "describe",
         f"gs://{bucket}",
         check=False,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        capture=True,
     )
     if exists.returncode == 0:
         print("    already exists — skipping create")

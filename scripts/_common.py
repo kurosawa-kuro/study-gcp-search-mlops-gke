@@ -160,15 +160,30 @@ def secret(name: str, default: str | None = None) -> str:
     return os.environ.get(name, fallback)
 
 
+# Canonical Terraform ``-var`` list passed by every deploy/destroy/import path.
+# Single source of truth — add a new var name here and all callers pick it up
+# (deploy_all / destroy_all / tf_apply / recover_wif / state_recovery).
+CANONICAL_TF_VAR_NAMES: tuple[str, ...] = (
+    "GITHUB_REPO",
+    "ONCALL_EMAIL",
+    "PUBLIC_DOMAIN",
+    "DNS_ZONE_NAME",
+)
+
+
 def terraform_var_args(*var_names: str) -> list[str]:
     """Build ``-var=KEY=VALUE`` args via env() lookup.
 
-    deploy_all / destroy_all で同じ ``-var=github_repo=...`` リストを独立に
-    組み立てており drift 源だった。本 helper に集約することで、新 var
-    追加時の更新箇所を 1 つに固定する。``var_names`` は env 名 (大文字)
-    で渡し、terraform 側には小文字 ``-var=...`` で出力される。
+    Called with no args → returns the **canonical full set**
+    (``CANONICAL_TF_VAR_NAMES``). Pass explicit env names (uppercase) only when
+    a caller needs a narrower subset (rare). terraform 側には小文字 ``-var=...``
+    で出力される。
+
+    deploy_all / destroy_all で同じ ``-var=...`` リストを独立に組み立てて
+    drift していた事故への構造的対策 — 新 var の追加箇所をここ 1 つに固定する。
     """
-    return [f"-var={name.lower()}={env(name)}" for name in var_names]
+    names = var_names or CANONICAL_TF_VAR_NAMES
+    return [f"-var={name.lower()}={env(name)}" for name in names]
 
 
 def gcs_bucket_name(suffix: str) -> str:
@@ -191,16 +206,23 @@ def run(
 ) -> subprocess.CompletedProcess[str]:
     """Thin wrapper around subprocess.run.
 
-    - ``capture=True`` returns stdout in ``.stdout``.
+    - ``capture=True`` captures **both** stdout and stderr (= ``subprocess.run``'s
+      ``capture_output=True``): they are returned in ``.stdout`` / ``.stderr`` and
+      **not** echoed to the terminal. Use this when the caller inspects the
+      output programmatically or wants to suppress noisy CLI chatter.
+    - ``capture=False`` (default) lets stdout/stderr stream straight to the
+      terminal (used for ``terraform apply`` etc.).
     - ``input`` (str) is fed to the process's stdin (text mode is always on).
     - ``env`` overrides the subprocess environment (passed through to
       ``subprocess.run``).
     """
+    pipe = subprocess.PIPE if capture else None
     return subprocess.run(
         cmd,
         check=check,
         text=True,
-        stdout=subprocess.PIPE if capture else None,
+        stdout=pipe,
+        stderr=pipe,
         timeout=timeout,
         input=input,
         env=env,
@@ -251,17 +273,21 @@ def cloud_run_url(service: str | None = None) -> str:
 
 DEFAULT_GATEWAY_NAMESPACE = "search"
 DEFAULT_GATEWAY_NAME = "search-api-gateway"
-DEFAULT_GATEWAY_HOST_HEADER = "search-api.example.com"
+# Public domain (M-Wave9) from env/config/setting.yaml. Falls back to the
+# pre-domain placeholder only when the setting is absent (early bootstrap).
+PUBLIC_DOMAIN = DEFAULTS.get("PUBLIC_DOMAIN", "").strip()
+DEFAULT_GATEWAY_HOST_HEADER = PUBLIC_DOMAIN or "search-api.example.com"
 
 
 def gateway_url(*, namespace: str | None = None, name: str | None = None) -> str:
-    """Resolve the GKE Gateway external URL via kubectl.
+    """Resolve the GKE Gateway external IP via kubectl, returned as ``https://<ip>``.
 
-    Phase 7 で serving 層が Cloud Run → GKE Gateway に切り替わったため、
-    ``cloud_run_url()`` の代わりに `kubectl get gateway` の
-    ``status.addresses[0].value`` (= 外部 IP) を ``https://`` 付きで返す。
-    HTTPRoute の hostname は IP 直叩きと噛み合わないので、呼び出し側は
-    ``Host`` ヘッダで補う前提 (``DEFAULT_GATEWAY_HOST_HEADER``)。
+    serving 層が GKE Gateway なので `kubectl get gateway` の
+    ``status.addresses[0].value`` (= 外部 IP) を返す。IP 直叩き時は HTTPRoute の
+    hostname と噛み合わないので呼び出し側は ``Host`` ヘッダで補う前提
+    (``DEFAULT_GATEWAY_HOST_HEADER``)。M-Wave9 以降は ``resolve_api_target()`` が
+    公開ドメイン (`https://<public_domain>`) を優先するので、本関数は
+    DNS / Certificate Manager がまだ live でない bootstrap 期の fallback。
     """
     ns = namespace or env("GATEWAY_NAMESPACE", DEFAULT_GATEWAY_NAMESPACE)
     nm = name or env("GATEWAY_NAME", DEFAULT_GATEWAY_NAME)
@@ -295,10 +321,12 @@ def identity_token() -> str:
 class ResolvedApiTarget:
     """Resolved API endpoint + auth mode for ops scripts.
 
-    Phase 7 で serving が GKE Gateway (IP-based HTTPS + 自己署名 TLS) になり、
-    呼び出し側は (a) HTTPRoute の hostname を ``Host`` ヘッダで補完し
-    (b) self-signed cert なので TLS 検証を無効化する必要がある。両者を
-    `ResolvedApiTarget` の責務に閉じ込めて呼び出し側はモード差を意識しない。
+    serving は GKE Gateway。M-Wave9 後は **公開ドメイン + Google-managed cert** が
+    canonical なので ``url=https://<public_domain>`` / ``verify_tls=True`` /
+    Host ヘッダ不要。DNS / Certificate Manager がまだ live でない bootstrap 期は
+    Gateway 外部 IP 直叩き (``url=https://<ip>`` / ``Host: <domain>`` /
+    ``verify_tls=False`` ← self-signed placeholder cert)。両モード差を本クラスに
+    閉じ込め、呼び出し側は意識しない。
     """
 
     url: str
@@ -344,10 +372,15 @@ def resolve_api_target() -> ResolvedApiTarget:
       ``API_REQUIRE_TOKEN=true``. ``API_HOST_HEADER`` / ``API_INSECURE_TLS``
       で Host ヘッダ / TLS 検証を上書き可能。``TARGET`` より優先。
     - ``TARGET=local``: use ``LOCAL_API_URL`` and no token
-    - ``TARGET=gcp`` (default): resolve the Phase 7 GKE Gateway URL via
-      ``gateway_url()``. IAP は dev default で disabled なので no token、
-      自己署名 TLS のため ``verify_tls=False``、HTTPRoute と一致させるため
-      ``Host: search-api.example.com`` を付与する。
+    - ``TARGET=gcp`` (default):
+      * ``PUBLIC_DOMAIN`` (= env/config/setting.yaml) があれば
+        ``https://<public_domain>`` を返す。Google-managed cert なので
+        ``verify_tls=True``、URL hostname が cert CN と一致するので Host ヘッダ
+        上書きは不要。IAP は dev default で disabled なので no token。
+      * 無ければ (DNS / Certificate Manager がまだ live でない bootstrap 期)
+        ``gateway_url()`` の Gateway 外部 IP に直叩き。HTTPRoute と一致させるため
+        ``Host: <DEFAULT_GATEWAY_HOST_HEADER>``、self-signed placeholder cert
+        なので ``verify_tls=False``。
     """
     target = os.environ.get("TARGET", "gcp").strip().lower()
     explicit_url = os.environ.get("API_URL", "").strip().rstrip("/")
@@ -367,6 +400,14 @@ def resolve_api_target() -> ResolvedApiTarget:
             mode="local",
         )
     if target == "gcp":
+        if PUBLIC_DOMAIN:
+            return ResolvedApiTarget(
+                url=f"https://{PUBLIC_DOMAIN}",
+                token=None,
+                mode="gcp",
+                host_header=os.environ.get("API_HOST_HEADER") or None,
+                verify_tls=not _env_flag("API_INSECURE_TLS"),
+            )
         return ResolvedApiTarget(
             url=gateway_url(),
             token=None,
@@ -390,9 +431,9 @@ def http_json(
 ) -> tuple[int, str]:
     """POST/GET JSON with optional Bearer token. Returns (status_code, body_text).
 
-    ``host_header`` を渡すと ``Host`` ヘッダを上書きする (Phase 7 で IP 直叩き
-    + HTTPRoute hostname の組合せに対応)。``verify_tls=False`` で TLS 検証を
-    無効化する (自己署名 cert 用)。
+    ``host_header`` を渡すと ``Host`` ヘッダを上書きする (Gateway 外部 IP 直叩き
+    + HTTPRoute hostname の組合せに対応する bootstrap 経路)。``verify_tls=False``
+    で TLS 検証を無効化する (self-signed placeholder cert 用)。
     """
     headers: dict[str, str] = {}
     if token:

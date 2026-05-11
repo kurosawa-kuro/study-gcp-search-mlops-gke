@@ -28,13 +28,19 @@
 
 Meilisearch を廃止、GKE 上で Elasticsearch (ECK) を稼働。Elastic Cloud は不採用。**M-Wave6 で完了**、**M-Wave8.7 で HTTPS+password auth へ production 化** (backlog)。
 
+### §0.4 公開ドメイン (M-Wave9、2026-05-11 購入)
+
+- ドメイン: **`gcp-search-mlops-gke.dev`** (Cloud Domains で購入。`.dev` TLD = Google が運用、**HSTS preload 強制 → HTTPS 必須** — HTTP-only でブラウザ到達不可、`curl` は HTTP でも可)
+- Cloud DNS public zone: **`gcp-search-mlops-gke-dev`** (DNS 名 `gcp-search-mlops-gke.dev.`、DNSSEC on、ゾーンタイプ 公開)。**console で手動作成済** — Terraform 側は `data "google_dns_managed_zone"` で参照 (zone 自体は import せず管理外、record-set のみ Terraform 管理)
+- GKE Gateway TLS は **Certificate Manager** 経由 (DNS-01 authorization + certmap annotation)。旧 self-signed Secret (`kserve/tls_dev.tf`) は `enable_self_signed_tls=false` で無効化、`api_insecure_tls` も解除
+
 ---
 
 ## §1. 残課題 (current backlog)
 
 | # | 残 | 関連 | 状態 |
 |---|---|---|---|
-| 1 | M-Wave9 独自ドメイン + HTTPS + DNS (Web 公開基盤) — **Step 1〜6** ([§2 Wave 9](#wave-9--web-公開基盤-独自ドメイン--https--dns)) | §2 Wave 9 | ⏸ ドメイン購入タイミングで着手 |
+| 1 | M-Wave9 独自ドメイン + HTTPS + DNS (Web 公開基盤) — Step 1-2 (購入 / DNS zone) **完了 2026-05-11**、Step 3-5 コーディング中、Step 6 (smoke) は deploy 後 ([§2 Wave 9](#wave-9--web-公開基盤-独自ドメイン--https--dns)) | §2 Wave 9 | 🔨 着手中 |
 | 2 | M-Wave8.7 ES production 化 (HTTPS + password auth) — **Step 7-1〜7-5** ([§2 Wave 8.7](#wave-87--es-production-化-https--password-auth)) | §2 Wave 8.7 | ⏸ Wave 9 完了後 (cert + DNS 先) |
 
 実施順は **Wave 9 → Wave 8.7** (cert + DNS が外側、ES auth が内側 — 外側を先に揃えてから内側の認可強化)。両 Wave の具体手順 (gcloud / kubectl / file edit / 検証コマンド) は §2 にステップ展開済。
@@ -49,90 +55,60 @@ Meilisearch を廃止、GKE 上で Elasticsearch (ECK) を稼働。Elastic Cloud
 
 **目的**: Web アプリを GCP 上で独自ドメイン配信、HTTPS/TLS + DNS を canonical 手順で固定。Wave 9 完了後に Wave 8.7 (ES auth production 化) を続けて実施する (cert + DNS が先、internal auth は後)。
 
+**ドメイン (確定値)**: `gcp-search-mlops-gke.dev` / Cloud DNS public zone `gcp-search-mlops-gke-dev` ([§0.4](#04-公開ドメイン-m-wave92026-05-11-購入) 参照)。
+
 **前提**:
 - M-Wave5 (継続改善サイクル) PASS 済 (canonical 経路が deployed cluster で動作)
-- `make verify-live-acceptance` が green (Gateway 外部 IP 取得可能、`make ops-api-url` で確認)
-- Billing 有効。Cloud Domains は前払い、`.com` で ~$12/yr
+- Billing 有効
 
-#### Step 1 — Cloud Domains で購入
+#### Step 1 — Cloud Domains で購入 ✅ 完了 (2026-05-11)
 
-GCP Console → Network services → Cloud Domains で `<your-domain>` を購入 (~$12/yr)。
-購入時の auto-DNS-zone option は **無効化** (canonical な Terraform 配下に zone を置くため)。
+`gcp-search-mlops-gke.dev` を購入済。確認: `gcloud domains registrations list --location=global --project=$PROJECT_ID`
 
-```bash
-gcloud domains registrations list --location=global --project=$PROJECT_ID
-```
+#### Step 2 — Cloud DNS Public Zone 作成 ✅ 完了 (2026-05-11、console で手動作成)
 
-#### Step 2 — Cloud DNS Public Zone 作成 + NS 委任
+Zone `gcp-search-mlops-gke-dev` (DNS 名 `gcp-search-mlops-gke.dev.`、public、DNSSEC on)。`.dev` は Cloud Domains 購入時に Google 側で NS 委任が自動完了するため別途 NS 書換え不要。Terraform 側は `data "google_dns_managed_zone"` で参照し、record-set のみ管理 (zone は import せず管理外)。確認: `dig NS gcp-search-mlops-gke.dev +short`
 
-```bash
-gcloud dns managed-zones create mlops-public \
-  --description="Public zone for $DOMAIN" \
-  --dns-name="$DOMAIN." \
-  --visibility=public \
-  --project=$PROJECT_ID
+#### Step 3 — Gateway: 静的 IP + certmap annotation + hostname 差替え (コード)
 
-gcloud dns managed-zones describe mlops-public \
-  --project=$PROJECT_ID --format='value(nameServers)'
-```
+`infra/manifests/search-api/gateway.yaml`:
+- `spec.addresses: [{type: NamedAddress, value: search-api-ip}]` — `module.dns` の `google_compute_global_address` を pin (ephemeral IP → A record の chicken-and-egg を回避)
+- annotation `networking.gke.io/certmap: search-api-certmap` — Certificate Manager の certmap を bind
+- listener `hostname` / HTTPRoute `hostnames` を `gcp-search-mlops-gke.dev` に
+- 旧 `tls.certificateRefs: [Secret search-api-tls]` (self-signed) は削除 → `enable_self_signed_tls=false`
 
-Cloud Domains 側で NS を上記 4 本に書き換え (購入時の Cloud DNS auto-zone を使わない設計)。
-反映確認:
+確認: `kubectl get gateway search-api-gateway -n search -o yaml`
 
-```bash
-dig NS $DOMAIN +short    # 4 NS が GCP DNS を指していること
-```
+#### Step 4 — Certificate Manager (DNS-01 authorization、コード)
 
-#### Step 3 — Gateway listener + HTTPRoute に独自ドメイン host 追加
+新 module `infra/terraform/modules/dns/` で:
+- `google_certificate_manager_dns_authorization` — `gcp-search-mlops-gke.dev` の DNS-01 authorization (LB IP に依存せず発行可能)
+- `google_dns_record_set` (CNAME) — dns_authorization が要求する `_acme-challenge` 相当の検証レコード (`dns_authorization.dns_resource_record` を流し込む)
+- `google_certificate_manager_certificate` (managed) — 上の dns_authorization を参照
+- `google_certificate_manager_certificate_map` + `google_certificate_manager_certificate_map_entry` — hostname `gcp-search-mlops-gke.dev` → cert
 
-`infra/manifests/search-api/gateway.yaml` の `spec.listeners[]` に HTTPS listener (`port: 443`, `protocol: HTTPS`, `tls.mode: Terminate`, `tls.options.networking.gke.io/pre-shared-certs: <cert-name>`) を追加。
-`infra/manifests/search-api/httproute.yaml` の `spec.hostnames: ["$DOMAIN"]` に独自ドメインを追加 (既存 `search-api.example.com` 学習用 host と並列で残す形でも可)。
+GKE Gateway は `networking.gke.io/certmap: <map-name>` annotation で certmap を消費する (classic `google_compute_managed_ssl_certificate` + `pre-shared-certs` は Ingress 用で Gateway API では使えない)。
 
-```bash
-make apply-manifests
-kubectl get gateway search-api-gateway -n search -o yaml | grep -A5 listeners
-```
+確認: `gcloud certificate-manager certificates describe search-api-cert --project=$PROJECT_ID --format='value(managed.state)'` が `ACTIVE` になるまで待つ (DNS-01 検証 ~数分〜30 min)
 
-#### Step 4 — Google-managed certificate 作成 + Gateway バインド
+#### Step 5 — A レコードを静的 IP へ (コード)
+
+`infra/terraform/modules/dns/` で `google_dns_record_set` (A) — `gcp-search-mlops-gke.dev.` → `google_compute_global_address.search_api.address`。静的 IP なので Terraform plan 時点で値が確定 (Gateway 起動を待たない)。`AAAA` は IPv6 が要る場合のみ。apex に `CNAME` は張れない。
+
+確認: `dig +short gcp-search-mlops-gke.dev`
+
+#### Step 6 — smoke 疎通検証 (deploy 後、runtime)
 
 ```bash
-gcloud compute ssl-certificates create mlops-search-cert \
-  --domains="$DOMAIN" --global \
-  --project=$PROJECT_ID
-
-gcloud compute ssl-certificates describe mlops-search-cert \
-  --global --project=$PROJECT_ID --format='value(managed.status)'
-# ACTIVE になるまで待つ (DNS A record 完成 + プロビジョニング ~10-30 min)
+curl -I https://gcp-search-mlops-gke.dev                 # 200 + Google Trust Services cert
+openssl s_client -connect gcp-search-mlops-gke.dev:443 -servername gcp-search-mlops-gke.dev </dev/null \
+  | openssl x509 -noout -issuer -dates
+API_URL=https://gcp-search-mlops-gke.dev API_REQUIRE_TOKEN=false make ops-search
 ```
 
-Gateway の listener annotation `networking.gke.io/pre-shared-certs: mlops-search-cert` で binding。
+`_common.py` の `resolve_api_target()` は `TARGET=gcp` 時 `gateway_url()` (= `kubectl get gateway` の external IP) を返すが、Wave 9 後は **静的 IP + 正規 cert + 正規 hostname** になるため `DEFAULT_GATEWAY_HOST_HEADER` を `gcp-search-mlops-gke.dev` に、`verify_tls` を `True` に切替える (self-signed 時代の Host ヘッダ偽装 + TLS 検証スキップが不要に)。
 
-#### Step 5 — A / AAAA を Gateway 外部 IP へ
-
-```bash
-GATEWAY_IP=$(make ops-api-url | sed 's|https://||')
-gcloud dns record-sets create "$DOMAIN." \
-  --zone=mlops-public --type=A --ttl=300 \
-  --rrdatas="$GATEWAY_IP" --project=$PROJECT_ID
-```
-
-`AAAA` は Gateway IPv6 が必要な場合のみ。`CNAME` は apex には張れない (subdomain 用途のみ)。
-反映確認:
-
-```bash
-dig +short $DOMAIN
-```
-
-#### Step 6 — smoke 疎通検証
-
-```bash
-curl -I "https://$DOMAIN"                              # 200 OK + cert chain
-openssl s_client -connect "$DOMAIN:443" -servername "$DOMAIN" </dev/null \
-  | openssl x509 -noout -issuer -dates                  # Google Trust Services
-API_URL="https://$DOMAIN" API_REQUIRE_TOKEN=false make ops-search
-```
-
-**完了条件**: 独自ドメイン経由で `/api/v1/search` が HTTPS 200 を返し、証明書が自動更新 (`managed.status=ACTIVE`)。**scope outside** (user 指示で除外継続、ドメイン購入タイミングで着手)。
+**完了条件**: `https://gcp-search-mlops-gke.dev/api/v1/search` が HTTPS 200、`certificate_manager` の `managed.state=ACTIVE` で自動更新、`make ops-search` が `TARGET=gcp` (= 正規ドメイン) で通る。
 
 ---
 

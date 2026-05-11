@@ -60,15 +60,11 @@ resource "google_composer_environment" "this" {
         # 注入する。空ならば DAG 側 fallback (project + region + repo から
         # 組み立て、`composer-runner:latest`) を使う。
         COMPOSER_RUNNER_IMAGE = var.composer_runner_image
-        # V5 fix Run 2 fail postmortem (2026-05-03 晩): scripts/_common.py の
-        # `resolve_api_target()` は明示 `API_URL` パスでは default `verify_tls=True`
-        # / `host_header=None` になり、GKE Gateway の自己署名 TLS + HTTPRoute
-        # hostname mismatch で fail する。Composer Pod から正常に
-        # `/ops/jobs/check-retrain` を呼べるよう、TARGET=gcp パスと同じ挙動を
-        # env で明示注入する (Pod では kubectl による gateway_url() resolve が
-        # 出来ないため、明示 URL + 補助 env でカバーする)。
-        API_HOST_HEADER   = "search-api.example.com"
-        API_INSECURE_TLS  = "true"
+        # M-Wave9 以降: `API_EXTERNAL_URL` は公開ドメイン (`https://gcp-search-mlops-gke.dev`)
+        # + Google-managed cert になったため、`resolve_api_target()` の明示 `API_URL`
+        # パス default (`verify_tls=True` / `host_header=None`) で正しく到達できる。
+        # 旧 self-signed + IP 直叩き時代の `API_HOST_HEADER` / `API_INSECURE_TLS`
+        # 注入は不要になったので削除。
       }
     }
 

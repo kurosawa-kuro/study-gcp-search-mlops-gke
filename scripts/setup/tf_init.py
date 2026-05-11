@@ -5,7 +5,6 @@ instead of letting terraform fail with the noisier backend error.
 
 from __future__ import annotations
 
-import subprocess
 from pathlib import Path
 
 from scripts._common import env, fail
@@ -19,14 +18,15 @@ def main() -> int:
     project_id = env("PROJECT_ID")
     bucket = f"{project_id}-tfstate"
 
+    # `capture=True` suppresses both stdout and the "not found" stderr; only the
+    # return code matters for the preflight existence check.
     exists = gcloud_run(
         "storage",
         "buckets",
         "describe",
         f"gs://{bucket}",
         check=False,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        capture=True,
     )
     if exists.returncode != 0:
         return fail(

@@ -102,7 +102,7 @@ def recover(project_id: str | None = None) -> None:
         terraform_run(
             f"-chdir={INFRA}",
             "import",
-            *terraform_var_args("GITHUB_REPO", "ONCALL_EMAIL"),
+            *terraform_var_args(),
             pool_address,
             pool_id,
             check=True,
@@ -153,7 +153,7 @@ def recover(project_id: str | None = None) -> None:
         terraform_run(
             f"-chdir={INFRA}",
             "import",
-            *terraform_var_args("GITHUB_REPO", "ONCALL_EMAIL"),
+            *terraform_var_args(),
             provider_address,
             provider_id,
             check=True,

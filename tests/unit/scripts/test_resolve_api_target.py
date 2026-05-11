@@ -1,15 +1,19 @@
 """Unit tests for scripts._common.resolve_api_target.
 
-Pins the canonical 構成 resolution contract:
+Pins the canonical resolution contract:
 
     1. ``API_URL`` wins (mode=explicit). Token only when API_REQUIRE_TOKEN=truthy.
        ``API_HOST_HEADER`` / ``API_INSECURE_TLS`` で Host / TLS 検証を上書き可能。
     2. ``TARGET=local`` uses LOCAL_API_URL with no token, no Host override,
        verify_tls=True (mode=local).
-    3. ``TARGET=gcp`` (default) resolves the GKE Gateway external URL via
-       ``gateway_url()``. IAP は dev default で disabled なので no token、
-       自己署名 TLS で ``verify_tls=False``、HTTPRoute と一致させるため
-       ``Host: search-api.example.com`` を付与する (mode=gcp)。
+    3. ``TARGET=gcp`` (default):
+       - ``_common.PUBLIC_DOMAIN`` (= env/config/setting.yaml::public_domain) が
+         truthy なら ``https://<public_domain>`` を返す。Google-managed cert
+         なので ``verify_tls=True``、URL hostname が cert CN と一致するので
+         Host ヘッダ上書きなし。``API_INSECURE_TLS`` で TLS 検証を切れる。
+       - 空 (bootstrap 期、DNS / Certificate Manager 未 live) なら
+         ``gateway_url()`` の Gateway 外部 IP に直叩き、``verify_tls=False``、
+         ``Host: <DEFAULT_GATEWAY_HOST_HEADER>``。
 
 The basis is intentionally small: it must not auto-detect modes or fall back.
 """
@@ -103,9 +107,45 @@ def test_target_local_honors_local_api_url_override(monkeypatch: pytest.MonkeyPa
     assert resolved.url == "http://127.0.0.1:18080"
 
 
-def test_target_gcp_default_resolves_gateway_url_with_host_and_insecure_tls(
+def test_target_gcp_default_uses_public_domain_with_valid_tls(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """M-Wave9 canonical: public domain is set → https://<domain>, real cert."""
+    monkeypatch.setattr(_common, "PUBLIC_DOMAIN", "gcp-search-mlops-gke.dev")
+    monkeypatch.setattr(
+        _common,
+        "gateway_url",
+        lambda: pytest.fail("must not fall back to gateway_url when PUBLIC_DOMAIN set"),
+    )
+    monkeypatch.setattr(_common, "identity_token", lambda: pytest.fail("gcp must not mint token"))
+
+    resolved = _common.resolve_api_target()
+
+    assert resolved.mode == "gcp"
+    assert resolved.url == "https://gcp-search-mlops-gke.dev"
+    assert resolved.token is None
+    assert resolved.host_header is None
+    assert resolved.verify_tls is True
+
+
+def test_target_gcp_public_domain_honors_insecure_tls_override(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(_common, "PUBLIC_DOMAIN", "gcp-search-mlops-gke.dev")
+    monkeypatch.setenv("API_INSECURE_TLS", "true")
+
+    resolved = _common.resolve_api_target()
+
+    assert resolved.url == "https://gcp-search-mlops-gke.dev"
+    assert resolved.verify_tls is False
+
+
+def test_target_gcp_falls_back_to_gateway_ip_when_public_domain_empty(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Bootstrap (no public domain yet): direct Gateway IP + Host + insecure TLS."""
+    monkeypatch.setattr(_common, "PUBLIC_DOMAIN", "")
+    monkeypatch.setattr(_common, "DEFAULT_GATEWAY_HOST_HEADER", "search-api.example.com")
     monkeypatch.setattr(_common, "gateway_url", lambda: "https://34.128.173.247")
     monkeypatch.setattr(_common, "identity_token", lambda: pytest.fail("gcp must not mint token"))
 
@@ -113,12 +153,14 @@ def test_target_gcp_default_resolves_gateway_url_with_host_and_insecure_tls(
 
     assert resolved.mode == "gcp"
     assert resolved.url == "https://34.128.173.247"
-    assert resolved.token is None
     assert resolved.host_header == "search-api.example.com"
     assert resolved.verify_tls is False
 
 
-def test_target_gcp_honors_api_host_header_override(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_target_gcp_fallback_honors_api_host_header_override(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(_common, "PUBLIC_DOMAIN", "")
     monkeypatch.setattr(_common, "gateway_url", lambda: "https://34.128.173.247")
     monkeypatch.setenv("API_HOST_HEADER", "custom.example.com")
 

@@ -75,7 +75,7 @@ module "composer" {
   vector_search_index_resource_name = module.vector_search.index_resource_name
   feature_online_store_id           = module.vertex.feature_online_store_id
   feature_view_id                   = module.vertex.feature_view_id
-  api_external_url                  = var.api_external_url
+  api_external_url                  = var.api_external_url != "" ? var.api_external_url : "https://${var.public_domain}"
   slo_availability_goal             = var.slo_availability_goal
   composer_runner_image             = var.composer_runner_image
 
@@ -137,9 +137,28 @@ module "kserve" {
 
   ksa_names        = module.gke.ksa_names
   service_accounts = module.iam.service_accounts
+  # Self-signed Secret `search-api-tls` stays as the Gateway listener's
+  # certificateRefs placeholder (keeps it PROGRAMMED), but actual TLS is the
+  # Google-managed cert via the certmap annotation (M-Wave9). Match the CN to
+  # the real public domain so the placeholder is at least consistent.
+  tls_cn = var.public_domain
 
   depends_on = [
     module.gke,
+  ]
+}
+
+# M-Wave9 — public domain serving: reserved global IP + apex A record +
+# Certificate Manager managed cert (DNS-01) + certificate-map for the Gateway.
+module "dns" {
+  source = "../../modules/dns"
+
+  project_id    = var.project_id
+  public_domain = var.public_domain
+  dns_zone_name = var.dns_zone_name
+
+  depends_on = [
+    google_project_service.enabled,
   ]
 }
 
@@ -167,7 +186,7 @@ module "messaging" {
   search_impressions_table_id = module.data.search_impressions_table.table_id
   user_actions_table_id       = module.data.user_actions_table.table_id
   service_accounts            = module.iam.service_accounts
-  api_external_url            = var.api_external_url
+  api_external_url            = var.api_external_url != "" ? var.api_external_url : "https://${var.public_domain}"
 
   depends_on = [
     google_project_service.enabled,

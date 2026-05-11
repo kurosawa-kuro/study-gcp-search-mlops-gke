@@ -2,7 +2,7 @@ locals {
   required_apis = [
     "bigquery.googleapis.com",
     "bigquerystorage.googleapis.com",
-    "run.googleapis.com", # Meilisearch は引き続き Cloud Run
+    "run.googleapis.com", # Cloud Run (legacy / smoke alternates; not the canonical serving layer)
     "artifactregistry.googleapis.com",
     "aiplatform.googleapis.com",
     "dataform.googleapis.com",
@@ -18,17 +18,17 @@ locals {
     "cloudfunctions.googleapis.com",
     "cloudbuild.googleapis.com",
     "notebooks.googleapis.com",
-    # Phase 6: GKE + Gateway API + IAP
+    # GKE + Gateway API + IAP + Certificate Manager + Cloud DNS (M-Wave9 public domain)
     "container.googleapis.com",
     "gkehub.googleapis.com",
     "iap.googleapis.com",
     "networkservices.googleapis.com",
     "certificatemanager.googleapis.com",
-    # Phase 6 PMLE: Dataflow streaming
+    "dns.googleapis.com",
+    # PMLE: Dataflow streaming aggregates
     "dataflow.googleapis.com",
-    # Phase 7 W2-4: Cloud Composer (Managed Airflow Gen 3) — canonical
-    # orchestrator for daily_feature_refresh / retrain_orchestration /
-    # monitoring_validation 3 DAGs (docs/01 §3).
+    # Cloud Composer (Managed Airflow Gen 3) — canonical orchestrator for the
+    # daily_feature_refresh / retrain_orchestration / monitoring_validation DAGs.
     "composer.googleapis.com",
   ]
 }

@@ -39,7 +39,7 @@ resource "google_vertex_ai_index" "property_embeddings" {
       # supports UNIT_L2_NORM featureNormType`` を返して create に失敗する。
       # multilingual-e5 の embedding は L2 normalize 前提で training されている
       # (HuggingFace モデルカード) ため UNIT_L2_NORM が canonical。
-      feature_norm_type           = "UNIT_L2_NORM"
+      feature_norm_type = "UNIT_L2_NORM"
 
       algorithm_config {
         tree_ah_config {

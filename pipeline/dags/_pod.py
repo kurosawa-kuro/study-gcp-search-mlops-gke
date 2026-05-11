@@ -1,4 +1,4 @@
-"""KubernetesPodOperator 共通ヘルパ — Phase 7 V5 fix (2026-05-03)。
+"""KubernetesPodOperator 共通ヘルパ (V5 fix、2026-05-03)。
 
 過去 incident: 過去 session の Claude が DAG を `BashOperator: uv run python -m
 scripts.X` で書いたが Composer worker は uv 不在 / repo source 不在で task
@@ -36,12 +36,6 @@ PROPAGATED_ENV_KEYS = (
     "VERTEX_FEATURE_ONLINE_STORE_ID",
     "VERTEX_FEATURE_VIEW_ID",
     "API_EXTERNAL_URL",
-    # V5 fix Run 2 fail postmortem (2026-05-03 晩): explicit API_URL パスで
-    # default verify_tls=True / host_header=None になる問題を回避する補助 env。
-    # composer/main.tf で値を seed (API_HOST_HEADER=search-api.example.com /
-    # API_INSECURE_TLS=true)。
-    "API_HOST_HEADER",
-    "API_INSECURE_TLS",
     "SLO_AVAILABILITY_GOAL",
     "ENABLE_DAILY_VVS_REFRESH",
     "AUTO_PROMOTE",
@@ -79,21 +73,13 @@ def _propagated_env_vars() -> dict[str, str]:
 
     ENV_KEY_ALIASES に従い、scripts 側 canonical 名 (例: API_URL) にも複製する。
 
-    V5 fix Run 3 fail postmortem (2026-05-03 晩): tf-apply で Composer
-    env_variables に API_HOST_HEADER / API_INSECURE_TLS を追加しても、Composer
-    scheduler の `os.environ` に即時反映されないケースが観測された (DIAG log
-    で `<unset>` 確認)。timing 依存を避け、TLS / Host のような **値が
-    決定的な env** は DAG file 内で hardcode default を持たせる (env が
-    あればそれを優先、無ければ default fallback)。
+    M-Wave9 以降 `API_EXTERNAL_URL` は公開ドメイン (`https://gcp-search-mlops-gke.dev`)
+    + Google-managed cert なので、旧 self-signed + IP 直叩き時代の
+    `API_HOST_HEADER` / `API_INSECURE_TLS` hardcode default は不要 (むしろ正規
+    cert に対して TLS verify を切ると到達できなくなる)。`resolve_api_target()` の
+    明示 `API_URL` パス default (`verify_tls=True` / `host_header=None`) で正しい。
     """
-    # GKE Gateway 自己署名 TLS + HTTPRoute hostname の決定的 default。
-    # `var.api_external_url` が GKE Gateway IP に向く前提のため、TLS verify は
-    # 必ず off で、Host ヘッダは必ず DEFAULT_GATEWAY_HOST_HEADER 相当を付ける。
-    HARDCODED_DEFAULTS = {
-        "API_HOST_HEADER": "search-api.example.com",
-        "API_INSECURE_TLS": "true",
-    }
-    out: dict[str, str] = dict(HARDCODED_DEFAULTS)
+    out: dict[str, str] = {}
     for key in PROPAGATED_ENV_KEYS:
         if key in os.environ:
             value = os.environ[key]

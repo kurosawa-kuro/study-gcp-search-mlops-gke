@@ -65,7 +65,7 @@ def main() -> int:
         INFRA,
         project_id,
         region,
-        terraform_var_args=list(terraform_var_args("GITHUB_REPO", "ONCALL_EMAIL")),
+        terraform_var_args=list(terraform_var_args()),
     )
     if imported:
         print(f"==> {imported} addr imported into state — terraform plan で no-op 扱いになる")
@@ -83,7 +83,7 @@ def main() -> int:
         INFRA,
         project_id,
         region,
-        terraform_var_args=list(terraform_var_args("GITHUB_REPO", "ONCALL_EMAIL")),
+        terraform_var_args=list(terraform_var_args()),
     )
     if recovered:
         print(f"==> {recovered} orphan resource(s) imported — tf-apply 'alreadyExists' fail 回避")
@@ -100,7 +100,7 @@ def main() -> int:
         f"-chdir={INFRA}",
         "apply",
         "-auto-approve",
-        *terraform_var_args("GITHUB_REPO", "ONCALL_EMAIL"),
+        *terraform_var_args(),
         *[f"-target={target}" for target in TF_APPLY_STAGE1_TARGETS],
     ]
     print(
@@ -120,7 +120,7 @@ def main() -> int:
             f"-chdir={INFRA}",
             "apply",
             "-auto-approve",
-            *terraform_var_args("GITHUB_REPO", "ONCALL_EMAIL"),
+            *terraform_var_args(),
         ],
         chdir_infra=INFRA,
     )

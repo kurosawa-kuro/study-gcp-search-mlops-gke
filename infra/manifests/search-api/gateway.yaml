@@ -1,18 +1,33 @@
 # Gateway API (v1) — GKE Gateway controller (`gke-l7-global-external-managed`)
-# が managed HTTPS LB を作る。証明書は Google-managed を前提。
-# hostname / TLS は環境 (`environments/<env>/`) 側で Kustomize overlay する。
+# が managed HTTPS LB を作る。
+#
+# M-Wave9 で公開ドメイン `gcp-search-mlops-gke.dev` 化:
+#   - `spec.addresses` で `module.dns` の予約済グローバル外部 IP (`search-api-ip`)
+#     を pin → 公開 A レコードと LB front-end の chicken-and-egg を回避。
+#   - `networking.gke.io/certmap` annotation で Certificate Manager の certmap
+#     (`search-api-certmap`) を bind → 実 TLS は Google-managed cert。listener の
+#     `tls.certificateRefs` (self-signed `search-api-tls`) は certmap がある時
+#     controller が無視するが、listener が PROGRAMMED になるための placeholder
+#     として残す (`module.kserve` が CN=実ドメインで生成、`enable_self_signed_tls`)。
+#   - `hostname` / HTTPRoute `hostnames` は実ドメインを直書き。値の正本は
+#     `env/config/setting.yaml::public_domain`、drift は contract test が検知。
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: search-api-gateway
   namespace: search
+  annotations:
+    networking.gke.io/certmap: search-api-certmap
 spec:
   gatewayClassName: gke-l7-global-external-managed
+  addresses:
+    - type: NamedAddress
+      value: search-api-ip
   listeners:
     - name: https
       protocol: HTTPS
       port: 443
-      hostname: "search-api.example.com" # overlay で置換
+      hostname: "gcp-search-mlops-gke.dev"
       tls:
         mode: Terminate
         certificateRefs:
@@ -28,7 +43,7 @@ spec:
   parentRefs:
     - name: search-api-gateway
   hostnames:
-    - "search-api.example.com" # overlay で置換
+    - "gcp-search-mlops-gke.dev"
   rules:
     - matches:
         - path:

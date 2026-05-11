@@ -18,9 +18,9 @@
 # =========================================================================
 
 resource "tls_private_key" "search_api_dev" {
-  count       = var.enable_self_signed_tls ? 1 : 0
-  algorithm   = "RSA"
-  rsa_bits    = 2048
+  count     = var.enable_self_signed_tls ? 1 : 0
+  algorithm = "RSA"
+  rsa_bits  = 2048
 }
 
 resource "tls_self_signed_cert" "search_api_dev" {

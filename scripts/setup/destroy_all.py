@@ -186,7 +186,7 @@ def _step_done() -> None:
 def _common_vars() -> list[str]:
     return [
         "-var=enable_deletion_protection=false",
-        *terraform_var_args("GITHUB_REPO", "ONCALL_EMAIL"),
+        *terraform_var_args(),
     ]
 
 

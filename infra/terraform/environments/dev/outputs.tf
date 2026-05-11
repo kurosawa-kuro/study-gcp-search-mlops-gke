@@ -229,3 +229,32 @@ output "synonym_redis_auth_secret_id" {
   description = "Secret Manager secret ID holding the Memorystore AUTH string (External Secrets Operator mirrors it to the ``REDIS_AUTH`` env in the search-api Pod)."
   value       = var.enable_redis_synonym ? module.redis_synonym[0].auth_secret_id : ""
 }
+
+# =========================================================================
+# M-Wave9 — public domain serving (Gateway IP + Certificate Manager)
+# =========================================================================
+
+output "public_domain" {
+  description = "Public domain served by the search-api Gateway (apex). From env/config/setting.yaml via -var."
+  value       = module.dns.public_domain
+}
+
+output "gateway_ip_name" {
+  description = "Reserved global external IP name — the Gateway manifest pins it via spec.addresses[].value (type: NamedAddress)."
+  value       = module.dns.gateway_ip_name
+}
+
+output "gateway_ip_address" {
+  description = "The reserved global external IP address backing the apex A record."
+  value       = module.dns.gateway_ip_address
+}
+
+output "certificate_map_name" {
+  description = "Certificate-map name — set on the Gateway via the networking.gke.io/certmap annotation."
+  value       = module.dns.certificate_map_name
+}
+
+output "certificate_name" {
+  description = "Certificate Manager managed-certificate name (poll managed.state == ACTIVE after DNS-01 validation)."
+  value       = module.dns.certificate_name
+}

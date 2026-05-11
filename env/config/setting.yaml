@@ -35,7 +35,7 @@ local_api_port: 8000
 local_encoder_port: 18081
 local_reranker_port: 18082
 local_reranker_model_path: /tmp/hybrid-search-cloud-smoke-model.txt
-# Phase 7 は KServe serving であり Vertex Endpoint は deploy しない。
+# serving は KServe InferenceService であり Vertex Endpoint は deploy しない。
 # Vertex Endpoint shell の display_name は `enable_vertex_endpoint_shell=true`
 # の時にのみ使われ、値は `infra/terraform/environments/dev/main.tf` の
 # module 呼び出しで literal 指定 (`property-{encoder,reranker}-endpoint`)。
@@ -55,6 +55,19 @@ oncall_email: admin@admin.com
 # 実運用では個人メール、学習ではプレースホルダでよい。
 admin_user_emails:
   - admin@admin.com
+
+# 公開ドメイン (M-Wave9、2026-05-11 購入)。Cloud Domains で取得した `.dev` ドメイン
+# と、それを管理する Cloud DNS public zone 名。
+#   public_domain  — GKE Gateway listener hostname / HTTPRoute hostnames / Certificate
+#                    Manager の対象 domain / ops scripts の Host ヘッダ。`.dev` は HSTS
+#                    preload 強制 (ブラウザは HTTPS 必須)。
+#   dns_zone_name  — Cloud DNS managed zone のリソース名 (console で手動作成済、
+#                    Terraform は `data "google_dns_managed_zone"` で参照、zone 自体は
+#                    管理外。record-set + cert のみ Terraform 管理)。
+# Terraform へは `make tf-plan` / deploy-all が `-var=public_domain=...` `-var=dns_zone_name=...`
+# で流す (github_repo / oncall_email と同じ経路)。
+public_domain: gcp-search-mlops-gke.dev
+dns_zone_name: gcp-search-mlops-gke-dev
 
 # Dataform — pipeline/data_job/dataform/workflow_settings.yaml は本ファイルから自動生成される
 # (Makefile の `make sync-dataform-config` を実行)。Dataform の YAML スキーマは

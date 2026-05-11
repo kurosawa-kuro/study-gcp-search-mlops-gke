@@ -328,7 +328,7 @@ resource "google_vertex_ai_feature_online_store_featureview" "property_features"
   feature_online_store = google_vertex_ai_feature_online_store.property_features[0].name
 
   big_query_source {
-    uri = "bq://${var.project_id}.${var.feature_mart_dataset_id}.property_features_online_latest"
+    uri               = "bq://${var.project_id}.${var.feature_mart_dataset_id}.property_features_online_latest"
     entity_id_columns = ["property_id"]
   }
 

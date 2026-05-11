@@ -674,13 +674,19 @@ def main(argv: list[str] | None = None) -> int:
     project_id = os.environ.get("PROJECT_ID", "mlops-dev-a")
     region = os.environ.get("VERTEX_LOCATION") or os.environ.get("REGION") or "asia-northeast1"
     infra_dir = Path(__file__).resolve().parents[2] / "infra" / "terraform" / "environments" / "dev"
+    # Mirror the canonical -var set (github_repo / oncall_email / public_domain /
+    # dns_zone_name). Each is `-var=k=v` (two argv items) so terraform receives
+    # them the same way `_common.terraform_var_args()` produces.
     var_args: list[str] = []
-    github_repo = os.environ.get("GITHUB_REPO", "").strip()
-    if github_repo:
-        var_args.extend(["-var", f"github_repo={github_repo}"])
-    oncall = os.environ.get("ONCALL_EMAIL", "").strip()
-    if oncall:
-        var_args.extend(["-var", f"oncall_email={oncall}"])
+    for env_name, tf_name in (
+        ("GITHUB_REPO", "github_repo"),
+        ("ONCALL_EMAIL", "oncall_email"),
+        ("PUBLIC_DOMAIN", "public_domain"),
+        ("DNS_ZONE_NAME", "dns_zone_name"),
+    ):
+        value = os.environ.get(env_name, "").strip()
+        if value:
+            var_args.extend(["-var", f"{tf_name}={value}"])
     recover_orphan_gcp_resources(infra_dir, project_id, region, terraform_var_args=var_args)
     return 0
 

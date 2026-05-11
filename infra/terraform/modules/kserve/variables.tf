@@ -52,18 +52,19 @@ variable "service_accounts" {
 variable "enable_self_signed_tls" {
   description = <<-EOT
     Bootstrap a self-signed TLS Secret named `search-api-tls` in the search
-    namespace so the Gateway API listener becomes Programmed without manual
-    cert provisioning. Phase 7 dev / PDCA only — production should switch
-    to GCP Managed Certificate (or cert-manager + Let's Encrypt) and set
-    this to `false`. Phase 7 Run 1 incident: had to `kubectl create secret tls`
-    by hand mid-deploy because the Gateway listener wedged at PROGRAMMED=False.
+    namespace. Since M-Wave9 it serves only as the Gateway listener's
+    `certificateRefs` placeholder (so the listener stays PROGRAMMED) — actual
+    TLS is the Google-managed cert bound via the `networking.gke.io/certmap`
+    annotation. Keep `true` for dev. Earlier incident: had to
+    `kubectl create secret tls` by hand mid-deploy because the listener wedged
+    at PROGRAMMED=False with no Secret.
   EOT
   type        = bool
   default     = true
 }
 
 variable "tls_cn" {
-  description = "Common Name + DNS SAN for the self-signed cert. Must match `gateway.yaml::hostname`."
+  description = "Common Name + DNS SAN for the self-signed placeholder cert. Should match the Gateway listener hostname (= the public domain). dev/main.tf passes `var.public_domain`."
   type        = string
   default     = "search-api.example.com"
 }

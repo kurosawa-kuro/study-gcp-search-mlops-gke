@@ -34,11 +34,9 @@ def _terraform_output(name: str) -> str:
             "output",
             "-raw",
             name,
-            cwd="infra/terraform/environments/dev",
+            chdir="infra/terraform/environments/dev",
             check=True,
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
+            capture=True,
         )
         return proc.stdout.strip()
     except (subprocess.CalledProcessError, FileNotFoundError):
