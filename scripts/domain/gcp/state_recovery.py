@@ -490,7 +490,8 @@ def _aiplatform_get(token: str, url: str) -> dict:
     proc = subprocess.run(
         ["curl", "-sS", "-H", f"Authorization: Bearer {token}", url],
         check=False,
-        capture=True,
+        capture_output=True,
+        text=True,
     )
     if proc.returncode != 0:
         return {}
@@ -609,7 +610,8 @@ def _recover_dataform(infra_dir: Path, project_id: str, region: str, var_args: l
             f"https://dataform.googleapis.com/v1beta1/projects/{project_id}/locations/{region}/repositories",
         ],
         check=False,
-        capture=True,
+        capture_output=True,
+        text=True,
     )
     if api_proc.returncode != 0:
         return 0

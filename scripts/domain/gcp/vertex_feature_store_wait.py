@@ -40,7 +40,8 @@ def _rest_get(token: str, url: str) -> dict:
     proc = subprocess.run(
         ["curl", "-sS", "-H", f"Authorization: Bearer {token}", url],
         check=False,
-        capture=True,
+        capture_output=True,
+        text=True,
     )
     if proc.returncode != 0:
         return {}
