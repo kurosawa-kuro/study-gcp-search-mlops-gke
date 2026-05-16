@@ -1,0 +1,1261 @@
+{
+  "project": {
+    "name": "study-gcp-search-mlops-gke",
+    "purpose": "Real-estate hybrid-search API + continuous-retraining MLOps loop on GCP/GKE: Elasticsearch BM25 + multilingual-e5 + Vertex AI Vector Search fused by RRF and reranked by LightGBM LambdaRank, with behaviour-log driven retraining orchestrated by Cloud Composer.",
+    "stack": [
+      "FastAPI",
+      "Pydantic",
+      "uv",
+      "Python 3.12",
+      "GKE",
+      "KServe",
+      "BigQuery",
+      "Pub/Sub",
+      "Vertex AI Vector Search",
+      "Vertex AI Feature Online Store",
+      "Vertex AI Pipelines (KFP 2.x)",
+      "Vertex AI Model Registry",
+      "Vertex AI Experiments",
+      "Cloud Composer (Airflow)",
+      "Dataform",
+      "BQML",
+      "Cloud Memorystore (Redis)",
+      "Elasticsearch (ECK)",
+      "Apache Beam / Dataflow",
+      "LightGBM",
+      "sentence-transformers (ME5)",
+      "Terraform",
+      "Cloud Logging / Prometheus / GMP"
+    ],
+    "entrypoints": [
+      {"type": "http", "path": "app/main.py::create_app", "description": "FastAPI app served on GKE Pod. Routes: /api/v1/search, /api/v1/feedback, /ops/*, /ui/*, /livez|/healthz|/readyz, /metrics."},
+      {"type": "http", "path": "ml/serving/encoder.py", "description": "KServe HuggingFace runtime container for multilingual-e5 embeddings (query/passage prefixes)."},
+      {"type": "http", "path": "ml/serving/reranker.py", "description": "KServe custom-predictor container for LightGBM LambdaRank /predict + /explain (TreeSHAP)."},
+      {"type": "pipeline", "path": "pipeline/training_job/main.py", "description": "KFP pipeline `property-search-train`: load_features → train_reranker → evaluate → register_reranker (gate)."},
+      {"type": "pipeline", "path": "pipeline/data_job/main.py", "description": "KFP pipeline `property-search-embed`: load_properties → batch_predict_embeddings → write_embeddings → upsert_vector_search."},
+      {"type": "pipeline", "path": "pipeline/evaluation_job/main.py", "description": "STUB KFP pipeline `property-search-evaluate` (no real components wired yet)."},
+      {"type": "pipeline", "path": "pipeline/batch_serving_job/main.py", "description": "STUB KFP pipeline `property-search-batch-serve`."},
+      {"type": "cli", "path": "pipeline/labeling_job/main.py::run", "description": "Aggregates impressions + user_actions into mlops.ranking_labels (weighted relevance)."},
+      {"type": "cli", "path": "pipeline/training_dataset_job/main.py::run", "description": "Builds training_dataset.csv from ranker repository (offline dataset snapshot)."},
+      {"type": "cli", "path": "ml/training/trainer.py::main", "description": "`train-reranker` CLI — LightGBM LambdaRank train, GCS upload, mlops.training_runs row."},
+      {"type": "worker", "path": "pipeline/dags/daily_feature_refresh.py", "description": "Airflow DAG @ 01:00 JST: Dataform run → Feature View sync → (opt) VVS incremental backfill."},
+      {"type": "worker", "path": "pipeline/dags/retrain_orchestration.py", "description": "Airflow DAG @ 04:00 JST (CANONICAL retrain): check_retrain → submit train pipeline → wait → AUTO_PROMOTE gate → promote."},
+      {"type": "worker", "path": "pipeline/dags/monitoring_validation.py", "description": "Airflow DAG @ 04:30 JST: feature_skew SQL + model_output_drift SQL + SLO burn-rate."},
+      {"type": "worker", "path": "ml/streaming/pipeline.py::run", "description": "Apache Beam / Dataflow streaming job: ranking-log Pub/Sub → hourly CTR aggregation → BigQuery."},
+      {"type": "cli", "path": "scripts/ops/run_all.py", "description": "`make run-all-core` orchestrator (16-step canonical validation: readiness → seed → label → train → daily → accuracy)."},
+      {"type": "cli", "path": "scripts/setup/deploy_all.py", "description": "`make deploy-all` orchestrator (15-step: tf-bootstrap → 2-stage tf apply → seed → sync-elasticsearch → composer-deploy-dags → deploy-api)."},
+      {"type": "cli", "path": "scripts/setup/destroy_all.py", "description": "`make destroy-all` no-prompt teardown (8 sliceable steps)."},
+      {"type": "cli", "path": "pipeline/workflow/trigger_zip/main.py", "description": "Cloud Function HTTP trigger that submits Vertex PipelineJobs (smoke/manual alt to Composer)."}
+    ]
+  },
+  "modules": [
+    {
+      "id": "app.main",
+      "path": "app/main.py",
+      "layer": "web",
+      "responsibility": "FastAPI ASGI entrypoint: lifespan builds the Container, mounts /api/v1, /ops, /ui, probes, /metrics, legacy 307 redirects.",
+      "depends_on": ["app.composition_root", "app.api.routers", "app.observability", "app.settings", "ml.common.logging"],
+      "exposes": ["create_app", "app"],
+      "side_effects": ["http_call"],
+      "confidence": "high"
+    },
+    {
+      "id": "app.composition_root",
+      "path": "app/composition_root.py",
+      "layer": "composition_root",
+      "responsibility": "Translates ApiSettings into a frozen Container of adapters + services; owns the single BigQuery client.",
+      "depends_on": ["app.container.infra", "app.container.search", "app.container.ml", "app.services.protocols", "app.services.search_service", "app.services.feedback_service", "app.services.data_catalog_service", "app.services.model_metrics_service", "app.observability", "app.settings"],
+      "exposes": ["Container", "ContainerBuilder"],
+      "side_effects": ["none"],
+      "confidence": "high"
+    },
+    {
+      "id": "app.container.infra",
+      "path": "app/container/infra.py",
+      "layer": "composition_root",
+      "responsibility": "Wires Pub/Sub + BigQuery + Redis infrastructure adapters (or Noop when enable_search=False).",
+      "depends_on": ["app.services.adapters", "app.services.noop_adapters", "app.services.protocols"],
+      "exposes": ["InfraBuilder", "InfraComponents"],
+      "side_effects": ["none"],
+      "confidence": "high"
+    },
+    {
+      "id": "app.container.search",
+      "path": "app/container/search.py",
+      "layer": "composition_root",
+      "responsibility": "Wires lexical (ES) + semantic (VVS) retrieval, KServe encoder + reranker, and the Feature Online Store fetcher.",
+      "depends_on": ["app.services.adapters", "app.services.noop_adapters", "app.services.protocols"],
+      "exposes": ["SearchBuilder", "SearchComponents"],
+      "side_effects": ["none"],
+      "confidence": "high"
+    },
+    {
+      "id": "app.container.ml",
+      "path": "app/container/ml.py",
+      "layer": "composition_root",
+      "responsibility": "Optional BQML popularity scorer wiring.",
+      "depends_on": ["app.services.adapters.bqml_popularity_scorer", "app.services.protocols.popularity_scorer", "app.container.internal.optional_adapter"],
+      "exposes": ["MlBuilder", "MlComponents"],
+      "side_effects": ["none"],
+      "confidence": "high"
+    },
+    {
+      "id": "app.api.routers.search_router",
+      "path": "app/api/routers/search_router.py",
+      "layer": "web",
+      "responsibility": "POST /search: maps SearchRequest → SearchInput, delegates to SearchService, maps SearchOutput → SearchResponse (503 on unavailable).",
+      "depends_on": ["app.api.mappers", "app.schemas", "app.services.search_service", "app.api.dependencies"],
+      "exposes": ["router"],
+      "side_effects": ["http_call"],
+      "confidence": "high"
+    },
+    {
+      "id": "app.api.routers.feedback_router",
+      "path": "app/api/routers/feedback_router.py",
+      "layer": "web",
+      "responsibility": "POST /feedback: delegates to FeedbackService.record.",
+      "depends_on": ["app.services.feedback_service", "app.schemas"],
+      "exposes": ["router"],
+      "side_effects": ["http_call"],
+      "confidence": "high"
+    },
+    {
+      "id": "app.api.routers.retrain_router",
+      "path": "app/api/routers/retrain_router.py",
+      "layer": "web",
+      "responsibility": "POST /ops/jobs/check-retrain: evaluates retrain policy + publishes trigger. DEMOTED: not the canonical scheduler (Composer DAG owns that).",
+      "depends_on": ["app.services.retrain_policy", "app.composition_root"],
+      "exposes": ["router"],
+      "side_effects": ["queue_publish", "db_read"],
+      "confidence": "high"
+    },
+    {
+      "id": "app.api.routers.model_router",
+      "path": "app/api/routers/model_router.py",
+      "layer": "web",
+      "responsibility": "GET /ops/model/{metrics,info,data}: offline accuracy report + active endpoint paths + table previews.",
+      "depends_on": ["app.composition_root", "app.schemas.model"],
+      "exposes": ["router"],
+      "side_effects": ["http_call", "db_read"],
+      "confidence": "high"
+    },
+    {
+      "id": "app.api.routers.ops_router",
+      "path": "app/api/routers/ops_router.py",
+      "layer": "web",
+      "responsibility": "GET /ops/destroy-check, /ops/search-volume, /ops/runs-recent — operator BQ smoke endpoints (shells out to bq).",
+      "depends_on": ["app.schemas.ops", "scripts.ops.destroy_check", "scripts._common"],
+      "exposes": ["router"],
+      "side_effects": ["db_read", "file_io"],
+      "confidence": "medium"
+    },
+    {
+      "id": "app.api.routers.admin_mlops_router",
+      "path": "app/api/routers/admin_mlops_router.py",
+      "layer": "web",
+      "responsibility": "GET /ops/admin/mlops: aggregates event volumes + latest training dataset + latest eval metrics + production model paths.",
+      "depends_on": ["app.composition_root", "app.schemas.admin_mlops"],
+      "exposes": ["router"],
+      "side_effects": ["db_read"],
+      "confidence": "medium"
+    },
+    {
+      "id": "app.api.routers.ui_router",
+      "path": "app/api/routers/ui_router.py",
+      "layer": "web",
+      "responsibility": "Jinja2 templated browser UI under /ui/* (user search, dev search, model metrics, data preview, ops, property detail).",
+      "depends_on": [],
+      "exposes": ["build_ui_router"],
+      "side_effects": ["file_io"],
+      "confidence": "high"
+    },
+    {
+      "id": "app.api.routers.health_router",
+      "path": "app/api/routers/health_router.py",
+      "layer": "web",
+      "responsibility": "k8s probes: /livez /healthz /readyz (503 until retriever+encoder are wired).",
+      "depends_on": ["app.composition_root"],
+      "exposes": ["router"],
+      "side_effects": ["none"],
+      "confidence": "high"
+    },
+    {
+      "id": "app.services.search_service",
+      "path": "app/services/search_service.py",
+      "layer": "usecase",
+      "responsibility": "Hybrid-search use case: emit search_event → embed → expand → run_search → emit impressions → optional BQML popularity score.",
+      "depends_on": ["app.domain.search", "app.domain.candidate", "app.services.ranking", "app.services.protocols", "ml.common.logging"],
+      "exposes": ["SearchService", "SearchServiceUnavailable"],
+      "side_effects": ["queue_publish", "http_call"],
+      "confidence": "high"
+    },
+    {
+      "id": "app.services.feedback_service",
+      "path": "app/services/feedback_service.py",
+      "layer": "usecase",
+      "responsibility": "Emits user_action via EventWriter + legacy click/favorite via FeedbackRecorder. Swallows publish failures (telemetry).",
+      "depends_on": ["app.domain.event", "app.services.protocols.event_writer", "app.services.protocols.feedback_recorder"],
+      "exposes": ["FeedbackService"],
+      "side_effects": ["queue_publish"],
+      "confidence": "high"
+    },
+    {
+      "id": "app.services.ranking",
+      "path": "app/services/ranking.py",
+      "layer": "domain",
+      "responsibility": "Pure orchestration: retrieve → optional FOS fresh-feature merge → rerank (predict or predict_with_explain) → publish ranking_log → sort.",
+      "depends_on": ["app.domain.candidate", "app.domain.search", "app.services.protocols", "ml.data.feature_engineering"],
+      "exposes": ["run_search", "rrf_fuse", "RRF_K"],
+      "side_effects": ["queue_publish"],
+      "confidence": "high"
+    },
+    {
+      "id": "app.services.retrain_policy",
+      "path": "app/services/retrain_policy.py",
+      "layer": "domain",
+      "responsibility": "Pure decision: should_retrain given feedback rows / NDCG drift / last-run timestamp.",
+      "depends_on": ["app.services.protocols.retrain_queries"],
+      "exposes": ["evaluate"],
+      "side_effects": ["none"],
+      "confidence": "medium"
+    },
+    {
+      "id": "app.services.model_metrics_service",
+      "path": "app/services/model_metrics_service.py",
+      "layer": "usecase",
+      "responsibility": "Computes offline NDCG@k / HitRate@k / MRR@k from a curated cases file by invoking SearchService.",
+      "depends_on": ["app.services.search_service"],
+      "exposes": ["ModelMetricsService", "default_cases_path"],
+      "side_effects": ["file_io"],
+      "confidence": "medium"
+    },
+    {
+      "id": "app.services.data_catalog_service",
+      "path": "app/services/data_catalog_service.py",
+      "layer": "usecase",
+      "responsibility": "Renders the data-preview snapshot for /ops/model/data.",
+      "depends_on": ["app.services.protocols.data_catalog_reader"],
+      "exposes": ["DataCatalogService"],
+      "side_effects": ["db_read"],
+      "confidence": "medium"
+    },
+    {
+      "id": "app.domain.candidate",
+      "path": "app/domain/candidate.py",
+      "layer": "domain",
+      "responsibility": "Immutable Candidate / RankedCandidate dataclasses (no I/O).",
+      "depends_on": [],
+      "exposes": ["Candidate", "RankedCandidate"],
+      "side_effects": ["none"],
+      "confidence": "high"
+    },
+    {
+      "id": "app.domain.search",
+      "path": "app/domain/search.py",
+      "layer": "domain",
+      "responsibility": "SearchFilters TypedDict + SearchInput / SearchResultItem / SearchOutput dataclasses.",
+      "depends_on": ["app.domain.candidate"],
+      "exposes": ["SearchFilters", "SearchInput", "SearchResultItem", "SearchOutput"],
+      "side_effects": ["none"],
+      "confidence": "high"
+    },
+    {
+      "id": "app.domain.event",
+      "path": "app/domain/event.py",
+      "layer": "domain",
+      "responsibility": "ActionType Literal + event domain dataclasses for user_actions / search_events / impressions.",
+      "depends_on": [],
+      "exposes": ["ActionType", "SearchEvent", "ImpressionEvent", "UserAction"],
+      "side_effects": ["none"],
+      "confidence": "medium"
+    },
+    {
+      "id": "app.domain.retrieval",
+      "path": "app/domain/retrieval.py",
+      "layer": "domain",
+      "responsibility": "LexicalResult / SemanticResult NamedTuples for lexical+semantic ports.",
+      "depends_on": [],
+      "exposes": ["LexicalResult", "SemanticResult"],
+      "side_effects": ["none"],
+      "confidence": "high"
+    },
+    {
+      "id": "app.domain.labeling",
+      "path": "app/domain/labeling.py",
+      "layer": "domain",
+      "responsibility": "RankingLabel dataclass for label-repo writes.",
+      "depends_on": [],
+      "exposes": ["RankingLabel"],
+      "side_effects": ["none"],
+      "confidence": "high"
+    },
+    {
+      "id": "app.services.protocols",
+      "path": "app/services/protocols/",
+      "layer": "port",
+      "responsibility": "18 Protocols: CandidateRetriever, LexicalSearchPort, SemanticSearchPort, EncoderClient, RerankerClient(+Explainer), RankingLogPublisher, FeedbackRecorder, EventWriter, EventRepository, LabelRepository, MetricsRepository, PredictionPublisher, RetrainQueries, TrainingDatasetRepository, PopularityScorer, SynonymExpanderPort, FeatureFetcher, DataCatalogReader.",
+      "depends_on": ["app.domain.candidate", "app.domain.search", "app.domain.retrieval", "app.domain.event", "app.domain.labeling"],
+      "exposes": ["<all listed Protocols>"],
+      "side_effects": ["none"],
+      "confidence": "high"
+    },
+    {
+      "id": "app.services.adapters.bigquery_candidate_retriever",
+      "path": "app/services/adapters/bigquery_candidate_retriever.py",
+      "layer": "adapter",
+      "responsibility": "Lexical (ES) + semantic (VVS) retrieval → RRF fuse → BigQuery JOIN on properties_cleaned + property_features_daily for per-candidate features.",
+      "depends_on": ["app.services.protocols.lexical_search", "app.services.protocols.semantic_search", "app.services.ranking", "app.domain.candidate"],
+      "exposes": ["BigQueryCandidateRetriever"],
+      "side_effects": ["http_call", "db_read"],
+      "confidence": "high"
+    },
+    {
+      "id": "app.services.adapters.elasticsearch_lexical",
+      "path": "app/services/adapters/elasticsearch_lexical.py",
+      "layer": "adapter",
+      "responsibility": "Elasticsearch BM25 lexical search adapter (LexicalSearchPort).",
+      "depends_on": ["app.services.protocols.lexical_search", "app.domain.retrieval"],
+      "exposes": ["ElasticsearchLexical"],
+      "side_effects": ["http_call"],
+      "confidence": "high"
+    },
+    {
+      "id": "app.services.adapters.vertex_vector_search_semantic_search",
+      "path": "app/services/adapters/vertex_vector_search_semantic_search.py",
+      "layer": "adapter",
+      "responsibility": "Vertex AI Vector Search (Matching Engine) ANN adapter (SemanticSearchPort).",
+      "depends_on": ["app.services.protocols.semantic_search", "app.domain.retrieval"],
+      "exposes": ["VertexVectorSearchSemanticSearch"],
+      "side_effects": ["http_call"],
+      "confidence": "high"
+    },
+    {
+      "id": "app.services.adapters.kserve_encoder",
+      "path": "app/services/adapters/kserve_encoder.py",
+      "layer": "adapter",
+      "responsibility": "EncoderClient over KServe HuggingFace runtime (multilingual-e5).",
+      "depends_on": ["app.services.protocols.encoder_client"],
+      "exposes": ["KServeEncoder"],
+      "side_effects": ["http_call"],
+      "confidence": "high"
+    },
+    {
+      "id": "app.services.adapters.kserve_reranker",
+      "path": "app/services/adapters/kserve_reranker.py",
+      "layer": "adapter",
+      "responsibility": "RerankerClient (+ Explainer) over KServe v2 inference endpoint.",
+      "depends_on": ["app.services.protocols.reranker_client"],
+      "exposes": ["KServeReranker"],
+      "side_effects": ["http_call"],
+      "confidence": "high"
+    },
+    {
+      "id": "app.services.adapters.feature_online_store_fetcher",
+      "path": "app/services/adapters/feature_online_store_fetcher.py",
+      "layer": "adapter",
+      "responsibility": "Vertex AI Feature Online Store fetcher via Feature View (ctr / fav_rate / inquiry_rate freshness).",
+      "depends_on": ["app.services.protocols.feature_fetcher"],
+      "exposes": ["FeatureOnlineStoreFetcher"],
+      "side_effects": ["http_call"],
+      "confidence": "high"
+    },
+    {
+      "id": "app.services.adapters.bqml_popularity_scorer",
+      "path": "app/services/adapters/bqml_popularity_scorer.py",
+      "layer": "adapter",
+      "responsibility": "PopularityScorer using a BQML model (auxiliary signal).",
+      "depends_on": ["app.services.protocols.popularity_scorer"],
+      "exposes": ["BQMLPopularityScorer"],
+      "side_effects": ["db_read"],
+      "confidence": "high"
+    },
+    {
+      "id": "app.services.adapters.redis_synonym_expander",
+      "path": "app/services/adapters/redis_synonym_expander.py",
+      "layer": "adapter",
+      "responsibility": "SynonymExpanderPort over Cloud Memorystore Redis (opt-in lexical query expansion).",
+      "depends_on": ["app.services.protocols.synonym_expander"],
+      "exposes": ["RedisSynonymExpander"],
+      "side_effects": ["http_call"],
+      "confidence": "high"
+    },
+    {
+      "id": "app.services.adapters.pubsub_ranking_log_publisher",
+      "path": "app/services/adapters/pubsub_ranking_log_publisher.py",
+      "layer": "adapter",
+      "responsibility": "Publishes ranking_log rows to Pub/Sub topic `ranking-log` (BQ subscription sinks to mlops.ranking_log).",
+      "depends_on": ["app.services.protocols.ranking_log_publisher"],
+      "exposes": ["PubSubRankingLogPublisher"],
+      "side_effects": ["queue_publish"],
+      "confidence": "high"
+    },
+    {
+      "id": "app.services.adapters.pubsub_event_writer",
+      "path": "app/services/adapters/pubsub_event_writer.py",
+      "layer": "adapter",
+      "responsibility": "Canonical EventWriter: publishes search_events / search_impressions / user_actions topics → mlops.* BQ subscriptions.",
+      "depends_on": ["app.services.protocols.event_writer"],
+      "exposes": ["PubSubEventWriter"],
+      "side_effects": ["queue_publish"],
+      "confidence": "high"
+    },
+    {
+      "id": "app.services.adapters.pubsub_feedback_recorder",
+      "path": "app/services/adapters/pubsub_feedback_recorder.py",
+      "layer": "adapter",
+      "responsibility": "Legacy click/favorite FeedbackRecorder → Pub/Sub `search-feedback` → mlops.feedback_events.",
+      "depends_on": ["app.services.protocols.feedback_recorder"],
+      "exposes": ["PubSubFeedbackRecorder"],
+      "side_effects": ["queue_publish"],
+      "confidence": "high"
+    },
+    {
+      "id": "app.services.adapters.cloud_logging_event_writer",
+      "path": "app/services/adapters/cloud_logging_event_writer.py",
+      "layer": "adapter",
+      "responsibility": "Bootstrap-only fallback EventWriter (Cloud Logging) when 3 Pub/Sub topics are not yet configured. RISK: silent gap if left in prod.",
+      "depends_on": ["app.services.protocols.event_writer"],
+      "exposes": ["CloudLoggingEventWriter"],
+      "side_effects": ["file_io"],
+      "confidence": "medium"
+    },
+    {
+      "id": "app.services.adapters.bigquery_event_repository",
+      "path": "app/services/adapters/bigquery_event_repository.py",
+      "layer": "adapter",
+      "responsibility": "Reads impressions / user_actions from BigQuery for the labeling job.",
+      "depends_on": ["app.services.protocols.event_repository", "app.domain.event"],
+      "exposes": ["BigQueryEventRepository"],
+      "side_effects": ["db_read"],
+      "confidence": "high"
+    },
+    {
+      "id": "app.services.adapters.bigquery_label_repository",
+      "path": "app/services/adapters/bigquery_label_repository.py",
+      "layer": "adapter",
+      "responsibility": "Writes ranking_labels rows (weighted relevance) to BigQuery.",
+      "depends_on": ["app.services.protocols.label_repository", "app.domain.labeling"],
+      "exposes": ["BigQueryLabelRepository"],
+      "side_effects": ["db_write"],
+      "confidence": "high"
+    },
+    {
+      "id": "app.services.adapters.bigquery_metrics_repository",
+      "path": "app/services/adapters/bigquery_metrics_repository.py",
+      "layer": "adapter",
+      "responsibility": "Reads/writes mlops.validation_results / model_monitoring_alerts / training_runs metrics.",
+      "depends_on": ["app.services.protocols.metrics_repository"],
+      "exposes": ["BigQueryMetricsRepository"],
+      "side_effects": ["db_read", "db_write"],
+      "confidence": "medium"
+    },
+    {
+      "id": "app.services.adapters.bigquery_data_catalog_reader",
+      "path": "app/services/adapters/bigquery_data_catalog_reader.py",
+      "layer": "adapter",
+      "responsibility": "Reads row samples from canonical BQ tables for /ops/model/data.",
+      "depends_on": ["app.services.protocols.data_catalog_reader"],
+      "exposes": ["BigQueryDataCatalogReader"],
+      "side_effects": ["db_read"],
+      "confidence": "high"
+    },
+    {
+      "id": "app.services.adapters.gcs_training_dataset_repository",
+      "path": "app/services/adapters/gcs_training_dataset_repository.py",
+      "layer": "adapter",
+      "responsibility": "Writes/lists training_dataset Parquet artifacts in GCS.",
+      "depends_on": ["app.services.protocols.training_dataset_repository"],
+      "exposes": ["GcsTrainingDatasetRepository"],
+      "side_effects": ["file_io"],
+      "confidence": "medium"
+    },
+    {
+      "id": "app.services.adapters.retrain",
+      "path": "app/services/adapters/retrain.py",
+      "layer": "adapter",
+      "responsibility": "BigQueryRetrainQueries — counts feedback rows since last run, NDCG drift; PubSubPublisher for retrain-trigger topic.",
+      "depends_on": ["app.services.protocols.retrain_queries", "app.services.protocols.publisher"],
+      "exposes": ["BigQueryRetrainQueries", "create_retrain_queries"],
+      "side_effects": ["db_read", "queue_publish"],
+      "confidence": "medium"
+    },
+    {
+      "id": "app.services.adapters.publisher",
+      "path": "app/services/adapters/publisher.py",
+      "layer": "adapter",
+      "responsibility": "Generic Pub/Sub publisher (used by retrain-trigger).",
+      "depends_on": ["app.services.protocols.publisher"],
+      "exposes": ["PubSubPublisher"],
+      "side_effects": ["queue_publish"],
+      "confidence": "high"
+    },
+    {
+      "id": "app.services.noop_adapters",
+      "path": "app/services/noop_adapters/",
+      "layer": "adapter",
+      "responsibility": "Per-Port no-op fallbacks used when ENABLE_SEARCH=false / local boot / synonym backend disabled / topics unconfigured.",
+      "depends_on": ["app.services.protocols"],
+      "exposes": ["Noop<Port> for 11 ports"],
+      "side_effects": ["none"],
+      "confidence": "high"
+    },
+    {
+      "id": "ml.data.feature_engineering",
+      "path": "ml/data/feature_engineering/",
+      "layer": "domain",
+      "responsibility": "Pure 10-column ranker feature builder + FEATURE_COLS_RANKER schema (consumed by both /search rerank and training).",
+      "depends_on": [],
+      "exposes": ["build_ranker_features", "FEATURE_COLS_RANKER", "RANKER_LABEL_COL", "RANKER_GROUP_COL"],
+      "side_effects": ["none"],
+      "confidence": "high"
+    },
+    {
+      "id": "ml.evaluation.metrics",
+      "path": "ml/evaluation/metrics/",
+      "layer": "domain",
+      "responsibility": "numpy NDCG@K / MAP / Recall@K / label-gain helpers.",
+      "depends_on": [],
+      "exposes": ["evaluate", "ndcg_at_k"],
+      "side_effects": ["none"],
+      "confidence": "high"
+    },
+    {
+      "id": "ml.labeling.policy",
+      "path": "ml/labeling/policy.py",
+      "layer": "domain",
+      "responsibility": "Canonical action_type weights (5 app + 3 synthetic) and compute_label policy for ranking_labels.relevance.",
+      "depends_on": [],
+      "exposes": ["ACTION_WEIGHTS", "compute_label"],
+      "side_effects": ["none"],
+      "confidence": "high"
+    },
+    {
+      "id": "ml.training.trainer",
+      "path": "ml/training/trainer.py",
+      "layer": "usecase",
+      "responsibility": "LightGBM LambdaRank train: pure train() + write_artifacts() + run()/main() CLI, writes mlops.training_runs row and uploads model.txt to GCS.",
+      "depends_on": ["ml.data.feature_engineering", "ml.data.loaders.ranker_repository", "ml.evaluation.metrics", "ml.registry.artifact_store", "ml.training.experiments"],
+      "exposes": ["train", "run", "main"],
+      "side_effects": ["db_write", "file_io"],
+      "confidence": "high"
+    },
+    {
+      "id": "ml.training.model_builder",
+      "path": "ml/training/model_builder.py",
+      "layer": "domain",
+      "responsibility": "Group-aware split + synthetic ranking frames generator.",
+      "depends_on": [],
+      "exposes": ["split_by_request_id", "synthetic_ranking_frames"],
+      "side_effects": ["none"],
+      "confidence": "medium"
+    },
+    {
+      "id": "ml.training.ports",
+      "path": "ml/training/ports/",
+      "layer": "port",
+      "responsibility": "RankerTrainer / RankerModel Protocols.",
+      "depends_on": [],
+      "exposes": ["RankerTrainer", "RankerModel"],
+      "side_effects": ["none"],
+      "confidence": "high"
+    },
+    {
+      "id": "ml.training.adapters.lightgbm_trainer",
+      "path": "ml/training/adapters/lightgbm_trainer.py",
+      "layer": "adapter",
+      "responsibility": "LightGBM-backed RankerTrainer adapter.",
+      "depends_on": ["ml.training.ports"],
+      "exposes": ["LightGBMTrainer"],
+      "side_effects": ["file_io"],
+      "confidence": "high"
+    },
+    {
+      "id": "ml.training.experiments",
+      "path": "ml/training/experiments/",
+      "layer": "port_adapter",
+      "responsibility": "ExperimentTracker Port + Vertex Experiments adapter + Null tracker default.",
+      "depends_on": [],
+      "exposes": ["ExperimentTracker", "VertexExperimentsTracker", "NullExperimentTracker"],
+      "side_effects": ["http_call"],
+      "confidence": "high"
+    },
+    {
+      "id": "ml.data.loaders.ranker_repository",
+      "path": "ml/data/loaders/",
+      "layer": "adapter",
+      "responsibility": "Materialises the LightGBM training frame from BigQuery ranking_labels x search_impressions x property_features_daily.",
+      "depends_on": ["ml.common.config"],
+      "exposes": ["RankerTrainingRepository", "create_rank_repository"],
+      "side_effects": ["db_read"],
+      "confidence": "high"
+    },
+    {
+      "id": "ml.registry.model_registry",
+      "path": "ml/registry/model_registry.py",
+      "layer": "adapter",
+      "responsibility": "Thin facade over google.cloud.aiplatform for Vertex Model Registry promote (alias add).",
+      "depends_on": [],
+      "exposes": ["ModelRegistry", "RegisteredModel"],
+      "side_effects": ["http_call"],
+      "confidence": "high"
+    },
+    {
+      "id": "ml.registry.ports",
+      "path": "ml/registry/ports/",
+      "layer": "port",
+      "responsibility": "ModelRegistry Port.",
+      "depends_on": [],
+      "exposes": ["ModelRegistry"],
+      "side_effects": ["none"],
+      "confidence": "medium"
+    },
+    {
+      "id": "ml.registry.adapters.vertex_model_registry",
+      "path": "ml/registry/adapters/vertex_model_registry.py",
+      "layer": "adapter",
+      "responsibility": "Vertex AI Model Registry adapter.",
+      "depends_on": ["ml.registry.ports"],
+      "exposes": ["VertexModelRegistry"],
+      "side_effects": ["http_call"],
+      "confidence": "medium"
+    },
+    {
+      "id": "ml.registry.artifact_store",
+      "path": "ml/registry/artifact_store.py",
+      "layer": "adapter",
+      "responsibility": "GCS upload / download helpers for model.txt + metrics.json artifacts.",
+      "depends_on": [],
+      "exposes": ["ArtifactUploader", "GcsArtifactUploader", "GcsPrefix", "download_file"],
+      "side_effects": ["file_io"],
+      "confidence": "high"
+    },
+    {
+      "id": "ml.registry.metadata_store",
+      "path": "ml/registry/metadata_store.py",
+      "layer": "adapter",
+      "responsibility": "mlops.training_runs row insert (provenance: hyperparams, metrics, artifact URI).",
+      "depends_on": [],
+      "exposes": ["MetadataStore"],
+      "side_effects": ["db_write"],
+      "confidence": "medium"
+    },
+    {
+      "id": "ml.serving.encoder",
+      "path": "ml/serving/encoder.py",
+      "layer": "infra",
+      "responsibility": "KServe FastAPI server for multilingual-e5 (lazy sentence-transformers load, query:/passage: prefix enforcement).",
+      "depends_on": ["ml.registry.artifact_store"],
+      "exposes": ["E5Encoder", "create_app"],
+      "side_effects": ["http_call", "file_io"],
+      "confidence": "high"
+    },
+    {
+      "id": "ml.serving.reranker",
+      "path": "ml/serving/reranker.py",
+      "layer": "infra",
+      "responsibility": "KServe FastAPI server for LightGBM reranker: /predict + /explain (TreeSHAP via pred_contrib=True).",
+      "depends_on": ["ml.registry.artifact_store"],
+      "exposes": ["create_app"],
+      "side_effects": ["http_call", "file_io"],
+      "confidence": "high"
+    },
+    {
+      "id": "ml.serving.predictor",
+      "path": "ml/serving/predictor.py",
+      "layer": "adapter",
+      "responsibility": "Generic Predictor Protocol + RemotePredictorConfig facade.",
+      "depends_on": [],
+      "exposes": ["Predictor", "RemotePredictorConfig"],
+      "side_effects": ["none"],
+      "confidence": "medium"
+    },
+    {
+      "id": "ml.serving.adapters.kserve_predictor",
+      "path": "ml/serving/adapters/kserve_predictor.py",
+      "layer": "adapter",
+      "responsibility": "Adapter that calls KServe endpoints (mirror of app-side adapters in the ml namespace).",
+      "depends_on": ["ml.serving.ports"],
+      "exposes": ["KServePredictor"],
+      "side_effects": ["http_call"],
+      "confidence": "low"
+    },
+    {
+      "id": "ml.streaming.pipeline",
+      "path": "ml/streaming/pipeline.py",
+      "layer": "infra",
+      "responsibility": "Apache Beam streaming: ranking-log Pub/Sub → 1h tumbling aggregation → mlops.ranking_log_hourly_ctr.",
+      "depends_on": [],
+      "exposes": ["run"],
+      "side_effects": ["queue_publish", "db_write"],
+      "confidence": "medium"
+    },
+    {
+      "id": "ml.streaming.ports",
+      "path": "ml/streaming/ports/",
+      "layer": "port",
+      "responsibility": "StreamProcessor Protocol.",
+      "depends_on": [],
+      "exposes": ["StreamProcessor"],
+      "side_effects": ["none"],
+      "confidence": "low"
+    },
+    {
+      "id": "ml.streaming.adapters.dataflow_processor",
+      "path": "ml/streaming/adapters/dataflow_processor.py",
+      "layer": "adapter",
+      "responsibility": "Dataflow-runner adapter for StreamProcessor Port.",
+      "depends_on": ["ml.streaming.ports"],
+      "exposes": ["DataflowProcessor"],
+      "side_effects": ["queue_publish"],
+      "confidence": "low"
+    },
+    {
+      "id": "ml.common",
+      "path": "ml/common/",
+      "layer": "infra",
+      "responsibility": "Shared config (BaseAppSettings / TrainSettings / EmbeddingSettings), structured logging, run_id helper.",
+      "depends_on": [],
+      "exposes": ["BaseAppSettings", "TrainSettings", "configure_logging", "get_logger", "generate_run_id"],
+      "side_effects": ["file_io"],
+      "confidence": "high"
+    },
+    {
+      "id": "pipeline.training_job.main",
+      "path": "pipeline/training_job/main.py",
+      "layer": "pipeline",
+      "responsibility": "KFP `property-search-train` definition + compile/submit CLI: load_features → train_reranker → evaluate → gated register_reranker.",
+      "depends_on": ["pipeline.training_job.components", "pipeline.workflow.compile"],
+      "exposes": ["property_search_train_pipeline", "main"],
+      "side_effects": ["http_call", "file_io"],
+      "confidence": "high"
+    },
+    {
+      "id": "pipeline.training_job.components",
+      "path": "pipeline/training_job/components/",
+      "layer": "pipeline",
+      "responsibility": "KFP components: load_features (BQ JOIN), train_reranker (container), evaluate (gate metric vs threshold), register_reranker (Vertex Model Registry promote + endpoint traffic split).",
+      "depends_on": [],
+      "exposes": ["load_features", "train_reranker", "evaluate_reranker", "register_reranker"],
+      "side_effects": ["db_read", "http_call", "file_io"],
+      "confidence": "high"
+    },
+    {
+      "id": "pipeline.training_job.ports",
+      "path": "pipeline/training_job/ports/",
+      "layer": "port",
+      "responsibility": "PipelineOrchestrator + PipelineComponent Protocols.",
+      "depends_on": [],
+      "exposes": ["PipelineOrchestrator", "PipelineComponent"],
+      "side_effects": ["none"],
+      "confidence": "medium"
+    },
+    {
+      "id": "pipeline.training_job.adapters.kfp_orchestrator",
+      "path": "pipeline/training_job/adapters/kfp_orchestrator.py",
+      "layer": "adapter",
+      "responsibility": "KFP-backed PipelineOrchestrator adapter.",
+      "depends_on": ["pipeline.training_job.ports"],
+      "exposes": ["KfpOrchestrator"],
+      "side_effects": ["http_call"],
+      "confidence": "medium"
+    },
+    {
+      "id": "pipeline.data_job.main",
+      "path": "pipeline/data_job/main.py",
+      "layer": "pipeline",
+      "responsibility": "KFP `property-search-embed`: load_properties → batch_predict_embeddings → write_embeddings → upsert_vector_search (strangler).",
+      "depends_on": ["pipeline.data_job.components"],
+      "exposes": ["property_search_embed_pipeline", "main"],
+      "side_effects": ["db_write", "http_call"],
+      "confidence": "high"
+    },
+    {
+      "id": "pipeline.data_job.components",
+      "path": "pipeline/data_job/components/",
+      "layer": "pipeline",
+      "responsibility": "KFP components for embedding pipeline (load/predict/write/upsert).",
+      "depends_on": ["pipeline.data_job.ports"],
+      "exposes": ["load_properties", "batch_predict_embeddings", "write_embeddings", "upsert_vector_search"],
+      "side_effects": ["db_read", "db_write", "http_call"],
+      "confidence": "high"
+    },
+    {
+      "id": "pipeline.data_job.ports",
+      "path": "pipeline/data_job/ports/",
+      "layer": "port",
+      "responsibility": "VectorSearchWriter Protocol.",
+      "depends_on": [],
+      "exposes": ["VectorSearchWriter"],
+      "side_effects": ["none"],
+      "confidence": "high"
+    },
+    {
+      "id": "pipeline.data_job.adapters",
+      "path": "pipeline/data_job/adapters/",
+      "layer": "adapter",
+      "responsibility": "VertexVectorSearchWriter (prod) + InMemoryVectorSearchWriter (test) adapters.",
+      "depends_on": ["pipeline.data_job.ports"],
+      "exposes": ["VertexVectorSearchWriter", "InMemoryVectorSearchWriter"],
+      "side_effects": ["http_call"],
+      "confidence": "high"
+    },
+    {
+      "id": "pipeline.data_job.dataform",
+      "path": "pipeline/data_job/dataform/",
+      "layer": "infra",
+      "responsibility": "Dataform definitions: sources / staging / features / monitoring / assertions for feature_mart.",
+      "depends_on": [],
+      "exposes": [],
+      "side_effects": ["db_write"],
+      "confidence": "medium"
+    },
+    {
+      "id": "pipeline.labeling_job.main",
+      "path": "pipeline/labeling_job/main.py",
+      "layer": "pipeline",
+      "responsibility": "Reads BQ impressions + actions, applies compute_label policy, writes mlops.ranking_labels rows.",
+      "depends_on": ["ml.labeling.policy", "app.services.adapters.bigquery_event_repository", "app.services.adapters.bigquery_label_repository", "ml.common.config"],
+      "exposes": ["run", "main"],
+      "side_effects": ["db_read", "db_write"],
+      "confidence": "high"
+    },
+    {
+      "id": "pipeline.training_dataset_job.main",
+      "path": "pipeline/training_dataset_job/main.py",
+      "layer": "pipeline",
+      "responsibility": "Snapshots a CSV training dataset from ranker repository (`dist/training_datasets/<run_id>/training_dataset.csv`).",
+      "depends_on": ["ml.data.loaders.ranker_repository", "ml.common"],
+      "exposes": ["run", "main"],
+      "side_effects": ["db_read", "file_io"],
+      "confidence": "high"
+    },
+    {
+      "id": "pipeline.evaluation_job.main",
+      "path": "pipeline/evaluation_job/main.py",
+      "layer": "pipeline",
+      "responsibility": "STUB KFP `property-search-evaluate` pipeline — TODO: wire real components for offline NDCG@10 / MAP / Recall@20 vs prod baseline.",
+      "depends_on": [],
+      "exposes": ["property_search_evaluate_pipeline", "main"],
+      "side_effects": ["none"],
+      "confidence": "high"
+    },
+    {
+      "id": "pipeline.batch_serving_job.main",
+      "path": "pipeline/batch_serving_job/main.py",
+      "layer": "pipeline",
+      "responsibility": "STUB KFP `property-search-batch-serve` — TODO: wire Vertex Batch Prediction + cache hydration.",
+      "depends_on": [],
+      "exposes": ["property_search_batch_serve_pipeline", "main"],
+      "side_effects": ["none"],
+      "confidence": "high"
+    },
+    {
+      "id": "pipeline.workflow.compile",
+      "path": "pipeline/workflow/compile.py",
+      "layer": "pipeline",
+      "responsibility": "KFP compile + Vertex PipelineJob submit helpers shared across data/training jobs.",
+      "depends_on": [],
+      "exposes": ["compile_pipeline", "submit_pipeline_yaml"],
+      "side_effects": ["http_call", "file_io"],
+      "confidence": "high"
+    },
+    {
+      "id": "pipeline.workflow.trigger_zip.main",
+      "path": "pipeline/workflow/trigger_zip/main.py",
+      "layer": "pipeline",
+      "responsibility": "Cloud Function HTTP entrypoint to submit Vertex PipelineJobs (smoke/manual alternative).",
+      "depends_on": ["pipeline.workflow.compile"],
+      "exposes": ["main"],
+      "side_effects": ["http_call"],
+      "confidence": "medium"
+    },
+    {
+      "id": "pipeline.dags.daily_feature_refresh",
+      "path": "pipeline/dags/daily_feature_refresh.py",
+      "layer": "pipeline",
+      "responsibility": "Airflow DAG (Composer): Dataform compile/invocation → FeatureView sync (KubernetesPodOperator) → optional VVS incremental backfill.",
+      "depends_on": ["pipeline.dags._common", "pipeline.dags._pod", "scripts.domain.gcp.feature_view_sync", "scripts.setup.backfill_vector_search_index"],
+      "exposes": ["dag"],
+      "side_effects": ["http_call", "db_write"],
+      "confidence": "high"
+    },
+    {
+      "id": "pipeline.dags.retrain_orchestration",
+      "path": "pipeline/dags/retrain_orchestration.py",
+      "layer": "pipeline",
+      "responsibility": "Airflow DAG: canonical retrain schedule — check_retrain → submit_train_pipeline → wait_train_succeeded → AUTO_PROMOTE gate → promote_reranker.",
+      "depends_on": ["pipeline.dags._common", "pipeline.dags._pod", "scripts.ops.check_retrain", "scripts.ops.submit_train_pipeline", "scripts.ops.vertex.pipeline_wait", "scripts.ops.promote"],
+      "exposes": ["dag"],
+      "side_effects": ["http_call", "queue_publish"],
+      "confidence": "high"
+    },
+    {
+      "id": "pipeline.dags.monitoring_validation",
+      "path": "pipeline/dags/monitoring_validation.py",
+      "layer": "pipeline",
+      "responsibility": "Airflow DAG: feature_skew SQL + model_output_drift SQL → mlops.validation_results / model_monitoring_alerts; SLO burn-rate check.",
+      "depends_on": ["pipeline.dags._common", "pipeline.dags._pod", "scripts.ops.slo_status"],
+      "exposes": ["dag"],
+      "side_effects": ["db_read", "db_write", "http_call"],
+      "confidence": "high"
+    },
+    {
+      "id": "scripts.ops.run_all",
+      "path": "scripts/ops/run_all.py",
+      "layer": "cli",
+      "responsibility": "16-step `make run-all-core` orchestrator (canonical validation): readiness → seed → label → train → daily → accuracy.",
+      "depends_on": ["scripts.lib.step_timing"],
+      "exposes": ["STEPS"],
+      "side_effects": ["http_call", "db_read", "db_write"],
+      "confidence": "high"
+    },
+    {
+      "id": "scripts.setup.deploy_all",
+      "path": "scripts/setup/deploy_all.py",
+      "layer": "cli",
+      "responsibility": "15-step deploy orchestrator: tf-bootstrap → 2-stage tf apply → seed → sync-elasticsearch → composer-deploy-dags → deploy-api.",
+      "depends_on": ["scripts.adapters.terraform", "scripts.adapters.gcloud", "scripts.adapters.kubectl", "scripts.lib.step_timing"],
+      "exposes": ["main"],
+      "side_effects": ["http_call", "file_io"],
+      "confidence": "high"
+    },
+    {
+      "id": "scripts.setup.destroy_all",
+      "path": "scripts/setup/destroy_all.py",
+      "layer": "cli",
+      "responsibility": "8-step teardown orchestrator with --from-step/--to-step slicing.",
+      "depends_on": ["scripts.adapters.terraform", "scripts.domain.gcp", "scripts.domain.k8s", "scripts.lib.step_timing"],
+      "exposes": ["main"],
+      "side_effects": ["http_call"],
+      "confidence": "high"
+    },
+    {
+      "id": "scripts.ops.promote",
+      "path": "scripts/ops/promote.py",
+      "layer": "cli",
+      "responsibility": "Promote latest trained reranker to Vertex Model Registry alias `production` (APPLY=1 gate).",
+      "depends_on": ["ml.registry.model_registry"],
+      "exposes": ["main"],
+      "side_effects": ["http_call"],
+      "confidence": "medium"
+    },
+    {
+      "id": "scripts.ops.check_retrain",
+      "path": "scripts/ops/check_retrain.py",
+      "layer": "cli",
+      "responsibility": "Retrain decision CLI (used by Composer DAG and Cloud Scheduler smoke).",
+      "depends_on": ["app.services.retrain_policy", "app.services.adapters.retrain"],
+      "exposes": ["main"],
+      "side_effects": ["db_read", "queue_publish"],
+      "confidence": "medium"
+    },
+    {
+      "id": "scripts.ci.layers",
+      "path": "scripts/ci/layers.py",
+      "layer": "infra",
+      "responsibility": "AST layer-boundary checker: RULES + DIRECTORY_RULES enforce no google.cloud / lightgbm leak into ports / pure logic.",
+      "depends_on": [],
+      "exposes": ["RULES", "DIRECTORY_RULES", "UNIVERSAL_BANS", "find_violations"],
+      "side_effects": ["file_io"],
+      "confidence": "high"
+    },
+    {
+      "id": "scripts.deploy.composer_deploy_dags",
+      "path": "scripts/deploy/composer_deploy_dags.py",
+      "layer": "cli",
+      "responsibility": "Syncs DAG files + Composer data SQLs to Composer GCS bucket.",
+      "depends_on": [],
+      "exposes": ["main"],
+      "side_effects": ["file_io", "http_call"],
+      "confidence": "medium"
+    },
+    {
+      "id": "scripts.deploy.build_all_local",
+      "path": "scripts/deploy/build_all_local.py",
+      "layer": "cli",
+      "responsibility": "`make build-all-local` — docker buildx no-push build for ml-base → search-api / property-encoder / property-reranker / composer-runner (5 images).",
+      "depends_on": [],
+      "exposes": ["main"],
+      "side_effects": ["file_io"],
+      "confidence": "high"
+    },
+    {
+      "id": "infra.terraform",
+      "path": "infra/terraform/",
+      "layer": "infra",
+      "responsibility": "Terraform modules for GCP project bootstrap: GKE Autopilot, Composer Gen 3, Vertex Feature Store/View, Vector Search, Pub/Sub + BQ Subscriptions, Dataform repo, Cloud Domains + DNS, Certificate Manager, IAP.",
+      "depends_on": [],
+      "exposes": [],
+      "side_effects": ["http_call"],
+      "confidence": "medium"
+    },
+    {
+      "id": "infra.manifests",
+      "path": "infra/manifests/",
+      "layer": "infra",
+      "responsibility": "k8s manifests: ECK Elasticsearch (HTTP + anonymous learning mode), KServe InferenceService, search-api Gateway, NetworkPolicies, kustomize overlay.",
+      "depends_on": [],
+      "exposes": [],
+      "side_effects": ["none"],
+      "confidence": "medium"
+    },
+    {
+      "id": "infra.sql",
+      "path": "infra/sql/",
+      "layer": "infra",
+      "responsibility": "BigQuery monitoring SQL: validate_feature_skew.sql, validate_model_output_drift.sql; consumed by monitoring_validation DAG.",
+      "depends_on": [],
+      "exposes": [],
+      "side_effects": ["none"],
+      "confidence": "high"
+    }
+  ],
+  "flows": [
+    {
+      "id": "flow.search",
+      "name": "hybrid_search_request",
+      "trigger": "HTTP POST /api/v1/search",
+      "steps": [
+        {"module_id": "app.api.routers.search_router", "action": "Map SearchRequest → SearchInput, resolve request_id, depend on SearchService."},
+        {"module_id": "app.services.search_service", "action": "Emit search_event via EventWriter."},
+        {"module_id": "app.services.adapters.kserve_encoder", "action": "Embed query text → 768-dim ME5 vector."},
+        {"module_id": "app.services.adapters.redis_synonym_expander", "action": "Optional: expand lexical query via Redis dict (encoder side untouched)."},
+        {"module_id": "app.services.ranking", "action": "run_search: retrieve, optional FOS feature fetch, rerank, publish ranking_log, sort."},
+        {"module_id": "app.services.adapters.bigquery_candidate_retriever", "action": "Hybrid retrieval: ES BM25 + VVS ANN → RRF fuse → BQ feature JOIN."},
+        {"module_id": "app.services.adapters.elasticsearch_lexical", "action": "BM25 search on Elasticsearch cluster."},
+        {"module_id": "app.services.adapters.vertex_vector_search_semantic_search", "action": "Approximate-NN over the deployed VVS index."},
+        {"module_id": "app.services.adapters.feature_online_store_fetcher", "action": "Optional: fetch ctr/fav_rate/inquiry_rate via Vertex Feature View."},
+        {"module_id": "ml.data.feature_engineering", "action": "Build 10-column feature matrix (FEATURE_COLS_RANKER)."},
+        {"module_id": "app.services.adapters.kserve_reranker", "action": "POST features → LightGBM /predict (or /predict_with_explain for TreeSHAP)."},
+        {"module_id": "app.services.adapters.pubsub_ranking_log_publisher", "action": "Publish ranking_log rows to `ranking-log` topic (best-effort)."},
+        {"module_id": "app.services.search_service", "action": "Emit impressions per ranked item, attach popularity score, build SearchOutput."},
+        {"module_id": "app.services.adapters.bqml_popularity_scorer", "action": "Optional: BQML aux popularity scoring per property_id."},
+        {"module_id": "app.services.adapters.pubsub_event_writer", "action": "Publish search_events + search_impressions to Pub/Sub → mlops.* via BQ subscriptions."}
+      ],
+      "external_io": ["Elasticsearch", "Vertex AI Vector Search", "KServe (encoder + reranker)", "Vertex AI Feature Online Store", "BigQuery", "Pub/Sub", "Cloud Memorystore (Redis)", "BQML"],
+      "failure_modes": [
+        "encoder or retriever unset → 503 SearchServiceUnavailable",
+        "Elasticsearch / VVS transient errors propagate (5xx)",
+        "FOS fetch fails → degraded (rerank with stale BQ features, logged)",
+        "ranking_log publish fails → silent (logged, /search still serves)",
+        "BQML popularity scoring fails → continues without popularity column",
+        "Reranker timeout → propagates"
+      ]
+    },
+    {
+      "id": "flow.feedback",
+      "name": "user_feedback_event",
+      "trigger": "HTTP POST /api/v1/feedback (from /ui/property/{id} buttons or programmatic clients)",
+      "steps": [
+        {"module_id": "app.api.routers.feedback_router", "action": "Bind FeedbackRequest → FeedbackService."},
+        {"module_id": "app.services.feedback_service", "action": "Emit user_action via EventWriter; if action in {click,favorite} also publish legacy feedback record."},
+        {"module_id": "app.services.adapters.pubsub_event_writer", "action": "Publish to `user-actions` Pub/Sub topic → mlops.user_actions BQ subscription."},
+        {"module_id": "app.services.adapters.pubsub_feedback_recorder", "action": "Legacy: publish to `search-feedback` → mlops.feedback_events."}
+      ],
+      "external_io": ["Pub/Sub", "BigQuery"],
+      "failure_modes": [
+        "Pub/Sub publish failure → returns accepted=false (logged, not raised)",
+        "Schema drift between Pydantic ActionType and BQ enum could silently drop rows"
+      ]
+    },
+    {
+      "id": "flow.daily_feature_refresh",
+      "name": "daily_feature_refresh",
+      "trigger": "Composer DAG `daily_feature_refresh` cron `0 16 * * *` UTC (01:00 JST)",
+      "steps": [
+        {"module_id": "pipeline.dags.daily_feature_refresh", "action": "DataformCreateCompilationResultOperator + DataformCreateWorkflowInvocationOperator."},
+        {"module_id": "pipeline.data_job.dataform", "action": "Run Dataform: sources → staging → features → monitoring SQL refresh feature_mart.*."},
+        {"module_id": "scripts.domain.gcp.feature_view_sync", "action": "Trigger Vertex AI Feature View sync (Feature Online Store refresh)."},
+        {"module_id": "scripts.setup.backfill_vector_search_index", "action": "Optional (`ENABLE_DAILY_VVS_REFRESH=true`): incremental VVS index backfill."}
+      ],
+      "external_io": ["Dataform", "BigQuery", "Vertex AI Feature Store", "Vertex AI Vector Search"],
+      "failure_modes": [
+        "Dataform compile/invocation failure halts Feature View sync",
+        "Feature View sync silently lags if quota throttled",
+        "VVS index backfill is opt-in; default off may diverge from BQ embeddings"
+      ]
+    },
+    {
+      "id": "flow.retrain_orchestration",
+      "name": "retrain_orchestration",
+      "trigger": "Composer DAG `retrain_orchestration` cron `0 19 * * *` UTC (04:00 JST)",
+      "steps": [
+        {"module_id": "scripts.ops.check_retrain", "action": "Read mlops.feedback_events / training_runs / accuracy report; decide should_retrain."},
+        {"module_id": "scripts.ops.submit_train_pipeline", "action": "Compile + submit KFP `property-search-train` pipeline to Vertex AI Pipelines."},
+        {"module_id": "pipeline.training_job.main", "action": "Pipeline runs: load_features (BQ JOIN) → train_reranker → evaluate (NDCG@10 gate) → register_reranker (conditional)."},
+        {"module_id": "ml.training.trainer", "action": "Inside train_reranker container: LightGBM LambdaRank fit, write artifacts, mlops.training_runs row."},
+        {"module_id": "ml.registry.artifact_store", "action": "Upload model.txt + metrics.json to gs://<artifacts>/models/."},
+        {"module_id": "pipeline.training_job.components", "action": "evaluate → register_reranker: Vertex Model Registry upload + Endpoint traffic split (if gate passed)."},
+        {"module_id": "scripts.ops.vertex.pipeline_wait", "action": "Block until PipelineJob SUCCEEDED."},
+        {"module_id": "scripts.ops.promote", "action": "If AUTO_PROMOTE=true: alias newest version → `production`."}
+      ],
+      "external_io": ["BigQuery", "GCS", "Vertex AI Pipelines", "Vertex AI Model Registry", "Vertex AI Endpoints", "Cloud Logging"],
+      "failure_modes": [
+        "Empty ranking_labels frame → load_features fails (root cause: labeling job didn't run / ordering violation)",
+        "evaluate gate (NDCG@10 < threshold) skips registration but still consumes compute",
+        "Vertex traffic split misconfiguration could send 100% traffic to a regressed model",
+        "AUTO_PROMOTE=true without manual review = risk of bad alias flip"
+      ]
+    },
+    {
+      "id": "flow.monitoring",
+      "name": "monitoring_validation",
+      "trigger": "Composer DAG `monitoring_validation` cron `30 19 * * *` UTC (04:30 JST)",
+      "steps": [
+        {"module_id": "pipeline.dags.monitoring_validation", "action": "BigQueryInsertJobOperator runs validate_feature_skew.sql → mlops.validation_results."},
+        {"module_id": "pipeline.dags.monitoring_validation", "action": "BigQueryInsertJobOperator runs validate_model_output_drift.sql → mlops.model_monitoring_alerts."},
+        {"module_id": "scripts.ops.slo_status", "action": "Check SLO + burn-rate (Cloud Monitoring) and emit alerts."}
+      ],
+      "external_io": ["BigQuery", "Cloud Monitoring"],
+      "failure_modes": [
+        "SQL file path resolution: Composer data dir vs repo fallback (incident pattern)",
+        "Skew SQL false positives when feature distribution shifts seasonally",
+        "SLO definition decoupled from /metrics service label = silent SLO blindness"
+      ]
+    },
+    {
+      "id": "flow.labeling",
+      "name": "labeling_pipeline",
+      "trigger": "CLI `python -m pipeline.labeling_job.main` (invoked by `make label-build` in run-all)",
+      "steps": [
+        {"module_id": "app.services.adapters.bigquery_event_repository", "action": "Read mlops.search_impressions + mlops.user_actions since (now-window_days)."},
+        {"module_id": "ml.labeling.policy", "action": "compute_label per (search_id, property_id): weighted ACTION_WEIGHTS → relevance + label_source."},
+        {"module_id": "app.services.adapters.bigquery_label_repository", "action": "Write RankingLabel rows to mlops.ranking_labels."}
+      ],
+      "external_io": ["BigQuery"],
+      "failure_modes": [
+        "Stale window (no recent feedback) → empty labels → empty training frame downstream",
+        "Synthetic action injection (definitions/labeling/synthetic_actions.yaml) bypasses user_actions — could mask app-emit regressions"
+      ]
+    },
+    {
+      "id": "flow.embedding_refresh",
+      "name": "property_embedding_refresh",
+      "trigger": "Manual: `python -m pipeline.data_job.main submit` (or future Composer DAG)",
+      "steps": [
+        {"module_id": "pipeline.data_job.components", "action": "load_properties (BQ → properties_cleaned slice)."},
+        {"module_id": "pipeline.data_job.components", "action": "batch_predict_embeddings (Vertex BatchPrediction on ME5)."},
+        {"module_id": "pipeline.data_job.components", "action": "write_embeddings (BQ feature_mart.property_embeddings upsert)."},
+        {"module_id": "pipeline.data_job.adapters", "action": "upsert_vector_search → Vertex Vector Search index (skip if index unset)."}
+      ],
+      "external_io": ["BigQuery", "Vertex AI Batch Prediction", "Vertex AI Vector Search"],
+      "failure_modes": [
+        "VVS index missing → upsert silently skipped (Strangler default-off)",
+        "Embeddings table and VVS index can diverge (no transactional coupling)",
+        "Batch prediction quota throttling extends pipeline wall time"
+      ]
+    },
+    {
+      "id": "flow.streaming_ctr",
+      "name": "ranking_log_streaming_aggregation",
+      "trigger": "Dataflow streaming job: `python -m ml.streaming.pipeline --streaming ...`",
+      "steps": [
+        {"module_id": "app.services.adapters.pubsub_ranking_log_publisher", "action": "Source: ranking-log Pub/Sub topic (one msg per /search candidate)."},
+        {"module_id": "ml.streaming.pipeline", "action": "Beam: 1h tumbling window → group by property_id → (impressions, clicks-synthesized-from-rank==1)."},
+        {"module_id": "ml.streaming.pipeline", "action": "Sink: BigQuery mlops.ranking_log_hourly_ctr."}
+      ],
+      "external_io": ["Pub/Sub", "Dataflow", "BigQuery"],
+      "failure_modes": [
+        "Clicks are synthesized from final_rank==1 (learning proxy, not real CTR) → biased training signal",
+        "Streaming pipeline restart loses in-flight windows unless checkpointed",
+        "BQ schema drift in hourly table breaks sink"
+      ]
+    },
+    {
+      "id": "flow.check_retrain_smoke",
+      "name": "check_retrain_smoke",
+      "trigger": "HTTP POST /ops/jobs/check-retrain (Composer task + Cloud Scheduler monthly smoke + manual)",
+      "steps": [
+        {"module_id": "app.api.routers.retrain_router", "action": "Bind RetrainQueries via DI."},
+        {"module_id": "app.services.retrain_policy", "action": "evaluate(feedback_rows, ndcg_drift, last_run_at) → ShouldRetrain decision."},
+        {"module_id": "app.services.adapters.retrain", "action": "If should_retrain: publish to retrain-trigger topic (PubSubPublisher) — best-effort."}
+      ],
+      "external_io": ["BigQuery", "Pub/Sub"],
+      "failure_modes": [
+        "Cannibalization risk: if Cloud Scheduler set to high-frequency cron it duplicates Composer retrain (CLAUDE.md non-negotiable)",
+        "Pub/Sub publish failure → published=false in response"
+      ]
+    },
+    {
+      "id": "flow.deploy_all",
+      "name": "deploy_all_canonical",
+      "trigger": "`make deploy-all` → CLI `scripts/setup/deploy_all.py`",
+      "steps": [
+        {"module_id": "scripts.setup.deploy_all", "action": "15 steps: tf-bootstrap → tf apply stage A → tf apply stage B → seed-minimal-clean → sync-elasticsearch → composer-deploy-dags → build-all-local → push images → deploy-api → configmap-overlay → kserve models → checkpoints."},
+        {"module_id": "infra.terraform", "action": "Provision GKE/Composer/Vertex/Pub/Sub/Dataform/Cloud Domains."},
+        {"module_id": "infra.manifests", "action": "Apply kustomize overlay: ES, KServe, search-api Gateway, NetworkPolicies."},
+        {"module_id": "scripts.deploy.composer_deploy_dags", "action": "Sync DAGs + SQL to Composer GCS bucket."}
+      ],
+      "external_io": ["Terraform Cloud / state bucket", "GCS", "GKE", "Artifact Registry", "Composer"],
+      "failure_modes": [
+        "deploy/destroy-only callsites are NOT exercised by `make check` (incident: 5 latent bugs surfaced only via deploy-all)",
+        "Two-stage tf apply means partial-apply state on stage A failure",
+        "Composer Gen 3 auto-sets GCP_PROJECT — user-set PROJECT_ID can cause HTTP 400"
+      ]
+    }
+  ],
+  "boundaries": {
+    "ports": [
+      {"name": "CandidateRetriever", "implementations": ["BigQueryCandidateRetriever"]},
+      {"name": "LexicalSearchPort", "implementations": ["ElasticsearchLexical", "NoopLexicalSearch"]},
+      {"name": "SemanticSearchPort", "implementations": ["VertexVectorSearchSemanticSearch"]},
+      {"name": "EncoderClient", "implementations": ["KServeEncoder"]},
+      {"name": "RerankerClient / RerankerExplainer", "implementations": ["KServeReranker"]},
+      {"name": "FeatureFetcher", "implementations": ["FeatureOnlineStoreFetcher"]},
+      {"name": "PopularityScorer", "implementations": ["BQMLPopularityScorer", "(optional / disabled by flag)"]},
+      {"name": "SynonymExpanderPort", "implementations": ["RedisSynonymExpander", "NoopSynonymExpander"]},
+      {"name": "RankingLogPublisher", "implementations": ["PubSubRankingLogPublisher", "NoopRankingLogPublisher"]},
+      {"name": "FeedbackRecorder", "implementations": ["PubSubFeedbackRecorder", "NoopFeedbackRecorder"]},
+      {"name": "EventWriter", "implementations": ["PubSubEventWriter", "CloudLoggingEventWriter (fallback)", "NoopEventWriter"]},
+      {"name": "EventRepository", "implementations": ["BigQueryEventRepository", "NoopEventRepository"]},
+      {"name": "LabelRepository", "implementations": ["BigQueryLabelRepository", "NoopLabelRepository"]},
+      {"name": "MetricsRepository", "implementations": ["BigQueryMetricsRepository", "NoopMetricsRepository"]},
+      {"name": "TrainingDatasetRepository", "implementations": ["GcsTrainingDatasetRepository", "NoopTrainingDatasetRepository"]},
+      {"name": "RetrainQueries", "implementations": ["BigQueryRetrainQueries", "NoopRetrainQueries"]},
+      {"name": "PredictionPublisher", "implementations": ["PubSubPublisher", "NoopPublisher"]},
+      {"name": "DataCatalogReader", "implementations": ["BigQueryDataCatalogReader", "NoopDataCatalogReader"]},
+      {"name": "RankerTrainer (ml.training.ports)", "implementations": ["LightGBMTrainer"]},
+      {"name": "ExperimentTracker (ml.training.experiments.ports)", "implementations": ["VertexExperimentsTracker", "NullExperimentTracker"]},
+      {"name": "ModelRegistry (ml.registry.ports)", "implementations": ["VertexModelRegistry"]},
+      {"name": "VectorSearchWriter (pipeline.data_job.ports)", "implementations": ["VertexVectorSearchWriter", "InMemoryVectorSearchWriter"]},
+      {"name": "StreamProcessor (ml.streaming.ports)", "implementations": ["DataflowProcessor"]},
+      {"name": "PipelineOrchestrator (pipeline.training_job.ports)", "implementations": ["KfpOrchestrator"]},
+      {"name": "PredictorService (ml.serving.ports)", "implementations": ["KServePredictor"]}
+    ],
+    "swappable_backends": [
+      "lexical: Elasticsearch BM25 ↔ Noop (ENABLE_SEARCH off)",
+      "semantic: Vertex Vector Search (single canonical impl; Port left for future ES-ANN / OpenSearch swap)",
+      "encoder: KServe-hosted ME5 (single impl)",
+      "reranker: KServe-hosted LightGBM (single impl; explainer optional)",
+      "feature fresh: Vertex Feature Online Store ↔ off (BQ-only)",
+      "synonym: Redis ↔ Noop",
+      "event writer: Pub/Sub canonical ↔ CloudLogging fallback ↔ Noop",
+      "popularity: BQML ↔ off",
+      "training experiment tracker: Vertex Experiments ↔ Null",
+      "vector search write: Vertex VVS ↔ InMemory (tests)"
+    ]
+  },
+  "risks": [
+    {"area": "Cloud Logging fallback", "issue": "CloudLoggingEventWriter is bootstrap-only fallback. If left enabled in prod (3 topics unconfigured), event tables silently stay empty — entire retrain loop degrades to synthetic-only without obvious surface signal.", "severity": "high"},
+    {"area": "Streaming CTR proxy", "issue": "ml.streaming.pipeline synthesizes `click` from final_rank==1 instead of joining real /feedback. Hourly CTR table is therefore biased — using it for training would close a feedback loop on the model's own ranking.", "severity": "high"},
+    {"area": "Composer cron cannibalization", "issue": "Cloud Scheduler retains /jobs/check-retrain trigger. CLAUDE.md explicitly forbids it from acting as a parallel scheduler (would double-fire retrain).", "severity": "med"},
+    {"area": "Stub pipelines", "issue": "pipeline.evaluation_job.main and pipeline.batch_serving_job.main are KFP stubs with `del project_id` — they compile but do nothing. README/docs imply offline eval is wired.", "severity": "med"},
+    {"area": "Elasticsearch hardening parked", "issue": "ECK manifest is intentionally HTTP + anonymous superuser (learning mode). A contract test pins this state, so adding auth requires deliberate flip. RISK becomes prod-grade only if endpoint is exposed beyond GKE cluster.", "severity": "med"},
+    {"area": "Deploy-path coverage", "issue": "`make check` excludes scripts/setup/* and scripts/domain/* callsites; deploy/destroy bugs only surface during real `make deploy-all` (5-bug incident in M-Wave8.6).", "severity": "med"},
+    {"area": "Feature parity 6-locations invariant", "issue": "Adding a ranker feature requires synchronized edits in Dataform / build_ranker_features / FEATURE_COLS_RANKER / ranking_log.features in Terraform / validate_feature_skew.sql / Vertex Feature Group. Drift here would corrupt training-serving skew.", "severity": "high"},
+    {"area": "AUTO_PROMOTE gate", "issue": "retrain_orchestration auto-aliases `production` whenever AUTO_PROMOTE=true regardless of human review — the eval gate is a single NDCG@10 threshold.", "severity": "med"},
+    {"area": "ranking_log publish best-effort", "issue": "search_service.run_search swallows ranking_log publish failures (telemetry). A persistent Pub/Sub topic/IAM outage would silently void retraining data.", "severity": "med"},
+    {"area": "FOS endpoint missing", "issue": "SearchBuilder.resolve_feature_fetcher fails loud at startup if FOS resource IDs are blank when enable_search=True — config drift here = no /search at all.", "severity": "low"},
+    {"area": "Subprocess shell-out in API", "issue": "/ops/destroy-check + /ops/search-volume + /ops/runs-recent shell out to `bq` CLI from inside the FastAPI process (subprocess.run). Latency + crash mode is uncharacteristic for an API.", "severity": "low"},
+    {"area": "Schema drift action_type", "issue": "8 action_type values must stay aligned across Pydantic / Terraform / labeling YAML / labeling SQL / EventWriter Port / ranking_labels — only enforced by docs + tests, not by a generated schema.", "severity": "med"}
+  ],
+  "open_questions": [
+    "Does pipeline.evaluation_job.main get wired before Wave 5 dashboard goes GA, or does the dashboard rely on training_runs only?",
+    "Are mlops.ranking_log_hourly_ctr rows actually consumed downstream (feature mart? eval?) or is the streaming pipeline orphaned?",
+    "Is the retrain-trigger Pub/Sub topic actually subscribed to anything in canonical mode, or is it dead-letter telemetry for the smoke endpoint?",
+    "ml/serving/adapters/kserve_predictor.py overlaps with app/services/adapters/kserve_*.py — which is canonical for non-app callers?",
+    "ml/streaming/ports + adapters look like scaffolding (single Dataflow adapter). Is the Port useful or premature abstraction?",
+    "scripts/ops/ops_router shells out to `bq` — should this migrate to BigQueryMetricsRepository or stay as an operator-only shortcut?",
+    "How is /readyz's `service` label kept in sync with the SLO good/total filter when OTEL_SERVICE_NAME changes per deploy?"
+  ]
+}

@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>system_map — study-gcp-search-mlops-gke</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --panel-2: #1c2230;
+    --border: #2a313c;
+    --fg: #d5d9de;
+    --muted: #8b949e;
+    --accent: #4493f8;
+    --accent-2: #79c0ff;
+    --domain: #a5d6a7;
+    --usecase: #ffd479;
+    --port: #c792ea;
+    --adapter: #4fc3f7;
+    --composition: #f48fb1;
+    --infra: #ce93d8;
+    --web: #80cbc4;
+    --cli: #b3a4f5;
+    --pipeline: #ffab91;
+    --risk-high: #ff7b72;
+    --risk-med: #d29922;
+    --risk-low: #8b949e;
+  }
+  * { box-sizing: border-box; }
+  html, body { background: var(--bg); color: var(--fg); margin: 0; padding: 0; font-family: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.55; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 24px 80px; }
+  h1 { font-size: 18px; margin: 0 0 4px; letter-spacing: .02em; }
+  h2 { font-size: 14px; margin: 32px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); color: var(--accent-2); letter-spacing: .04em; text-transform: uppercase; }
+  h3 { font-size: 13px; margin: 18px 0 8px; color: var(--accent); }
+  h4 { font-size: 12px; margin: 14px 0 4px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  p, ul, ol { margin: 6px 0; }
+  ul { padding-left: 22px; }
+  code { background: var(--panel-2); border: 1px solid var(--border); padding: 1px 5px; border-radius: 3px; font-size: 12px; color: var(--accent-2); }
+  .subtitle { color: var(--muted); margin: 0 0 18px; }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 14px 16px; margin: 8px 0; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  @media (max-width: 800px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 6px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px dashed var(--border); vertical-align: top; }
+  th { color: var(--muted); font-weight: 500; letter-spacing: .04em; text-transform: uppercase; font-size: 11px; }
+  .tag { display: inline-block; font-size: 10px; padding: 1px 7px; border-radius: 10px; border: 1px solid var(--border); color: var(--muted); margin-right: 5px; letter-spacing: .04em; }
+  .tag.domain { color: var(--domain); border-color: var(--domain); }
+  .tag.usecase { color: var(--usecase); border-color: var(--usecase); }
+  .tag.port { color: var(--port); border-color: var(--port); }
+  .tag.adapter { color: var(--adapter); border-color: var(--adapter); }
+  .tag.composition_root { color: var(--composition); border-color: var(--composition); }
+  .tag.infra { color: var(--infra); border-color: var(--infra); }
+  .tag.web { color: var(--web); border-color: var(--web); }
+  .tag.cli { color: var(--cli); border-color: var(--cli); }
+  .tag.pipeline { color: var(--pipeline); border-color: var(--pipeline); }
+  .tag.port_adapter { color: var(--port); border-color: var(--port); }
+  .tag.confidence-low { color: var(--risk-med); border-color: var(--risk-med); }
+  .row { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+  .module { padding: 9px 11px; margin: 6px 0; border: 1px solid var(--border); border-radius: 5px; background: var(--panel-2); }
+  .module h5 { margin: 0 0 3px; font-size: 12px; color: var(--accent-2); }
+  .module .resp { color: var(--fg); }
+  .module .meta { color: var(--muted); font-size: 11px; margin-top: 4px; word-break: break-word; }
+  .deps { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .deps b { color: var(--fg); }
+  .arrow { color: var(--accent); }
+  details { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 8px 14px; margin: 8px 0; }
+  details > summary { cursor: pointer; color: var(--accent-2); font-weight: 600; padding: 4px 0; outline: none; }
+  details[open] > summary { color: var(--accent); }
+  ol.flow-steps { margin: 4px 0 0; padding-left: 22px; }
+  ol.flow-steps li { padding: 3px 0; }
+  ol.flow-steps li code { font-size: 11px; }
+  .risk-row { display: grid; grid-template-columns: 75px 1fr; gap: 10px; padding: 6px 0; border-bottom: 1px dashed var(--border); }
+  .risk-row:last-child { border-bottom: none; }
+  .sev { font-size: 10px; padding: 1px 7px; border-radius: 10px; border: 1px solid; align-self: start; text-align: center; letter-spacing: .04em; }
+  .sev.high { color: var(--risk-high); border-color: var(--risk-high); }
+  .sev.med { color: var(--risk-med); border-color: var(--risk-med); }
+  .sev.low { color: var(--risk-low); border-color: var(--risk-low); }
+  .stack-chip { display: inline-block; font-size: 11px; padding: 2px 7px; margin: 2px 3px 2px 0; background: var(--panel-2); border: 1px solid var(--border); border-radius: 3px; color: var(--fg); }
+  hr.spacer { border: none; height: 1px; background: var(--border); margin: 18px 0; }
+  .external { color: var(--muted); font-size: 11px; }
+  .external b { color: var(--accent-2); }
+  .small { font-size: 11px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>system_map — study-gcp-search-mlops-gke</h1>
+<p class="subtitle">Real-estate hybrid-search API + continuous-retraining MLOps loop on GCP/GKE. Map derived from code (not README aspirations).</p>
+
+<!-- ============================== SECTION 1: PROJECT SUMMARY ============================== -->
+<h2>1 · Project summary</h2>
+<div class="panel">
+  <h4>Purpose</h4>
+  <p>Elasticsearch BM25 + multilingual-e5 + Vertex AI Vector Search are fused via RRF and reranked by a LightGBM LambdaRank model. Behaviour events (3-table Pub/Sub canonical) feed a labeling job → training pipeline → Vertex Model Registry promote, orchestrated by Cloud Composer DAGs.</p>
+
+  <h4>Stack</h4>
+  <p>
+    <span class="stack-chip">FastAPI</span><span class="stack-chip">Pydantic</span><span class="stack-chip">Python 3.12 / uv</span>
+    <span class="stack-chip">GKE Autopilot</span><span class="stack-chip">KServe</span><span class="stack-chip">BigQuery</span>
+    <span class="stack-chip">Pub/Sub</span><span class="stack-chip">Vertex AI Vector Search</span><span class="stack-chip">Vertex AI Feature Online Store</span>
+    <span class="stack-chip">Vertex AI Pipelines (KFP 2.x)</span><span class="stack-chip">Vertex AI Model Registry</span><span class="stack-chip">Vertex AI Experiments</span>
+    <span class="stack-chip">Cloud Composer Gen 3 (Airflow)</span><span class="stack-chip">Dataform</span><span class="stack-chip">BQML</span>
+    <span class="stack-chip">Cloud Memorystore (Redis)</span><span class="stack-chip">Elasticsearch (ECK)</span><span class="stack-chip">Apache Beam / Dataflow</span>
+    <span class="stack-chip">LightGBM</span><span class="stack-chip">sentence-transformers (ME5)</span><span class="stack-chip">Terraform</span>
+    <span class="stack-chip">Cloud Logging / Prometheus / GMP</span>
+  </p>
+
+  <h4>Entrypoints</h4>
+  <table>
+    <thead><tr><th>Type</th><th>Path</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><span class="tag web">http</span></td><td><code>app/main.py::create_app</code></td><td>FastAPI ASGI server on GKE Pod. /api/v1/search, /api/v1/feedback, /ops/*, /ui/*, /livez|/healthz|/readyz, /metrics.</td></tr>
+      <tr><td><span class="tag web">http</span></td><td><code>ml/serving/encoder.py</code></td><td>KServe HuggingFace runtime serving multilingual-e5 (query:/passage: prefixes).</td></tr>
+      <tr><td><span class="tag web">http</span></td><td><code>ml/serving/reranker.py</code></td><td>KServe custom predictor for LightGBM /predict + /explain (TreeSHAP).</td></tr>
+      <tr><td><span class="tag pipeline">pipeline</span></td><td><code>pipeline/training_job/main.py</code></td><td>KFP <code>property-search-train</code>: load_features → train_reranker → evaluate → gated register_reranker.</td></tr>
+      <tr><td><span class="tag pipeline">pipeline</span></td><td><code>pipeline/data_job/main.py</code></td><td>KFP <code>property-search-embed</code>: load_properties → batch_predict → write_embeddings → upsert_vector_search.</td></tr>
+      <tr><td><span class="tag pipeline">pipeline (stub)</span></td><td><code>pipeline/evaluation_job/main.py</code></td><td>STUB <code>property-search-evaluate</code> — components not wired.</td></tr>
+      <tr><td><span class="tag pipeline">pipeline (stub)</span></td><td><code>pipeline/batch_serving_job/main.py</code></td><td>STUB <code>property-search-batch-serve</code>.</td></tr>
+      <tr><td><span class="tag cli">cli</span></td><td><code>pipeline/labeling_job/main.py</code></td><td>BQ impressions × user_actions → mlops.ranking_labels via <code>compute_label</code>.</td></tr>
+      <tr><td><span class="tag cli">cli</span></td><td><code>pipeline/training_dataset_job/main.py</code></td><td>Materialise CSV training dataset under <code>dist/training_datasets/&lt;run_id&gt;/</code>.</td></tr>
+      <tr><td><span class="tag cli">cli</span></td><td><code>ml/training/trainer.py::main</code></td><td><code>train-reranker</code> CLI — LightGBM LambdaRank, GCS upload, mlops.training_runs row.</td></tr>
+      <tr><td><span class="tag pipeline">worker</span></td><td><code>pipeline/dags/daily_feature_refresh.py</code></td><td>Airflow DAG @ 01:00 JST: Dataform → Feature View sync → optional VVS backfill.</td></tr>
+      <tr><td><span class="tag pipeline">worker</span></td><td><code>pipeline/dags/retrain_orchestration.py</code></td><td>Airflow DAG @ 04:00 JST: <b>canonical retrain</b> — check_retrain → submit → wait → AUTO_PROMOTE gate → promote.</td></tr>
+      <tr><td><span class="tag pipeline">worker</span></td><td><code>pipeline/dags/monitoring_validation.py</code></td><td>Airflow DAG @ 04:30 JST: feature_skew + model_output_drift SQL + SLO burn-rate.</td></tr>
+      <tr><td><span class="tag pipeline">worker</span></td><td><code>ml/streaming/pipeline.py</code></td><td>Beam/Dataflow streaming: ranking-log → 1h tumbling → mlops.ranking_log_hourly_ctr.</td></tr>
+      <tr><td><span class="tag cli">cli</span></td><td><code>scripts/ops/run_all.py</code></td><td>16-step <code>make run-all-core</code> canonical validation.</td></tr>
+      <tr><td><span class="tag cli">cli</span></td><td><code>scripts/setup/deploy_all.py</code></td><td>15-step <code>make deploy-all</code>: tf → seed → ES sync → Composer DAGs → API deploy.</td></tr>
+      <tr><td><span class="tag cli">cli</span></td><td><code>scripts/setup/destroy_all.py</code></td><td>8-step <code>make destroy-all</code> with --from-step/--to-step slicing.</td></tr>
+      <tr><td><span class="tag cli">cli</span></td><td><code>pipeline/workflow/trigger_zip/main.py</code></td><td>Cloud Function HTTP trigger to submit Vertex PipelineJobs (smoke/manual alt).</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ============================== SECTION 2: MODULE MAP ============================== -->
+<h2>2 · Module map (by layer)</h2>
+
+<details open><summary>domain — pure logic, no I/O</summary>
+  <div class="module">
+    <h5>app.services.ranking <span class="tag domain">domain</span></h5>
+    <div class="resp">Pure orchestration: retrieve → optional FOS fresh-feature merge → rerank (predict or predict_with_explain) → publish ranking_log → sort by reranker score with deterministic tie-break.</div>
+    <div class="deps"><b>Path</b> <code>app/services/ranking.py</code> · <b>Exposes</b> run_search, rrf_fuse, RRF_K</div>
+    <div class="deps"><span class="arrow">→</span> app.domain.candidate · app.domain.search · app.services.protocols · ml.data.feature_engineering</div>
+  </div>
+  <div class="module">
+    <h5>app.services.retrain_policy <span class="tag domain">domain</span></h5>
+    <div class="resp">Pure decision <code>evaluate(...)</code>: should_retrain given feedback rows / NDCG drift / last-run timestamp.</div>
+    <div class="deps"><span class="arrow">→</span> app.services.protocols.retrain_queries</div>
+  </div>
+  <div class="module">
+    <h5>app.domain.candidate / search / event / retrieval / labeling <span class="tag domain">domain</span></h5>
+    <div class="resp">Immutable dataclasses + TypedDicts shared across layers: Candidate, RankedCandidate, SearchFilters, SearchInput/Output, ActionType, LexicalResult, SemanticResult, RankingLabel.</div>
+  </div>
+  <div class="module">
+    <h5>ml.data.feature_engineering <span class="tag domain">domain</span></h5>
+    <div class="resp">Pure 10-column ranker feature builder (<code>build_ranker_features</code>) + <code>FEATURE_COLS_RANKER</code> schema. Shared by /search rerank and the training pipeline (training-serving skew prevention).</div>
+  </div>
+  <div class="module">
+    <h5>ml.evaluation.metrics <span class="tag domain">domain</span></h5>
+    <div class="resp">numpy-only NDCG@K / MAP / Recall@K and label-gain helpers.</div>
+  </div>
+  <div class="module">
+    <h5>ml.labeling.policy <span class="tag domain">domain</span></h5>
+    <div class="resp">Canonical <code>ACTION_WEIGHTS</code> (5 app-emit + 3 synthetic) and <code>compute_label</code>. Python-side source of truth for action_type enum + relevance weights.</div>
+  </div>
+  <div class="module">
+    <h5>ml.training.model_builder <span class="tag domain">domain</span></h5>
+    <div class="resp">Group-aware split + synthetic ranking frames generator.</div>
+  </div>
+</details>
+
+<details open><summary>usecase — orchestration / application services</summary>
+  <div class="module">
+    <h5>app.services.search_service <span class="tag usecase">usecase</span></h5>
+    <div class="resp">Hybrid-search use case: emit search_event → embed query → expand lexical → run_search → emit impressions → optional BQML popularity score. Raises <code>SearchServiceUnavailable</code> (HTTP 503) when retriever or encoder missing.</div>
+    <div class="deps"><span class="arrow">→</span> app.services.ranking · app.services.protocols.* (8 ports)</div>
+  </div>
+  <div class="module">
+    <h5>app.services.feedback_service <span class="tag usecase">usecase</span></h5>
+    <div class="resp">Emits user_action via EventWriter; legacy {click, favorite} also recorded through FeedbackRecorder. Publish failures are swallowed (telemetry, not transactional).</div>
+  </div>
+  <div class="module">
+    <h5>app.services.model_metrics_service <span class="tag usecase">usecase</span></h5>
+    <div class="resp">Offline NDCG@k / HitRate@k / MRR@k against a curated cases file — invokes SearchService directly to measure rerank quality.</div>
+  </div>
+  <div class="module">
+    <h5>app.services.data_catalog_service <span class="tag usecase">usecase</span></h5>
+    <div class="resp">Renders the data-preview snapshot for /ops/model/data.</div>
+  </div>
+  <div class="module">
+    <h5>ml.training.trainer <span class="tag usecase">usecase</span></h5>
+    <div class="resp">LightGBM LambdaRank trainer: pure <code>train()</code> + <code>write_artifacts()</code> + <code>run()</code>/<code>main()</code> CLI. Writes <code>mlops.training_runs</code> row and uploads <code>model.txt</code> to GCS.</div>
+  </div>
+</details>
+
+<details open><summary>port — Protocols (no concrete deps)</summary>
+  <div class="module">
+    <h5>app.services.protocols (18 Ports) <span class="tag port">port</span></h5>
+    <div class="resp">CandidateRetriever · LexicalSearchPort · SemanticSearchPort · EncoderClient · RerankerClient (+RerankerExplainer) · RankingLogPublisher · FeedbackRecorder · EventWriter · EventRepository · LabelRepository · MetricsRepository · PredictionPublisher · RetrainQueries · TrainingDatasetRepository · PopularityScorer · SynonymExpanderPort · FeatureFetcher · DataCatalogReader.</div>
+  </div>
+  <div class="module">
+    <h5>ml.training.ports · ml.registry.ports · ml.serving.ports · ml.streaming.ports · ml.training.experiments.ports · pipeline.data_job.ports · pipeline.training_job.ports <span class="tag port">port</span></h5>
+    <div class="resp">RankerTrainer · RankerModel · ModelRegistry · PredictorService · StreamProcessor · ExperimentTracker · VectorSearchWriter · PipelineOrchestrator · PipelineComponent.</div>
+  </div>
+</details>
+
+<details><summary>adapter — concrete I/O (DB / HTTP / queue / ML backend)</summary>
+  <div class="grid-2">
+    <div class="module"><h5>BigQueryCandidateRetriever <span class="tag adapter">adapter</span></h5><div class="resp">ES BM25 + VVS ANN → RRF → BQ JOIN on properties_cleaned + property_features_daily.</div></div>
+    <div class="module"><h5>ElasticsearchLexical <span class="tag adapter">adapter</span></h5><div class="resp">LexicalSearchPort over ES cluster (HTTP).</div></div>
+    <div class="module"><h5>VertexVectorSearchSemanticSearch <span class="tag adapter">adapter</span></h5><div class="resp">SemanticSearchPort over Vertex AI Vector Search (Matching Engine).</div></div>
+    <div class="module"><h5>KServeEncoder · KServeReranker <span class="tag adapter">adapter</span></h5><div class="resp">EncoderClient + RerankerClient(+Explainer) over KServe.</div></div>
+    <div class="module"><h5>FeatureOnlineStoreFetcher <span class="tag adapter">adapter</span></h5><div class="resp">Vertex AI Feature Online Store via Feature View for ctr / fav_rate / inquiry_rate freshness.</div></div>
+    <div class="module"><h5>BQMLPopularityScorer <span class="tag adapter">adapter</span></h5><div class="resp">Optional auxiliary popularity signal from BQML model.</div></div>
+    <div class="module"><h5>RedisSynonymExpander <span class="tag adapter">adapter</span></h5><div class="resp">SynonymExpanderPort over Cloud Memorystore Redis (opt-in lexical expansion). Swallows backend errors.</div></div>
+    <div class="module"><h5>PubSubRankingLogPublisher <span class="tag adapter">adapter</span></h5><div class="resp">→ Pub/Sub <code>ranking-log</code> → mlops.ranking_log BQ subscription.</div></div>
+    <div class="module"><h5>PubSubEventWriter <span class="tag adapter">adapter</span></h5><div class="resp">Canonical EventWriter: search-events / search-impressions / user-actions topics → mlops.* tables.</div></div>
+    <div class="module"><h5>PubSubFeedbackRecorder <span class="tag adapter">adapter</span></h5><div class="resp">Legacy click/favorite → <code>search-feedback</code> → mlops.feedback_events.</div></div>
+    <div class="module"><h5>CloudLoggingEventWriter <span class="tag adapter">adapter</span> <span class="tag confidence-low">fallback</span></h5><div class="resp">Bootstrap-only EventWriter — silent gap if left enabled with downstream sinks missing.</div></div>
+    <div class="module"><h5>BigQuery{Event,Label,Metrics,DataCatalog}Repository <span class="tag adapter">adapter</span></h5><div class="resp">BQ-backed event/label/metrics/preview access.</div></div>
+    <div class="module"><h5>GcsTrainingDatasetRepository <span class="tag adapter">adapter</span></h5><div class="resp">Writes/lists training dataset Parquet under gs://&lt;artifacts&gt;/training_datasets/.</div></div>
+    <div class="module"><h5>BigQueryRetrainQueries + PubSubPublisher (retrain.py) <span class="tag adapter">adapter</span></h5><div class="resp">Reads feedback row counts + NDCG drift; publishes retrain-trigger.</div></div>
+    <div class="module"><h5>Noop&lt;Port&gt; ×11 <span class="tag adapter">adapter</span></h5><div class="resp">Per-Port no-ops used when ENABLE_SEARCH=false / local boot / topic unconfigured.</div></div>
+    <div class="module"><h5>LightGBMTrainer · VertexExperimentsTracker / NullExperimentTracker <span class="tag adapter">adapter</span></h5><div class="resp">ML-side adapters for RankerTrainer + ExperimentTracker ports.</div></div>
+    <div class="module"><h5>VertexModelRegistry · GcsArtifactUploader · MetadataStore <span class="tag adapter">adapter</span></h5><div class="resp">Registry promote (alias add), artifact upload to GCS, training_runs row insert.</div></div>
+    <div class="module"><h5>VertexVectorSearchWriter / InMemoryVectorSearchWriter <span class="tag adapter">adapter</span></h5><div class="resp">VectorSearchWriter Port impls — production VVS upsert vs in-memory test.</div></div>
+    <div class="module"><h5>DataflowProcessor <span class="tag adapter">adapter</span></h5><div class="resp">StreamProcessor Port → Dataflow runner.</div></div>
+    <div class="module"><h5>KServePredictor (ml.serving.adapters) <span class="tag adapter">adapter</span> <span class="tag confidence-low">low conf</span></h5><div class="resp">Possibly overlapping with app/services/adapters/kserve_*.</div></div>
+  </div>
+</details>
+
+<details><summary>composition_root — DI wiring</summary>
+  <div class="module">
+    <h5>app.composition_root <span class="tag composition_root">composition_root</span></h5>
+    <div class="resp">Frozen <code>Container</code> + <code>ContainerBuilder.build()</code>. Single BigQuery client cached across all adapters. Per-component <code>_build_*</code> helpers (one feature flag → one adapter).</div>
+    <div class="deps">orchestrates → <code>app.container.infra · app.container.search · app.container.ml</code></div>
+  </div>
+  <div class="module">
+    <h5>app.container.infra <span class="tag composition_root">composition_root</span></h5>
+    <div class="resp">Pub/Sub + BigQuery + Redis adapter wiring; falls back to Noop adapters when <code>ENABLE_SEARCH=false</code>.</div>
+  </div>
+  <div class="module">
+    <h5>app.container.search <span class="tag composition_root">composition_root</span></h5>
+    <div class="resp">Lexical/semantic retrieval, KServe encoder + reranker, Feature Online Store fetcher. <code>resolve_feature_fetcher</code> fails-loud if FOS resource IDs missing.</div>
+  </div>
+  <div class="module">
+    <h5>app.container.ml <span class="tag composition_root">composition_root</span></h5>
+    <div class="resp">Optional BQML popularity scorer (controlled by <code>popularity.enabled</code> flag).</div>
+  </div>
+</details>
+
+<details><summary>web — HTTP surface (routers + UI)</summary>
+  <div class="module">
+    <h5>app.main <span class="tag web">web</span></h5>
+    <div class="resp">FastAPI entrypoint: lifespan builds Container; mounts /api/v1, /ops, /ui, probes; <code>Observability.expose_prometheus</code> for /metrics; 307 legacy redirects for one-sprint compatibility.</div>
+  </div>
+  <div class="row">
+    <span class="tag web">search_router</span><span class="tag web">feedback_router</span><span class="tag web">retrain_router</span><span class="tag web">model_router</span>
+    <span class="tag web">ops_router</span><span class="tag web">admin_mlops_router</span><span class="tag web">ui_router</span><span class="tag web">health_router</span>
+  </div>
+  <div class="module">
+    <h5>retrain_router (DEMOTED) <span class="tag web">web</span></h5>
+    <div class="resp"><code>POST /ops/jobs/check-retrain</code> — kept as Composer-task smoke / monthly Cloud Scheduler / manual trigger only. <b>Not</b> the canonical scheduler (Composer DAG owns that).</div>
+  </div>
+  <div class="module">
+    <h5>ops_router shells out to <code>bq</code> CLI <span class="tag web">web</span></h5>
+    <div class="resp">/ops/destroy-check, /ops/search-volume, /ops/runs-recent use <code>subprocess.run</code> against <code>scripts/sql/*.sql</code> — uncharacteristic for an API path.</div>
+  </div>
+</details>
+
+<details><summary>cli — orchestration scripts (deploy / verify / ops)</summary>
+  <div class="module">
+    <h5>scripts.setup.deploy_all · destroy_all · run_all <span class="tag cli">cli</span></h5>
+    <div class="resp">Step-orchestrators with per-step wall-time recorded to <code>logs/step_timings.csv</code> via <code>scripts.lib.step_timing</code> (ETA + slowest-step preview on run start).</div>
+  </div>
+  <div class="module">
+    <h5>scripts.ops.check_retrain · submit_train_pipeline · promote · slo_status · accuracy_report · sync_elasticsearch · label_seed · feedback · ranking · search · livez · composer_dag · composer_task_states · vertex.* <span class="tag cli">cli</span></h5>
+    <div class="resp">Composer DAG tasks reuse these as module entrypoints under the <code>composer-runner</code> image (KubernetesPodOperator).</div>
+  </div>
+  <div class="module">
+    <h5>scripts.deploy.build_all_local · build_kserve_images · build_kserve_images_local · api_gke · api_gke_local · composer_runner · composer_deploy_dags · configmap_overlay · kserve_models · monitor · seed_lgbm_model <span class="tag cli">cli</span></h5>
+    <div class="resp"><code>make build-all-local</code> builds 5 images: ml-base → search-api / property-encoder / property-reranker / composer-runner.</div>
+  </div>
+  <div class="module">
+    <h5>scripts.ci.layers <span class="tag cli">ci</span></h5>
+    <div class="resp">AST layer-boundary checker (<code>RULES</code> + <code>DIRECTORY_RULES</code> + <code>UNIVERSAL_BANS</code>). Enforced by <code>tests/unit/arch/test_import_boundaries.py</code> AND <code>make check-layers</code>.</div>
+  </div>
+</details>
+
+<details><summary>pipeline — KFP definitions + Composer DAGs</summary>
+  <div class="module"><h5>pipeline.training_job <span class="tag pipeline">pipeline</span></h5><div class="resp">KFP <code>property-search-train</code>. Components: load_features → train_reranker (containerised LightGBM) → evaluate (NDCG@10 gate vs threshold) → register_reranker (Vertex Model Registry upload + endpoint traffic split). Sub-Port: <code>PipelineOrchestrator</code> (KFP adapter).</div></div>
+  <div class="module"><h5>pipeline.data_job <span class="tag pipeline">pipeline</span></h5><div class="resp">KFP <code>property-search-embed</code>. Components: load_properties → batch_predict_embeddings (Vertex BatchPrediction on ME5) → write_embeddings (BQ feature_mart.property_embeddings) → upsert_vector_search (Strangler default off). Sub-Port: <code>VectorSearchWriter</code> with Vertex and InMemory adapters. Plus the <b>Dataform</b> definitions (sources / staging / features / monitoring / assertions).</div></div>
+  <div class="module"><h5>pipeline.labeling_job <span class="tag pipeline">pipeline</span></h5><div class="resp">Aggregates impressions × user_actions → mlops.ranking_labels using <code>compute_label</code>. Reuses app-side BQ adapters.</div></div>
+  <div class="module"><h5>pipeline.training_dataset_job <span class="tag pipeline">pipeline</span></h5><div class="resp">Materialises a CSV snapshot of the training frame for offline inspection (<code>dist/training_datasets/&lt;run_id&gt;/</code>).</div></div>
+  <div class="module"><h5>pipeline.evaluation_job · pipeline.batch_serving_job <span class="tag pipeline">stub</span></h5><div class="resp">KFP definitions with placeholder bodies — components not wired (see Risks).</div></div>
+  <div class="module"><h5>pipeline.workflow <span class="tag pipeline">pipeline</span></h5><div class="resp"><code>compile_pipeline</code> + <code>submit_pipeline_yaml</code> + <code>trigger_zip/main.py</code> (Cloud Function HTTP trigger for smoke/manual submission).</div></div>
+  <div class="module"><h5>pipeline.dags.* (Composer Gen 3) <span class="tag pipeline">pipeline</span></h5><div class="resp">Three DAGs run each task as <code>KubernetesPodOperator</code> over the <code>composer-runner</code> image (V5 fix: 2026-05-03 incident — bash subprocess approach lacked uv/source). <code>_common.py</code> + <code>_pod.py</code> centralise env propagation (GCP_PROJECT auto-set by Composer Gen 3).</div></div>
+</details>
+
+<details><summary>infra — Terraform / k8s / SQL</summary>
+  <div class="module"><h5>infra.terraform <span class="tag infra">infra</span></h5><div class="resp">Modules for GKE Autopilot, Composer Gen 3, Vertex Feature Store + View, Vector Search index/endpoint, Pub/Sub topics + BQ Subscriptions, Dataform repo, Cloud Domains + DNS, Certificate Manager (Google-managed cert ACTIVE), IAP.</div></div>
+  <div class="module"><h5>infra.manifests <span class="tag infra">infra</span></h5><div class="resp">kustomize overlay: ECK Elasticsearch (intentionally HTTP + anonymous superuser; production hardening parked), KServe InferenceServices, search-api Gateway + NetworkPolicies.</div></div>
+  <div class="module"><h5>infra.sql <span class="tag infra">infra</span></h5><div class="resp"><code>validate_feature_skew.sql</code> + <code>validate_model_output_drift.sql</code> read by monitoring_validation DAG (Composer data/ first, repo fallback).</div></div>
+</details>
+
+<!-- ============================== SECTION 3: MAIN FLOWS ============================== -->
+<h2>3 · Main flows</h2>
+
+<details open><summary>3.1 hybrid_search_request — <code>POST /api/v1/search</code></summary>
+  <div class="external"><b>External I/O:</b> Elasticsearch · Vertex AI Vector Search · KServe (encoder + reranker) · Vertex AI Feature Online Store · BigQuery · Pub/Sub · Cloud Memorystore (Redis) · BQML</div>
+  <ol class="flow-steps">
+    <li><code>search_router</code> → bind request_id, map <code>SearchRequest</code> → <code>SearchInput</code>, depend on <code>SearchService</code>.</li>
+    <li><code>SearchService.search</code> → <b>emit search_event</b> via <code>EventWriter</code>.</li>
+    <li><code>KServeEncoder.embed("query: " + query)</code> → 768-dim ME5 vector. Encoder runs on the original (unexpanded) text.</li>
+    <li><code>RedisSynonymExpander.expand(query)</code> (opt-in) → expanded lexical query.</li>
+    <li><code>run_search</code>: <code>retriever.retrieve(query_text, query_vector, filters, top_k)</code>.</li>
+    <li><code>BigQueryCandidateRetriever</code> → <code>ElasticsearchLexical.search</code> (top 200) + <code>VertexVectorSearch.search</code> (top 200) → <code>rrf_fuse(K=60)</code> → BQ JOIN on <code>properties_cleaned</code> + <code>property_features_daily</code>.</li>
+    <li><code>FeatureOnlineStoreFetcher.fetch</code> (opt-in) → merge fresh <code>ctr / fav_rate / inquiry_rate</code> onto candidates.</li>
+    <li><code>build_ranker_features</code> → 10-col matrix in <code>FEATURE_COLS_RANKER</code> order.</li>
+    <li><code>KServeReranker.predict</code> (or <code>predict_with_explain</code> for TreeSHAP). Tie-break: lexical_rank, semantic_rank.</li>
+    <li><code>PubSubRankingLogPublisher.publish_candidates</code> (failures swallowed, ERROR-logged).</li>
+    <li>Emit <code>impressions</code> per ranked item via <code>EventWriter</code>; optional <code>BQMLPopularityScorer.score</code>.</li>
+    <li>Return <code>SearchResponse</code> (items include display-side metadata copied from candidate.property_features).</li>
+  </ol>
+  <div class="external"><b>Failure modes:</b> 503 if encoder/retriever missing · ES/VVS errors propagate · FOS failure → degraded (stale features) · ranking_log publish failure silently logged · popularity scorer failure ignored.</div>
+</details>
+
+<details><summary>3.2 user_feedback_event — <code>POST /api/v1/feedback</code></summary>
+  <div class="external"><b>External I/O:</b> Pub/Sub · BigQuery (subscription sink)</div>
+  <ol class="flow-steps">
+    <li><code>feedback_router</code> binds <code>FeedbackRequest</code>.</li>
+    <li><code>FeedbackService.record</code> → <code>EventWriter.emit_user_action</code> (→ <code>user-actions</code> Pub/Sub topic → <code>mlops.user_actions</code>).</li>
+    <li>If action ∈ {click, favorite}: also <code>FeedbackRecorder.record</code> (→ <code>search-feedback</code> → <code>mlops.feedback_events</code>).</li>
+    <li>Returns <code>accepted=false</code> on publish failure (logged, not raised).</li>
+  </ol>
+  <div class="external"><b>Failure modes:</b> Pub/Sub publish failure → accepted=false; schema drift between Pydantic <code>ActionType</code> and BQ enum could silently drop rows.</div>
+</details>
+
+<details><summary>3.3 daily_feature_refresh — Composer DAG @ 01:00 JST</summary>
+  <div class="external"><b>External I/O:</b> Dataform · BigQuery · Vertex AI Feature Store · Vertex AI Vector Search</div>
+  <ol class="flow-steps">
+    <li><code>DataformCreateCompilationResultOperator</code> + <code>DataformCreateWorkflowInvocationOperator</code> against repo <code>hybrid-search-cloud</code> @ main.</li>
+    <li>Dataform: sources → staging → features → monitoring SQL refresh <code>feature_mart.*</code>.</li>
+    <li>KubernetesPodOperator → <code>scripts.domain.gcp.feature_view_sync</code> (Feature Online Store refresh).</li>
+    <li><code>ShortCircuitOperator</code> gates on <code>ENABLE_DAILY_VVS_REFRESH=true</code>.</li>
+    <li>If enabled: <code>scripts.setup.backfill_vector_search_index --apply</code>.</li>
+  </ol>
+  <div class="external"><b>Failure modes:</b> Dataform failure halts FV sync · FV sync may lag silently under quota · VVS backfill opt-in (default off) → possible divergence from BQ embeddings.</div>
+</details>
+
+<details><summary>3.4 retrain_orchestration — Composer DAG @ 04:00 JST (canonical)</summary>
+  <div class="external"><b>External I/O:</b> BigQuery · GCS · Vertex AI Pipelines · Vertex AI Model Registry · Vertex AI Endpoints · Cloud Logging</div>
+  <ol class="flow-steps">
+    <li><code>scripts.ops.check_retrain</code> decides should_retrain (feedback rows since last run + NDCG drift + last_run timestamp).</li>
+    <li><code>scripts.ops.submit_train_pipeline</code> compiles + submits KFP <code>property-search-train</code> to Vertex AI Pipelines (KFP 2.16; compile at runtime inside Pod to avoid module-level import problem).</li>
+    <li>Pipeline runs: <code>load_features</code> (BQ JOIN) → <code>train_reranker</code> (LightGBM container) → <code>evaluate</code> (gate on <code>ndcg_at_10 ≥ 0.6</code>) → <code>register_reranker</code> (conditional).</li>
+    <li><code>ml.training.trainer.run</code>: LightGBM LambdaRank fit, write artifacts, mlops.training_runs row, upload model.txt + metrics.json to GCS.</li>
+    <li><code>register_reranker</code>: Vertex Model Registry upload + Endpoint traffic split (10% default).</li>
+    <li><code>scripts.ops.vertex.pipeline_wait</code> blocks until SUCCEEDED.</li>
+    <li><code>ShortCircuitOperator</code> on <code>AUTO_PROMOTE=true</code>.</li>
+    <li><code>scripts.ops.promote</code> (APPLY=1): alias newest version → <code>production</code>.</li>
+  </ol>
+  <div class="external"><b>Failure modes:</b> Empty <code>ranking_labels</code> → load_features fails (root cause: labeling didn't run / ordering violation in run_all) · Eval gate skip wastes compute · Traffic-split misconfig could 100% to regressed model · AUTO_PROMOTE without human review.</div>
+</details>
+
+<details><summary>3.5 monitoring_validation — Composer DAG @ 04:30 JST</summary>
+  <div class="external"><b>External I/O:</b> BigQuery · Cloud Monitoring</div>
+  <ol class="flow-steps">
+    <li><code>BigQueryInsertJobOperator</code> runs <code>validate_feature_skew.sql</code> → <code>mlops.validation_results</code>.</li>
+    <li><code>BigQueryInsertJobOperator</code> runs <code>validate_model_output_drift.sql</code> → <code>mlops.model_monitoring_alerts</code>.</li>
+    <li>KubernetesPodOperator → <code>scripts.ops.slo_status</code> (SLO + burn-rate alert check).</li>
+  </ol>
+  <div class="external"><b>Failure modes:</b> SQL path resolution (Composer data dir vs repo fallback — 2026-05-03 incident) · Skew SQL false positives under seasonal shift · SLO decoupled from /metrics <code>service</code> label.</div>
+</details>
+
+<details><summary>3.6 labeling_pipeline — <code>python -m pipeline.labeling_job.main</code></summary>
+  <div class="external"><b>External I/O:</b> BigQuery</div>
+  <ol class="flow-steps">
+    <li><code>BigQueryEventRepository.read_impressions / read_user_actions</code> since (now − window_days).</li>
+    <li><code>ml.labeling.policy.compute_label</code> per (search_id, property_id): weighted <code>ACTION_WEIGHTS</code> → (relevance, label_source).</li>
+    <li><code>BigQueryLabelRepository.write_ranking_labels</code> → <code>mlops.ranking_labels</code>.</li>
+  </ol>
+  <div class="external"><b>Failure modes:</b> Stale window → empty labels → empty training frame · Synthetic injection bypasses user_actions and can mask app-emit regressions.</div>
+</details>
+
+<details><summary>3.7 property_embedding_refresh — <code>python -m pipeline.data_job.main submit</code></summary>
+  <div class="external"><b>External I/O:</b> BigQuery · Vertex AI Batch Prediction · Vertex AI Vector Search</div>
+  <ol class="flow-steps">
+    <li><code>load_properties</code> (BQ → properties_cleaned slice, optional full_refresh).</li>
+    <li><code>batch_predict_embeddings</code> via Vertex BatchPrediction on ME5.</li>
+    <li><code>write_embeddings</code> → <code>feature_mart.property_embeddings</code>.</li>
+    <li><code>upsert_vector_search</code> → Vertex VVS index (skip if <code>vector_search_index_resource_name</code> blank — Strangler).</li>
+  </ol>
+  <div class="external"><b>Failure modes:</b> VVS upsert silently skipped if unset · embeddings table and VVS index can diverge (no transactional coupling).</div>
+</details>
+
+<details><summary>3.8 ranking_log_streaming_aggregation — <code>ml/streaming/pipeline.py</code> (Dataflow)</summary>
+  <div class="external"><b>External I/O:</b> Pub/Sub · Dataflow · BigQuery</div>
+  <ol class="flow-steps">
+    <li>Source: <code>ranking-log</code> Pub/Sub topic (one msg per /search candidate).</li>
+    <li>Beam: 1h tumbling window → group by property_id → (impressions, clicks-synthesized-from-rank==1).</li>
+    <li>Sink: <code>mlops.ranking_log_hourly_ctr</code>.</li>
+  </ol>
+  <div class="external"><b>Failure modes:</b> Clicks proxied from final_rank==1 = biased CTR (loop-closure risk if used for training) · pipeline restart loses in-flight windows unless checkpointed · BQ schema drift.</div>
+</details>
+
+<details><summary>3.9 check_retrain_smoke — <code>POST /ops/jobs/check-retrain</code></summary>
+  <div class="external"><b>External I/O:</b> BigQuery · Pub/Sub</div>
+  <ol class="flow-steps">
+    <li><code>retrain_router</code> resolves <code>RetrainQueries</code> from container.</li>
+    <li><code>retrain_policy.evaluate</code> → <code>ShouldRetrain</code> decision.</li>
+    <li>If true: <code>PubSubPublisher.publish</code> retrain-trigger (best-effort).</li>
+  </ol>
+  <div class="external"><b>Failure modes:</b> Cannibalization with Composer DAG if cron set too aggressively (CLAUDE.md non-negotiable) · publish failure → published=false.</div>
+</details>
+
+<details><summary>3.10 deploy_all_canonical — <code>make deploy-all</code> (15 steps)</summary>
+  <div class="external"><b>External I/O:</b> Terraform state bucket · GCS · GKE · Artifact Registry · Composer</div>
+  <ol class="flow-steps">
+    <li><code>scripts.setup.deploy_all</code> runs steps in order: tf-bootstrap → tf apply stage A → tf apply stage B → seed-minimal-clean → sync-elasticsearch → composer-deploy-dags → build-all-local → push images → deploy-api → configmap-overlay → kserve models → smoke checks.</li>
+    <li>Terraform modules provision GKE/Composer/Vertex/Pub/Sub/Dataform/Cloud Domains.</li>
+    <li>Kustomize overlay applies ES + KServe + Gateway + NetworkPolicies.</li>
+    <li><code>scripts.deploy.composer_deploy_dags</code> syncs DAGs + SQLs to Composer GCS.</li>
+  </ol>
+  <div class="external"><b>Failure modes:</b> deploy/destroy callsites are <b>not</b> exercised by <code>make check</code> (5-bug incident in M-Wave8.6) · two-stage tf apply can land in partial-applied state on stage A failure · Composer Gen 3 auto-sets <code>GCP_PROJECT</code> — user-set <code>PROJECT_ID</code> can fail with HTTP 400.</div>
+</details>
+
+<!-- ============================== SECTION 4: BOUNDARIES ============================== -->
+<h2>4 · Boundaries &amp; swappable backends</h2>
+<div class="panel">
+  <h4>Ports → Implementations</h4>
+  <table>
+    <thead><tr><th>Port</th><th>Implementations</th></tr></thead>
+    <tbody>
+      <tr><td>CandidateRetriever</td><td>BigQueryCandidateRetriever</td></tr>
+      <tr><td>LexicalSearchPort</td><td>ElasticsearchLexical · NoopLexicalSearch</td></tr>
+      <tr><td>SemanticSearchPort</td><td>VertexVectorSearchSemanticSearch <span class="small">(canonical single impl)</span></td></tr>
+      <tr><td>EncoderClient</td><td>KServeEncoder</td></tr>
+      <tr><td>RerankerClient / RerankerExplainer</td><td>KServeReranker</td></tr>
+      <tr><td>FeatureFetcher</td><td>FeatureOnlineStoreFetcher</td></tr>
+      <tr><td>PopularityScorer</td><td>BQMLPopularityScorer <span class="small">(flag-gated)</span></td></tr>
+      <tr><td>SynonymExpanderPort</td><td>RedisSynonymExpander · NoopSynonymExpander</td></tr>
+      <tr><td>RankingLogPublisher</td><td>PubSubRankingLogPublisher · NoopRankingLogPublisher</td></tr>
+      <tr><td>FeedbackRecorder</td><td>PubSubFeedbackRecorder · NoopFeedbackRecorder</td></tr>
+      <tr><td>EventWriter</td><td>PubSubEventWriter · <span class="small">CloudLoggingEventWriter (fallback)</span> · NoopEventWriter</td></tr>
+      <tr><td>EventRepository</td><td>BigQueryEventRepository · NoopEventRepository</td></tr>
+      <tr><td>LabelRepository</td><td>BigQueryLabelRepository · NoopLabelRepository</td></tr>
+      <tr><td>MetricsRepository</td><td>BigQueryMetricsRepository · NoopMetricsRepository</td></tr>
+      <tr><td>TrainingDatasetRepository</td><td>GcsTrainingDatasetRepository · NoopTrainingDatasetRepository</td></tr>
+      <tr><td>RetrainQueries</td><td>BigQueryRetrainQueries · NoopRetrainQueries</td></tr>
+      <tr><td>PredictionPublisher</td><td>PubSubPublisher · NoopPublisher</td></tr>
+      <tr><td>DataCatalogReader</td><td>BigQueryDataCatalogReader · NoopDataCatalogReader</td></tr>
+      <tr><td>RankerTrainer (ml.training.ports)</td><td>LightGBMTrainer</td></tr>
+      <tr><td>ExperimentTracker</td><td>VertexExperimentsTracker · NullExperimentTracker</td></tr>
+      <tr><td>ModelRegistry (ml.registry.ports)</td><td>VertexModelRegistry</td></tr>
+      <tr><td>VectorSearchWriter (pipeline.data_job.ports)</td><td>VertexVectorSearchWriter · InMemoryVectorSearchWriter</td></tr>
+      <tr><td>StreamProcessor</td><td>DataflowProcessor</td></tr>
+      <tr><td>PipelineOrchestrator</td><td>KfpOrchestrator</td></tr>
+      <tr><td>PredictorService (ml.serving.ports)</td><td>KServePredictor <span class="small">(low confidence — overlaps with app/services/adapters/kserve_*)</span></td></tr>
+    </tbody>
+  </table>
+
+  <h4>Swappable backends (subtraction axes)</h4>
+  <ul>
+    <li>lexical: Elasticsearch BM25 ↔ Noop (ENABLE_SEARCH off)</li>
+    <li>semantic: Vertex Vector Search (single impl; Port left for future ES-ANN / OpenSearch swap)</li>
+    <li>feature fresh: Vertex Feature Online Store ↔ off (BQ-enriched values only)</li>
+    <li>synonym: Redis ↔ Noop</li>
+    <li>event writer: Pub/Sub canonical ↔ CloudLogging fallback ↔ Noop</li>
+    <li>popularity: BQML ↔ off</li>
+    <li>training experiment tracker: Vertex Experiments ↔ Null</li>
+    <li>vector-search write: Vertex VVS ↔ InMemory (tests)</li>
+  </ul>
+</div>
+
+<!-- ============================== SECTION 5: RISKS / QUESTIONS ============================== -->
+<h2>5 · Risks &amp; open questions</h2>
+
+<div class="panel">
+  <h3>Risks</h3>
+  <div class="risk-row"><span class="sev high">high</span><div><b>Cloud Logging fallback can silently disable the loop.</b> If 3 Pub/Sub topics are unconfigured at startup, <code>CloudLoggingEventWriter</code> is wired and downstream BQ tables stay empty — entire retrain loop degrades to synthetic-only with no obvious surface signal.</div></div>
+  <div class="risk-row"><span class="sev high">high</span><div><b>Streaming CTR is a click-proxy.</b> <code>ml.streaming.pipeline</code> synthesizes <code>click</code> from <code>final_rank==1</code> instead of joining real /feedback. Hourly CTR is biased — using it for training would close a feedback loop on the model's own ranking.</div></div>
+  <div class="risk-row"><span class="sev high">high</span><div><b>Feature parity 6-locations invariant.</b> Adding a ranker feature requires synchronized edits in Dataform / <code>build_ranker_features</code> / <code>FEATURE_COLS_RANKER</code> / Terraform <code>ranking_log.features</code> / <code>validate_feature_skew.sql</code> / Vertex Feature Group. Drift = training-serving skew.</div></div>
+  <div class="risk-row"><span class="sev med">med</span><div><b>Composer cron cannibalization.</b> Cloud Scheduler still hits <code>/ops/jobs/check-retrain</code> — if reconfigured to a high-frequency cron it would double-fire retrain alongside the Composer DAG (CLAUDE.md non-negotiable).</div></div>
+  <div class="risk-row"><span class="sev med">med</span><div><b>Stub pipelines.</b> <code>pipeline.evaluation_job.main</code> and <code>pipeline.batch_serving_job.main</code> are KFP stubs (<code>del project_id</code>) — compile but do nothing. README implies offline eval is wired.</div></div>
+  <div class="risk-row"><span class="sev med">med</span><div><b>Elasticsearch hardening parked.</b> ECK manifest is intentionally HTTP + anonymous superuser, pinned by a contract test. Becomes prod-grade only if exposed beyond the GKE cluster.</div></div>
+  <div class="risk-row"><span class="sev med">med</span><div><b>Deploy-path coverage gap.</b> <code>make check</code> excludes <code>scripts/setup/*</code> and <code>scripts/domain/*</code> callsites; deploy/destroy bugs only surface during real <code>make deploy-all</code> (5-bug incident in M-Wave8.6).</div></div>
+  <div class="risk-row"><span class="sev med">med</span><div><b>AUTO_PROMOTE gate is a single metric.</b> <code>retrain_orchestration</code> auto-aliases <code>production</code> on <code>AUTO_PROMOTE=true</code> regardless of human review — the only gate is NDCG@10 ≥ threshold.</div></div>
+  <div class="risk-row"><span class="sev med">med</span><div><b>ranking_log publish is best-effort.</b> <code>search_service.run_search</code> swallows publish failures (telemetry). A persistent Pub/Sub / IAM outage would silently void retraining data.</div></div>
+  <div class="risk-row"><span class="sev med">med</span><div><b>action_type schema drift.</b> 8 action_type values must stay aligned across Pydantic / Terraform / labeling YAML / labeling SQL / EventWriter Port / ranking_labels — only enforced by docs + tests, not a generated schema.</div></div>
+  <div class="risk-row"><span class="sev low">low</span><div><b>FOS resource IDs blank → no /search.</b> <code>SearchBuilder.resolve_feature_fetcher</code> fails loud at startup if FOS config is incomplete when <code>enable_search=True</code>.</div></div>
+  <div class="risk-row"><span class="sev low">low</span><div><b>API subprocesses out to <code>bq</code>.</b> /ops/destroy-check / search-volume / runs-recent run <code>subprocess.run</code> inside the FastAPI process — uncharacteristic latency/crash mode for an API.</div></div>
+</div>
+
+<div class="panel">
+  <h3>Open questions</h3>
+  <ul>
+    <li>Does <code>pipeline.evaluation_job.main</code> get wired before the Wave 5 dashboard goes GA, or does it rely on <code>training_runs</code> only?</li>
+    <li>Are <code>mlops.ranking_log_hourly_ctr</code> rows actually consumed downstream (feature mart? eval?) or is the streaming pipeline orphaned?</li>
+    <li>Is the <code>retrain-trigger</code> Pub/Sub topic subscribed to anything in canonical mode, or is it dead-letter telemetry for the smoke endpoint?</li>
+    <li><code>ml/serving/adapters/kserve_predictor.py</code> overlaps with <code>app/services/adapters/kserve_*.py</code> — which is canonical for non-app callers?</li>
+    <li><code>ml/streaming/ports + adapters</code> look like scaffolding (one Dataflow adapter). Useful Port or premature abstraction?</li>
+    <li><code>scripts/ops/ops_router</code> shells out to <code>bq</code> — migrate to <code>BigQueryMetricsRepository</code> or keep as operator-only shortcut?</li>
+    <li>How is <code>/readyz</code>'s <code>service</code> label kept in sync with the SLO good/total filter when <code>OTEL_SERVICE_NAME</code> changes per deploy?</li>
+  </ul>
+</div>
+
+<hr class="spacer">
+<p class="small">Generated from code state, not README. JSON twin: <code>system_map.json</code>. Confidence flagged on a per-module basis; <span class="tag confidence-low">low conf</span> tags mark guesses.</p>
+
+</div>
+</body>
+</html>
