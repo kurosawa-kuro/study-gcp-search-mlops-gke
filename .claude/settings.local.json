@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(update-config)",
+      "Bash(awk '/^def /{if\\(prev\\){print prev_line, NR-prev_line, \"lines\"} prev=$2; prev_line=NR}' scripts/setup/destroy_all.py)"
+    ]
+  }
+}
