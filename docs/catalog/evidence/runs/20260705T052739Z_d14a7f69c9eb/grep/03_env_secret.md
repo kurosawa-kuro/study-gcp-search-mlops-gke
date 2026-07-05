@@ -1,0 +1,618 @@
+# grep: env_secret
+
+evidence_id: ev.grep.env_secret
+description: env / secret / credential
+
+- .github/workflows/deploy-api.yml:L18: id-token: <redacted>
+- .github/workflows/deploy-dataform.yml:L14: id-token: <redacted>
+- .github/workflows/deploy-dataform.yml:L54: -H "Authorization: <redacted>
+- .github/workflows/deploy-encoder-image.yml:L24: id-token: <redacted>
+- .github/workflows/deploy-pipeline.yml:L31: id-token: <redacted>
+- .github/workflows/deploy-reranker-image.yml:L24: id-token: <redacted>
+- .github/workflows/deploy-trainer-image.yml:L25: id-token: <redacted>
+- .github/workflows/terraform.yml:L14: id-token: <redacted>
+- .github/workflows/terraform.yml:L62: const text = (process.env.PLAN_TEXT || 'Plan output not available');
+- app/api/middleware/request_logging.py:L22: os.getenv("GCP_PROJECT") or os.getenv("GOOGLE_CLOUD_PROJECT") or os.getenv("PROJECT_ID")
+- app/container/infra.py:L280: password = <redacted>
+- app/container/infra.py:L283: password= <redacted>
+- app/container/infra.py:L291: max_synonyms_per_token= <redacted>
+- app/container/search.py:L209: api_key= <redacted>
+- app/container/search.py:L211: password= <redacted>
+- app/main.py:L106: configure_logging(level=os.getenv("LOG_LEVEL", "INFO"))
+- app/observability.py:L70: service_name=os.getenv("OTEL_SERVICE_NAME", default_service),
+- app/services/adapters/elasticsearch_lexical.py:L24: api_key: str = <redacted>
+- app/services/adapters/elasticsearch_lexical.py:L26: password: str = <redacted>
+- app/services/adapters/elasticsearch_lexical.py:L32: self._api_key = <redacted>
+- app/services/adapters/elasticsearch_lexical.py:L34: self._password = <redacted>
+- app/services/adapters/elasticsearch_lexical.py:L40: if self._api_key:
+- app/services/adapters/elasticsearch_lexical.py:L41: h["authorization"] = <redacted>
+- app/services/adapters/elasticsearch_lexical.py:L75: if self._username and self._password:
+- app/services/adapters/elasticsearch_lexical.py:L76: auth = <redacted>
+- app/services/adapters/internal/pubsub_diagnostics.py:L27: os.getenv("K_SERVICE_ACCOUNT", "")
+- app/services/adapters/internal/pubsub_diagnostics.py:L28: or os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "")
+- app/services/adapters/internal/pubsub_diagnostics.py:L29: or os.getenv("CLOUD_RUN_SERVICE_ACCOUNT", "")
+- app/services/adapters/redis_synonym_expander.py:L11: 1. Tokenize ``query`` on whitespace. CJK characters stay grouped — the
+- app/services/adapters/redis_synonym_expander.py:L12: downstream Elasticsearch BM25 applies its own tokenizer.
+- app/services/adapters/redis_synonym_expander.py:L13: 2. For each token ``t`` fetch ``SMEMBERS syn: <redacted>
+- app/services/adapters/redis_synonym_expander.py:L14: 3. Concatenate the original tokens plus all unique synonym members,
+- app/services/adapters/redis_synonym_expander.py:L37: Each ``expand`` call performs ``len(tokens)`` ``SMEMBERS`` calls.
+- app/services/adapters/redis_synonym_expander.py:L49: max_synonyms_per_token: int = <redacted>
+- app/services/adapters/redis_synonym_expander.py:L53: self._max_synonyms_per_token = <redacted>
+- app/services/adapters/redis_synonym_expander.py:L56: tokens = <redacted>
+- app/services/adapters/redis_synonym_expander.py:L57: if not tokens:
+- app/services/adapters/redis_synonym_expander.py:L60: return self._expand_tokens(tokens)
+- app/services/adapters/redis_synonym_expander.py:L65: def _expand_tokens(self, tokens: <redacted>
+- app/services/adapters/redis_synonym_expander.py:L68: for tok in tokens:
+- app/services/adapters/redis_synonym_expander.py:L75: for syn in decoded[: <redacted>
+- app/settings/api.py:L43: redis_password_env: <redacted>
+- app/settings/api.py:L45: max_synonyms_per_token: <redacted>
+- app/settings/api.py:L64: elasticsearch_api_key: str = <redacted>
+- app/settings/api.py:L66: elasticsearch_password: str = <redacted>
+- app/settings/api.py:L110: synonym_redis_password_env: str = <redacted>
+- app/settings/api.py:L112: synonym_max_synonyms_per_token: int = <redacted>
+- app/settings/api.py:L153: redis_password_env= <redacted>
+- app/settings/api.py:L155: max_synonyms_per_token= <redacted>
+- definitions/synonyms/real_estate_ja.yaml:L3: # Schema: <redacted>
+- definitions/synonyms/real_estate_ja.yaml:L5: # the key ``syn: <redacted>
+- definitions/synonyms/real_estate_ja.yaml:L6: # of original tokens + synonyms into the lexical query before BM25.
+- definitions/synonyms/real_estate_ja.yaml:L19: #   ``synonym_max_synonyms_per_token`` setting truncates further at the
+- env/config/setting.yaml:L4: # パスワード・API 鍵・トークン実体は env/secret/credential.yaml（gitignore）または
+- env/config/setting.yaml:L5: # Secret Manager。setting に秘密を足すのは設計違反。エージェントはこの前提を誤読しないこと。
+- env/config/setting.yaml:L10: # **Terraform の google_composer_environment.env_variables + Composer が注入する
+- env/config/setting.yaml:L26: # （繰り返し）クレデンシャル実体は **ここに置かない**。`env/secret/credential.yaml`
+- env/config/setting.yaml:L27: # または Secret Manager。参照 ID は非秘密としてここ可。
+- env/config/setting.yaml:L54: # sa-api impersonate 用の開発者ユーザ (Terraform が Token Creator を bind)。
+- infra/manifests/elasticsearch/elasticsearch.yaml:L12: # のまま、anonymous role で auth bypass。production 化時は HTTPS + password
+- infra/manifests/elasticsearch/networkpolicy.yaml:L19: # ECK Operator (`elastic-system` ns) は ES pod の `: <redacted>
+- infra/manifests/kustomization.yaml:L17: - search-api/secretstore.yaml
+- infra/manifests/kustomization.yaml:L18: - search-api/synonym-redis-auth-externalsecret.yaml
+- infra/manifests/kustomization.yaml:L19: - search-api/iap-oauth-client-secret-externalsecret.yaml
+- infra/manifests/policies/search-api-iap-policy.yaml:L20: #   client_id をここに貼り (c) client_secret を Secret Manager の
+- infra/manifests/policies/search-api-iap-policy.yaml:L21: #   `search-api-iap-oauth-client-secret` に投入する 3 ステップ手作業が必要。
+- infra/manifests/policies/search-api-iap-policy.yaml:L25: #   `Invalid: <redacted>
+- infra/manifests/policies/search-api-iap-policy.yaml:L41: oauth2ClientSecret:
+- infra/manifests/policies/search-api-iap-policy.yaml:L42: name: <redacted>
+- infra/manifests/policies/search-api-networkpolicy.yaml:L70: # allows Secret Manager / GCP API calls that External Secrets uses.
+- infra/manifests/search-api/deployment.yaml:L58: - name: <redacted>
+- infra/manifests/search-api/deployment.yaml:L62: - name: <redacted>
+- infra/manifests/search-api/deployment.yaml:L64: secretKeyRef:
+- infra/manifests/search-api/deployment.yaml:L138: # に流し込む。AUTH 文字列は Memorystore が生成 → Secret Manager に
+- infra/manifests/search-api/deployment.yaml:L139: # ミラー → External Secrets Operator が ``synonym-redis-auth``
+- infra/manifests/search-api/deployment.yaml:L140: # Secret として `search` namespace に配信する。
+- infra/manifests/search-api/deployment.yaml:L156: secretKeyRef:
+- infra/manifests/search-api/gateway.yaml:L34: - kind: <redacted>
+- infra/manifests/search-api/iap-oauth-client-secret-externalsecret.yaml:L1: apiVersion: <redacted>
+- infra/manifests/search-api/iap-oauth-client-secret-externalsecret.yaml:L2: kind: <redacted>
+- infra/manifests/search-api/iap-oauth-client-secret-externalsecret.yaml:L4: name: <redacted>
+- infra/manifests/search-api/iap-oauth-client-secret-externalsecret.yaml:L8: secretStoreRef:
+- infra/manifests/search-api/iap-oauth-client-secret-externalsecret.yaml:L9: name: <redacted>
+- infra/manifests/search-api/iap-oauth-client-secret-externalsecret.yaml:L10: kind: <redacted>
+- infra/manifests/search-api/iap-oauth-client-secret-externalsecret.yaml:L12: name: <redacted>
+- infra/manifests/search-api/iap-oauth-client-secret-externalsecret.yaml:L15: - secretKey: <redacted>
+- infra/manifests/search-api/iap-oauth-client-secret-externalsecret.yaml:L17: key: <redacted>
+- infra/manifests/search-api/secretstore.yaml:L1: apiVersion: <redacted>
+- infra/manifests/search-api/secretstore.yaml:L2: kind: <redacted>
+- infra/manifests/search-api/secretstore.yaml:L4: name: <redacted>
+- infra/manifests/search-api/synonym-redis-auth-externalsecret.yaml:L1: apiVersion: <redacted>
+- infra/manifests/search-api/synonym-redis-auth-externalsecret.yaml:L2: kind: <redacted>
+- infra/manifests/search-api/synonym-redis-auth-externalsecret.yaml:L8: secretStoreRef:
+- infra/manifests/search-api/synonym-redis-auth-externalsecret.yaml:L9: name: <redacted>
+- infra/manifests/search-api/synonym-redis-auth-externalsecret.yaml:L10: kind: <redacted>
+- infra/manifests/search-api/synonym-redis-auth-externalsecret.yaml:L15: - secretKey: <redacted>
+- infra/terraform/environments/dev/apis.tf:L11: "secretmanager.googleapis.com",
+- infra/terraform/environments/dev/main.tf:L4: #   data         → BigQuery / GCS / Artifact Registry / Secret Manager + data IAM
+- infra/terraform/environments/dev/main.tf:L43: dataform_git_token_secret_version = <redacted>
+- infra/terraform/environments/dev/main.tf:L71: environment_name                  = var.composer_environment_name
+- infra/terraform/environments/dev/main.tf:L140: # Self-signed Secret `search-api-tls` stays as the Gateway listener's
+- infra/terraform/environments/dev/outputs.tf:L82: external_secrets  = <redacted>
+- infra/terraform/environments/dev/outputs.tf:L210: description = "Airflow UI URL of the Composer environment. Used by `make ops-composer-list-runs`."
+- infra/terraform/environments/dev/outputs.tf:L214: output "composer_environment_name" {
+- infra/terraform/environments/dev/outputs.tf:L215: description = "Composer environment name (used by `gcloud composer environments run --environment=<name>`)."
+- infra/terraform/environments/dev/outputs.tf:L216: value       = module.composer.environment_name
+- infra/terraform/environments/dev/outputs.tf:L228: output "synonym_redis_auth_secret_id" {
+- infra/terraform/environments/dev/outputs.tf:L229: description = <redacted>
+- infra/terraform/environments/dev/outputs.tf:L230: value       = <redacted>
+- infra/terraform/environments/dev/provider.tf:L15: # providers now read endpoint + token from the **local
+- infra/terraform/environments/dev/provider.tf:L25: # + token directly from the kubeconfig.
+- infra/terraform/environments/dev/variables.tf:L39: description = <redacted>
+- infra/terraform/environments/dev/variables.tf:L50: variable "dataform_git_token_secret_version" {
+- infra/terraform/environments/dev/variables.tf:L51: description = <redacted>
+- infra/terraform/environments/dev/variables.tf:L129: ## helm providers now read endpoint+token from the local kubeconfig
+- infra/terraform/environments/dev/variables.tf:L228: description = "Provision the Cloud Composer (Gen 3) environment. Default true (Stage 3 flip 2026-05-02): canonical 構成では `make deploy-all` で Composer 環境を立ち上げる本線運用。現設定の 3h 学習 1 回では full 構成全体で ~¥870-1,200 が目安 (詳細 docs/runbook/05_運用.md §1.4-bis)。`enable_composer=false` で provisioning skip も可 (Composer 不要な作業時)。"
+- infra/terraform/environments/dev/variables.tf:L233: variable "composer_environment_name" {
+- infra/terraform/environments/dev/variables.tf:L234: description = "Cloud Composer environment name (shown in Cloud Console / `gcloud composer environments list`). Single environment per dev project."
+- infra/terraform/modules/composer/main.tf:L26: resource "google_composer_environment" "this" {
+- infra/terraform/modules/composer/main.tf:L47: # `os.environ["GCP_PROJECT"]` で参照する。
+- infra/terraform/modules/composer/outputs.tf:L3: value       = var.enable_composer ? google_composer_environment.this[0].config[0].dag_gcs_prefix : ""
+- infra/terraform/modules/composer/outputs.tf:L7: description = "Airflow UI URL of the Composer environment. Used by `make ops-composer-list-runs` smoke."
+- infra/terraform/modules/composer/outputs.tf:L8: value       = var.enable_composer ? google_composer_environment.this[0].config[0].airflow_uri : ""
+- infra/terraform/modules/composer/outputs.tf:L12: description = "Composer environment name (used by `gcloud composer environments run --environment=<name>`)."
+- infra/terraform/modules/composer/outputs.tf:L17: description = "Whether the Composer environment is provisioned (mirrors `var.enable_composer`)."
+- infra/terraform/modules/composer/variables.tf:L2: description = "Provision the Cloud Composer (Gen 3, Managed Airflow 2.x) environment for canonical 本線 orchestration. Default true; cost is bounded by `make destroy-all` between PDCA cycles. DCU-hour pricing (Gen 3): ~$0.72/h (12 DCU × $0.06) ≒ ~¥115/h. Single 50-65min verify costs ~¥150-300; the real risk is destroy leak (24h leak ≒ ¥2,800, multi-day leak can reach ¥10,000+, full month always-on ≒ ¥84,000)."
+- infra/terraform/modules/composer/variables.tf:L8: description = "Cloud Composer environment name (shown in Cloud Console / `gcloud composer environments list`)."
+- infra/terraform/modules/composer/variables.tf:L19: description = "Region for the Composer environment (e.g. asia-northeast1)."
+- infra/terraform/modules/composer/variables.tf:L30: description = "GCP service account email the Composer environment runs as. Created in `module.iam.google_service_account.composer`."
+- infra/terraform/modules/data/main.tf:L524: # Secret Manager — IAP OAuth client (dev placeholder; real value out-of-band)
+- infra/terraform/modules/data/main.tf:L526: resource "google_secret_manager_secret" "search_api_iap_oauth_client_secret" {
+- infra/terraform/modules/data/main.tf:L527: secret_id = <redacted>
+- infra/terraform/modules/data/main.tf:L533: # Dev-only placeholder version so the ExternalSecret has *something* to read
+- infra/terraform/modules/data/main.tf:L535: # has `iap.enabled: <redacted>
+- infra/terraform/modules/data/main.tf:L536: # `SecretSyncedError` and the GCPBackendPolicy emits `Invalid:
+- infra/terraform/modules/data/main.tf:L537: # oauth2ClientSecret cannot be found` even though `iap.enabled: <redacted>
+- infra/terraform/modules/data/main.tf:L542: # and overwrite this secret via
+- infra/terraform/modules/data/main.tf:L543: #   `gcloud secrets versions add search-api-iap-oauth-client-secret --data-file= <redacted>
+- infra/terraform/modules/data/main.tf:L545: resource "google_secret_manager_secret_version" "search_api_iap_oauth_client_secret_dev_placeholder" {
+- infra/terraform/modules/data/main.tf:L546: secret      = <redacted>
+- infra/terraform/modules/data/main.tf:L547: secret_data = <redacted>
+- infra/terraform/modules/data/main.tf:L557: #         storage objectViewer on models bucket, secret accessor.
+- infra/terraform/modules/data/main.tf:L576: resource "google_secret_manager_secret_iam_member" "external_secrets_search_api_iap_oauth_client_secret_access" {
+- infra/terraform/modules/data/main.tf:L577: secret_id = <redacted>
+- infra/terraform/modules/data/main.tf:L578: role      = <redacted>
+- infra/terraform/modules/data/main.tf:L579: member    = <redacted>
+- infra/terraform/modules/data/main.tf:L582: # sa-job-train: <redacted>
+- infra/terraform/modules/data/main.tf:L692: # Optional git_remote_settings: <redacted>
+- infra/terraform/modules/data/main.tf:L694: # (Dataform UI push / manual sync). The token secret value itself is
+- infra/terraform/modules/data/main.tf:L709: for_each = <redacted>
+- infra/terraform/modules/data/main.tf:L713: authentication_token_secret_version = <redacted>
+- infra/terraform/modules/data/outputs.tf:L90: output "secrets" {
+- infra/terraform/modules/data/outputs.tf:L92: search_api_iap_oauth_client_secret = <redacted>
+- infra/terraform/modules/data/variables.tf:L7: description = <redacted>
+- infra/terraform/modules/data/variables.tf:L48: variable "dataform_git_token_secret_version" {
+- infra/terraform/modules/data/variables.tf:L49: description = <redacted>
+- infra/terraform/modules/gke/main.tf:L72: resource "google_service_account_iam_member" "external_secrets_wi" {
+- infra/terraform/modules/gke/main.tf:L73: service_account_id = <redacted>
+- infra/terraform/modules/gke/main.tf:L75: member             = <redacted>
+- infra/terraform/modules/gke/variables.tf:L39: external_secrets = <redacted>
+- infra/terraform/modules/gke/variables.tf:L44: external_secrets = <redacted>
+- infra/terraform/modules/gke/variables.tf:L54: external_secrets = <redacted>
+- infra/terraform/modules/gke/variables.tf:L60: external_secrets = <redacted>
+- infra/terraform/modules/iam/main.tf:L48: resource "google_service_account" "external_secrets" {
+- infra/terraform/modules/iam/main.tf:L49: account_id   = <redacted>
+- infra/terraform/modules/iam/main.tf:L50: display_name = <redacted>
+- infra/terraform/modules/iam/main.tf:L74: issuer_uri = <redacted>
+- infra/terraform/modules/iam/main.tf:L90: # Admin user → sa-api TokenCreator (local-ops impersonation).
+- infra/terraform/modules/iam/main.tf:L93: # `gcloud auth print-identity-token --impersonate-service-account= <redacted>
+- infra/terraform/modules/iam/main.tf:L94: # user accounts need TokenCreator on sa-api for that path.
+- infra/terraform/modules/iam/main.tf:L99: resource "google_service_account_iam_member" "api_token_creator_for_admins" {
+- infra/terraform/modules/iam/main.tf:L102: role               = <redacted>
+- infra/terraform/modules/iam/main.tf:L276: # Cloud Composer environment runtime SA (canonical orchestration).
+- infra/terraform/modules/iam/main.tf:L295: display_name = "Cloud Composer environment runtime SA (canonical 本線 orchestrator)"
+- infra/terraform/modules/iam/main.tf:L353: # google_composer_environment リソースを操作するため)。
+- infra/terraform/modules/iam/outputs.tf:L13: external_secrets  = <redacted>
+- infra/terraform/modules/iam/variables.tf:L12: description = <redacted>
+- infra/terraform/modules/kserve/main.tf:L6: # endpoint + WI token を引いた provider 設定を渡すこと。
+- infra/terraform/modules/kserve/main.tf:L87: resource "helm_release" "external_secrets" {
+- infra/terraform/modules/kserve/main.tf:L88: name             = <redacted>
+- infra/terraform/modules/kserve/main.tf:L89: namespace        = <redacted>
+- infra/terraform/modules/kserve/main.tf:L91: repository       = <redacted>
+- infra/terraform/modules/kserve/main.tf:L92: chart            = <redacted>
+- infra/terraform/modules/kserve/main.tf:L93: version          = <redacted>
+- infra/terraform/modules/kserve/main.tf:L116: name  = <redacted>
+- infra/terraform/modules/kserve/main.tf:L122: value = <redacted>
+- infra/terraform/modules/kserve/main.tf:L127: value = <redacted>
+- infra/terraform/modules/kserve/tls_dev.tf:L2: # Self-signed TLS Secret bootstrap for the search-api Gateway listener.
+- infra/terraform/modules/kserve/tls_dev.tf:L5: # 1. The Secret data must be generated, not committed (private key).
+- infra/terraform/modules/kserve/tls_dev.tf:L10: #    referenced `Secret search/search-api-tls` that didn't exist. Bootstrapping
+- infra/terraform/modules/kserve/tls_dev.tf:L16: # Secret name. The current `gateway.yaml` references Secret name verbatim
+- infra/terraform/modules/kserve/tls_dev.tf:L46: resource "kubernetes_secret" "search_api_tls" {
+- infra/terraform/modules/kserve/variables.tf:L13: variable "external_secrets_chart_version" {
+- infra/terraform/modules/kserve/variables.tf:L14: description = <redacted>
+- infra/terraform/modules/kserve/variables.tf:L43: external_secrets = <redacted>
+- infra/terraform/modules/kserve/variables.tf:L54: Bootstrap a self-signed TLS Secret named `search-api-tls` in the search
+- infra/terraform/modules/kserve/variables.tf:L59: `kubectl create secret tls` by hand mid-deploy because the listener wedged
+- infra/terraform/modules/kserve/variables.tf:L60: at PROGRAMMED= <redacted>
+- infra/terraform/modules/messaging/main.tf:L219: oidc_token {
+- infra/terraform/modules/redis_synonym/main.tf:L38: # AUTH string mirrored into Secret Manager so the search-api KSA can pull
+- infra/terraform/modules/redis_synonym/main.tf:L39: # it via External Secrets Operator (same pattern as ``search-api-iap-oauth-client-secret``).
+- infra/terraform/modules/redis_synonym/main.tf:L40: resource "google_secret_manager_secret" "redis_auth" {
+- infra/terraform/modules/redis_synonym/main.tf:L43: secret_id = <redacted>
+- infra/terraform/modules/redis_synonym/main.tf:L55: resource "google_secret_manager_secret_version" "redis_auth" {
+- infra/terraform/modules/redis_synonym/main.tf:L57: secret      = <redacted>
+- infra/terraform/modules/redis_synonym/main.tf:L58: secret_data = <redacted>
+- infra/terraform/modules/redis_synonym/outputs.tf:L16: output "auth_secret_id" {
+- infra/terraform/modules/redis_synonym/outputs.tf:L17: description = <redacted>
+- infra/terraform/modules/redis_synonym/outputs.tf:L18: value       = <redacted>
+- infra/terraform/modules/redis_synonym/variables.tf:L37: description = <redacted>
+- infra/terraform/modules/redis_synonym/variables.tf:L46: variable "auth_secret_id" {
+- infra/terraform/modules/redis_synonym/variables.tf:L48: description = <redacted>
+- ml/common/config/base.py:L4: 1. 環境変数 (本番は GKE ConfigMap / Secret 経由で注入)
+- ml/common/config/base.py:L5: 2. env/secret/credential.yaml (ローカル開発用シークレット)
+- ml/common/config/base.py:L23: _CREDENTIAL_YAML = <redacted>
+- ml/common/config/base.py:L44: file_secret_settings: <redacted>
+- ml/common/config/base.py:L52: file_secret_settings,
+- ml/common/logging/structured_logging.py:L52: if os.getenv("LOG_AS_JSON") == "1" or os.getenv("K_SERVICE") or os.getenv("CLOUD_RUN_JOB"):
+- ml/data/loaders/ranker_repository.py:L197: experiment_name = os.getenv("VERTEX_EXPERIMENT_NAME", "").strip()
+- ml/serving/encoder.py:L126: local_model_dir = os.getenv("LOCAL_ENCODER_MODEL_DIR", "").strip()
+- ml/serving/encoder.py:L129: storage_uri = os.getenv("AIP_STORAGE_URI", "").strip()
+- ml/serving/encoder.py:L134: model_name = os.getenv("ENCODER_MODEL_NAME", E5_MODEL_NAME).strip() or E5_MODEL_NAME
+- ml/serving/encoder.py:L159: @app.get(os.getenv("AIP_HEALTH_ROUTE", "/health"))
+- ml/serving/encoder.py:L164: @app.post(os.getenv("AIP_PREDICT_ROUTE", "/predict"), response_model=EncoderResponse)
+- ml/serving/encoder.py:L182: host=os.getenv("HOST", "0.0.0.0"),
+- ml/serving/encoder.py:L183: port=int(os.getenv("AIP_HTTP_PORT", os.getenv("PORT", "8080"))),
+- ml/serving/encoder.py:L184: log_level=os.getenv("LOG_LEVEL", "info").lower(),
+- ml/serving/reranker.py:L63: local_model_path = os.getenv("LOCAL_RERANKER_MODEL_PATH", "").strip()
+- ml/serving/reranker.py:L66: storage_uri = os.getenv("AIP_STORAGE_URI", "").strip()
+- ml/serving/reranker.py:L109: @app.get(os.getenv("AIP_HEALTH_ROUTE", "/health"))
+- ml/serving/reranker.py:L114: @app.post(os.getenv("AIP_PREDICT_ROUTE", "/predict"), response_model=RerankerResponse)
+- ml/serving/reranker.py:L130: @app.post(os.getenv("AIP_EXPLAIN_ROUTE", "/explain"), response_model=ExplainResponse)
+- ml/serving/reranker.py:L148: host=os.getenv("HOST", "0.0.0.0"),
+- ml/serving/reranker.py:L149: port=int(os.getenv("AIP_HTTP_PORT", os.getenv("PORT", "8080"))),
+- ml/serving/reranker.py:L150: log_level=os.getenv("LOG_LEVEL", "info").lower(),
+- ml/training/trainer.py:L260: os.environ["VERTEX_EXPERIMENT_NAME"] = experiment_name
+- ml/training/trainer.py:L304: git_sha=os.getenv("GIT_SHA"),
+- pipeline/dags/_common.py:L7: env 経由の値解決は `os.environ.get` で素直に行う。Airflow Variable は使わない
+- pipeline/dags/_common.py:L22: value = os.environ.get(name, "").strip()
+- pipeline/dags/_pod.py:L61: override = os.environ.get("COMPOSER_RUNNER_IMAGE", "").strip()
+- pipeline/dags/_pod.py:L65: project = os.environ.get("GCP_PROJECT") or os.environ.get("PROJECT_ID") or "mlops-dev-a"
+- pipeline/dags/_pod.py:L66: region = os.environ.get("REGION", "asia-northeast1")
+- pipeline/dags/_pod.py:L67: repo = os.environ.get("ARTIFACT_REPO_ID", "mlops")
+- pipeline/dags/_pod.py:L84: if key in os.environ:
+- pipeline/dags/_pod.py:L85: value = <redacted>
+- pipeline/dags/daily_feature_refresh.py:L44: PROJECT_ID = os.environ.get("GCP_PROJECT") or os.environ.get("PROJECT_ID") or ""
+- pipeline/workflow/trigger.py:L20: value = os.getenv(name, "").strip()
+- pipeline/workflow/trigger.py:L27: raw = os.getenv(name, "").strip()
+- pipeline/workflow/trigger.py:L86: display_name_prefix = os.getenv("PIPELINE_DISPLAY_NAME_PREFIX", "property-train")
+- pipeline/workflow/trigger.py:L87: service_account = os.getenv("PIPELINE_SERVICE_ACCOUNT", "").strip()
+- pipeline/workflow/trigger.py:L88: enable_caching = os.getenv("PIPELINE_ENABLE_CACHING", "false").lower() == "true"
+- pipeline/workflow/trigger_zip/main.py:L20: value = os.getenv(name, "").strip()
+- pipeline/workflow/trigger_zip/main.py:L27: raw = os.getenv(name, "").strip()
+- pipeline/workflow/trigger_zip/main.py:L86: display_name_prefix = os.getenv("PIPELINE_DISPLAY_NAME_PREFIX", "property-train")
+- pipeline/workflow/trigger_zip/main.py:L87: service_account = os.getenv("PIPELINE_SERVICE_ACCOUNT", "").strip()
+- pipeline/workflow/trigger_zip/main.py:L88: enable_caching = os.getenv("PIPELINE_ENABLE_CACHING", "false").lower() == "true"
+- scripts/_common.py:L9: - ``DEFAULTS`` ← ``env/config/setting.yaml`` — **non-secret values only** by repo
+- scripts/_common.py:L11: - ``SECRET_DEFAULTS`` ← ``env/secret/credential.yaml`` — **local secrets only**
+- scripts/_common.py:L12: (directory gitignored). Production uses Secret Manager.
+- scripts/_common.py:L33: _SECRET_SETTINGS_PATH = <redacted>
+- scripts/_common.py:L34: Path(__file__).resolve().parent.parent / "env" / "secret" / "credential.yaml"
+- scripts/_common.py:L110: SECRET_DEFAULTS = <redacted>
+- scripts/_common.py:L129: os.environ.get("GCP_PROJECT", "").strip()
+- scripts/_common.py:L130: or os.environ.get("PROJECT_ID", "").strip()
+- scripts/_common.py:L143: explicit = os.environ.get(name)
+- scripts/_common.py:L147: alt = os.environ.get(sibling, "").strip()
+- scripts/_common.py:L154: return os.environ.get(name, fallback)
+- scripts/_common.py:L157: def secret(name: str, default: str | None = <redacted>
+- scripts/_common.py:L158: """Read a secret env var with credential.yaml fallback."""
+- scripts/_common.py:L159: fallback = <redacted>
+- scripts/_common.py:L160: return os.environ.get(name, fallback)
+- scripts/_common.py:L216: - ``env`` overrides the subprocess environment (passed through to
+- scripts/_common.py:L315: def identity_token() -> str:
+- scripts/_common.py:L316: """Mint an OIDC token for IAM-gated Cloud Run calls."""
+- scripts/_common.py:L317: return gcloud("auth", "print-identity-token", capture= <redacted>
+- scripts/_common.py:L333: token: <redacted>
+- scripts/_common.py:L351: token= <redacted>
+- scripts/_common.py:L361: raw = os.environ.get(name)
+- scripts/_common.py:L368: """Resolve the target API base URL + optional Bearer token.
+- scripts/_common.py:L371: - explicit ``API_URL``: <redacted>
+- scripts/_common.py:L372: ``API_REQUIRE_TOKEN= <redacted>
+- scripts/_common.py:L374: - ``TARGET= <redacted>
+- scripts/_common.py:L379: 上書きは不要。IAP は dev default で disabled なので no token。
+- scripts/_common.py:L385: target = os.environ.get("TARGET", "gcp").strip().lower()
+- scripts/_common.py:L386: explicit_url = os.environ.get("API_URL", "").strip().rstrip("/")
+- scripts/_common.py:L388: token = <redacted>
+- scripts/_common.py:L391: token= <redacted>
+- scripts/_common.py:L393: host_header=os.environ.get("API_HOST_HEADER") or None,
+- scripts/_common.py:L398: url=os.environ.get("LOCAL_API_URL", "http://127.0.0.1:8080").rstrip("/"),
+- scripts/_common.py:L399: token= <redacted>
+- scripts/_common.py:L406: token= <redacted>
+- scripts/_common.py:L408: host_header=os.environ.get("API_HOST_HEADER") or None,
+- scripts/_common.py:L413: token= <redacted>
+- scripts/_common.py:L415: host_header=os.environ.get("API_HOST_HEADER", DEFAULT_GATEWAY_HOST_HEADER),
+- scripts/_common.py:L425: token: str | None = <redacted>
+- scripts/_common.py:L432: """POST/GET JSON with optional Bearer token. Returns (status_code, body_text).
+- scripts/_common.py:L439: if token:
+- scripts/_common.py:L440: headers["Authorization"] = <redacted>
+- scripts/adapters/kubectl.py:L34: - ``env`` overrides the subprocess environment (e.g. ``KUBECONFIG=...``).
+- scripts/deploy/composer_deploy_dags.py:L121: "[info] composer_dag_bucket output is empty — Composer environment not provisioned "
+- scripts/deploy/configmap_overlay.py:L53: "print-access-token",
+- scripts/deploy/configmap_overlay.py:L57: token = <redacted>
+- scripts/deploy/configmap_overlay.py:L58: if proc.returncode != <redacted>
+- scripts/deploy/configmap_overlay.py:L66: headers= <redacted>
+- scripts/deploy/monitor.py:L79: explicit = os.environ.get("MONITOR_LOG_DIR")
+- scripts/deploy/monitor.py:L82: log_root = os.environ.get("LOG_ROOT") or str(_REPO_ROOT / "logs")
+- scripts/deploy/monitor.py:L103: ``argparse.REMAINDER`` keeps the leading ``--`` token when present, so
+- scripts/deploy/monitor.py:L218: child_env = dict(os.environ)
+- scripts/domain/gcp/feature_view_sync.py:L50: def _access_token() -> str:
+- scripts/domain/gcp/feature_view_sync.py:L51: proc = <redacted>
+- scripts/domain/gcp/feature_view_sync.py:L52: token = <redacted>
+- scripts/domain/gcp/feature_view_sync.py:L53: if proc.returncode != <redacted>
+- scripts/domain/gcp/feature_view_sync.py:L54: raise SystemExit("[error] gcloud auth print-access-token failed for Feature View sync")
+- scripts/domain/gcp/feature_view_sync.py:L55: return token
+- scripts/domain/gcp/feature_view_sync.py:L62: token: <redacted>
+- scripts/domain/gcp/feature_view_sync.py:L66: "Authorization": <redacted>
+- scripts/domain/gcp/feature_view_sync.py:L82: def _latest_sync_name(feature_view: <redacted>
+- scripts/domain/gcp/feature_view_sync.py:L83: payload = <redacted>
+- scripts/domain/gcp/feature_view_sync.py:L92: feature_view: str, *, token: str, region: str, page_size: int = <redacted>
+- scripts/domain/gcp/feature_view_sync.py:L99: return _request_json(url, token= <redacted>
+- scripts/domain/gcp/feature_view_sync.py:L112: token = <redacted>
+- scripts/domain/gcp/feature_view_sync.py:L113: before_name = <redacted>
+- scripts/domain/gcp/feature_view_sync.py:L120: _request_json(sync_url, method= <redacted>
+- scripts/domain/gcp/feature_view_sync.py:L124: payload = <redacted>
+- scripts/domain/gcp/state_recovery.py:L57: "external_secrets",
+- scripts/domain/gcp/state_recovery.py:L116: # Secret Manager secrets: <redacted>
+- scripts/domain/gcp/state_recovery.py:L117: SECRET_MANAGER_SECRETS = <redacted>
+- scripts/domain/gcp/state_recovery.py:L118: ("search-api-iap-oauth-client-secret", "data", "search_api_iap_oauth_client_secret"),
+- scripts/domain/gcp/state_recovery.py:L437: def _recover_secret_manager(infra_dir: <redacted>
+- scripts/domain/gcp/state_recovery.py:L442: ["gcloud", "secrets", "list", f"--project= <redacted>
+- scripts/domain/gcp/state_recovery.py:L445: for gcp_id, module, tf_name in SECRET_MANAGER_SECRETS:
+- scripts/domain/gcp/state_recovery.py:L446: addr = <redacted>
+- scripts/domain/gcp/state_recovery.py:L451: gcp_resource = <redacted>
+- scripts/domain/gcp/state_recovery.py:L488: def _aiplatform_get(token: <redacted>
+- scripts/domain/gcp/state_recovery.py:L491: ["curl", "-sS", "-H", f"Authorization: <redacted>
+- scripts/domain/gcp/state_recovery.py:L511: "print-access-token",
+- scripts/domain/gcp/state_recovery.py:L517: token = <redacted>
+- scripts/domain/gcp/state_recovery.py:L521: fg_payload = <redacted>
+- scripts/domain/gcp/state_recovery.py:L536: fos_payload = <redacted>
+- scripts/domain/gcp/state_recovery.py:L555: feat_payload = <redacted>
+- scripts/domain/gcp/state_recovery.py:L574: fv_payload = <redacted>
+- scripts/domain/gcp/state_recovery.py:L594: # Use REST API directly via gcloud's default access token
+- scripts/domain/gcp/state_recovery.py:L597: "print-access-token",
+- scripts/domain/gcp/state_recovery.py:L603: token = <redacted>
+- scripts/domain/gcp/state_recovery.py:L609: f"Authorization: <redacted>
+- scripts/domain/gcp/state_recovery.py:L661: total += <redacted>
+- scripts/domain/gcp/state_recovery.py:L676: project_id = os.environ.get("PROJECT_ID", "mlops-dev-a")
+- scripts/domain/gcp/state_recovery.py:L677: region = os.environ.get("VERTEX_LOCATION") or os.environ.get("REGION") or "asia-northeast1"
+- scripts/domain/gcp/state_recovery.py:L691: value = os.environ.get(env_name, "").strip()
+- scripts/domain/gcp/vertex_feature_store_wait.py:L27: def _access_token() -> str | None:
+- scripts/domain/gcp/vertex_feature_store_wait.py:L30: "print-access-token",
+- scripts/domain/gcp/vertex_feature_store_wait.py:L39: def _rest_get(token: <redacted>
+- scripts/domain/gcp/vertex_feature_store_wait.py:L41: ["curl", "-sS", "-H", f"Authorization: <redacted>
+- scripts/domain/gcp/vertex_feature_store_wait.py:L54: def _feature_group_ids(project_id: <redacted>
+- scripts/domain/gcp/vertex_feature_store_wait.py:L59: payload = <redacted>
+- scripts/domain/gcp/vertex_feature_store_wait.py:L67: def _feature_online_store_ids(project_id: <redacted>
+- scripts/domain/gcp/vertex_feature_store_wait.py:L72: payload = <redacted>
+- scripts/domain/gcp/vertex_feature_store_wait.py:L92: token = <redacted>
+- scripts/domain/gcp/vertex_feature_store_wait.py:L93: if not token:
+- scripts/domain/gcp/vertex_feature_store_wait.py:L95: "[vertex_feature_store_wait] no gcloud access token — "
+- scripts/domain/gcp/vertex_feature_store_wait.py:L100: fg = <redacted>
+- scripts/domain/gcp/vertex_feature_store_wait.py:L101: fos = <redacted>
+- scripts/domain/k8s/kube_cleanup.py:L8: (~3 分 retry のあとステップ全体が stall する)。同じ理由で ExternalSecret の
+- scripts/domain/k8s/kube_cleanup.py:L9: ``externalsecrets.external-secrets.io/externalsecret-cleanup`` finalizer も
+- scripts/domain/k8s/kube_cleanup.py:L10: operator (external-secrets) 消滅後に取り残される。
+- scripts/domain/k8s/kube_cleanup.py:L13: リソース (ISVC / ExternalSecret) を **operator に処理させて** 消しておく。
+- scripts/domain/k8s/kube_cleanup.py:L40: # ExternalSecret: <redacted>
+- scripts/domain/k8s/kube_cleanup.py:L43: "externalsecret",
+- scripts/domain/terraform/lock.py:L41: raw = os.environ.get(name, "").strip().lower()
+- scripts/ops/accuracy_report.py:L43: case_tag = os.environ.get("EVAL_CASES_TAG", "5-vertex")
+- scripts/ops/accuracy_report.py:L118: cases_file = Path(os.environ.get("EVAL_CASES_FILE", str(_default_cases_path())))
+- scripts/ops/accuracy_report.py:L119: k = int(os.environ.get("EVAL_K", "10"))
+- scripts/ops/accuracy_report.py:L120: min_hit_rate = float(os.environ.get("MIN_HIT_RATE_AT_K", "0.0001"))
+- scripts/ops/check_retrain.py:L1: """POST /ops/jobs/check-retrain on search-api with an OIDC token. The endpoint
+- scripts/ops/check_retrain.py:L24: _diag(f"env {key}= <redacted>
+- scripts/ops/check_retrain.py:L34: f"has_token= <redacted>
+- scripts/ops/composer_dag.py:L3: Replaces the multi-line ``gcloud composer environments run ... \\``
+- scripts/ops/composer_dag.py:L25: return os.environ.get(name, "").strip() or default
+- scripts/ops/composer_dag.py:L56: default=os.environ.get("DAG", ""),
+- scripts/ops/composer_task_states.py:L1: """Parse `gcloud composer environments run ... tasks states-for-dag-run` output.
+- scripts/ops/composer_task_states.py:L3: `gcloud composer environments run` prints log lines and banners *before* the
+- scripts/ops/composer_task_states.py:L140: default=_os.environ.get("DAG", "").strip() or "retrain_orchestration",
+- scripts/ops/composer_task_states.py:L145: default=_os.environ.get("RUN_ID", "").strip(),
+- scripts/ops/composer_task_states.py:L151: default=not _os.environ.get("RUN_ID", "").strip(),
+- scripts/ops/feedback.py:L14: query = os.environ.get("QUERY", "品川駅")
+- scripts/ops/feedback.py:L15: action = os.environ.get("ACTION", "click")
+- scripts/ops/label_seed.py:L27: query = os.environ.get("QUERY", "札幌 ペット可 2LDK")
+- scripts/ops/label_seed.py:L28: n_per_action = int(os.environ.get("N_PER_ACTION", "5"))
+- scripts/ops/promote.py:L253: value = os.environ.get(name, "").strip()
+- scripts/ops/promote.py:L259: return bool(os.environ.get(name, "").strip())
+- scripts/ops/promote.py:L267: default=os.environ.get("PROMOTE_KIND") or None,
+- scripts/ops/ranking.py:L15: query = os.environ.get("QUERY", "新宿駅 1LDK")
+- scripts/ops/ranking.py:L16: top_k = int(os.environ.get("TOP_K", "5"))
+- scripts/ops/search.py:L21: query = os.environ.get("QUERY", "赤羽駅徒歩10分 ペット可")
+- scripts/ops/search.py:L22: top_k = int(os.environ.get("TOP_K", "20"))
+- scripts/ops/search.py:L23: max_rent = int(os.environ.get("MAX_RENT", "150000"))
+- scripts/ops/search.py:L24: retries = int(os.environ.get("SEARCH_RETRIES", "3"))
+- scripts/ops/search.py:L25: retry_sleep = float(os.environ.get("SEARCH_RETRY_SLEEP", "2.0"))
+- scripts/ops/search_components.py:L40: query = os.environ.get("QUERY", "新宿区西新宿 1LDK")
+- scripts/ops/search_components.py:L41: top_k = int(os.environ.get("TOP_K", "20"))
+- scripts/ops/search_components.py:L42: max_rent = int(os.environ.get("MAX_RENT", "150000"))
+- scripts/ops/slo_status.py:L50: def _describe_slo(project_id: <redacted>
+- scripts/ops/slo_status.py:L52: status, body = <redacted>
+- scripts/ops/slo_status.py:L58: def _burn_rate(project_id: <redacted>
+- scripts/ops/slo_status.py:L74: status, body = <redacted>
+- scripts/ops/slo_status.py:L104: token = <redacted>
+- scripts/ops/slo_status.py:L105: if not token:
+- scripts/ops/slo_status.py:L106: return fail("could not mint access token via `gcloud auth print-access-token`")
+- scripts/ops/slo_status.py:L110: slo = <redacted>
+- scripts/ops/slo_status.py:L117: fast = <redacted>
+- scripts/ops/slo_status.py:L118: slow = <redacted>
+- scripts/ops/sync_elasticsearch.py:L8: - ``ELASTICSEARCH_API_KEY`` — sent as ``Authorization: <redacted>
+- scripts/ops/sync_elasticsearch.py:L37: def _headers(*, api_key: <redacted>
+- scripts/ops/sync_elasticsearch.py:L39: if api_key.strip():
+- scripts/ops/sync_elasticsearch.py:L41: h["authorization"] = <redacted>
+- scripts/ops/sync_elasticsearch.py:L108: p.add_argument("--project-id", default=os.environ.get("PROJECT_ID", ""))
+- scripts/ops/sync_elasticsearch.py:L111: default=os.environ.get("BQ_PROPERTIES_TABLE", "feature_mart.properties_cleaned"),
+- scripts/ops/sync_elasticsearch.py:L113: p.add_argument("--es-url", default=os.environ.get("ELASTICSEARCH_URL", "").strip())
+- scripts/ops/sync_elasticsearch.py:L114: p.add_argument("--index", default=os.environ.get("ELASTICSEARCH_INDEX", "properties"))
+- scripts/ops/sync_elasticsearch.py:L115: p.add_argument("--api-key", default= <redacted>
+- scripts/ops/sync_elasticsearch.py:L116: p.add_argument("--username", default=os.environ.get("ELASTICSEARCH_USERNAME", ""))
+- scripts/ops/sync_elasticsearch.py:L117: p.add_argument("--password", default= <redacted>
+- scripts/ops/sync_elasticsearch.py:L200: hdrs = <redacted>
+- scripts/ops/sync_elasticsearch.py:L202: if not args.api_key and args.username and args.password:
+- scripts/ops/sync_elasticsearch.py:L203: auth = <redacted>
+- scripts/ops/sync_synonyms.py:L4: synonyms) and rewrites the ``syn: <redacted>
+- scripts/ops/sync_synonyms.py:L11: The script is idempotent and atomic per token: <redacted>
+- scripts/ops/sync_synonyms.py:L17: (mirrors the ``synonym-redis-auth`` Secret in the GKE Pod).
+- scripts/ops/sync_synonyms.py:L63: explicit = os.environ.get("SYNONYM_REDIS_URL", "").strip()
+- scripts/ops/sync_synonyms.py:L96: def _resolve_redis_auth(*, project_id: <redacted>
+- scripts/ops/sync_synonyms.py:L97: explicit = os.environ.get("REDIS_AUTH", "").strip()
+- scripts/ops/sync_synonyms.py:L102: "secrets",
+- scripts/ops/sync_synonyms.py:L106: f"--secret= <redacted>
+- scripts/ops/sync_synonyms.py:L112: # ``redis.from_url`` via ``os.environ.get('REDIS_AUTH')`` below.
+- scripts/ops/sync_synonyms.py:L113: os.environ["REDIS_AUTH"] = minted
+- scripts/ops/sync_synonyms.py:L121: default=os.environ.get("PROJECT_ID", "mlops-dev-a"),
+- scripts/ops/sync_synonyms.py:L125: default=os.environ.get("REGION", "asia-northeast1"),
+- scripts/ops/sync_synonyms.py:L129: default=os.environ.get("SYNONYM_REDIS_INSTANCE", "mlops-synonym"),
+- scripts/ops/sync_synonyms.py:L133: "--redis-auth-secret-id",
+- scripts/ops/sync_synonyms.py:L134: default= <redacted>
+- scripts/ops/sync_synonyms.py:L135: help= <redacted>
+- scripts/ops/sync_synonyms.py:L145: help= <redacted>
+- scripts/ops/sync_synonyms.py:L149: default= <redacted>
+- scripts/ops/sync_synonyms.py:L175: for token, synonyms in raw.items():
+- scripts/ops/sync_synonyms.py:L176: if not isinstance(token, str) or not token.strip():
+- scripts/ops/sync_synonyms.py:L177: raise ValueError(f"{path}: <redacted>
+- scripts/ops/sync_synonyms.py:L179: raise ValueError(f"{path}: <redacted>
+- scripts/ops/sync_synonyms.py:L182: out[token.strip()] = <redacted>
+- scripts/ops/sync_synonyms.py:L191: f"loaded {len(dictionary)} canonical tokens "
+- scripts/ops/sync_synonyms.py:L197: for token, synonyms in dictionary.items():
+- scripts/ops/sync_synonyms.py:L198: _log(f"  {args.key_prefix}{token} -> {synonyms}")
+- scripts/ops/sync_synonyms.py:L221: secret_id= <redacted>
+- scripts/ops/sync_synonyms.py:L230: password = <redacted>
+- scripts/ops/sync_synonyms.py:L233: password= <redacted>
+- scripts/ops/sync_synonyms.py:L242: for token, synonyms in dictionary.items():
+- scripts/ops/sync_synonyms.py:L243: key = <redacted>
+- scripts/ops/vertex/explain.py:L27: query = os.environ.get("QUERY", "新宿区西新宿 1LDK")
+- scripts/ops/vertex/explain.py:L28: top_k = int(os.environ.get("TOP_K", "5"))
+- scripts/ops/vertex/feature_group.py:L39: def _access_token() -> str:
+- scripts/ops/vertex/feature_group.py:L40: proc = <redacted>
+- scripts/ops/vertex/feature_group.py:L41: token = <redacted>
+- scripts/ops/vertex/feature_group.py:L42: if proc.returncode != <redacted>
+- scripts/ops/vertex/feature_group.py:L43: raise RuntimeError("gcloud auth print-access-token failed")
+- scripts/ops/vertex/feature_group.py:L44: return token
+- scripts/ops/vertex/feature_group.py:L47: def _request_json(url: <redacted>
+- scripts/ops/vertex/feature_group.py:L50: headers= <redacted>
+- scripts/ops/vertex/feature_group.py:L62: token = <redacted>
+- scripts/ops/vertex/feature_group.py:L67: payload = <redacted>
+- scripts/ops/vertex/feature_group.py:L120: property_id = os.environ.get("PROPERTY_ID", "p001")
+- scripts/ops/vertex/monitoring.py:L32: limit = int(os.environ.get("LIMIT", "10"))
+- scripts/ops/vertex/pipeline_status.py:L27: limit = int(os.environ.get("LIMIT", "10"))
+- scripts/ops/vertex/pipeline_wait.py:L54: display_name = os.environ.get("PIPELINE_DISPLAY_NAME", "property-search-train")
+- scripts/ops/vertex/pipeline_wait.py:L55: timeout_seconds = int(os.environ.get("PIPELINE_WAIT_TIMEOUT_SECONDS", "1800"))
+- scripts/ops/vertex/pipeline_wait.py:L56: poll_seconds = int(os.environ.get("PIPELINE_WAIT_POLL_SECONDS", "30"))
+- scripts/ops/vertex/vector_search.py:L82: num_neighbors_str = os.environ.get("NUM_NEIGHBORS", "5")
+- scripts/setup/destroy_all.py:L117: # (GKE cluster の endpoint / token) に依存しており、cluster が destroy 過程で
+- scripts/setup/doctor.py:L45: venv = os.environ.get("VIRTUAL_ENV", "")
+- scripts/setup/local_hybrid.py:L5: 1. resolve non-secret config from ``env/config/setting.yaml``
+- scripts/setup/local_hybrid.py:L6: 2. resolve local secrets from ``env/secret/credential.yaml`` (fallback:
+- scripts/setup/local_hybrid.py:L34: from scripts._common import env, run, secret
+- scripts/setup/local_hybrid.py:L71: def _resolve_elasticsearch_api_key(*, elasticsearch_url: <redacted>
+- scripts/setup/local_hybrid.py:L74: preset = <redacted>
+- scripts/setup/local_hybrid.py:L77: return env("ELASTICSEARCH_API_KEY", "")
+- scripts/setup/local_hybrid.py:L114: return subprocess.Popen(cmd, env=child_env)
+- scripts/setup/local_hybrid.py:L122: es_api_key = <redacted>
+- scripts/setup/local_hybrid.py:L142: base_env = os.environ.copy()
+- scripts/setup/local_hybrid.py:L161: "ELASTICSEARCH_API_KEY": <redacted>
+- scripts/setup/recover_wif.py:L57: endpoint+token from the local kubeconfig instead of the
+- scripts/setup/recover_wif.py:L62: parent process env directly.
+- scripts/setup/tf_bootstrap.py:L22: "secretmanager.googleapis.com",
+- scripts/setup/tf_plan.py:L26: github_repo = os.environ.get("GITHUB_REPO") or DEFAULTS.get("GITHUB_REPO", "")
+- scripts/setup/tf_plan.py:L27: oncall_email = os.environ.get("ONCALL_EMAIL") or DEFAULTS.get("ONCALL_EMAIL", "")
+- scripts/verify/_runner.py:L27: explicit = os.environ.get("VERIFY_LOG_DIR")
+- scripts/verify/_runner.py:L30: log_root = os.environ.get("LOG_ROOT") or str(_REPO_ROOT / "logs")
+- scripts/verify/_runner.py:L70: merged_env = os.environ.copy()
+- system_map.html:L300: <div class="module"><h5>pipeline.dags.* (Composer Gen 3) <span class="tag pipeline">pipeline</span></h5><div class="resp">Three DAGs run each task as <code>KubernetesPodOperator</code> over the <code>composer-runner</code> image (V5 fix: 2026-05-03 incident — bash subprocess approach lacked uv/source). <code>_common.py</code> + <code>_pod.py</code> centralise env propagation (GCP_PROJECT auto-set by Composer Gen 3).</div></div>
+- tests/e2e/test_full_recreate_gate.py:L38: if os.environ.get("RUN_LIVE_GCP_FULL_RECREATE", "").strip() != "1":
+- tests/e2e/test_live_acceptance_gate.py:L34: if os.environ.get("RUN_LIVE_GCP_ACCEPTANCE", "").strip() != "1":
+- tests/integration/infra/test_manifests_structure.py:L120: def test_search_api_secretstore_uses_gcpsm_provider() -> None:
+- tests/integration/infra/test_manifests_structure.py:L121: store = <redacted>
+- tests/integration/infra/test_manifests_structure.py:L122: assert store["apiVersion"].startswith("external-secrets.io/")
+- tests/integration/infra/test_manifests_structure.py:L123: assert store["kind"] = <redacted>
+- tests/integration/infra/test_manifests_structure.py:L128: def test_search_api_external_secret_syncs_iap_client_secret() -> None:
+- tests/integration/infra/test_manifests_structure.py:L129: ext = <redacted>
+- tests/integration/infra/test_manifests_structure.py:L130: assert ext["apiVersion"].startswith("external-secrets.io/")
+- tests/integration/infra/test_manifests_structure.py:L131: assert ext["kind"] = <redacted>
+- tests/integration/infra/test_manifests_structure.py:L132: assert ext["metadata"]["name"] = <redacted>
+- tests/integration/infra/test_manifests_structure.py:L134: assert ext["spec"]["target"]["name"] = <redacted>
+- tests/integration/infra/test_manifests_structure.py:L137: "secretKey": <redacted>
+- tests/integration/infra/test_manifests_structure.py:L138: "remoteRef": <redacted>
+- tests/integration/infra/test_manifests_structure.py:L275: # dev default は `enabled: <redacted>
+- tests/integration/infra/test_manifests_structure.py:L278: assert iap["oauth2ClientSecret"]["name"] = <redacted>
+- tests/integration/infra/test_workflows_structure.py:L6: * every deploy workflow specifies ``id-token: <redacted>
+- tests/integration/infra/test_workflows_structure.py:L68: def test_deploy_workflows_request_oidc_token(filename: <redacted>
+- tests/integration/infra/test_workflows_structure.py:L70: assert "id-token: <redacted>
+- tests/integration/infra/test_workflows_structure.py:L71: f"{filename} must request id-token: <redacted>
+- tests/integration/parity/test_codebase_invariants.py:L5: (runbook itself documents forbidden tokens and would self-match).
+- tests/integration/parity/test_codebase_invariants.py:L19: # Same token union as runbook §2 L1'' table (W2-8 removal targets).
+- tests/integration/parity/test_codebase_invariants.py:L71: def test_w2_8_legacy_tokens_absent_in_python_trees(root_name: <redacted>
+- tests/integration/parity/test_codebase_invariants.py:L81: def test_w2_8_legacy_tokens_absent_in_manifests_yaml() -> None:
+- tests/integration/parity/test_codebase_invariants.py:L124: `: <redacted>
+- tests/integration/parity/test_codebase_invariants.py:L148: production 化 (HTTPS + password auth) する時は本 contract を更新すること。
+- tests/integration/workflow/test_composer_gcloud_json_contract.py:L3: Incident (2026-05): ``gcloud composer environments run`` mixes log lines and
+- tests/integration/workflow/test_composer_module_contract.py:L3: Pin the Composer module skeleton, IAM `sa-composer` SA + roles, dev environment
+- tests/integration/workflow/test_composer_module_contract.py:L34: "composer environment must be count-gated by var.enable_composer"
+- tests/integration/workflow/test_composer_module_contract.py:L49: Composer Gen 3 の予約 environment variable を含めると HTTP 400
+- tests/integration/workflow/test_composer_module_contract.py:L94: def test_composer_environment_uses_correct_region_var() -> None:
+- tests/integration/workflow/test_composer_module_contract.py:L104: def test_composer_environment_has_proper_create_destroy_timeouts() -> None:
+- tests/integration/workflow/test_composer_module_contract.py:L142: def test_composer_module_wired_into_dev_environment_with_correct_depends_on() -> None:
+- tests/integration/workflow/test_composer_module_contract.py:L182: 'variable "composer_environment_name"',
+- tests/integration/workflow/test_composer_module_contract.py:L190: 'output "composer_environment_name"',
+- tests/integration/workflow/test_composer_module_contract.py:L325: assert "gcloud composer environments run" in makefile
+- tests/integration/workflow/test_composer_module_contract.py:L344: """`Makefile::COMPOSER_ENV` ↔ tf `composer_environment_name` mismatch なし。"""
+- tests/integration/workflow/test_composer_module_contract.py:L353: r'variable "composer_environment_name" \{[^}]*default\s+=\s+"([^"]+)"',
+- tests/integration/workflow/test_destroy_all_contract.py:L348: 無かったため、user が手動で `gcloud composer environments delete --async` 等
+- tests/integration/workflow/test_destroy_all_contract.py:L359: assert "gcloud composer environments delete" in runbook
+- tests/integration/workflow/test_destroy_all_contract.py:L430: # Artifact Registry / Secret Manager / Dataform repo / GCS buckets / Feature Store
+- tests/integration/workflow/test_destroy_all_contract.py:L441: "_recover_secret_manager",
+- tests/integration/workflow/test_destroy_all_contract.py:L449: "Artifact Registry / Secret Manager / Dataform / GCS buckets / "
+- tests/integration/workflow/test_infra_apis_contract.py:L27: "google_composer_environment": "composer.googleapis.com",
+- tests/integration/workflow/test_infra_apis_contract.py:L41: "google_secret_manager_secret": <redacted>
+- tests/unit/app/test_kserve_wiring.py:L24: # Build ApiSettings from explicit kwargs so we don't depend on the process env.
+- tests/unit/app/test_settings_sources.py:L9: def test_apisettings_loads_non_secret_values_from_setting_yaml(monkeypatch, tmp_path: <redacted>
+- tests/unit/app/test_settings_sources.py:L16: "ELASTICSEARCH_API_KEY",
+- tests/unit/app/test_settings_sources.py:L30: credential_path.write_text("elasticsearch_api_key: local-es-key\n", encoding= <redacted>
+- tests/unit/app/test_settings_sources.py:L38: assert settings.elasticsearch_api_key = <redacted>
+- tests/unit/app/test_settings_sources.py:L45: credential_path.write_text('elasticsearch_api_key: "from-credential"\n', encoding= <redacted>
+- tests/unit/app/test_settings_sources.py:L49: monkeypatch.setenv("ELASTICSEARCH_API_KEY", "env-key")
+- tests/unit/app/test_settings_sources.py:L54: assert settings.elasticsearch_api_key = <redacted>
+- tests/unit/app/test_synonym_expander.py:L5: the same adapter wire format (``syn: <redacted>
+- tests/unit/app/test_synonym_expander.py:L11: - HIT path: <redacted>
+- tests/unit/app/test_synonym_expander.py:L13: - MISS path (token unknown): <redacted>
+- tests/unit/app/test_synonym_expander.py:L16: - ``max_synonyms_per_token`` truncates runaway entries
+- tests/unit/app/test_synonym_expander.py:L17: - Cross-token deduplication: <redacted>
+- tests/unit/app/test_synonym_expander.py:L61: def test_redis_expands_known_tokens_with_synonyms() -> None:
+- tests/unit/app/test_synonym_expander.py:L70: tokens = <redacted>
+- tests/unit/app/test_synonym_expander.py:L71: # original tokens preserved at the head
+- tests/unit/app/test_synonym_expander.py:L72: assert tokens[0] = <redacted>
+- tests/unit/app/test_synonym_expander.py:L73: assert tokens[1] in {"アクセス良好", "駅徒歩"}
+- tests/unit/app/test_synonym_expander.py:L74: assert "2LDK" in tokens
+- tests/unit/app/test_synonym_expander.py:L75: assert "2DK" in tokens
+- tests/unit/app/test_synonym_expander.py:L76: assert "2部屋" in tokens
+- tests/unit/app/test_synonym_expander.py:L78: assert len(tokens) = <redacted>
+- tests/unit/app/test_synonym_expander.py:L92: def test_redis_caps_synonyms_per_token() -> None:
+- tests/unit/app/test_synonym_expander.py:L95: expander = <redacted>
+- tests/unit/app/test_synonym_expander.py:L97: tokens = <redacted>
+- tests/unit/app/test_synonym_expander.py:L98: assert tokens[0] = <redacted>
+- tests/unit/app/test_synonym_expander.py:L99: # at most 3 synonyms appended → 4 total tokens
+- tests/unit/app/test_synonym_expander.py:L100: assert len(tokens) = <redacted>
+- tests/unit/app/test_synonym_expander.py:L103: def test_redis_dedupes_across_tokens() -> None:
+- tests/unit/app/test_synonym_expander.py:L104: # Two tokens share the synonym "共同住宅" — it must appear at most once.
+- tests/unit/app/test_synonym_expander.py:L113: tokens = <redacted>
+- tests/unit/app/test_synonym_expander.py:L114: assert tokens.count("共同住宅") = <redacted>
+- tests/unit/app/test_synonym_expander.py:L115: assert tokens.count("マンション") = <redacted>
+- tests/unit/app/test_synonym_expander.py:L116: assert tokens.count("アパート") = <redacted>
+- tests/unit/scripts/test_adapters.py:L81: with patch("scripts.adapters.gcloud._run", return_value= <redacted>
+- tests/unit/scripts/test_adapters.py:L82: gcloud_run("auth", "print-access-token", capture= <redacted>
+- tests/unit/scripts/test_composer_deploy_dags.py:L43: assert "Composer environment not provisioned" in captured.out
+- tests/unit/scripts/test_deploy_all_step_timing.py:L164: "os.environ",
+- tests/unit/scripts/test_deploy_all_step_timing.py:L218: "os.environ",
+- tests/unit/scripts/test_deploy_all_step_timing.py:L237: patch.dict("os.environ", {"PROJECT_ID": "mlops-test"}, clear=False),
+- tests/unit/scripts/test_infra_cleanup.py:L39: # ExternalSecret delete in search namespace
+- tests/unit/scripts/test_infra_cleanup.py:L40: assert "externalsecret" in calls[1]
+- tests/unit/scripts/test_infra_feature_view_sync.py:L62: patch.object(fvs, "_access_token", return_value= <redacted>
+- tests/unit/scripts/test_local_hybrid.py:L9: def test_resolve_elasticsearch_api_key_prefers_local_secret() -> None:
+- tests/unit/scripts/test_local_hybrid.py:L10: with patch("scripts.setup.local_hybrid.secret", return_value= <redacted>
+- tests/unit/scripts/test_local_hybrid.py:L12: local_hybrid._resolve_elasticsearch_api_key(elasticsearch_url= <redacted>
+- tests/unit/scripts/test_local_hybrid.py:L13: = <redacted>
+- tests/unit/scripts/test_local_hybrid.py:L17: def test_resolve_elasticsearch_api_key_empty_when_no_url() -> None:
+- tests/unit/scripts/test_local_hybrid.py:L18: assert local_hybrid._resolve_elasticsearch_api_key(elasticsearch_url= <redacted>
+- tests/unit/scripts/test_resolve_api_target.py:L5: 1. ``API_URL`` wins (mode= <redacted>
+- tests/unit/scripts/test_resolve_api_target.py:L7: 2. ``TARGET= <redacted>
+- tests/unit/scripts/test_resolve_api_target.py:L34: "API_REQUIRE_TOKEN",
+- tests/unit/scripts/test_resolve_api_target.py:L41: def test_explicit_api_url_wins_over_target_and_skips_token_by_default(
+- tests/unit/scripts/test_resolve_api_target.py:L47: monkeypatch.setattr(_common, "identity_token", lambda: <redacted>
+- tests/unit/scripts/test_resolve_api_target.py:L53: assert resolved.token is None
+- tests/unit/scripts/test_resolve_api_target.py:L72: def test_explicit_api_url_mints_token_when_require_token_truthy(
+- tests/unit/scripts/test_resolve_api_target.py:L76: monkeypatch.setenv("API_REQUIRE_TOKEN", flag)
+- tests/unit/scripts/test_resolve_api_target.py:L77: monkeypatch.setattr(_common, "identity_token", lambda: <redacted>
+- tests/unit/scripts/test_resolve_api_target.py:L82: assert resolved.token = <redacted>
+- tests/unit/scripts/test_resolve_api_target.py:L85: def test_target_local_uses_default_local_url_without_token(
+- tests/unit/scripts/test_resolve_api_target.py:L89: monkeypatch.setattr(_common, "identity_token", lambda: <redacted>
+- tests/unit/scripts/test_resolve_api_target.py:L95: assert resolved.token is None
+- tests/unit/scripts/test_resolve_api_target.py:L120: monkeypatch.setattr(_common, "identity_token", lambda: <redacted>
+- tests/unit/scripts/test_resolve_api_target.py:L126: assert resolved.token is None
+- tests/unit/scripts/test_resolve_api_target.py:L150: monkeypatch.setattr(_common, "identity_token", lambda: <redacted>
+- tests/unit/scripts/test_vertex_feature_store_wait.py:L15: def fake_token() -> str:
+- tests/unit/scripts/test_vertex_feature_store_wait.py:L18: def fake_rest(_token: <redacted>
+- tests/unit/scripts/test_vertex_feature_store_wait.py:L26: monkeypatch.setattr(vfs, "_access_token", fake_token)
+- tests/unit/scripts/test_vertex_feature_store_wait.py:L39: def fake_token() -> str:
+- tests/unit/scripts/test_vertex_feature_store_wait.py:L42: def fake_rest(_token: <redacted>
+- tests/unit/scripts/test_vertex_feature_store_wait.py:L53: monkeypatch.setattr(vfs, "_access_token", fake_token)
+- tests/unit/scripts/test_vertex_ops_scripts.py:L257: patch.object(feature_group, "_access_token", return_value= <redacted>

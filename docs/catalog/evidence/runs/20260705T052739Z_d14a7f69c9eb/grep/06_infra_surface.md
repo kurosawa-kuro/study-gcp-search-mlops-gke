@@ -1,0 +1,1625 @@
+# grep: infra_surface
+
+evidence_id: ev.grep.infra_surface
+description: iac / gcp / ci / container surface
+
+- .github/actions/setup-gcp/action.yml:L6: description: WIF provider resource name (projects/.../locations/.../workloadIdentityPools/.../providers/...)
+- .github/actions/setup-gcp/action.yml:L8: service_account:
+- .github/actions/setup-gcp/action.yml:L29: service_account: ${{ inputs.service_account }}
+- .github/workflows/ci.yml:L10: permissions:
+- .github/workflows/ci.yml:L15: runs-on: ubuntu-latest
+- .github/workflows/ci.yml:L39: runs-on: ubuntu-latest
+- .github/workflows/deploy-api.yml:L16: permissions:
+- .github/workflows/deploy-api.yml:L29: runs-on: ubuntu-latest
+- .github/workflows/deploy-api.yml:L36: service_account: ${{ vars.DEPLOYER_SERVICE_ACCOUNT }}
+- .github/workflows/deploy-dataform.yml:L12: permissions:
+- .github/workflows/deploy-dataform.yml:L23: runs-on: ubuntu-latest
+- .github/workflows/deploy-dataform.yml:L30: service_account: ${{ vars.DEPLOYER_SERVICE_ACCOUNT }}
+- .github/workflows/deploy-encoder-image.yml:L22: permissions:
+- .github/workflows/deploy-encoder-image.yml:L34: runs-on: ubuntu-latest
+- .github/workflows/deploy-encoder-image.yml:L41: service_account: ${{ vars.DEPLOYER_SERVICE_ACCOUNT }}
+- .github/workflows/deploy-pipeline.yml:L29: permissions:
+- .github/workflows/deploy-pipeline.yml:L36: PIPELINE_ROOT_BUCKET: mlops-dev-a-pipeline-root
+- .github/workflows/deploy-pipeline.yml:L40: runs-on: ubuntu-latest
+- .github/workflows/deploy-pipeline.yml:L49: service_account: ${{ vars.DEPLOYER_SERVICE_ACCOUNT }}
+- .github/workflows/deploy-pipeline.yml:L67: gs://${{ env.PIPELINE_ROOT_BUCKET }}/templates/
+- .github/workflows/deploy-reranker-image.yml:L22: permissions:
+- .github/workflows/deploy-reranker-image.yml:L34: runs-on: ubuntu-latest
+- .github/workflows/deploy-reranker-image.yml:L41: service_account: ${{ vars.DEPLOYER_SERVICE_ACCOUNT }}
+- .github/workflows/deploy-trainer-image.yml:L23: permissions:
+- .github/workflows/deploy-trainer-image.yml:L35: runs-on: ubuntu-latest
+- .github/workflows/deploy-trainer-image.yml:L42: service_account: ${{ vars.DEPLOYER_SERVICE_ACCOUNT }}
+- .github/workflows/terraform.yml:L12: permissions:
+- .github/workflows/terraform.yml:L24: runs-on: ubuntu-latest
+- .github/workflows/terraform.yml:L31: service_account: ${{ vars.DEPLOYER_SERVICE_ACCOUNT }}
+- .github/workflows/terraform.yml:L82: runs-on: ubuntu-latest
+- .github/workflows/terraform.yml:L90: service_account: ${{ vars.DEPLOYER_SERVICE_ACCOUNT }}
+- app/api/middleware/request_logging.py:L22: os.getenv("GCP_PROJECT") or os.getenv("GOOGLE_CLOUD_PROJECT") or os.getenv("PROJECT_ID")
+- app/container/infra.py:L178: The bucket name comes from ``ApiSettings.gcs_pipeline_root_bucket``
+- app/container/infra.py:L179: when set. Without a bucket, fall back to Noop so the search-api
+- app/container/infra.py:L185: bucket = getattr(settings, "gcs_pipeline_root_bucket", "") or ""
+- app/container/infra.py:L186: if not bucket:
+- app/container/infra.py:L195: bucket=bucket,
+- app/container/search.py:L38: """Accept either a bare endpoint ID or a fully-qualified resource name."""
+- app/container/search.py:L129: Feature View 経由で fresh feature を fetch する 1 本に収束。Resource
+- app/services/adapters/feature_online_store_fetcher.py:L35: feature_view: Fully-qualified ``FeatureView`` resource name, e.g.
+- app/services/adapters/feature_online_store_fetcher.py:L95: location = _resource_part(self._feature_view, "locations")
+- app/services/adapters/feature_online_store_fetcher.py:L140: def _resource_part(resource_name: <redacted>
+- app/services/adapters/feature_online_store_fetcher.py:L141: parts = resource_name.split("/")
+- app/services/adapters/gcs_training_dataset_repository.py:L32: bucket: str,
+- app/services/adapters/gcs_training_dataset_repository.py:L36: self._bucket = bucket
+- app/services/adapters/gcs_training_dataset_repository.py:L54: bucket = self._client.bucket(self._bucket)
+- app/services/adapters/gcs_training_dataset_repository.py:L55: blob = bucket.blob(self._manifest_path)
+- app/services/adapters/gcs_training_dataset_repository.py:L77: bucket = self._client.bucket(self._bucket)
+- app/services/adapters/gcs_training_dataset_repository.py:L78: blob = bucket.blob(self._manifest_path)
+- app/services/adapters/internal/pubsub_diagnostics.py:L19: from google.api_core import exceptions as google_exceptions
+- app/services/adapters/internal/pubsub_diagnostics.py:L27: os.getenv("K_SERVICE_ACCOUNT", "")
+- app/services/adapters/internal/pubsub_diagnostics.py:L28: or os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "")
+- app/services/adapters/internal/pubsub_diagnostics.py:L29: or os.getenv("CLOUD_RUN_SERVICE_ACCOUNT", "")
+- app/services/adapters/internal/pubsub_diagnostics.py:L47: if isinstance(exc, google_exceptions.PermissionDenied):
+- app/services/adapters/internal/pubsub_diagnostics.py:L49: "H1: runtime SA (sa-api) に roles/pubsub.publisher が欠落 — "
+- app/services/adapters/internal/pubsub_diagnostics.py:L57: elif isinstance(exc, google_exceptions.NotFound):
+- app/services/adapters/internal/pubsub_diagnostics.py:L64: elif isinstance(exc, google_exceptions.DeadlineExceeded | TimeoutError):
+- app/services/adapters/vertex_vector_search_semantic_search.py:L42: index_endpoint_name: Fully-qualified resource name of the deployed
+- app/services/noop_adapters/noop_training_dataset_repository.py:L12: """Returns no-ops; used when the GCS bucket is not configured."""
+- app/settings/api.py:L74: # 常に Vertex Vector Search の find_neighbors を使う。Resource ID は
+- env/config/setting.yaml:L10: # **Terraform の google_composer_environment.env_variables + Composer が注入する
+- env/config/setting.yaml:L43: pipeline_root_bucket: mlops-dev-a-pipeline-root
+- env/config/setting.yaml:L65: #                    Terraform は `data "google_dns_managed_zone"` で参照、zone 自体は
+- infra/manifests/elasticsearch/elasticsearch.yaml:L34: resources:
+- infra/manifests/elasticsearch/elasticsearch.yaml:L54: resources:
+- infra/manifests/elasticsearch/kibana-pvc.yaml:L10: resources:
+- infra/manifests/elasticsearch/kibana.yaml:L15: resources:
+- infra/manifests/kserve/encoder.yaml:L48: resources:
+- infra/manifests/kserve/reranker-explain.yaml:L66: resources:
+- infra/manifests/kserve/reranker.yaml:L29: resources:
+- infra/manifests/kustomization.yaml:L3: resources:
+- infra/manifests/search-api/configmap.example.yaml:L6: # Online Store の resource ID / endpoint だけを持つ。`semantic_backend`
+- infra/manifests/search-api/configmap.example.yaml:L15: models_bucket: "mlops-dev-a-models"
+- infra/manifests/search-api/deployment.yaml:L28: resources:
+- infra/manifests/search-api/deployment.yaml:L41: - name: GCS_MODELS_BUCKET
+- infra/manifests/search-api/deployment.yaml:L45: key: <redacted>
+- infra/manifests/search-api/deployment.yaml:L102: # canonical 経路の resource ID / endpoint だけを ConfigMap から注入。
+- infra/manifests/search-api/healthcheckpolicy.yaml:L13: # Reference: https://cloud.google.com/kubernetes-engine/docs/how-to/configure-gateway-resources#configure_health_check
+- infra/manifests/search-api/hpa.yaml:L14: - type: Resource
+- infra/manifests/search-api/hpa.yaml:L15: resource:
+- infra/manifests/search-api/hpa.yaml:L20: - type: Resource
+- infra/manifests/search-api/hpa.yaml:L21: resource:
+- infra/terraform/environments/dev/apis.tf:L36: resource "google_project_service" "enabled" {
+- infra/terraform/environments/dev/backend.tf:L3: bucket = "mlops-dev-a-tfstate"
+- infra/terraform/environments/dev/main.tf:L14: # `depends_on = [google_project_service.enabled]` on each module call.
+- infra/terraform/environments/dev/main.tf:L28: depends_on = [google_project_service.enabled]
+- infra/terraform/environments/dev/main.tf:L37: models_bucket_name                = var.models_bucket_name
+- infra/terraform/environments/dev/main.tf:L38: pipeline_root_bucket_name         = var.pipeline_root_bucket_name
+- infra/terraform/environments/dev/main.tf:L39: artifacts_bucket_name             = var.artifacts_bucket_name
+- infra/terraform/environments/dev/main.tf:L40: service_accounts                  = module.iam.service_accounts
+- infra/terraform/environments/dev/main.tf:L47: depends_on = [google_project_service.enabled]
+- infra/terraform/environments/dev/main.tf:L57: depends_on = [google_project_service.enabled]
+- infra/terraform/environments/dev/main.tf:L72: composer_service_account_email    = module.iam.service_accounts.composer.email
+- infra/terraform/environments/dev/main.tf:L73: pipeline_root_bucket_name         = module.data.pipeline_root_bucket.name
+- infra/terraform/environments/dev/main.tf:L75: vector_search_index_resource_name = module.vector_search.index_resource_name
+- infra/terraform/environments/dev/main.tf:L83: google_project_service.enabled,
+- infra/terraform/environments/dev/main.tf:L97: service_accounts                 = module.iam.service_accounts
+- infra/terraform/environments/dev/main.tf:L100: pipeline_root_bucket_name        = module.data.pipeline_root_bucket.name
+- infra/terraform/environments/dev/main.tf:L101: models_bucket_name               = module.data.models_bucket.name
+- infra/terraform/environments/dev/main.tf:L113: google_project_service.enabled,
+- infra/terraform/environments/dev/main.tf:L127: service_accounts    = module.iam.service_accounts
+- infra/terraform/environments/dev/main.tf:L130: google_project_service.enabled,
+- infra/terraform/environments/dev/main.tf:L139: service_accounts = module.iam.service_accounts
+- infra/terraform/environments/dev/main.tf:L161: google_project_service.enabled,
+- infra/terraform/environments/dev/main.tf:L188: service_accounts            = module.iam.service_accounts
+- infra/terraform/environments/dev/main.tf:L192: google_project_service.enabled,
+- infra/terraform/environments/dev/main.tf:L210: depends_on = [google_project_service.enabled]
+- infra/terraform/environments/dev/main.tf:L222: service_accounts            = module.iam.service_accounts
+- infra/terraform/environments/dev/main.tf:L225: google_project_service.enabled,
+- infra/terraform/environments/dev/main.tf:L243: temp_location          = "gs://${module.data.artifacts_bucket.name}/dataflow/tmp"
+- infra/terraform/environments/dev/main.tf:L244: staging_location       = "gs://${module.data.artifacts_bucket.name}/dataflow/staging"
+- infra/terraform/environments/dev/main.tf:L248: google_project_service.enabled,
+- infra/terraform/environments/dev/main.tf:L281: google_project_service.enabled,
+- infra/terraform/environments/dev/outputs.tf:L9: output "models_bucket" {
+- infra/terraform/environments/dev/outputs.tf:L10: value = module.data.models_bucket.name
+- infra/terraform/environments/dev/outputs.tf:L13: output "pipeline_root_bucket" {
+- infra/terraform/environments/dev/outputs.tf:L14: description = "GCS bucket used as Vertex AI pipeline root"
+- infra/terraform/environments/dev/outputs.tf:L15: value       = module.data.pipeline_root_bucket.name
+- infra/terraform/environments/dev/outputs.tf:L71: output "service_accounts" {
+- infra/terraform/environments/dev/outputs.tf:L73: api               = module.iam.service_accounts.api.email
+- infra/terraform/environments/dev/outputs.tf:L74: job_train         = module.iam.service_accounts.job_train.email
+- infra/terraform/environments/dev/outputs.tf:L75: job_embed         = module.iam.service_accounts.job_embed.email
+- infra/terraform/environments/dev/outputs.tf:L76: dataform          = module.iam.service_accounts.dataform.email
+- infra/terraform/environments/dev/outputs.tf:L77: scheduler         = module.iam.service_accounts.scheduler.email
+- infra/terraform/environments/dev/outputs.tf:L78: pipeline          = module.iam.service_accounts.pipeline.email
+- infra/terraform/environments/dev/outputs.tf:L79: endpoint_encoder  = module.iam.service_accounts.endpoint_encoder.email
+- infra/terraform/environments/dev/outputs.tf:L80: endpoint_reranker = module.iam.service_accounts.endpoint_reranker.email
+- infra/terraform/environments/dev/outputs.tf:L81: pipeline_trigger  = module.iam.service_accounts.pipeline_trigger.email
+- infra/terraform/environments/dev/outputs.tf:L82: external_secrets  = <redacted>
+- infra/terraform/environments/dev/outputs.tf:L87: description = "Resolved Vertex encoder endpoint resource name placeholder"
+- infra/terraform/environments/dev/outputs.tf:L92: description = "Resolved Vertex reranker endpoint resource name placeholder"
+- infra/terraform/environments/dev/outputs.tf:L122: description = "Vertex AI Vector Search index endpoint resource name. Empty string when enable_vector_search=false. Consumed by search-api via VERTEX_VECTOR_SEARCH_INDEX_ENDPOINT_ID env."
+- infra/terraform/environments/dev/outputs.tf:L131: output "vector_search_index_resource_name" {
+- infra/terraform/environments/dev/outputs.tf:L132: description = "Vertex AI Vector Search index resource name (full path). Empty string when disabled. Consumed by embed pipeline VVS upsert step via vector_search_index_resource_name KFP param."
+- infra/terraform/environments/dev/outputs.tf:L133: value       = module.vector_search.index_resource_name
+- infra/terraform/environments/dev/outputs.tf:L172: description = "Register as GitHub Actions var DEPLOYER_SERVICE_ACCOUNT"
+- infra/terraform/environments/dev/outputs.tf:L197: description = "Namespace hosting KServe InferenceService resources"
+- infra/terraform/environments/dev/outputs.tf:L202: # `scripts/deploy/composer_deploy_dags.py` (DAG bucket) and
+- infra/terraform/environments/dev/outputs.tf:L204: output "composer_dag_bucket" {
+- infra/terraform/environments/dev/outputs.tf:L206: value       = module.composer.dag_bucket
+- infra/terraform/environments/dev/provider.tf:L11: data "google_project" "current" {}
+- infra/terraform/environments/dev/provider.tf:L16: # kubeconfig** instead of `data.google_container_cluster.hybrid_search`. The
+- infra/terraform/environments/dev/provider.tf:L36: # (kubeconfig が無くても provider init は失敗しない、resource 操作時のみ
+- infra/terraform/environments/dev/variables.tf:L16: variable "models_bucket_name" {
+- infra/terraform/environments/dev/variables.tf:L21: variable "pipeline_root_bucket_name" {
+- infra/terraform/environments/dev/variables.tf:L22: description = "GCS bucket name for Vertex AI pipeline root artifacts and compiled templates"
+- infra/terraform/environments/dev/variables.tf:L27: variable "artifacts_bucket_name" {
+- infra/terraform/environments/dev/variables.tf:L51: description = <redacted>
+- infra/terraform/environments/dev/variables.tf:L83: description = "Cloud DNS managed-zone resource name that hosts public_domain. The zone is created out-of-band (console); Terraform reads it via data source and only manages record-sets + the Certificate Manager DNS authorization CNAME."
+- infra/terraform/environments/dev/variables.tf:L189: description = "GCS path to the compiled Flex Template spec JSON (built out-of-band by scripts/setup/build_streaming_template.py). Empty suppresses the Dataflow job resource."
+- infra/terraform/environments/dev/variables.tf:L240: description = "GCS path to compiled KFP pipeline YAML (e.g. `gs://<bucket>/templates/property-search-train.yaml`). DAG `retrain_orchestration::submit_train_pipeline` reads this to invoke `scripts.ops.train_now`. Empty = DAG falls back to local compile (Stage 2 default)."
+- infra/terraform/modules/composer/main.tf:L26: resource "google_composer_environment" "this" {
+- infra/terraform/modules/composer/main.tf:L51: PIPELINE_ROOT_BUCKET                     = var.pipeline_root_bucket_name
+- infra/terraform/modules/composer/main.tf:L53: VERTEX_VECTOR_SEARCH_INDEX_RESOURCE_NAME = var.vector_search_index_resource_name
+- infra/terraform/modules/composer/main.tf:L72: service_account = var.composer_service_account_email
+- infra/terraform/modules/composer/outputs.tf:L1: output "dag_bucket" {
+- infra/terraform/modules/composer/outputs.tf:L2: description = "GCS prefix Composer reads DAGs from (e.g. `gs://<region>-<env>-<hash>-bucket/dags`). Consumed by `scripts/deploy/composer_deploy_dags.py` via `terraform output -json`."
+- infra/terraform/modules/composer/outputs.tf:L3: value       = var.enable_composer ? google_composer_environment.this[0].config[0].dag_gcs_prefix : ""
+- infra/terraform/modules/composer/outputs.tf:L8: value       = var.enable_composer ? google_composer_environment.this[0].config[0].airflow_uri : ""
+- infra/terraform/modules/composer/variables.tf:L29: variable "composer_service_account_email" {
+- infra/terraform/modules/composer/variables.tf:L30: description = "GCP service account email the Composer environment runs as. Created in `module.iam.google_service_account.composer`."
+- infra/terraform/modules/composer/variables.tf:L34: variable "pipeline_root_bucket_name" {
+- infra/terraform/modules/composer/variables.tf:L35: description = "GCS bucket name (no `gs://`) for Vertex Pipelines run artifacts. Surfaced to DAGs as PIPELINE_ROOT_BUCKET."
+- infra/terraform/modules/composer/variables.tf:L40: description = "GCS path to compiled KFP pipeline YAML (e.g. `gs://<bucket>/templates/property-search-train.yaml`). DAG `retrain_orchestration` reads this to submit Vertex PipelineJob via `scripts.ops.train_now`."
+- infra/terraform/modules/composer/variables.tf:L45: variable "vector_search_index_resource_name" {
+- infra/terraform/modules/composer/variables.tf:L46: description = "Vertex AI Vector Search index resource name (`projects/.../locations/.../indexes/...`). Surfaced to DAG `daily_feature_refresh::backfill_vvs_incremental`."
+- infra/terraform/modules/data/main.tf:L5: resource "google_bigquery_dataset" "mlops" {
+- infra/terraform/modules/data/main.tf:L11: resource "google_bigquery_dataset" "feature_mart" {
+- infra/terraform/modules/data/main.tf:L17: resource "google_bigquery_dataset" "predictions" {
+- infra/terraform/modules/data/main.tf:L23: resource "google_bigquery_table" "training_runs" {
+- infra/terraform/modules/data/main.tf:L24: dataset_id          = google_bigquery_dataset.mlops.dataset_id
+- infra/terraform/modules/data/main.tf:L73: # removed: google_bigquery_table.predictions_log
+- infra/terraform/modules/data/main.tf:L82: # *before* the next `terraform apply`, because the resource previously carried
+- infra/terraform/modules/data/main.tf:L112: resource "google_bigquery_table" "property_features_daily" {
+- infra/terraform/modules/data/main.tf:L113: dataset_id          = google_bigquery_dataset.feature_mart.dataset_id
+- infra/terraform/modules/data/main.tf:L142: resource "google_bigquery_table" "property_features_online_latest" {
+- infra/terraform/modules/data/main.tf:L143: dataset_id          = google_bigquery_dataset.feature_mart.dataset_id
+- infra/terraform/modules/data/main.tf:L146: depends_on          = [google_bigquery_table.property_features_daily]
+- infra/terraform/modules/data/main.tf:L160: FROM `${var.project_id}.${google_bigquery_dataset.feature_mart.dataset_id}.property_features_daily`
+- infra/terraform/modules/data/main.tf:L166: resource "google_bigquery_table" "property_embeddings" {
+- infra/terraform/modules/data/main.tf:L167: dataset_id          = google_bigquery_dataset.feature_mart.dataset_id
+- infra/terraform/modules/data/main.tf:L182: resource "google_bigquery_table" "search_logs" {
+- infra/terraform/modules/data/main.tf:L183: dataset_id          = google_bigquery_dataset.mlops.dataset_id
+- infra/terraform/modules/data/main.tf:L214: resource "google_bigquery_table" "ranking_log" {
+- infra/terraform/modules/data/main.tf:L215: dataset_id          = google_bigquery_dataset.mlops.dataset_id
+- infra/terraform/modules/data/main.tf:L256: resource "google_bigquery_table" "feedback_events" {
+- infra/terraform/modules/data/main.tf:L257: dataset_id          = google_bigquery_dataset.mlops.dataset_id
+- infra/terraform/modules/data/main.tf:L275: resource "google_bigquery_table" "search_events" {
+- infra/terraform/modules/data/main.tf:L276: dataset_id          = google_bigquery_dataset.mlops.dataset_id
+- infra/terraform/modules/data/main.tf:L299: resource "google_bigquery_table" "search_impressions" {
+- infra/terraform/modules/data/main.tf:L300: dataset_id          = google_bigquery_dataset.mlops.dataset_id
+- infra/terraform/modules/data/main.tf:L325: resource "google_bigquery_table" "user_actions" {
+- infra/terraform/modules/data/main.tf:L326: dataset_id          = google_bigquery_dataset.mlops.dataset_id
+- infra/terraform/modules/data/main.tf:L346: resource "google_bigquery_table" "ranking_labels" {
+- infra/terraform/modules/data/main.tf:L347: dataset_id          = google_bigquery_dataset.mlops.dataset_id
+- infra/terraform/modules/data/main.tf:L366: resource "google_bigquery_table" "evaluation_metrics" {
+- infra/terraform/modules/data/main.tf:L367: dataset_id          = google_bigquery_dataset.mlops.dataset_id
+- infra/terraform/modules/data/main.tf:L389: resource "google_bigquery_table" "validation_results" {
+- infra/terraform/modules/data/main.tf:L390: dataset_id          = google_bigquery_dataset.mlops.dataset_id
+- infra/terraform/modules/data/main.tf:L409: resource "google_bigquery_table" "model_monitoring_alerts" {
+- infra/terraform/modules/data/main.tf:L410: dataset_id          = google_bigquery_dataset.mlops.dataset_id
+- infra/terraform/modules/data/main.tf:L422: { name = "model_resource_name", type = "STRING", mode = "NULLABLE" },
+- infra/terraform/modules/data/main.tf:L434: resource "google_bigquery_table" "ranking_log_hourly_ctr" {
+- infra/terraform/modules/data/main.tf:L435: dataset_id          = google_bigquery_dataset.mlops.dataset_id
+- infra/terraform/modules/data/main.tf:L458: resource "google_storage_bucket" "models" {
+- infra/terraform/modules/data/main.tf:L459: name                        = var.models_bucket_name
+- infra/terraform/modules/data/main.tf:L461: uniform_bucket_level_access = true
+- infra/terraform/modules/data/main.tf:L479: resource "google_storage_bucket" "artifacts" {
+- infra/terraform/modules/data/main.tf:L480: name                        = var.artifacts_bucket_name
+- infra/terraform/modules/data/main.tf:L482: uniform_bucket_level_access = true
+- infra/terraform/modules/data/main.tf:L495: resource "google_storage_bucket" "pipeline_root" {
+- infra/terraform/modules/data/main.tf:L496: name                        = var.pipeline_root_bucket_name
+- infra/terraform/modules/data/main.tf:L498: uniform_bucket_level_access = true
+- infra/terraform/modules/data/main.tf:L516: resource "google_artifact_registry_repository" "mlops" {
+- infra/terraform/modules/data/main.tf:L526: resource "google_secret_manager_secret" "search_api_iap_oauth_client_secret" {
+- infra/terraform/modules/data/main.tf:L545: resource "google_secret_manager_secret_version" "search_api_iap_oauth_client_secret_dev_placeholder" {
+- infra/terraform/modules/data/main.tf:L546: secret      = <redacted>
+- infra/terraform/modules/data/main.tf:L551: # IAM — runtime SAs ↔ data resources
+- infra/terraform/modules/data/main.tf:L557: #         storage objectViewer on models bucket, secret accessor.
+- infra/terraform/modules/data/main.tf:L558: resource "google_bigquery_dataset_iam_member" "api_mlops_viewer" {
+- infra/terraform/modules/data/main.tf:L559: dataset_id = google_bigquery_dataset.mlops.dataset_id
+- infra/terraform/modules/data/main.tf:L560: role       = "roles/bigquery.dataViewer"
+- infra/terraform/modules/data/main.tf:L561: member     = "serviceAccount:${var.service_accounts.api.email}"
+- infra/terraform/modules/data/main.tf:L564: resource "google_bigquery_dataset_iam_member" "api_feature_viewer" {
+- infra/terraform/modules/data/main.tf:L565: dataset_id = google_bigquery_dataset.feature_mart.dataset_id
+- infra/terraform/modules/data/main.tf:L566: role       = "roles/bigquery.dataViewer"
+- infra/terraform/modules/data/main.tf:L567: member     = "serviceAccount:${var.service_accounts.api.email}"
+- infra/terraform/modules/data/main.tf:L570: resource "google_storage_bucket_iam_member" "api_models_read" {
+- infra/terraform/modules/data/main.tf:L571: bucket = google_storage_bucket.models.name
+- infra/terraform/modules/data/main.tf:L572: role   = "roles/storage.objectViewer"
+- infra/terraform/modules/data/main.tf:L573: member = "serviceAccount:${var.service_accounts.api.email}"
+- infra/terraform/modules/data/main.tf:L576: resource "google_secret_manager_secret_iam_member" "external_secrets_search_api_iap_oauth_client_secret_access" {
+- infra/terraform/modules/data/main.tf:L577: secret_id = <redacted>
+- infra/terraform/modules/data/main.tf:L578: role      = <redacted>
+- infra/terraform/modules/data/main.tf:L579: member    = <redacted>
+- infra/terraform/modules/data/main.tf:L583: resource "google_bigquery_dataset_iam_member" "train_feature_viewer" {
+- infra/terraform/modules/data/main.tf:L584: dataset_id = google_bigquery_dataset.feature_mart.dataset_id
+- infra/terraform/modules/data/main.tf:L585: role       = "roles/bigquery.dataViewer"
+- infra/terraform/modules/data/main.tf:L586: member     = "serviceAccount:${var.service_accounts.job_train.email}"
+- infra/terraform/modules/data/main.tf:L589: resource "google_bigquery_dataset_iam_member" "train_mlops_editor" {
+- infra/terraform/modules/data/main.tf:L590: dataset_id = google_bigquery_dataset.mlops.dataset_id
+- infra/terraform/modules/data/main.tf:L591: role       = "roles/bigquery.dataEditor"
+- infra/terraform/modules/data/main.tf:L592: member     = "serviceAccount:${var.service_accounts.job_train.email}"
+- infra/terraform/modules/data/main.tf:L595: resource "google_storage_bucket_iam_member" "train_models_admin" {
+- infra/terraform/modules/data/main.tf:L596: bucket = google_storage_bucket.models.name
+- infra/terraform/modules/data/main.tf:L597: role   = "roles/storage.objectAdmin"
+- infra/terraform/modules/data/main.tf:L598: member = "serviceAccount:${var.service_accounts.job_train.email}"
+- infra/terraform/modules/data/main.tf:L601: resource "google_storage_bucket_iam_member" "train_pipeline_root_admin" {
+- infra/terraform/modules/data/main.tf:L602: bucket = google_storage_bucket.pipeline_root.name
+- infra/terraform/modules/data/main.tf:L603: role   = "roles/storage.objectAdmin"
+- infra/terraform/modules/data/main.tf:L604: member = "serviceAccount:${var.service_accounts.job_train.email}"
+- infra/terraform/modules/data/main.tf:L611: resource "google_bigquery_dataset_iam_member" "embed_feature_viewer" {
+- infra/terraform/modules/data/main.tf:L612: dataset_id = google_bigquery_dataset.feature_mart.dataset_id
+- infra/terraform/modules/data/main.tf:L613: role       = "roles/bigquery.dataViewer"
+- infra/terraform/modules/data/main.tf:L614: member     = "serviceAccount:${var.service_accounts.job_embed.email}"
+- infra/terraform/modules/data/main.tf:L617: resource "google_bigquery_dataset_iam_member" "embed_feature_editor" {
+- infra/terraform/modules/data/main.tf:L618: dataset_id = google_bigquery_dataset.feature_mart.dataset_id
+- infra/terraform/modules/data/main.tf:L619: role       = "roles/bigquery.dataEditor"
+- infra/terraform/modules/data/main.tf:L620: member     = "serviceAccount:${var.service_accounts.job_embed.email}"
+- infra/terraform/modules/data/main.tf:L623: resource "google_storage_bucket_iam_member" "embed_models_viewer" {
+- infra/terraform/modules/data/main.tf:L624: bucket = google_storage_bucket.models.name
+- infra/terraform/modules/data/main.tf:L625: role   = "roles/storage.objectViewer"
+- infra/terraform/modules/data/main.tf:L626: member = "serviceAccount:${var.service_accounts.job_embed.email}"
+- infra/terraform/modules/data/main.tf:L629: resource "google_bigquery_dataset_iam_member" "pipeline_feature_viewer" {
+- infra/terraform/modules/data/main.tf:L630: dataset_id = google_bigquery_dataset.feature_mart.dataset_id
+- infra/terraform/modules/data/main.tf:L631: role       = "roles/bigquery.dataViewer"
+- infra/terraform/modules/data/main.tf:L632: member     = "serviceAccount:${var.service_accounts.pipeline.email}"
+- infra/terraform/modules/data/main.tf:L635: resource "google_bigquery_dataset_iam_member" "pipeline_mlops_editor" {
+- infra/terraform/modules/data/main.tf:L636: dataset_id = google_bigquery_dataset.mlops.dataset_id
+- infra/terraform/modules/data/main.tf:L637: role       = "roles/bigquery.dataEditor"
+- infra/terraform/modules/data/main.tf:L638: member     = "serviceAccount:${var.service_accounts.pipeline.email}"
+- infra/terraform/modules/data/main.tf:L641: resource "google_storage_bucket_iam_member" "pipeline_models_admin" {
+- infra/terraform/modules/data/main.tf:L642: bucket = google_storage_bucket.models.name
+- infra/terraform/modules/data/main.tf:L643: role   = "roles/storage.objectAdmin"
+- infra/terraform/modules/data/main.tf:L644: member = "serviceAccount:${var.service_accounts.pipeline.email}"
+- infra/terraform/modules/data/main.tf:L647: resource "google_storage_bucket_iam_member" "pipeline_root_pipeline_admin" {
+- infra/terraform/modules/data/main.tf:L648: bucket = google_storage_bucket.pipeline_root.name
+- infra/terraform/modules/data/main.tf:L649: role   = "roles/storage.objectAdmin"
+- infra/terraform/modules/data/main.tf:L650: member = "serviceAccount:${var.service_accounts.pipeline.email}"
+- infra/terraform/modules/data/main.tf:L656: resource "google_storage_bucket_iam_member" "pipeline_root_composer_object_admin" {
+- infra/terraform/modules/data/main.tf:L657: bucket = google_storage_bucket.pipeline_root.name
+- infra/terraform/modules/data/main.tf:L658: role   = "roles/storage.objectAdmin"
+- infra/terraform/modules/data/main.tf:L659: member = "serviceAccount:${var.service_accounts.composer.email}"
+- infra/terraform/modules/data/main.tf:L662: resource "google_storage_bucket_iam_member" "endpoint_encoder_models_viewer" {
+- infra/terraform/modules/data/main.tf:L663: bucket = google_storage_bucket.models.name
+- infra/terraform/modules/data/main.tf:L664: role   = "roles/storage.objectViewer"
+- infra/terraform/modules/data/main.tf:L665: member = "serviceAccount:${var.service_accounts.endpoint_encoder.email}"
+- infra/terraform/modules/data/main.tf:L668: resource "google_storage_bucket_iam_member" "endpoint_reranker_models_viewer" {
+- infra/terraform/modules/data/main.tf:L669: bucket = google_storage_bucket.models.name
+- infra/terraform/modules/data/main.tf:L670: role   = "roles/storage.objectViewer"
+- infra/terraform/modules/data/main.tf:L671: member = "serviceAccount:${var.service_accounts.endpoint_reranker.email}"
+- infra/terraform/modules/data/main.tf:L675: resource "google_bigquery_dataset_iam_member" "dataform_feature_editor" {
+- infra/terraform/modules/data/main.tf:L676: dataset_id = google_bigquery_dataset.feature_mart.dataset_id
+- infra/terraform/modules/data/main.tf:L677: role       = "roles/bigquery.dataEditor"
+- infra/terraform/modules/data/main.tf:L678: member     = "serviceAccount:${var.service_accounts.dataform.email}"
+- infra/terraform/modules/data/main.tf:L682: # (google_bigquery_data_transfer_config in modules/monitoring), which reads
+- infra/terraform/modules/data/main.tf:L684: resource "google_bigquery_dataset_iam_member" "dataform_mlops_editor" {
+- infra/terraform/modules/data/main.tf:L685: dataset_id = google_bigquery_dataset.mlops.dataset_id
+- infra/terraform/modules/data/main.tf:L686: role       = "roles/bigquery.dataEditor"
+- infra/terraform/modules/data/main.tf:L687: member     = "serviceAccount:${var.service_accounts.dataform.email}"
+- infra/terraform/modules/data/main.tf:L698: resource "google_dataform_repository" "main" {
+- infra/terraform/modules/data/main.tf:L705: # service_account is the identity Dataform uses when executing compiled SQL.
+- infra/terraform/modules/data/main.tf:L706: service_account = var.service_accounts.dataform.email
+- infra/terraform/modules/data/main.tf:L725: resource "google_dataform_repository_iam_member" "admin_self" {
+- infra/terraform/modules/data/main.tf:L730: repository = google_dataform_repository.main.name
+- infra/terraform/modules/data/main.tf:L731: role       = "roles/dataform.admin"
+- infra/terraform/modules/data/main.tf:L732: member     = "serviceAccount:${var.service_accounts.dataform.email}"
+- infra/terraform/modules/data/main.tf:L737: resource "google_dataform_repository_iam_member" "deployer_editor" {
+- infra/terraform/modules/data/main.tf:L744: repository = google_dataform_repository.main.name
+- infra/terraform/modules/data/main.tf:L745: role       = "roles/dataform.editor"
+- infra/terraform/modules/data/outputs.tf:L2: value = google_bigquery_dataset.mlops
+- infra/terraform/modules/data/outputs.tf:L6: value = google_bigquery_dataset.feature_mart
+- infra/terraform/modules/data/outputs.tf:L10: value = google_bigquery_dataset.predictions
+- infra/terraform/modules/data/outputs.tf:L14: value = google_bigquery_table.training_runs
+- infra/terraform/modules/data/outputs.tf:L18: value = google_bigquery_table.validation_results
+- infra/terraform/modules/data/outputs.tf:L22: value = google_bigquery_table.model_monitoring_alerts
+- infra/terraform/modules/data/outputs.tf:L26: value = google_bigquery_table.property_features_daily
+- infra/terraform/modules/data/outputs.tf:L30: value = google_bigquery_table.property_features_online_latest
+- infra/terraform/modules/data/outputs.tf:L34: value = google_bigquery_table.property_embeddings
+- infra/terraform/modules/data/outputs.tf:L38: value = google_bigquery_table.search_logs
+- infra/terraform/modules/data/outputs.tf:L42: value = google_bigquery_table.ranking_log
+- infra/terraform/modules/data/outputs.tf:L46: value = google_bigquery_table.feedback_events
+- infra/terraform/modules/data/outputs.tf:L50: value = google_bigquery_table.search_events
+- infra/terraform/modules/data/outputs.tf:L54: value = google_bigquery_table.search_impressions
+- infra/terraform/modules/data/outputs.tf:L58: value = google_bigquery_table.user_actions
+- infra/terraform/modules/data/outputs.tf:L62: value = google_bigquery_table.ranking_labels
+- infra/terraform/modules/data/outputs.tf:L66: value = google_bigquery_table.evaluation_metrics
+- infra/terraform/modules/data/outputs.tf:L71: value = google_bigquery_table.ranking_log_hourly_ctr
+- infra/terraform/modules/data/outputs.tf:L74: output "models_bucket" {
+- infra/terraform/modules/data/outputs.tf:L75: value = google_storage_bucket.models
+- infra/terraform/modules/data/outputs.tf:L78: output "artifacts_bucket" {
+- infra/terraform/modules/data/outputs.tf:L79: value = google_storage_bucket.artifacts
+- infra/terraform/modules/data/outputs.tf:L82: output "pipeline_root_bucket" {
+- infra/terraform/modules/data/outputs.tf:L83: value = google_storage_bucket.pipeline_root
+- infra/terraform/modules/data/outputs.tf:L87: value = google_artifact_registry_repository.mlops
+- infra/terraform/modules/data/outputs.tf:L92: search_api_iap_oauth_client_secret = <redacted>
+- infra/terraform/modules/data/outputs.tf:L97: description = "google_dataform_repository.main — name is referenced by .github/workflows/deploy-dataform.yml"
+- infra/terraform/modules/data/outputs.tf:L98: value       = google_dataform_repository.main
+- infra/terraform/modules/data/variables.tf:L7: description = <redacted>
+- infra/terraform/modules/data/variables.tf:L16: variable "models_bucket_name" {
+- infra/terraform/modules/data/variables.tf:L17: description = "GCS bucket name for trained model artifacts (immutable under lgbm/{date}/{run_id}/)"
+- infra/terraform/modules/data/variables.tf:L21: variable "pipeline_root_bucket_name" {
+- infra/terraform/modules/data/variables.tf:L22: description = "GCS bucket name for Vertex AI pipeline root and compiled pipeline templates"
+- infra/terraform/modules/data/variables.tf:L26: variable "artifacts_bucket_name" {
+- infra/terraform/modules/data/variables.tf:L27: description = "GCS bucket name for general-purpose artifacts (code drops, Dataform logs)"
+- infra/terraform/modules/data/variables.tf:L31: variable "service_accounts" {
+- infra/terraform/modules/data/variables.tf:L32: description = "Map of SA resources emitted by the iam module. Uses .email for IAM bindings."
+- infra/terraform/modules/data/variables.tf:L49: description = <redacted>
+- infra/terraform/modules/data/variables.tf:L61: description = "Toggle BQ table deletion_protection across the data module. Default true (production-safe). `make destroy-all` flips this to false in a preceding apply so the subsequent terraform destroy can proceed (Terraform refuses to destroy a table whose state still says deletion_protection=true, even if the actual GCP resource was unprotected via bq CLI)."
+- infra/terraform/modules/dns/main.tf:L13: #      `google_compute_managed_ssl_certificate` + `pre-shared-certs` is an
+- infra/terraform/modules/dns/main.tf:L22: data "google_dns_managed_zone" "public" {
+- infra/terraform/modules/dns/main.tf:L28: resource "google_compute_global_address" "search_api" {
+- infra/terraform/modules/dns/main.tf:L36: resource "google_dns_record_set" "apex_a" {
+- infra/terraform/modules/dns/main.tf:L40: managed_zone = data.google_dns_managed_zone.public.name
+- infra/terraform/modules/dns/main.tf:L42: rrdatas      = [google_compute_global_address.search_api.address]
+- infra/terraform/modules/dns/main.tf:L46: resource "google_certificate_manager_dns_authorization" "search_api" {
+- infra/terraform/modules/dns/main.tf:L56: resource "google_dns_record_set" "cert_auth_cname" {
+- infra/terraform/modules/dns/main.tf:L57: name         = google_certificate_manager_dns_authorization.search_api.dns_resource_record[0].name
+- infra/terraform/modules/dns/main.tf:L58: type         = google_certificate_manager_dns_authorization.search_api.dns_resource_record[0].type
+- infra/terraform/modules/dns/main.tf:L60: managed_zone = data.google_dns_managed_zone.public.name
+- infra/terraform/modules/dns/main.tf:L62: rrdatas      = [google_certificate_manager_dns_authorization.search_api.dns_resource_record[0].data]
+- infra/terraform/modules/dns/main.tf:L65: resource "google_certificate_manager_certificate" "search_api" {
+- infra/terraform/modules/dns/main.tf:L74: google_certificate_manager_dns_authorization.search_api.id,
+- infra/terraform/modules/dns/main.tf:L79: resource "google_certificate_manager_certificate_map" "search_api" {
+- infra/terraform/modules/dns/main.tf:L85: resource "google_certificate_manager_certificate_map_entry" "search_api" {
+- infra/terraform/modules/dns/main.tf:L88: map          = google_certificate_manager_certificate_map.search_api.name
+- infra/terraform/modules/dns/main.tf:L89: certificates = [google_certificate_manager_certificate.search_api.id]
+- infra/terraform/modules/dns/outputs.tf:L3: value       = google_compute_global_address.search_api.name
+- infra/terraform/modules/dns/outputs.tf:L8: value       = google_compute_global_address.search_api.address
+- infra/terraform/modules/dns/outputs.tf:L13: value       = google_certificate_manager_certificate_map.search_api.name
+- infra/terraform/modules/dns/outputs.tf:L18: value       = google_certificate_manager_certificate.search_api.name
+- infra/terraform/modules/dns/variables.tf:L2: description = "GCP project ID that owns the Cloud DNS zone, static IP, and Certificate Manager resources."
+- infra/terraform/modules/dns/variables.tf:L12: description = "Cloud DNS managed-zone resource name hosting public_domain. Created out-of-band (console); referenced via data source, never managed by this module."
+- infra/terraform/modules/dns/variables.tf:L23: description = "Certificate Manager managed-certificate resource name."
+- infra/terraform/modules/dns/variables.tf:L29: description = "Certificate Manager certificate-map resource name. The GKE Gateway references this via the networking.gke.io/certmap annotation."
+- infra/terraform/modules/dns/variables.tf:L35: description = "Certificate Manager DNS authorization resource name (used for DNS-01 validation of the managed certificate)."
+- infra/terraform/modules/elasticsearch/main.tf:L1: resource "kubernetes_namespace" "elastic_system" {
+- infra/terraform/modules/elasticsearch/main.tf:L10: resource "helm_release" "eck_operator" {
+- infra/terraform/modules/gke/main.tf:L9: resource "google_container_cluster" "hybrid_search" {
+- infra/terraform/modules/gke/main.tf:L54: resource "google_service_account_iam_member" "api_wi" {
+- infra/terraform/modules/gke/main.tf:L55: service_account_id = var.service_accounts.api.name
+- infra/terraform/modules/gke/main.tf:L56: role               = "roles/iam.workloadIdentityUser"
+- infra/terraform/modules/gke/main.tf:L60: resource "google_service_account_iam_member" "encoder_wi" {
+- infra/terraform/modules/gke/main.tf:L61: service_account_id = var.service_accounts.endpoint_encoder.name
+- infra/terraform/modules/gke/main.tf:L62: role               = "roles/iam.workloadIdentityUser"
+- infra/terraform/modules/gke/main.tf:L66: resource "google_service_account_iam_member" "reranker_wi" {
+- infra/terraform/modules/gke/main.tf:L67: service_account_id = var.service_accounts.endpoint_reranker.name
+- infra/terraform/modules/gke/main.tf:L68: role               = "roles/iam.workloadIdentityUser"
+- infra/terraform/modules/gke/main.tf:L72: resource "google_service_account_iam_member" "external_secrets_wi" {
+- infra/terraform/modules/gke/main.tf:L73: service_account_id = <redacted>
+- infra/terraform/modules/gke/main.tf:L74: role               = "roles/iam.workloadIdentityUser"
+- infra/terraform/modules/gke/outputs.tf:L2: value = google_container_cluster.hybrid_search.name
+- infra/terraform/modules/gke/outputs.tf:L6: value = google_container_cluster.hybrid_search.location
+- infra/terraform/modules/gke/outputs.tf:L10: value     = google_container_cluster.hybrid_search.endpoint
+- infra/terraform/modules/gke/outputs.tf:L15: value     = google_container_cluster.hybrid_search.master_auth[0].cluster_ca_certificate
+- infra/terraform/modules/gke/variables.tf:L29: variable "service_accounts" {
+- infra/terraform/modules/gke/variables.tf:L30: description = "Map of SA resources emitted by the iam module. Uses .email / .name for Workload Identity bindings."
+- infra/terraform/modules/iam/main.tf:L3: resource "google_service_account" "api" {
+- infra/terraform/modules/iam/main.tf:L8: resource "google_service_account" "job_train" {
+- infra/terraform/modules/iam/main.tf:L13: resource "google_service_account" "job_embed" {
+- infra/terraform/modules/iam/main.tf:L18: resource "google_service_account" "dataform" {
+- infra/terraform/modules/iam/main.tf:L23: resource "google_service_account" "scheduler" {
+- infra/terraform/modules/iam/main.tf:L28: resource "google_service_account" "pipeline" {
+- infra/terraform/modules/iam/main.tf:L33: resource "google_service_account" "endpoint_encoder" {
+- infra/terraform/modules/iam/main.tf:L38: resource "google_service_account" "endpoint_reranker" {
+- infra/terraform/modules/iam/main.tf:L43: resource "google_service_account" "pipeline_trigger" {
+- infra/terraform/modules/iam/main.tf:L48: resource "google_service_account" "external_secrets" {
+- infra/terraform/modules/iam/main.tf:L55: resource "google_iam_workload_identity_pool" "github" {
+- infra/terraform/modules/iam/main.tf:L60: resource "google_iam_workload_identity_pool_provider" "github" {
+- infra/terraform/modules/iam/main.tf:L61: workload_identity_pool_id          = google_iam_workload_identity_pool.github.workload_identity_pool_id
+- infra/terraform/modules/iam/main.tf:L78: resource "google_service_account" "github_deployer" {
+- infra/terraform/modules/iam/main.tf:L83: resource "google_service_account_iam_member" "github_wif_binding" {
+- infra/terraform/modules/iam/main.tf:L84: service_account_id = google_service_account.github_deployer.name
+- infra/terraform/modules/iam/main.tf:L85: role               = "roles/iam.workloadIdentityUser"
+- infra/terraform/modules/iam/main.tf:L86: member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github.name}/attribute.repository/${var.github_repo}"
+- infra/terraform/modules/iam/main.tf:L99: resource "google_service_account_iam_member" "api_token_creator_for_admins" {
+- infra/terraform/modules/iam/main.tf:L101: service_account_id = google_service_account.api.name
+- infra/terraform/modules/iam/main.tf:L102: role               = <redacted>
+- infra/terraform/modules/iam/main.tf:L108: resource "google_project_iam_member" "github_deployer_editor" {
+- infra/terraform/modules/iam/main.tf:L110: role    = "roles/editor"
+- infra/terraform/modules/iam/main.tf:L111: member  = "serviceAccount:${google_service_account.github_deployer.email}"
+- infra/terraform/modules/iam/main.tf:L114: resource "google_project_iam_member" "github_deployer_sa_user" {
+- infra/terraform/modules/iam/main.tf:L116: role    = "roles/iam.serviceAccountUser"
+- infra/terraform/modules/iam/main.tf:L117: member  = "serviceAccount:${google_service_account.github_deployer.email}"
+- infra/terraform/modules/iam/main.tf:L122: resource "google_project_iam_member" "api_bq_job_user" {
+- infra/terraform/modules/iam/main.tf:L124: role    = "roles/bigquery.jobUser"
+- infra/terraform/modules/iam/main.tf:L125: member  = "serviceAccount:${google_service_account.api.email}"
+- infra/terraform/modules/iam/main.tf:L130: # lockdown stripped the project's default `roles/monitoring.metricWriter`
+- infra/terraform/modules/iam/main.tf:L136: resource "google_project_iam_member" "gmp_compute_metric_writer" {
+- infra/terraform/modules/iam/main.tf:L138: role    = "roles/monitoring.metricWriter"
+- infra/terraform/modules/iam/main.tf:L139: member  = "serviceAccount:${data.google_project.current.number}-compute@developer.gserviceaccount.com"
+- infra/terraform/modules/iam/main.tf:L142: data "google_project" "current" {
+- infra/terraform/modules/iam/main.tf:L146: resource "google_project_iam_member" "api_aiplatform_user" {
+- infra/terraform/modules/iam/main.tf:L148: role    = "roles/aiplatform.user"
+- infra/terraform/modules/iam/main.tf:L149: member  = "serviceAccount:${google_service_account.api.email}"
+- infra/terraform/modules/iam/main.tf:L152: resource "google_project_iam_member" "train_bq_job_user" {
+- infra/terraform/modules/iam/main.tf:L154: role    = "roles/bigquery.jobUser"
+- infra/terraform/modules/iam/main.tf:L155: member  = "serviceAccount:${google_service_account.job_train.email}"
+- infra/terraform/modules/iam/main.tf:L158: resource "google_project_iam_member" "train_bq_read_session" {
+- infra/terraform/modules/iam/main.tf:L160: role    = "roles/bigquery.readSessionUser"
+- infra/terraform/modules/iam/main.tf:L161: member  = "serviceAccount:${google_service_account.job_train.email}"
+- infra/terraform/modules/iam/main.tf:L164: resource "google_project_iam_member" "embed_bq_job_user" {
+- infra/terraform/modules/iam/main.tf:L166: role    = "roles/bigquery.jobUser"
+- infra/terraform/modules/iam/main.tf:L167: member  = "serviceAccount:${google_service_account.job_embed.email}"
+- infra/terraform/modules/iam/main.tf:L170: resource "google_project_iam_member" "embed_bq_read_session" {
+- infra/terraform/modules/iam/main.tf:L172: role    = "roles/bigquery.readSessionUser"
+- infra/terraform/modules/iam/main.tf:L173: member  = "serviceAccount:${google_service_account.job_embed.email}"
+- infra/terraform/modules/iam/main.tf:L176: resource "google_project_iam_member" "dataform_bq_job_user" {
+- infra/terraform/modules/iam/main.tf:L178: role    = "roles/bigquery.jobUser"
+- infra/terraform/modules/iam/main.tf:L179: member  = "serviceAccount:${google_service_account.dataform.email}"
+- infra/terraform/modules/iam/main.tf:L182: resource "google_project_iam_member" "pipeline_bq_job_user" {
+- infra/terraform/modules/iam/main.tf:L184: role    = "roles/bigquery.jobUser"
+- infra/terraform/modules/iam/main.tf:L185: member  = "serviceAccount:${google_service_account.pipeline.email}"
+- infra/terraform/modules/iam/main.tf:L188: resource "google_project_iam_member" "pipeline_bq_read_session" {
+- infra/terraform/modules/iam/main.tf:L190: role    = "roles/bigquery.readSessionUser"
+- infra/terraform/modules/iam/main.tf:L191: member  = "serviceAccount:${google_service_account.pipeline.email}"
+- infra/terraform/modules/iam/main.tf:L194: resource "google_project_iam_member" "pipeline_aiplatform_user" {
+- infra/terraform/modules/iam/main.tf:L196: role    = "roles/aiplatform.user"
+- infra/terraform/modules/iam/main.tf:L197: member  = "serviceAccount:${google_service_account.pipeline.email}"
+- infra/terraform/modules/iam/main.tf:L200: resource "google_project_iam_member" "pipeline_trigger_aiplatform_user" {
+- infra/terraform/modules/iam/main.tf:L202: role    = "roles/aiplatform.user"
+- infra/terraform/modules/iam/main.tf:L203: member  = "serviceAccount:${google_service_account.pipeline_trigger.email}"
+- infra/terraform/modules/iam/main.tf:L206: resource "google_project_iam_member" "pipeline_trigger_eventarc_receiver" {
+- infra/terraform/modules/iam/main.tf:L208: role    = "roles/eventarc.eventReceiver"
+- infra/terraform/modules/iam/main.tf:L209: member  = "serviceAccount:${google_service_account.pipeline_trigger.email}"
+- infra/terraform/modules/iam/main.tf:L212: resource "google_project_iam_member" "pipeline_trigger_pubsub_subscriber" {
+- infra/terraform/modules/iam/main.tf:L214: role    = "roles/pubsub.subscriber"
+- infra/terraform/modules/iam/main.tf:L215: member  = "serviceAccount:${google_service_account.pipeline_trigger.email}"
+- infra/terraform/modules/iam/main.tf:L218: resource "google_project_iam_member" "pipeline_trigger_logging_writer" {
+- infra/terraform/modules/iam/main.tf:L220: role    = "roles/logging.logWriter"
+- infra/terraform/modules/iam/main.tf:L221: member  = "serviceAccount:${google_service_account.pipeline_trigger.email}"
+- infra/terraform/modules/iam/main.tf:L224: resource "google_service_account_iam_member" "pipeline_trigger_can_use_pipeline_sa" {
+- infra/terraform/modules/iam/main.tf:L225: service_account_id = google_service_account.pipeline.name
+- infra/terraform/modules/iam/main.tf:L226: role               = "roles/iam.serviceAccountUser"
+- infra/terraform/modules/iam/main.tf:L227: member             = "serviceAccount:${google_service_account.pipeline_trigger.email}"
+- infra/terraform/modules/iam/main.tf:L231: # which calls `PipelineJob.submit(service_account=sa-pipeline@...)`. The caller
+- infra/terraform/modules/iam/main.tf:L234: resource "google_service_account_iam_member" "composer_can_use_pipeline_sa" {
+- infra/terraform/modules/iam/main.tf:L235: service_account_id = google_service_account.pipeline.name
+- infra/terraform/modules/iam/main.tf:L236: role               = "roles/iam.serviceAccountUser"
+- infra/terraform/modules/iam/main.tf:L237: member             = "serviceAccount:${google_service_account.composer.email}"
+- infra/terraform/modules/iam/main.tf:L240: resource "google_project_iam_member" "endpoint_encoder_logging_writer" {
+- infra/terraform/modules/iam/main.tf:L242: role    = "roles/logging.logWriter"
+- infra/terraform/modules/iam/main.tf:L243: member  = "serviceAccount:${google_service_account.endpoint_encoder.email}"
+- infra/terraform/modules/iam/main.tf:L246: resource "google_project_iam_member" "endpoint_reranker_logging_writer" {
+- infra/terraform/modules/iam/main.tf:L248: role    = "roles/logging.logWriter"
+- infra/terraform/modules/iam/main.tf:L249: member  = "serviceAccount:${google_service_account.endpoint_reranker.email}"
+- infra/terraform/modules/iam/main.tf:L256: # search-api SA (`api`) は既に roles/aiplatform.user 付与済 (line 148-152)
+- infra/terraform/modules/iam/main.tf:L262: #   roles/aiplatform.user は付与しない (最小権限)。
+- infra/terraform/modules/iam/main.tf:L269: resource "google_project_iam_member" "endpoint_reranker_aiplatform_user" {
+- infra/terraform/modules/iam/main.tf:L271: role    = "roles/aiplatform.user"
+- infra/terraform/modules/iam/main.tf:L272: member  = "serviceAccount:${google_service_account.endpoint_reranker.email}"
+- infra/terraform/modules/iam/main.tf:L285: # - composer.worker: Composer 環境本体の管理 (env / config / DAG bucket)
+- infra/terraform/modules/iam/main.tf:L293: resource "google_service_account" "composer" {
+- infra/terraform/modules/iam/main.tf:L298: resource "google_project_iam_member" "composer_worker" {
+- infra/terraform/modules/iam/main.tf:L300: role    = "roles/composer.worker"
+- infra/terraform/modules/iam/main.tf:L301: member  = "serviceAccount:${google_service_account.composer.email}"
+- infra/terraform/modules/iam/main.tf:L304: resource "google_project_iam_member" "composer_aiplatform_user" {
+- infra/terraform/modules/iam/main.tf:L306: role    = "roles/aiplatform.user"
+- infra/terraform/modules/iam/main.tf:L307: member  = "serviceAccount:${google_service_account.composer.email}"
+- infra/terraform/modules/iam/main.tf:L310: resource "google_project_iam_member" "composer_bq_job_user" {
+- infra/terraform/modules/iam/main.tf:L312: role    = "roles/bigquery.jobUser"
+- infra/terraform/modules/iam/main.tf:L313: member  = "serviceAccount:${google_service_account.composer.email}"
+- infra/terraform/modules/iam/main.tf:L316: resource "google_project_iam_member" "composer_bq_data_viewer" {
+- infra/terraform/modules/iam/main.tf:L318: role    = "roles/bigquery.dataViewer"
+- infra/terraform/modules/iam/main.tf:L319: member  = "serviceAccount:${google_service_account.composer.email}"
+- infra/terraform/modules/iam/main.tf:L322: resource "google_project_iam_member" "composer_run_invoker" {
+- infra/terraform/modules/iam/main.tf:L324: role    = "roles/run.invoker"
+- infra/terraform/modules/iam/main.tf:L325: member  = "serviceAccount:${google_service_account.composer.email}"
+- infra/terraform/modules/iam/main.tf:L336: #   `pipeline-root` bucket に書かれるので、submit_train_pipeline / pipeline_wait
+- infra/terraform/modules/iam/main.tf:L340: resource "google_project_iam_member" "composer_artifactregistry_reader" {
+- infra/terraform/modules/iam/main.tf:L342: role    = "roles/artifactregistry.reader"
+- infra/terraform/modules/iam/main.tf:L343: member  = "serviceAccount:${google_service_account.composer.email}"
+- infra/terraform/modules/iam/main.tf:L346: resource "google_project_iam_member" "composer_storage_object_viewer" {
+- infra/terraform/modules/iam/main.tf:L348: role    = "roles/storage.objectViewer"
+- infra/terraform/modules/iam/main.tf:L349: member  = "serviceAccount:${google_service_account.composer.email}"
+- infra/terraform/modules/iam/main.tf:L353: # google_composer_environment リソースを操作するため)。
+- infra/terraform/modules/iam/main.tf:L354: resource "google_project_iam_member" "github_deployer_composer_admin" {
+- infra/terraform/modules/iam/main.tf:L356: role    = "roles/composer.admin"
+- infra/terraform/modules/iam/main.tf:L357: member  = "serviceAccount:${google_service_account.github_deployer.email}"
+- infra/terraform/modules/iam/outputs.tf:L1: output "service_accounts" {
+- infra/terraform/modules/iam/outputs.tf:L2: description = "Map of runtime SA resources (use .email / .name / .id from caller)"
+- infra/terraform/modules/iam/outputs.tf:L4: api               = google_service_account.api
+- infra/terraform/modules/iam/outputs.tf:L5: job_train         = google_service_account.job_train
+- infra/terraform/modules/iam/outputs.tf:L6: job_embed         = google_service_account.job_embed
+- infra/terraform/modules/iam/outputs.tf:L7: dataform          = google_service_account.dataform
+- infra/terraform/modules/iam/outputs.tf:L8: scheduler         = google_service_account.scheduler
+- infra/terraform/modules/iam/outputs.tf:L9: pipeline          = google_service_account.pipeline
+- infra/terraform/modules/iam/outputs.tf:L10: endpoint_encoder  = google_service_account.endpoint_encoder
+- infra/terraform/modules/iam/outputs.tf:L11: endpoint_reranker = google_service_account.endpoint_reranker
+- infra/terraform/modules/iam/outputs.tf:L12: pipeline_trigger  = google_service_account.pipeline_trigger
+- infra/terraform/modules/iam/outputs.tf:L13: external_secrets  = <redacted>
+- infra/terraform/modules/iam/outputs.tf:L14: composer          = google_service_account.composer
+- infra/terraform/modules/iam/outputs.tf:L19: description = "sa-github-deployer email — register as GitHub Actions var DEPLOYER_SERVICE_ACCOUNT"
+- infra/terraform/modules/iam/outputs.tf:L20: value       = google_service_account.github_deployer.email
+- infra/terraform/modules/iam/outputs.tf:L24: description = "WIF provider resource name — register as GitHub Actions var WORKLOAD_IDENTITY_PROVIDER"
+- infra/terraform/modules/iam/outputs.tf:L25: value       = google_iam_workload_identity_pool_provider.github.name
+- infra/terraform/modules/kserve/main.tf:L13: resource "kubernetes_namespace" "search" {
+- infra/terraform/modules/kserve/main.tf:L19: resource "kubernetes_namespace" "inference" {
+- infra/terraform/modules/kserve/main.tf:L26: resource "kubernetes_service_account" "api" {
+- infra/terraform/modules/kserve/main.tf:L31: "iam.gke.io/gcp-service-account" = var.service_accounts.api.email
+- infra/terraform/modules/kserve/main.tf:L36: resource "kubernetes_service_account" "encoder" {
+- infra/terraform/modules/kserve/main.tf:L41: "iam.gke.io/gcp-service-account" = var.service_accounts.endpoint_encoder.email
+- infra/terraform/modules/kserve/main.tf:L46: resource "kubernetes_service_account" "reranker" {
+- infra/terraform/modules/kserve/main.tf:L51: "iam.gke.io/gcp-service-account" = var.service_accounts.endpoint_reranker.email
+- infra/terraform/modules/kserve/main.tf:L66: resource "helm_release" "cert_manager" {
+- infra/terraform/modules/kserve/main.tf:L87: resource "helm_release" "external_secrets" {
+- infra/terraform/modules/kserve/main.tf:L127: value = <redacted>
+- infra/terraform/modules/kserve/main.tf:L139: resource "helm_release" "kserve_crd" {
+- infra/terraform/modules/kserve/main.tf:L150: resource "helm_release" "kserve" {
+- infra/terraform/modules/kserve/outputs.tf:L11: name      = kubernetes_service_account.api.metadata[0].name
+- infra/terraform/modules/kserve/outputs.tf:L12: namespace = kubernetes_service_account.api.metadata[0].namespace
+- infra/terraform/modules/kserve/outputs.tf:L18: name      = kubernetes_service_account.encoder.metadata[0].name
+- infra/terraform/modules/kserve/outputs.tf:L19: namespace = kubernetes_service_account.encoder.metadata[0].namespace
+- infra/terraform/modules/kserve/outputs.tf:L25: name      = kubernetes_service_account.reranker.metadata[0].name
+- infra/terraform/modules/kserve/outputs.tf:L26: namespace = kubernetes_service_account.reranker.metadata[0].namespace
+- infra/terraform/modules/kserve/tls_dev.tf:L14: # either GCP Managed Certificate (`google_compute_managed_ssl_certificate`)
+- infra/terraform/modules/kserve/tls_dev.tf:L20: resource "tls_private_key" "search_api_dev" {
+- infra/terraform/modules/kserve/tls_dev.tf:L26: resource "tls_self_signed_cert" "search_api_dev" {
+- infra/terraform/modules/kserve/tls_dev.tf:L46: resource "kubernetes_secret" "search_api_tls" {
+- infra/terraform/modules/kserve/variables.tf:L26: description = "Namespace for KServe InferenceService resources"
+- infra/terraform/modules/kserve/variables.tf:L47: variable "service_accounts" {
+- infra/terraform/modules/messaging/main.tf:L9: data "google_project" "current" {}
+- infra/terraform/modules/messaging/main.tf:L11: resource "google_pubsub_topic" "ranking_log" {
+- infra/terraform/modules/messaging/main.tf:L15: resource "google_pubsub_topic" "search_feedback" {
+- infra/terraform/modules/messaging/main.tf:L19: resource "google_pubsub_topic" "retrain_trigger" {
+- infra/terraform/modules/messaging/main.tf:L26: resource "google_pubsub_topic" "search_events" {
+- infra/terraform/modules/messaging/main.tf:L30: resource "google_pubsub_topic" "search_impressions" {
+- infra/terraform/modules/messaging/main.tf:L34: resource "google_pubsub_topic" "user_actions" {
+- infra/terraform/modules/messaging/main.tf:L38: resource "google_pubsub_topic_iam_member" "api_publish_ranking_log" {
+- infra/terraform/modules/messaging/main.tf:L39: topic  = google_pubsub_topic.ranking_log.name
+- infra/terraform/modules/messaging/main.tf:L40: role   = "roles/pubsub.publisher"
+- infra/terraform/modules/messaging/main.tf:L41: member = "serviceAccount:${var.service_accounts.api.email}"
+- infra/terraform/modules/messaging/main.tf:L44: resource "google_pubsub_topic_iam_member" "api_publish_feedback" {
+- infra/terraform/modules/messaging/main.tf:L45: topic  = google_pubsub_topic.search_feedback.name
+- infra/terraform/modules/messaging/main.tf:L46: role   = "roles/pubsub.publisher"
+- infra/terraform/modules/messaging/main.tf:L47: member = "serviceAccount:${var.service_accounts.api.email}"
+- infra/terraform/modules/messaging/main.tf:L50: resource "google_pubsub_topic_iam_member" "api_publish_retrain" {
+- infra/terraform/modules/messaging/main.tf:L51: topic  = google_pubsub_topic.retrain_trigger.name
+- infra/terraform/modules/messaging/main.tf:L52: role   = "roles/pubsub.publisher"
+- infra/terraform/modules/messaging/main.tf:L53: member = "serviceAccount:${var.service_accounts.api.email}"
+- infra/terraform/modules/messaging/main.tf:L56: resource "google_pubsub_topic_iam_member" "scheduler_publish_retrain" {
+- infra/terraform/modules/messaging/main.tf:L57: topic  = google_pubsub_topic.retrain_trigger.name
+- infra/terraform/modules/messaging/main.tf:L58: role   = "roles/pubsub.publisher"
+- infra/terraform/modules/messaging/main.tf:L59: member = "serviceAccount:${var.service_accounts.scheduler.email}"
+- infra/terraform/modules/messaging/main.tf:L62: resource "google_pubsub_topic_iam_member" "api_publish_search_events" {
+- infra/terraform/modules/messaging/main.tf:L63: topic  = google_pubsub_topic.search_events.name
+- infra/terraform/modules/messaging/main.tf:L64: role   = "roles/pubsub.publisher"
+- infra/terraform/modules/messaging/main.tf:L65: member = "serviceAccount:${var.service_accounts.api.email}"
+- infra/terraform/modules/messaging/main.tf:L68: resource "google_pubsub_topic_iam_member" "api_publish_search_impressions" {
+- infra/terraform/modules/messaging/main.tf:L69: topic  = google_pubsub_topic.search_impressions.name
+- infra/terraform/modules/messaging/main.tf:L70: role   = "roles/pubsub.publisher"
+- infra/terraform/modules/messaging/main.tf:L71: member = "serviceAccount:${var.service_accounts.api.email}"
+- infra/terraform/modules/messaging/main.tf:L74: resource "google_pubsub_topic_iam_member" "api_publish_user_actions" {
+- infra/terraform/modules/messaging/main.tf:L75: topic  = google_pubsub_topic.user_actions.name
+- infra/terraform/modules/messaging/main.tf:L76: role   = "roles/pubsub.publisher"
+- infra/terraform/modules/messaging/main.tf:L77: member = "serviceAccount:${var.service_accounts.api.email}"
+- infra/terraform/modules/messaging/main.tf:L80: resource "google_pubsub_subscription" "ranking_log_to_bq" {
+- infra/terraform/modules/messaging/main.tf:L82: topic = google_pubsub_topic.ranking_log.name
+- infra/terraform/modules/messaging/main.tf:L95: google_project_iam_member.pubsub_bq_writer,
+- infra/terraform/modules/messaging/main.tf:L96: google_project_iam_member.pubsub_bq_metadata_viewer,
+- infra/terraform/modules/messaging/main.tf:L100: resource "google_pubsub_subscription" "search_feedback_to_bq" {
+- infra/terraform/modules/messaging/main.tf:L102: topic = google_pubsub_topic.search_feedback.name
+- infra/terraform/modules/messaging/main.tf:L115: google_project_iam_member.pubsub_bq_writer,
+- infra/terraform/modules/messaging/main.tf:L116: google_project_iam_member.pubsub_bq_metadata_viewer,
+- infra/terraform/modules/messaging/main.tf:L120: resource "google_pubsub_subscription" "search_events_to_bq" {
+- infra/terraform/modules/messaging/main.tf:L122: topic = google_pubsub_topic.search_events.name
+- infra/terraform/modules/messaging/main.tf:L135: google_project_iam_member.pubsub_bq_writer,
+- infra/terraform/modules/messaging/main.tf:L136: google_project_iam_member.pubsub_bq_metadata_viewer,
+- infra/terraform/modules/messaging/main.tf:L140: resource "google_pubsub_subscription" "search_impressions_to_bq" {
+- infra/terraform/modules/messaging/main.tf:L142: topic = google_pubsub_topic.search_impressions.name
+- infra/terraform/modules/messaging/main.tf:L155: google_project_iam_member.pubsub_bq_writer,
+- infra/terraform/modules/messaging/main.tf:L156: google_project_iam_member.pubsub_bq_metadata_viewer,
+- infra/terraform/modules/messaging/main.tf:L160: resource "google_pubsub_subscription" "user_actions_to_bq" {
+- infra/terraform/modules/messaging/main.tf:L162: topic = google_pubsub_topic.user_actions.name
+- infra/terraform/modules/messaging/main.tf:L175: google_project_iam_member.pubsub_bq_writer,
+- infra/terraform/modules/messaging/main.tf:L176: google_project_iam_member.pubsub_bq_metadata_viewer,
+- infra/terraform/modules/messaging/main.tf:L181: pubsub_service_agent = "serviceAccount:service-${data.google_project.current.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
+- infra/terraform/modules/messaging/main.tf:L184: resource "google_project_iam_member" "pubsub_bq_writer" {
+- infra/terraform/modules/messaging/main.tf:L186: role    = "roles/bigquery.dataEditor"
+- infra/terraform/modules/messaging/main.tf:L190: resource "google_project_iam_member" "pubsub_bq_metadata_viewer" {
+- infra/terraform/modules/messaging/main.tf:L192: role    = "roles/bigquery.metadataViewer"
+- infra/terraform/modules/messaging/main.tf:L206: resource "google_cloud_scheduler_job" "check_retrain_daily" {
+- infra/terraform/modules/messaging/main.tf:L220: service_account_email = var.service_accounts.scheduler.email
+- infra/terraform/modules/messaging/outputs.tf:L2: value = google_pubsub_topic.ranking_log
+- infra/terraform/modules/messaging/outputs.tf:L6: value = google_pubsub_topic.search_feedback
+- infra/terraform/modules/messaging/outputs.tf:L10: value = google_pubsub_topic.retrain_trigger
+- infra/terraform/modules/messaging/outputs.tf:L14: value = google_pubsub_topic.search_events
+- infra/terraform/modules/messaging/outputs.tf:L18: value = google_pubsub_topic.search_impressions
+- infra/terraform/modules/messaging/outputs.tf:L22: value = google_pubsub_topic.user_actions
+- infra/terraform/modules/messaging/variables.tf:L46: variable "service_accounts" {
+- infra/terraform/modules/messaging/variables.tf:L47: description = "Map of SA resources emitted by the iam module. Uses .email for bindings."
+- infra/terraform/modules/monitoring/main.tf:L7: resource "google_logging_metric" "api_error_rate" {
+- infra/terraform/modules/monitoring/main.tf:L11: resource.type="cloud_run_revision"
+- infra/terraform/modules/monitoring/main.tf:L12: resource.labels.service_name="search-api"
+- infra/terraform/modules/monitoring/main.tf:L23: resource "google_logging_metric" "api_p95_latency" {
+- infra/terraform/modules/monitoring/main.tf:L27: resource.type="cloud_run_revision"
+- infra/terraform/modules/monitoring/main.tf:L28: resource.labels.service_name="search-api"
+- infra/terraform/modules/monitoring/main.tf:L40: bucket_options {
+- infra/terraform/modules/monitoring/main.tf:L41: exponential_buckets {
+- infra/terraform/modules/monitoring/main.tf:L42: num_finite_buckets = 24
+- infra/terraform/modules/monitoring/main.tf:L54: resource "google_monitoring_notification_channel" "email" {
+- infra/terraform/modules/monitoring/main.tf:L73: resource "time_sleep" "wait_for_log_metric_indexing" {
+- infra/terraform/modules/monitoring/main.tf:L77: name   = google_logging_metric.api_error_rate.name
+- infra/terraform/modules/monitoring/main.tf:L78: filter = trimspace(google_logging_metric.api_error_rate.filter)
+- infra/terraform/modules/monitoring/main.tf:L81: name            = google_logging_metric.api_p95_latency.name
+- infra/terraform/modules/monitoring/main.tf:L82: filter          = trimspace(google_logging_metric.api_p95_latency.filter)
+- infra/terraform/modules/monitoring/main.tf:L83: value_extractor = google_logging_metric.api_p95_latency.value_extractor
+- infra/terraform/modules/monitoring/main.tf:L88: google_logging_metric.api_error_rate,
+- infra/terraform/modules/monitoring/main.tf:L89: google_logging_metric.api_p95_latency,
+- infra/terraform/modules/monitoring/main.tf:L94: resource "google_monitoring_alert_policy" "api_error_rate" {
+- infra/terraform/modules/monitoring/main.tf:L101: filter          = "metric.type=\"logging.googleapis.com/user/${google_logging_metric.api_error_rate.name}\" AND resource.type=\"cloud_run_revision\""
+- infra/terraform/modules/monitoring/main.tf:L113: notification_channels = [google_monitoring_notification_channel.email.id]
+- infra/terraform/modules/monitoring/main.tf:L118: resource "google_monitoring_alert_policy" "api_p95_latency" {
+- infra/terraform/modules/monitoring/main.tf:L125: filter          = "metric.type=\"logging.googleapis.com/user/${google_logging_metric.api_p95_latency.name}\" AND resource.type=\"cloud_run_revision\""
+- infra/terraform/modules/monitoring/main.tf:L138: notification_channels = [google_monitoring_notification_channel.email.id]
+- infra/terraform/modules/monitoring/main.tf:L153: resource "google_bigquery_data_transfer_config" "property_feature_skew_check" {
+- infra/terraform/modules/monitoring/main.tf:L160: # or `service_account_name` (SA delegation). sa-dataform already has
+- infra/terraform/modules/monitoring/main.tf:L162: service_account_name = var.service_accounts.dataform.email
+- infra/terraform/modules/monitoring/main.tf:L171: resource "google_bigquery_data_transfer_config" "model_output_drift_check" {
+- infra/terraform/modules/monitoring/main.tf:L177: service_account_name   = var.service_accounts.dataform.email
+- infra/terraform/modules/monitoring/outputs.tf:L2: value = google_monitoring_notification_channel.email.id
+- infra/terraform/modules/monitoring/outputs.tf:L6: value = google_bigquery_data_transfer_config.property_feature_skew_check.id
+- infra/terraform/modules/monitoring/outputs.tf:L10: value = google_bigquery_data_transfer_config.model_output_drift_check.id
+- infra/terraform/modules/monitoring/variables.tf:L7: description = "BQ dataset region. Required by google_bigquery_data_transfer_config (default jurisdiction US fails against an asia-northeast1 dataset)."
+- infra/terraform/modules/monitoring/variables.tf:L26: variable "service_accounts" {
+- infra/terraform/modules/monitoring/variables.tf:L27: description = "Map of SA resources emitted by the iam module. The dataform SA is used as google_bigquery_data_transfer_config.service_account_name so the Scheduled Query has a valid credential (otherwise DTS creation fails with 'Failed to find a valid credential')."
+- infra/terraform/modules/redis_synonym/main.tf:L13: resource "google_redis_instance" "synonym" {
+- infra/terraform/modules/redis_synonym/main.tf:L40: resource "google_secret_manager_secret" "redis_auth" {
+- infra/terraform/modules/redis_synonym/main.tf:L55: resource "google_secret_manager_secret_version" "redis_auth" {
+- infra/terraform/modules/redis_synonym/main.tf:L57: secret      = <redacted>
+- infra/terraform/modules/redis_synonym/main.tf:L58: secret_data = <redacted>
+- infra/terraform/modules/redis_synonym/outputs.tf:L3: value       = google_redis_instance.synonym.host
+- infra/terraform/modules/redis_synonym/outputs.tf:L8: value       = google_redis_instance.synonym.port
+- infra/terraform/modules/redis_synonym/outputs.tf:L13: value       = "redis://${google_redis_instance.synonym.host}:${google_redis_instance.synonym.port}/0"
+- infra/terraform/modules/redis_synonym/outputs.tf:L18: value       = <redacted>
+- infra/terraform/modules/redis_synonym/outputs.tf:L23: value       = google_redis_instance.synonym.name
+- infra/terraform/modules/slo/main.tf:L10: #   * One google_monitoring_custom_service anchors both SLOs to the Cloud Run
+- infra/terraform/modules/slo/main.tf:L11: #     service URI (telemetry.resource_name).
+- infra/terraform/modules/slo/main.tf:L12: #   * Two google_monitoring_slo:
+- infra/terraform/modules/slo/main.tf:L15: #   * Two google_monitoring_alert_policy per SLO (fast + slow burn) using the
+- infra/terraform/modules/slo/main.tf:L21: # channel resource here.
+- infra/terraform/modules/slo/main.tf:L30: telemetry_resource_name_by_type = {
+- infra/terraform/modules/slo/main.tf:L34: telemetry_resource_name = local.telemetry_resource_name_by_type[var.service_type]
+- infra/terraform/modules/slo/main.tf:L39: resource.type="prometheus_target"
+- infra/terraform/modules/slo/main.tf:L40: resource.label."namespace"="${var.k8s_namespace}"
+- infra/terraform/modules/slo/main.tf:L46: resource.type="cloud_run_revision"
+- infra/terraform/modules/slo/main.tf:L47: resource.label."service_name"="${var.service_name}"
+- infra/terraform/modules/slo/main.tf:L56: resource.type="prometheus_target"
+- infra/terraform/modules/slo/main.tf:L57: resource.label."namespace"="${var.k8s_namespace}"
+- infra/terraform/modules/slo/main.tf:L62: resource.type="cloud_run_revision"
+- infra/terraform/modules/slo/main.tf:L63: resource.label."service_name"="${var.service_name}"
+- infra/terraform/modules/slo/main.tf:L74: resource.type="prometheus_target"
+- infra/terraform/modules/slo/main.tf:L75: resource.label."namespace"="${var.k8s_namespace}"
+- infra/terraform/modules/slo/main.tf:L80: resource.type="cloud_run_revision"
+- infra/terraform/modules/slo/main.tf:L81: resource.label."service_name"="${var.service_name}"
+- infra/terraform/modules/slo/main.tf:L91: resource "google_monitoring_custom_service" "search_api" {
+- infra/terraform/modules/slo/main.tf:L97: resource_name = local.telemetry_resource_name
+- infra/terraform/modules/slo/main.tf:L107: resource "google_monitoring_slo" "availability" {
+- infra/terraform/modules/slo/main.tf:L109: service      = google_monitoring_custom_service.search_api.service_id
+- infra/terraform/modules/slo/main.tf:L130: resource "google_monitoring_slo" "latency" {
+- infra/terraform/modules/slo/main.tf:L132: service      = google_monitoring_custom_service.search_api.service_id
+- infra/terraform/modules/slo/main.tf:L161: resource "google_monitoring_alert_policy" "availability_fast_burn" {
+- infra/terraform/modules/slo/main.tf:L169: filter          = "select_slo_burn_rate(\"${google_monitoring_slo.availability.name}\", \"3600s\")"
+- infra/terraform/modules/slo/main.tf:L184: resource "google_monitoring_alert_policy" "availability_slow_burn" {
+- infra/terraform/modules/slo/main.tf:L192: filter          = "select_slo_burn_rate(\"${google_monitoring_slo.availability.name}\", \"86400s\")"
+- infra/terraform/modules/slo/main.tf:L207: resource "google_monitoring_alert_policy" "latency_fast_burn" {
+- infra/terraform/modules/slo/main.tf:L215: filter          = "select_slo_burn_rate(\"${google_monitoring_slo.latency.name}\", \"3600s\")"
+- infra/terraform/modules/slo/main.tf:L230: resource "google_monitoring_alert_policy" "latency_slow_burn" {
+- infra/terraform/modules/slo/main.tf:L238: filter          = "select_slo_burn_rate(\"${google_monitoring_slo.latency.name}\", \"86400s\")"
+- infra/terraform/modules/slo/outputs.tf:L2: description = "google_monitoring_custom_service service_id anchoring both SLOs. Use this to look up SLOs via the Monitoring REST API."
+- infra/terraform/modules/slo/outputs.tf:L3: value       = google_monitoring_custom_service.search_api.service_id
+- infra/terraform/modules/slo/outputs.tf:L7: description = "Full resource name (projects/.../services/...) of the custom service, usable in select_slo_burn_rate() queries from ad-hoc Monitoring dashboards."
+- infra/terraform/modules/slo/outputs.tf:L8: value       = google_monitoring_custom_service.search_api.name
+- infra/terraform/modules/slo/outputs.tf:L12: description = "Full resource name of the availability SLO (projects/.../services/.../serviceLevelObjectives/...). Needed for external tooling like `gcloud monitoring slos describe`."
+- infra/terraform/modules/slo/outputs.tf:L13: value       = google_monitoring_slo.availability.name
+- infra/terraform/modules/slo/outputs.tf:L17: description = "Full resource name of the latency SLO."
+- infra/terraform/modules/slo/outputs.tf:L18: value       = google_monitoring_slo.latency.name
+- infra/terraform/modules/slo/outputs.tf:L24: availability_fast_burn = google_monitoring_alert_policy.availability_fast_burn.id
+- infra/terraform/modules/slo/outputs.tf:L25: availability_slow_burn = google_monitoring_alert_policy.availability_slow_burn.id
+- infra/terraform/modules/slo/outputs.tf:L26: latency_fast_burn      = google_monitoring_alert_policy.latency_fast_burn.id
+- infra/terraform/modules/slo/outputs.tf:L27: latency_slow_burn      = google_monitoring_alert_policy.latency_slow_burn.id
+- infra/terraform/modules/slo/variables.tf:L2: description = "GCP project ID hosting the SLO resources (must match the Cloud Run service's project)"
+- infra/terraform/modules/slo/variables.tf:L7: description = "Cloud Run region of the target service. Used to build the telemetry.resource_name URI for google_monitoring_custom_service."
+- infra/terraform/modules/slo/variables.tf:L18: description = "Which serving layer the SLOs attach to. \"cloud_run\" uses run.googleapis.com/* metrics + cloud_run_revision resource filter. \"k8s_service\" uses kubernetes.io/* metrics + k8s_container resource filter (GKE + KServe)."
+- infra/terraform/modules/slo/variables.tf:L35: description = "GKE cluster name that hosts service_name. Only consulted when service_type=\"k8s_service\" to populate telemetry.resource_name (//container.googleapis.com/projects/<p>/locations/<r>/clusters/<c>)."
+- infra/terraform/modules/slo/variables.tf:L47: description = "Suffix appended to google_monitoring_custom_service.service_id to avoid collision if the module is instantiated more than once (e.g. per-env)."
+- infra/terraform/modules/slo/variables.tf:L87: description = "List of google_monitoring_notification_channel resource IDs that receive SLO burn-rate alerts. Typically passed from module.monitoring.notification_channel_id wrapped in a list."
+- infra/terraform/modules/streaming/main.tf:L9: # The google_dataflow_flex_template_job resource is gated behind
+- infra/terraform/modules/streaming/main.tf:L15: effective_sa    = var.service_account_email != "" ? var.service_account_email : try(google_service_account.dataflow[0].email, "")
+- infra/terraform/modules/streaming/main.tf:L19: resource "google_service_account" "dataflow" {
+- infra/terraform/modules/streaming/main.tf:L20: count = var.create_service_account ? 1 : 0
+- infra/terraform/modules/streaming/main.tf:L29: resource "google_project_iam_member" "dataflow_pubsub_subscriber" {
+- infra/terraform/modules/streaming/main.tf:L30: count = var.create_service_account ? 1 : 0
+- infra/terraform/modules/streaming/main.tf:L33: role    = "roles/pubsub.subscriber"
+- infra/terraform/modules/streaming/main.tf:L34: member  = "serviceAccount:${google_service_account.dataflow[0].email}"
+- infra/terraform/modules/streaming/main.tf:L38: resource "google_project_iam_member" "dataflow_worker" {
+- infra/terraform/modules/streaming/main.tf:L39: count = var.create_service_account ? 1 : 0
+- infra/terraform/modules/streaming/main.tf:L42: role    = "roles/dataflow.worker"
+- infra/terraform/modules/streaming/main.tf:L43: member  = "serviceAccount:${google_service_account.dataflow[0].email}"
+- infra/terraform/modules/streaming/main.tf:L46: resource "google_project_iam_member" "dataflow_storage" {
+- infra/terraform/modules/streaming/main.tf:L47: count = var.create_service_account ? 1 : 0
+- infra/terraform/modules/streaming/main.tf:L50: role    = "roles/storage.objectAdmin"
+- infra/terraform/modules/streaming/main.tf:L51: member  = "serviceAccount:${google_service_account.dataflow[0].email}"
+- infra/terraform/modules/streaming/main.tf:L55: resource "google_project_iam_member" "dataflow_bq_data_editor" {
+- infra/terraform/modules/streaming/main.tf:L56: count = var.create_service_account ? 1 : 0
+- infra/terraform/modules/streaming/main.tf:L59: role    = "roles/bigquery.dataEditor"
+- infra/terraform/modules/streaming/main.tf:L60: member  = "serviceAccount:${google_service_account.dataflow[0].email}"
+- infra/terraform/modules/streaming/main.tf:L63: resource "google_project_iam_member" "dataflow_bq_jobs" {
+- infra/terraform/modules/streaming/main.tf:L64: count = var.create_service_account ? 1 : 0
+- infra/terraform/modules/streaming/main.tf:L67: role    = "roles/bigquery.jobUser"
+- infra/terraform/modules/streaming/main.tf:L68: member  = "serviceAccount:${google_service_account.dataflow[0].email}"
+- infra/terraform/modules/streaming/main.tf:L71: resource "google_dataflow_flex_template_job" "ranking_log_hourly_ctr" {
+- infra/terraform/modules/streaming/main.tf:L87: service_account_email = local.effective_sa
+- infra/terraform/modules/streaming/outputs.tf:L1: output "service_account_email" {
+- infra/terraform/modules/streaming/outputs.tf:L7: description = "google_dataflow_flex_template_job.id — empty when create_job=false."
+- infra/terraform/modules/streaming/outputs.tf:L8: value       = local.will_create_job ? google_dataflow_flex_template_job.ranking_log_hourly_ctr[0].id : ""
+- infra/terraform/modules/streaming/outputs.tf:L13: value       = local.will_create_job ? google_dataflow_flex_template_job.ranking_log_hourly_ctr[0].name : ""
+- infra/terraform/modules/streaming/variables.tf:L7: description = "Region for Dataflow job + temp/staging buckets. Must match the Pub/Sub topic region."
+- infra/terraform/modules/streaming/variables.tf:L12: description = "Fully-qualified Pub/Sub topic resource ID for ranking-log (projects/.../topics/ranking-log). The streaming job reads from this."
+- infra/terraform/modules/streaming/variables.tf:L38: description = "Create google_dataflow_flex_template_job. Set false when only the SA + IAM scaffolding is needed (template not yet built)."
+- infra/terraform/modules/streaming/variables.tf:L43: variable "service_account_email" {
+- infra/terraform/modules/streaming/variables.tf:L49: variable "create_service_account" {
+- infra/terraform/modules/streaming/variables.tf:L50: description = "Create a dedicated sa-dataflow service account inside this module. Set false when service_account_email points to an existing SA owned elsewhere."
+- infra/terraform/modules/streaming/versions.tf:L8: # google_dataflow_flex_template_job lives in google-beta as of 5.40;
+- infra/terraform/modules/streaming/versions.tf:L9: # SA + IAM resources stay in the stable google provider.
+- infra/terraform/modules/vector_search/main.tf:L20: resource "google_vertex_ai_index" "property_embeddings" {
+- infra/terraform/modules/vector_search/main.tf:L59: # `lifecycle.prevent_destroy = true` だけでは依存元 resource の destroy が
+- infra/terraform/modules/vector_search/main.tf:L62: # `scripts/setup/destroy_all.py::PERSISTENT_VVS_RESOURCES` の state rm
+- infra/terraform/modules/vector_search/main.tf:L66: resource "google_vertex_ai_index_endpoint" "property_embeddings" {
+- infra/terraform/modules/vector_search/main.tf:L80: # を止めるリスクがあるため不採用。詳細は `google_vertex_ai_index` 側コメント。
+- infra/terraform/modules/vector_search/main.tf:L83: resource "google_vertex_ai_index_endpoint_deployed_index" "property_embeddings" {
+- infra/terraform/modules/vector_search/main.tf:L87: index_endpoint    = google_vertex_ai_index_endpoint.property_embeddings[0].id
+- infra/terraform/modules/vector_search/main.tf:L90: index             = google_vertex_ai_index.property_embeddings[0].id
+- infra/terraform/modules/vector_search/main.tf:L92: automatic_resources {
+- infra/terraform/modules/vector_search/main.tf:L103: google_vertex_ai_index.property_embeddings,
+- infra/terraform/modules/vector_search/main.tf:L104: google_vertex_ai_index_endpoint.property_embeddings,
+- infra/terraform/modules/vector_search/outputs.tf:L2: description = "Vertex AI Vector Search index resource (null when disabled)"
+- infra/terraform/modules/vector_search/outputs.tf:L4: length(google_vertex_ai_index.property_embeddings) > 0
+- infra/terraform/modules/vector_search/outputs.tf:L5: ? google_vertex_ai_index.property_embeddings[0]
+- infra/terraform/modules/vector_search/outputs.tf:L11: description = "Vertex AI Vector Search index endpoint resource (null when disabled)"
+- infra/terraform/modules/vector_search/outputs.tf:L13: length(google_vertex_ai_index_endpoint.property_embeddings) > 0
+- infra/terraform/modules/vector_search/outputs.tf:L14: ? google_vertex_ai_index_endpoint.property_embeddings[0]
+- infra/terraform/modules/vector_search/outputs.tf:L20: description = "Numeric / fully-qualified resource name of the index endpoint, consumed via VERTEX_VECTOR_SEARCH_INDEX_ENDPOINT_ID env. Empty string when disabled so the search-api adapter stays in no-op mode."
+- infra/terraform/modules/vector_search/outputs.tf:L22: length(google_vertex_ai_index_endpoint.property_embeddings) > 0
+- infra/terraform/modules/vector_search/outputs.tf:L23: ? google_vertex_ai_index_endpoint.property_embeddings[0].name
+- infra/terraform/modules/vector_search/outputs.tf:L31: length(google_vertex_ai_index_endpoint_deployed_index.property_embeddings) > 0
+- infra/terraform/modules/vector_search/outputs.tf:L32: ? google_vertex_ai_index_endpoint_deployed_index.property_embeddings[0].deployed_index_id
+- infra/terraform/modules/vector_search/outputs.tf:L37: output "index_resource_name" {
+- infra/terraform/modules/vector_search/outputs.tf:L38: description = "Vertex AI Vector Search index resource name (full path) consumed by the embed pipeline VVS upsert step (`vector_search_index_resource_name` KFP param). Empty string when disabled so the upsert component stays no-op."
+- infra/terraform/modules/vector_search/outputs.tf:L40: length(google_vertex_ai_index.property_embeddings) > 0
+- infra/terraform/modules/vector_search/outputs.tf:L41: ? google_vertex_ai_index.property_embeddings[0].name
+- infra/terraform/modules/vector_search/variables.tf:L2: description = "GCP project hosting the Vertex AI Vector Search resources"
+- infra/terraform/modules/vector_search/variables.tf:L83: variable "service_account_email" {
+- infra/terraform/modules/vector_search/variables.tf:L90: description = "Resource labels propagated to index / endpoint / deployed index"
+- infra/terraform/modules/vertex/main.tf:L59: pubsub_service_agent             = "serviceAccount:service-${data.google_project.current.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
+- infra/terraform/modules/vertex/main.tf:L60: pipeline_template_uri            = "gs://${var.pipeline_root_bucket_name}/templates/property-search-train.yaml"
+- infra/terraform/modules/vertex/main.tf:L61: pipeline_root_uri                = "gs://${var.pipeline_root_bucket_name}/runs"
+- infra/terraform/modules/vertex/main.tf:L64: data "google_project" "current" {
+- infra/terraform/modules/vertex/main.tf:L68: resource "google_pubsub_topic" "model_monitoring_alerts" {
+- infra/terraform/modules/vertex/main.tf:L72: resource "google_bigquery_dataset_iam_member" "pubsub_mlops_editor" {
+- infra/terraform/modules/vertex/main.tf:L74: role       = "roles/bigquery.dataEditor"
+- infra/terraform/modules/vertex/main.tf:L78: resource "google_bigquery_dataset_iam_member" "pubsub_mlops_metadata_viewer" {
+- infra/terraform/modules/vertex/main.tf:L80: role       = "roles/bigquery.metadataViewer"
+- infra/terraform/modules/vertex/main.tf:L84: resource "google_pubsub_subscription" "monitoring_alerts_to_bq" {
+- infra/terraform/modules/vertex/main.tf:L86: topic = google_pubsub_topic.model_monitoring_alerts.name
+- infra/terraform/modules/vertex/main.tf:L99: google_bigquery_dataset_iam_member.pubsub_mlops_editor,
+- infra/terraform/modules/vertex/main.tf:L100: google_bigquery_dataset_iam_member.pubsub_mlops_metadata_viewer,
+- infra/terraform/modules/vertex/main.tf:L110: resource "google_storage_bucket_object" "pipeline_trigger_zip" {
+- infra/terraform/modules/vertex/main.tf:L112: bucket = var.pipeline_root_bucket_name
+- infra/terraform/modules/vertex/main.tf:L127: resource "google_cloudfunctions2_function" "pipeline_trigger" {
+- infra/terraform/modules/vertex/main.tf:L139: bucket = var.pipeline_root_bucket_name
+- infra/terraform/modules/vertex/main.tf:L140: object = google_storage_bucket_object.pipeline_trigger_zip.name
+- infra/terraform/modules/vertex/main.tf:L148: service_account_email = var.service_accounts.pipeline_trigger.email
+- infra/terraform/modules/vertex/main.tf:L155: PIPELINE_SERVICE_ACCOUNT = var.service_accounts.pipeline.email
+- infra/terraform/modules/vertex/main.tf:L162: resource "google_cloud_run_service_iam_member" "pipeline_trigger_invoker" {
+- infra/terraform/modules/vertex/main.tf:L164: service  = google_cloudfunctions2_function.pipeline_trigger.name
+- infra/terraform/modules/vertex/main.tf:L165: role     = "roles/run.invoker"
+- infra/terraform/modules/vertex/main.tf:L166: member   = "serviceAccount:${var.service_accounts.pipeline_trigger.email}"
+- infra/terraform/modules/vertex/main.tf:L169: resource "google_eventarc_trigger" "retrain_to_pipeline" {
+- infra/terraform/modules/vertex/main.tf:L188: service = google_cloudfunctions2_function.pipeline_trigger.name
+- infra/terraform/modules/vertex/main.tf:L194: service_account = var.service_accounts.pipeline_trigger.email
+- infra/terraform/modules/vertex/main.tf:L197: google_cloudfunctions2_function.pipeline_trigger,
+- infra/terraform/modules/vertex/main.tf:L198: google_cloud_run_service_iam_member.pipeline_trigger_invoker,
+- infra/terraform/modules/vertex/main.tf:L202: resource "google_eventarc_trigger" "monitoring_to_pipeline" {
+- infra/terraform/modules/vertex/main.tf:L215: topic = google_pubsub_topic.model_monitoring_alerts.id
+- infra/terraform/modules/vertex/main.tf:L221: service = google_cloudfunctions2_function.pipeline_trigger.name
+- infra/terraform/modules/vertex/main.tf:L227: service_account = var.service_accounts.pipeline_trigger.email
+- infra/terraform/modules/vertex/main.tf:L230: google_cloudfunctions2_function.pipeline_trigger,
+- infra/terraform/modules/vertex/main.tf:L231: google_cloud_run_service_iam_member.pipeline_trigger_invoker,
+- infra/terraform/modules/vertex/main.tf:L244: resource "google_vertex_ai_feature_group" "property_features" {
+- infra/terraform/modules/vertex/main.tf:L260: resource "google_vertex_ai_feature_group_feature" "property_features" {
+- infra/terraform/modules/vertex/main.tf:L269: feature_group = google_vertex_ai_feature_group.property_features[0].name
+- infra/terraform/modules/vertex/main.tf:L284: resource "google_vertex_ai_feature_online_store" "property_features" {
+- infra/terraform/modules/vertex/main.tf:L318: # Feature Group / Feature resources 自体は別目的で残す:
+- infra/terraform/modules/vertex/main.tf:L322: resource "google_vertex_ai_feature_online_store_featureview" "property_features" {
+- infra/terraform/modules/vertex/main.tf:L328: feature_online_store = google_vertex_ai_feature_online_store.property_features[0].name
+- infra/terraform/modules/vertex/main.tf:L348: resource "google_vertex_ai_endpoint" "encoder" {
+- infra/terraform/modules/vertex/main.tf:L360: # computed fields so we leave them out of the managed resource entirely.
+- infra/terraform/modules/vertex/main.tf:L362: resource "google_vertex_ai_endpoint" "reranker" {
+- infra/terraform/modules/vertex/main.tf:L372: resource "google_storage_bucket_iam_member" "endpoint_encoder_models_reader" {
+- infra/terraform/modules/vertex/main.tf:L373: bucket = var.models_bucket_name
+- infra/terraform/modules/vertex/main.tf:L374: role   = "roles/storage.objectViewer"
+- infra/terraform/modules/vertex/main.tf:L375: member = "serviceAccount:${var.service_accounts.endpoint_encoder.email}"
+- infra/terraform/modules/vertex/main.tf:L378: resource "google_storage_bucket_iam_member" "endpoint_reranker_models_reader" {
+- infra/terraform/modules/vertex/main.tf:L379: bucket = var.models_bucket_name
+- infra/terraform/modules/vertex/main.tf:L380: role   = "roles/storage.objectViewer"
+- infra/terraform/modules/vertex/main.tf:L381: member = "serviceAccount:${var.service_accounts.endpoint_reranker.email}"
+- infra/terraform/modules/vertex/outputs.tf:L2: description = "Resolved encoder endpoint resource name placeholder"
+- infra/terraform/modules/vertex/outputs.tf:L7: description = "Resolved reranker endpoint resource name placeholder"
+- infra/terraform/modules/vertex/outputs.tf:L11: output "pipeline_root_bucket_name" {
+- infra/terraform/modules/vertex/outputs.tf:L12: description = "Vertex pipeline root bucket wired into this module"
+- infra/terraform/modules/vertex/outputs.tf:L13: value       = var.pipeline_root_bucket_name
+- infra/terraform/modules/vertex/outputs.tf:L23: value       = google_pubsub_topic.model_monitoring_alerts
+- infra/terraform/modules/vertex/outputs.tf:L28: value       = google_pubsub_subscription.monitoring_alerts_to_bq
+- infra/terraform/modules/vertex/outputs.tf:L33: value       = google_cloudfunctions2_function.pipeline_trigger.name
+- infra/terraform/modules/vertex/outputs.tf:L38: value       = google_eventarc_trigger.retrain_to_pipeline.name
+- infra/terraform/modules/vertex/outputs.tf:L43: value       = google_eventarc_trigger.monitoring_to_pipeline.name
+- infra/terraform/modules/vertex/outputs.tf:L49: length(google_vertex_ai_feature_group.property_features) > 0
+- infra/terraform/modules/vertex/outputs.tf:L50: ? google_vertex_ai_feature_group.property_features[0]
+- infra/terraform/modules/vertex/outputs.tf:L58: length(google_vertex_ai_feature_online_store.property_features) > 0
+- infra/terraform/modules/vertex/outputs.tf:L59: ? google_vertex_ai_feature_online_store.property_features[0].name
+- infra/terraform/modules/vertex/outputs.tf:L67: length(google_vertex_ai_feature_online_store_featureview.property_features) > 0
+- infra/terraform/modules/vertex/outputs.tf:L68: ? google_vertex_ai_feature_online_store_featureview.property_features[0].name
+- infra/terraform/modules/vertex/outputs.tf:L76: length(google_vertex_ai_feature_online_store.property_features) > 0
+- infra/terraform/modules/vertex/outputs.tf:L77: ? try(google_vertex_ai_feature_online_store.property_features[0].dedicated_serving_endpoint[0].public_endpoint_domain_name, "")
+- infra/terraform/modules/vertex/outputs.tf:L83: description = "Vertex AI encoder endpoint resource (null when disabled)"
+- infra/terraform/modules/vertex/outputs.tf:L85: length(google_vertex_ai_endpoint.encoder) > 0
+- infra/terraform/modules/vertex/outputs.tf:L86: ? google_vertex_ai_endpoint.encoder[0]
+- infra/terraform/modules/vertex/outputs.tf:L92: description = "Vertex AI reranker endpoint resource (null when disabled)"
+- infra/terraform/modules/vertex/outputs.tf:L94: length(google_vertex_ai_endpoint.reranker) > 0
+- infra/terraform/modules/vertex/outputs.tf:L95: ? google_vertex_ai_endpoint.reranker[0]
+- infra/terraform/modules/vertex/variables.tf:L7: description = "Primary region for regional resources"
+- infra/terraform/modules/vertex/variables.tf:L16: variable "service_accounts" {
+- infra/terraform/modules/vertex/variables.tf:L17: description = "Map of SA resources emitted by the iam module. Reserved for future Vertex resources."
+- infra/terraform/modules/vertex/variables.tf:L31: variable "pipeline_root_bucket_name" {
+- infra/terraform/modules/vertex/variables.tf:L32: description = "GCS bucket name used as Vertex AI pipeline root"
+- infra/terraform/modules/vertex/variables.tf:L42: description = "Vertex AI encoder endpoint ID or full resource name. Empty string keeps the module in scaffold mode."
+- infra/terraform/modules/vertex/variables.tf:L48: description = "Vertex AI reranker endpoint ID or full resource name. Empty string keeps the module in scaffold mode."
+- infra/terraform/modules/vertex/variables.tf:L73: variable "models_bucket_name" {
+- infra/terraform/modules/vertex/variables.tf:L74: description = "GCS bucket name hosting model artifacts read by Vertex endpoints"
+- ml/common/config/base.py:L35: gcs_models_bucket: str = "mlops-dev-a-models"
+- ml/registry/adapters/vertex_model_registry.py:L49: model_id=str(model.resource_name),
+- ml/registry/adapters/vertex_model_registry.py:L80: model_id=str(model.resource_name),
+- ml/registry/artifact_store.py:L4: * :class:`GcsPrefix` — immutable URI builder for ``gs://bucket/prefix/...``
+- ml/registry/artifact_store.py:L24: bucket: str
+- ml/registry/artifact_store.py:L31: bucket, _, prefix = uri[len("gs://") :].partition("/")
+- ml/registry/artifact_store.py:L32: if not bucket:
+- ml/registry/artifact_store.py:L33: raise ValueError(f"bucket missing in {uri!r}")
+- ml/registry/artifact_store.py:L34: return cls(bucket=bucket, prefix=prefix.strip("/"))
+- ml/registry/artifact_store.py:L38: return GcsPrefix(bucket=self.bucket, prefix=new_prefix)
+- ml/registry/artifact_store.py:L42: base = f"gs://{self.bucket}"
+- ml/registry/artifact_store.py:L48: def model_prefix(bucket: str, run_id: str, date_str: str) -> GcsPrefix:
+- ml/registry/artifact_store.py:L50: return GcsPrefix(bucket=bucket, prefix=f"lgbm/{date_str}/{run_id}")
+- ml/registry/artifact_store.py:L57: bucket = client.bucket(destination.bucket)
+- ml/registry/artifact_store.py:L64: bucket.blob(blob_name).upload_from_filename(str(path))
+- ml/registry/artifact_store.py:L65: uploaded.append(f"gs://{destination.bucket}/{blob_name}")
+- ml/registry/artifact_store.py:L75: client.bucket(prefix.bucket).blob(prefix.prefix).download_to_filename(str(local_path))
+- ml/registry/artifact_store.py:L86: """Uploads artifacts under ``gs://{bucket}/lgbm/{date}/{run_id}/``."""
+- ml/registry/artifact_store.py:L88: def __init__(self, *, bucket: str) -> None:
+- ml/registry/artifact_store.py:L89: self._bucket = bucket
+- ml/registry/artifact_store.py:L92: dest = model_prefix(bucket=self._bucket, run_id=run_id, date_str=date_str)
+- ml/serving/encoder.py:L117: for blob in client.list_blobs(prefix.bucket, prefix=prefix_with_slash):
+- ml/serving/encoder.py:L121: download_file(f"gs://{prefix.bucket}/{blob.name}", local_root / rel)
+- ml/streaming/pipeline.py:L4: 1-hour buckets, aggregates (impressions, clicks) per ``property_id``, and
+- ml/training/trainer.py:L292: uploader = uploader or GcsArtifactUploader(bucket=settings.gcs_models_bucket)
+- pipeline/dags/_pod.py:L11: - env_variables (REGION / VERTEX_LOCATION / PIPELINE_ROOT_BUCKET 等) は
+- pipeline/dags/_pod.py:L33: "PIPELINE_ROOT_BUCKET",
+- pipeline/dags/_pod.py:L35: "VERTEX_VECTOR_SEARCH_INDEX_RESOURCE_NAME",
+- pipeline/dags/_pod.py:L124: # service_account_name は Composer Gen 3 のデフォルト KSA (= sa-composer に
+- pipeline/data_job/adapters/vertex_vector_search_writer.py:L26: """``index_factory(index_resource_name) -> MatchingEngineIndex``."""
+- pipeline/data_job/adapters/vertex_vector_search_writer.py:L33: index_resource_name: Fully-qualified resource name of the
+- pipeline/data_job/adapters/vertex_vector_search_writer.py:L49: index_resource_name: str,
+- pipeline/data_job/adapters/vertex_vector_search_writer.py:L55: if not index_resource_name:
+- pipeline/data_job/adapters/vertex_vector_search_writer.py:L56: raise ValueError("index_resource_name is required")
+- pipeline/data_job/adapters/vertex_vector_search_writer.py:L63: self._index_resource_name = index_resource_name
+- pipeline/data_job/adapters/vertex_vector_search_writer.py:L75: self._index = self._index_factory(self._index_resource_name)
+- pipeline/data_job/adapters/vertex_vector_search_writer.py:L80: self._index = aiplatform.MatchingEngineIndex(index_name=self._index_resource_name)
+- pipeline/data_job/components/batch_predict_embeddings.py:L13: endpoint_resource_name: str,
+- pipeline/data_job/components/batch_predict_embeddings.py:L14: model_resource_name: str,
+- pipeline/data_job/components/batch_predict_embeddings.py:L23: "endpoint_resource_name": endpoint_resource_name,
+- pipeline/data_job/components/batch_predict_embeddings.py:L24: "model_resource_name": model_resource_name,
+- pipeline/data_job/components/upsert_vector_search.py:L4: describing the upsert plan (predictions URI + index resource + batch
+- pipeline/data_job/components/upsert_vector_search.py:L31: index_resource_name: str,
+- pipeline/data_job/components/upsert_vector_search.py:L40: "index_resource_name": index_resource_name,
+- pipeline/data_job/main.py:L34: endpoint_resource_name: str = "",
+- pipeline/data_job/main.py:L35: model_resource_name: str = "",
+- pipeline/data_job/main.py:L40: vector_search_index_resource_name: str = "",
+- pipeline/data_job/main.py:L54: endpoint_resource_name=endpoint_resource_name,
+- pipeline/data_job/main.py:L55: model_resource_name=model_resource_name,
+- pipeline/data_job/main.py:L66: # 常に DAG に含めるが、`vector_search_index_resource_name` が空なら downstream
+- pipeline/data_job/main.py:L73: index_resource_name=vector_search_index_resource_name,
+- pipeline/data_job/main.py:L89: "endpoint_resource_name": "",
+- pipeline/data_job/main.py:L90: "model_resource_name": "",
+- pipeline/data_job/main.py:L95: "vector_search_index_resource_name": "",
+- pipeline/training_job/adapters/kfp_orchestrator.py:L86: return str(job.resource_name)
+- pipeline/training_job/components/register_reranker.py:L17: endpoint_resource_name: str,
+- pipeline/training_job/components/register_reranker.py:L19: service_account: str,
+- pipeline/training_job/components/register_reranker.py:L34: _log(f"  endpoint_resource_name={endpoint_resource_name!r}")
+- pipeline/training_job/components/register_reranker.py:L35: _log("MINIMAL-REGISTER — done, returning dummy resource name")
+- pipeline/training_job/main.py:L60: endpoint_resource_name: str = "",
+- pipeline/training_job/main.py:L62: deploy_service_account: str = "",
+- pipeline/training_job/main.py:L93: endpoint_resource_name=endpoint_resource_name,
+- pipeline/training_job/main.py:L95: service_account=deploy_service_account,
+- pipeline/workflow/compile.py:L24: "endpoint_resource_name": "",
+- pipeline/workflow/compile.py:L25: "model_resource_name": "",
+- pipeline/workflow/compile.py:L134: service_account: str,
+- pipeline/workflow/compile.py:L147: job.submit(service_account=service_account or None)
+- pipeline/workflow/compile.py:L148: return job.resource_name
+- pipeline/workflow/compile.py:L165: return job.resource_name
+- pipeline/workflow/compile.py:L193: resource_name = _submit_pipeline(
+- pipeline/workflow/compile.py:L199: service_account=args.service_account,
+- pipeline/workflow/compile.py:L202: print(resource_name)
+- pipeline/workflow/trigger.py:L87: service_account = os.getenv("PIPELINE_SERVICE_ACCOUNT", "").strip()
+- pipeline/workflow/trigger.py:L103: job.submit(service_account=service_account or None)
+- pipeline/workflow/trigger.py:L106: "pipeline_job_resource_name": job.resource_name,
+- pipeline/workflow/trigger_zip/main.py:L87: service_account = os.getenv("PIPELINE_SERVICE_ACCOUNT", "").strip()
+- pipeline/workflow/trigger_zip/main.py:L103: job.submit(service_account=service_account or None)
+- pipeline/workflow/trigger_zip/main.py:L106: "pipeline_job_resource_name": job.resource_name,
+- pyproject.toml:L130: "live_gcp: requires real GCP resources / credentials and is skipped in local offline runs",
+- scripts/_common.py:L10: design (IDs, regions, bucket names). Never store credential material there.
+- scripts/_common.py:L189: def gcs_bucket_name(suffix: str) -> str:
+- scripts/_common.py:L190: """Compose ``<project_id>-<suffix>`` bucket name from PROJECT_ID env.
+- scripts/ci/sync_configmap.py:L6: - ``models_bucket`` follows the convention ``<project_id>-models`` set in
+- scripts/ci/sync_configmap.py:L7: ``ml/common/config/base.py::BaseAppSettings.gcs_models_bucket`` default.
+- scripts/ci/sync_configmap.py:L42: models_bucket = f"{project_id}-models"
+- scripts/ci/sync_configmap.py:L45: models_bucket=models_bucket,
+- scripts/deploy/composer_deploy_dags.py:L1: """Upload pipeline/dags/*.py to the Composer DAG GCS bucket.
+- scripts/deploy/composer_deploy_dags.py:L4: ``pipeline/dags/`` 配下の DAG ファイルを ``terraform output composer_dag_bucket``
+- scripts/deploy/composer_deploy_dags.py:L5: が指す GCS bucket へ upload する (Composer scheduler が GCS を polling して
+- scripts/deploy/composer_deploy_dags.py:L10: `enable_composer=false` のときは ``composer_dag_bucket`` output が空文字に
+- scripts/deploy/composer_deploy_dags.py:L16: の絶対 import を使うため、Composer DAG bucket 上にも ``pipeline/__init__.py``
+- scripts/deploy/composer_deploy_dags.py:L78: Composer DAG bucket では ``/home/airflow/gcs/dags/`` が ``sys.path`` に
+- scripts/deploy/composer_deploy_dags.py:L99: Composer は DAG bucket と並列に ``data/`` GCS subpath を持ち、Composer
+- scripts/deploy/composer_deploy_dags.py:L102: する (DAG bucket に置くと Airflow が DAG として scan しに行く)。
+- scripts/deploy/composer_deploy_dags.py:L118: dag_bucket = _terraform_output("composer_dag_bucket")
+- scripts/deploy/composer_deploy_dags.py:L119: if not dag_bucket:
+- scripts/deploy/composer_deploy_dags.py:L121: "[info] composer_dag_bucket output is empty — Composer environment not provisioned "
+- scripts/deploy/composer_deploy_dags.py:L131: print(f"[info] uploading {len(dag_files)} DAG file(s) + pipeline package shim → {dag_bucket}")
+- scripts/deploy/composer_deploy_dags.py:L136: ["gsutil", "-m", "cp", *(str(p) for p in dag_files), dag_bucket],
+- scripts/deploy/composer_deploy_dags.py:L143: pkg_bucket_root = dag_bucket.rstrip("/")
+- scripts/deploy/composer_deploy_dags.py:L145: target = f"{pkg_bucket_root}/{gcs_relative}"
+- scripts/deploy/composer_deploy_dags.py:L152: # 非 DAG アセット (SQL 等) を ここに置く (DAG bucket に置くと Airflow が
+- scripts/deploy/composer_deploy_dags.py:L154: data_bucket_root = pkg_bucket_root.rsplit("/dags", 1)[0] + "/data"
+- scripts/deploy/composer_deploy_dags.py:L157: print(f"[info] uploading {len(data_files)} data file(s) → {data_bucket_root}")
+- scripts/deploy/composer_deploy_dags.py:L159: target = f"{data_bucket_root}/{data_relative}"
+- scripts/deploy/configmap_overlay.py:L16: from scripts._common import env, gcs_bucket_name
+- scripts/deploy/configmap_overlay.py:L83: models_bucket = env("MODELS_BUCKET", gcs_bucket_name("models"))
+- scripts/deploy/configmap_overlay.py:L85: print(f"[info] models_bucket={models_bucket}")
+- scripts/deploy/configmap_overlay.py:L116: models_bucket=models_bucket,
+- scripts/deploy/kserve_models.py:L118: artifact_uri = getattr(model, "uri", None) or getattr(model._gca_resource, "artifact_uri", "")
+- scripts/deploy/seed_lgbm_model.py:L36: from scripts._common import env, gcloud, gcs_bucket_name, run
+- scripts/deploy/seed_lgbm_model.py:L39: DEFAULT_BUCKET_SUFFIX = (
+- scripts/deploy/seed_lgbm_model.py:L40: "models"  # `<project>-models`; see scripts.lib.gcp_resources.BUCKET_SUFFIXES
+- scripts/deploy/seed_lgbm_model.py:L54: def _resolve_bucket() -> str:
+- scripts/deploy/seed_lgbm_model.py:L55: explicit = env("MODELS_BUCKET")
+- scripts/deploy/seed_lgbm_model.py:L59: raise SystemExit("[error] PROJECT_ID is empty and MODELS_BUCKET is not set")
+- scripts/deploy/seed_lgbm_model.py:L60: return gcs_bucket_name(DEFAULT_BUCKET_SUFFIX)
+- scripts/deploy/seed_lgbm_model.py:L111: bucket = _resolve_bucket()
+- scripts/deploy/seed_lgbm_model.py:L113: target_uri = f"gs://{bucket}/{prefix.rstrip('/')}/{MODEL_FILENAME}"
+- scripts/domain/gcp/feature_view_sync.py:L75: def _feature_view_resource(project_id: str, region: str, store_id: str, view_id: str) -> str:
+- scripts/domain/gcp/feature_view_sync.py:L111: feature_view = _feature_view_resource(project_id, region, store_id, view_id)
+- scripts/domain/gcp/gcs_cleanup.py:L1: """GCS bucket cleanup helpers for destroy-all.
+- scripts/domain/gcp/gcs_cleanup.py:L3: Terraform-managed buckets (`*-models` / `*-artifacts` / `*-pipeline-root`) は
+- scripts/domain/gcp/gcs_cleanup.py:L6: ``Error trying to delete bucket ... containing objects without 'force_destroy'
+- scripts/domain/gcp/gcs_cleanup.py:L15: from scripts.lib.gcp_resources import BUCKET_SUFFIXES
+- scripts/domain/gcp/gcs_cleanup.py:L18: def wipe_bucket(project_id: str, bucket: str) -> None:
+- scripts/domain/gcp/gcs_cleanup.py:L19: """Recursively delete every object in one GCS bucket. Benign on absence.
+- scripts/domain/gcp/gcs_cleanup.py:L21: `gcloud storage rm --recursive gs://BUCKET/**` returns non-zero when the
+- scripts/domain/gcp/gcs_cleanup.py:L22: bucket doesn't exist or is already empty — both outcomes are fine here,
+- scripts/domain/gcp/gcs_cleanup.py:L25: uri = f"gs://{bucket}"
+- scripts/domain/gcp/gcs_cleanup.py:L38: def wipe_all_terraform_managed_buckets(project_id: str | None = None) -> None:
+- scripts/domain/gcp/gcs_cleanup.py:L39: """Iterate `BUCKET_SUFFIXES` and wipe each `<project>-<suffix>` bucket."""
+- scripts/domain/gcp/gcs_cleanup.py:L41: for suffix in BUCKET_SUFFIXES:
+- scripts/domain/gcp/gcs_cleanup.py:L42: wipe_bucket(pid, f"{pid}-{suffix}")
+- scripts/domain/gcp/state_recovery.py:L1: """Generic GCP resource state recovery — import existing GCP resources into tfstate.
+- scripts/domain/gcp/state_recovery.py:L6: - これは GCP 側で **本当に消えた resources** のための clean-up だが、`gcloud delete --async`
+- scripts/domain/gcp/state_recovery.py:L10: `Error: alreadyExists` で多数の resource create が fail
+- scripts/domain/gcp/state_recovery.py:L15: 1. GCP 側に存在する resources を type ごとに list
+- scripts/domain/gcp/state_recovery.py:L24: - IAM bindings (`google_project_iam_member` etc.) は recover しない (依存 SA を import
+- scripts/domain/gcp/state_recovery.py:L26: - GCS buckets は force_destroy 設計が module 側で固定されているため復元しない
+- scripts/domain/gcp/state_recovery.py:L40: # Terraform address ↔ GCP resource mapping
+- scripts/domain/gcp/state_recovery.py:L41: # `infra/terraform/modules/*/main.tf` の resource declaration と一致させる。
+- scripts/domain/gcp/state_recovery.py:L45: # IAM service accounts: account_id 'sa-X' → terraform address `module.iam.google_service_account.X`
+- scripts/domain/gcp/state_recovery.py:L65: # BQ tables: (dataset, table_name, terraform_resource_name)
+- scripts/domain/gcp/state_recovery.py:L66: # table_name は GCP の table ID、terraform_resource_name は main.tf の resource label
+- scripts/domain/gcp/state_recovery.py:L85: # Pub/Sub topics: (gcp_topic_name, module_name, terraform_resource_name)
+- scripts/domain/gcp/state_recovery.py:L93: # Pub/Sub subscriptions: (gcp_sub_name, module_name, terraform_resource_name)
+- scripts/domain/gcp/state_recovery.py:L100: # Cloud Function (Gen 2): (gcp_function_name, module_name, terraform_resource_name)
+- scripts/domain/gcp/state_recovery.py:L103: # Eventarc triggers: (gcp_trigger_name, module_name, terraform_resource_name)
+- scripts/domain/gcp/state_recovery.py:L109: # Cloud Run services: (gcp_service_name, module_name, terraform_resource_name)
+- scripts/domain/gcp/state_recovery.py:L112: # Artifact Registry repositories: (gcp_repo_id, module_name, terraform_resource_name)
+- scripts/domain/gcp/state_recovery.py:L116: # Secret Manager secrets: <redacted>
+- scripts/domain/gcp/state_recovery.py:L121: # Dataform repositories: (gcp_repo_name, module_name, terraform_resource_name)
+- scripts/domain/gcp/state_recovery.py:L125: # GCS buckets: (gcp_bucket_name, module_name, terraform_resource_name)
+- scripts/domain/gcp/state_recovery.py:L127: # tfstate bucket 自身 (`mlops-dev-a-tfstate`) は terraform 管理外のため対象外。
+- scripts/domain/gcp/state_recovery.py:L128: GCS_BUCKETS = (
+- scripts/domain/gcp/state_recovery.py:L134: # Vertex AI Feature Store: (gcp_id, module_name, terraform_resource_name)
+- scripts/domain/gcp/state_recovery.py:L142: # Vertex AI Feature Group Features: (feature_group_id, feature_id, module_name, terraform_resource_name)
+- scripts/domain/gcp/state_recovery.py:L143: # `for_each` resource なので address suffix は `["<feature_id>"]`。
+- scripts/domain/gcp/state_recovery.py:L216: addr = f"module.iam.google_service_account.{sa_name}"
+- scripts/domain/gcp/state_recovery.py:L226: gcp_resource_name = f"projects/{project_id}/serviceAccounts/{email}"
+- scripts/domain/gcp/state_recovery.py:L227: if _terraform_import(infra_dir, addr, gcp_resource_name, terraform_var_args=var_args):
+- scripts/domain/gcp/state_recovery.py:L250: addr = f"module.data.google_bigquery_dataset.{ds}"
+- scripts/domain/gcp/state_recovery.py:L259: addr = f"module.data.google_bigquery_table.{tf_name}"
+- scripts/domain/gcp/state_recovery.py:L284: addr = f"module.{module}.google_pubsub_topic.{tf_name}"
+- scripts/domain/gcp/state_recovery.py:L306: addr = f"module.{module}.google_pubsub_subscription.{tf_name}"
+- scripts/domain/gcp/state_recovery.py:L340: addr = f"module.{module}.google_cloudfunctions2_function.{tf_name}"
+- scripts/domain/gcp/state_recovery.py:L368: addr = f"module.{module}.google_eventarc_trigger.{tf_name}"
+- scripts/domain/gcp/state_recovery.py:L396: addr = f"module.{module}.google_cloud_run_v2_service.{tf_name}"
+- scripts/domain/gcp/state_recovery.py:L426: addr = f"module.{module}.google_artifact_registry_repository.{tf_name}"
+- scripts/domain/gcp/state_recovery.py:L431: gcp_resource = f"projects/{project_id}/locations/{region}/repositories/{gcp_id}"
+- scripts/domain/gcp/state_recovery.py:L432: if _terraform_import(infra_dir, addr, gcp_resource, terraform_var_args=var_args):
+- scripts/domain/gcp/state_recovery.py:L446: addr = <redacted>
+- scripts/domain/gcp/state_recovery.py:L451: gcp_resource = <redacted>
+- scripts/domain/gcp/state_recovery.py:L452: if _terraform_import(infra_dir, addr, gcp_resource, terraform_var_args=var_args):
+- scripts/domain/gcp/state_recovery.py:L457: def _recover_gcs_buckets(infra_dir: Path, project_id: str, var_args: list[str]) -> int:
+- scripts/domain/gcp/state_recovery.py:L458: """GCS buckets — `gcloud storage buckets list` で existing を取得し import。
+- scripts/domain/gcp/state_recovery.py:L460: bucket は `var.{name}_bucket_name` で `mlops-dev-a-{models,artifacts,pipeline-root}`。
+- scripts/domain/gcp/state_recovery.py:L461: tfstate bucket (`mlops-dev-a-tfstate`) は terraform 管理外のため除外。
+- scripts/domain/gcp/state_recovery.py:L466: "buckets",
+- scripts/domain/gcp/state_recovery.py:L476: for gcp_name, module, tf_name in GCS_BUCKETS:
+- scripts/domain/gcp/state_recovery.py:L477: addr = f"module.{module}.google_storage_bucket.{tf_name}"
+- scripts/domain/gcp/state_recovery.py:L482: # GCS bucket import ID is the bucket name itself
+- scripts/domain/gcp/state_recovery.py:L489: """Vertex AI REST API GET — gcloud に直接 list subcommand が無い resource 用."""
+- scripts/domain/gcp/state_recovery.py:L526: addr = f"module.{module}.google_vertex_ai_feature_group.{tf_name}[0]"
+- scripts/domain/gcp/state_recovery.py:L531: gcp_resource = f"projects/{project_id}/locations/{region}/featureGroups/{gcp_id}"
+- scripts/domain/gcp/state_recovery.py:L532: if _terraform_import(infra_dir, addr, gcp_resource, terraform_var_args=var_args):
+- scripts/domain/gcp/state_recovery.py:L541: addr = f"module.{module}.google_vertex_ai_feature_online_store.{tf_name}[0]"
+- scripts/domain/gcp/state_recovery.py:L546: gcp_resource = f"projects/{project_id}/locations/{region}/featureOnlineStores/{gcp_id}"
+- scripts/domain/gcp/state_recovery.py:L547: if _terraform_import(infra_dir, addr, gcp_resource, terraform_var_args=var_args):
+- scripts/domain/gcp/state_recovery.py:L554: addr = f'module.{module}.google_vertex_ai_feature_group_feature.{tf_name}["{feat_id}"]'
+- scripts/domain/gcp/state_recovery.py:L563: gcp_resource = (
+- scripts/domain/gcp/state_recovery.py:L566: if _terraform_import(infra_dir, addr, gcp_resource, terraform_var_args=var_args):
+- scripts/domain/gcp/state_recovery.py:L573: addr = f"module.{module}.google_vertex_ai_feature_online_store_featureview.{tf_name}[0]"
+- scripts/domain/gcp/state_recovery.py:L582: gcp_resource = (
+- scripts/domain/gcp/state_recovery.py:L586: if _terraform_import(infra_dir, addr, gcp_resource, terraform_var_args=var_args):
+- scripts/domain/gcp/state_recovery.py:L624: addr = f"module.{module}.google_dataform_repository.{tf_name}"
+- scripts/domain/gcp/state_recovery.py:L629: gcp_resource = f"projects/{project_id}/locations/{region}/repositories/{gcp_id}"
+- scripts/domain/gcp/state_recovery.py:L630: if _terraform_import(infra_dir, addr, gcp_resource, terraform_var_args=var_args):
+- scripts/domain/gcp/state_recovery.py:L640: def recover_orphan_gcp_resources(
+- scripts/domain/gcp/state_recovery.py:L647: """Discover existing GCP resources and import missing ones into tfstate.
+- scripts/domain/gcp/state_recovery.py:L649: Returns the total number of resources imported.
+- scripts/domain/gcp/state_recovery.py:L663: total += _recover_gcs_buckets(infra_dir, project_id, var_args)
+- scripts/domain/gcp/state_recovery.py:L666: print(f"==> state recovery: {total} orphan GCP resource(s) imported into state")
+- scripts/domain/gcp/state_recovery.py:L668: print("==> state recovery: no orphan resources found")
+- scripts/domain/gcp/state_recovery.py:L694: recover_orphan_gcp_resources(infra_dir, project_id, region, terraform_var_args=var_args)
+- scripts/domain/gcp/vertex_cleanup.py:L3: Terraform-managed `google_vertex_ai_endpoint` は empty shell。
+- scripts/domain/gcp/vertex_cleanup.py:L11: リソースとしては存在する (`scripts/lib/gcp_resources.VERTEX_ENDPOINTS`)。
+- scripts/domain/gcp/vertex_cleanup.py:L21: from scripts.lib.gcp_resources import VERTEX_ENDPOINTS
+- scripts/domain/gcp/vertex_import.py:L7: - GCP 上に該当 resource があれば **state に import** (= terraform plan で
+- scripts/domain/gcp/vertex_import.py:L9: - GCP 上にも無ければ skip (= terraform plan で全 resource を新規 create する初回 deploy)
+- scripts/domain/gcp/vertex_import.py:L24: INDEX_ADDR = "module.vector_search.google_vertex_ai_index.property_embeddings[0]"
+- scripts/domain/gcp/vertex_import.py:L25: ENDPOINT_ADDR = "module.vector_search.google_vertex_ai_index_endpoint.property_embeddings[0]"
+- scripts/domain/gcp/vertex_import.py:L71: def import_persistent_vvs_resources(
+- scripts/domain/gcp/vertex_import.py:L80: Returns the number of resources imported.
+- scripts/domain/gcp/vertex_import.py:L101: # gcloud は numeric project の resource name を返す。Terraform import は
+- scripts/domain/k8s/kubectl_context.py:L26: from scripts.lib.gcp_resources import GKE_CLUSTER_NAME_DEFAULT
+- scripts/domain/terraform/state.py:L80: empty-state の destroy-all 再走 → 12 resources added の事故)。
+- scripts/domain/terraform/state.py:L90: 配下の全 resource を一括で剥がせる。targeted destroy が cluster
+- scripts/domain/terraform/state.py:L91: unreachable で実 resource を消せなかった時の fallback として使う。
+- scripts/lib/__init__.py:L4: no filesystem access). They centralise GCP resource names and config schemas
+- scripts/lib/config.py:L8: Feature Online Store の resource ID / endpoint だけを持つ。`semantic_backend` /
+- scripts/lib/config.py:L19: # environment-specific values (project / bucket) from Vertex resource identifiers.
+- scripts/lib/config.py:L21: ["project_id", "models_bucket"],
+- scripts/lib/config.py:L39: # All Vertex resource identifiers default to "" because the committed example
+- scripts/lib/config.py:L59: models_bucket: str,
+- scripts/lib/config.py:L73: Caller-supplied values: ``project_id``, ``models_bucket``. Elasticsearch
+- scripts/lib/config.py:L74: URLs resolve at overlay time (cluster-local ES Service DNS). Vertex resource
+- scripts/lib/config.py:L81: "models_bucket": models_bucket,
+- scripts/lib/config.py:L116: "# Online Store の resource ID / endpoint だけを持つ。`semantic_backend`\n"
+- scripts/lib/gcp_resources.py:L1: """GCP resource name constants — single source of truth.
+- scripts/lib/gcp_resources.py:L15: BUCKET_SUFFIXES: list[str] = ["models", "artifacts", "pipeline-root"]
+- scripts/ops/destroy_check.py:L1: """Check for residual high-cost GCP resources after ``make destroy-all``.
+- scripts/ops/destroy_check.py:L6: - ``FAIL``: Phase 7 resources that should have been removed by destroy-all.
+- scripts/ops/destroy_check.py:L7: - ``WARN``: Google-managed residual buckets/repos that usually remain and
+- scripts/ops/destroy_check.py:L9: - ``ERROR``: the checker itself could not verify a resource group.
+- scripts/ops/destroy_check.py:L26: HIGH_COST_BUCKET_SUFFIXES = ("models", "artifacts", "pipeline-root")
+- scripts/ops/destroy_check.py:L28: ALLOWED_BUCKET_NAMES = ("tfstate", "vertex")
+- scripts/ops/destroy_check.py:L29: ALLOWED_BUCKET_PREFIXES = ("gcf-v2-sources-", "cloud-ai-platform-")
+- scripts/ops/destroy_check.py:L30: ALLOWED_BUCKET_SUFFIX_LITERALS = ("_cloudbuild",)
+- scripts/ops/destroy_check.py:L51: description="Check residual high-cost GCP resources after destroy-all."
+- scripts/ops/destroy_check.py:L229: def _collect_buckets(project_id: str) -> tuple[tuple[str, ...], str | None]:
+- scripts/ops/destroy_check.py:L231: ["gcloud", "storage", "buckets", "list", f"--project={project_id}", "--format=json"]
+- scripts/ops/destroy_check.py:L267: def _classify_bucket_names(
+- scripts/ops/destroy_check.py:L268: project_id: str, buckets: tuple[str, ...]
+- scripts/ops/destroy_check.py:L272: high_cost_buckets = {f"{project_id}-{suffix}" for suffix in HIGH_COST_BUCKET_SUFFIXES}
+- scripts/ops/destroy_check.py:L273: allowed_exact = {f"{project_id}-{suffix}" for suffix in ALLOWED_BUCKET_NAMES}
+- scripts/ops/destroy_check.py:L274: allowed_exact.update({f"{project_id}{suffix}" for suffix in ALLOWED_BUCKET_SUFFIX_LITERALS})
+- scripts/ops/destroy_check.py:L275: for bucket in buckets:
+- scripts/ops/destroy_check.py:L276: if bucket in high_cost_buckets:
+- scripts/ops/destroy_check.py:L277: fail_items.append(bucket)
+- scripts/ops/destroy_check.py:L279: if bucket in allowed_exact or bucket.startswith(ALLOWED_BUCKET_PREFIXES):
+- scripts/ops/destroy_check.py:L280: warn_items.append(bucket)
+- scripts/ops/destroy_check.py:L340: buckets, buckets_error = _collect_buckets(project_id)
+- scripts/ops/destroy_check.py:L344: fail_buckets, warn_buckets = _classify_bucket_names(project_id, buckets)
+- scripts/ops/destroy_check.py:L357: _evaluate("Phase 7 high-cost buckets", fail_buckets, buckets_error),
+- scripts/ops/destroy_check.py:L361: if warn_buckets:
+- scripts/ops/destroy_check.py:L364: label="Managed residual buckets",
+- scripts/ops/destroy_check.py:L366: items=warn_buckets,
+- scripts/ops/destroy_check.py:L367: note="Google-managed or intentionally preserved buckets",
+- scripts/ops/destroy_check.py:L397: print("destroy-check passed: no high-cost residual Phase 7 resources found.")
+- scripts/ops/promote.py:L77: rn = getattr(m, "resource_name", "") or ""
+- scripts/ops/promote.py:L91: resource* — when each train upload created a new Model rather than
+- scripts/ops/promote.py:L213: f"Pick a version_id pointing to a populated bucket "
+- scripts/ops/promote.py:L284: "Vertex Model resource numeric id (trailing component of "
+- scripts/ops/promote.py:L285: "projects/.../models/<id>). Use this when multiple Model resources "
+- scripts/ops/register_model.py:L25: """Resource name of the most recent SUCCEEDED PipelineJob."""
+- scripts/ops/register_model.py:L36: return str(j.resource_name)
+- scripts/ops/register_model.py:L40: def _resolve_model_uri_from_gcs(*, project_id: str, pipeline_resource_name: str) -> str:
+- scripts/ops/register_model.py:L41: """Walk pipeline-root bucket and find train-reranker's executor_output.json."""
+- scripts/ops/register_model.py:L46: # the pipeline resource name if available, otherwise resolve via aiplatform.
+- scripts/ops/register_model.py:L47: parts = pipeline_resource_name.split("/")
+- scripts/ops/register_model.py:L53: # Walk resource tree to resolve PROJECT_NUMBER: fetch the job, which
+- scripts/ops/register_model.py:L54: # returns the numeric form in .resource_name
+- scripts/ops/register_model.py:L56: job = aiplatform.PipelineJob.get(pipeline_resource_name)
+- scripts/ops/register_model.py:L57: numeric = job.resource_name.split("/")[1]
+- scripts/ops/register_model.py:L60: bucket_name = f"{project_id}-pipeline-root"
+- scripts/ops/register_model.py:L64: bucket = client.bucket(bucket_name)
+- scripts/ops/register_model.py:L65: for blob in bucket.list_blobs(prefix=base):
+- scripts/ops/register_model.py:L90: raise RuntimeError(f"could not locate train-reranker output under gs://{bucket_name}/{base}")
+- scripts/ops/register_model.py:L117: "resource_name": uploaded.resource_name,
+- scripts/ops/register_model.py:L159: pipeline_resource_name = (
+- scripts/ops/register_model.py:L163: pipeline_resource_name = _latest_pipeline_run(
+- scripts/ops/register_model.py:L166: print(f"[register_model] pipeline_resource_name={pipeline_resource_name}")
+- scripts/ops/register_model.py:L169: project_id=project_id, pipeline_resource_name=pipeline_resource_name
+- scripts/ops/slo_status.py:L8: Resolves SLO resource names from Terraform outputs so operators do not
+- scripts/ops/slo_status.py:L30: fallback resource-name resolution to kick in.
+- scripts/ops/submit_train_pipeline.py:L11: Composer is canonical). Region / bucket use :func:`scripts._common.env` so
+- scripts/ops/submit_train_pipeline.py:L40: bucket = env("PIPELINE_ROOT_BUCKET").strip()
+- scripts/ops/submit_train_pipeline.py:L41: if not bucket:
+- scripts/ops/submit_train_pipeline.py:L43: "[error] submit_train_pipeline: PIPELINE_ROOT_BUCKET missing — "
+- scripts/ops/submit_train_pipeline.py:L52: pipeline_root = f"gs://{bucket}/runs"
+- scripts/ops/submit_train_pipeline.py:L53: service_account = f"sa-pipeline@{project}.iam.gserviceaccount.com"
+- scripts/ops/submit_train_pipeline.py:L69: service_account,
+- scripts/ops/vertex/feature_group.py:L14: 1. Reads the FeatureOnlineStore resource to discover the public
+- scripts/ops/vertex/feature_group.py:L158: store_resource_name = str(getattr(store, "name", "") or store_name)
+- scripts/ops/vertex/feature_group.py:L161: store_name=store_resource_name,
+- scripts/ops/vertex/models_list.py:L20: from scripts.lib.gcp_resources import VERTEX_MODEL_NAMES
+- scripts/ops/vertex/models_list.py:L44: # resource_name: projects/.../locations/.../models/<model_id>
+- scripts/ops/vertex/models_list.py:L45: resource_name = getattr(m, "resource_name", "") or ""
+- scripts/ops/vertex/models_list.py:L46: model_id = resource_name.rsplit("/", 1)[-1] if resource_name else "-"
+- scripts/ops/vertex/pipeline_wait.py:L75: resource_name = str(getattr(job, "resource_name", "") or getattr(job, "name", "-"))
+- scripts/ops/vertex/pipeline_wait.py:L77: print(f"vertex-pipeline-wait: state={state} job={resource_name}")
+- scripts/ops/vertex/pipeline_wait.py:L80: print(f"vertex-pipeline-wait PASS: {resource_name}")
+- scripts/ops/vertex/pipeline_wait.py:L83: return fail(f"vertex-pipeline-wait: latest run ended in state={state}: {resource_name}")
+- scripts/setup/backfill_vector_search_index.py:L23: VERTEX_VECTOR_SEARCH_INDEX_RESOURCE_NAME=projects/.../indexes/123 \\
+- scripts/setup/backfill_vector_search_index.py:L54: index_resource_name: str
+- scripts/setup/backfill_vector_search_index.py:L85: index_resource_name = env(
+- scripts/setup/backfill_vector_search_index.py:L86: "VERTEX_VECTOR_SEARCH_INDEX_RESOURCE_NAME",
+- scripts/setup/backfill_vector_search_index.py:L87: outputs.get("vector_search_index_resource_name", ""),
+- scripts/setup/backfill_vector_search_index.py:L89: if not index_resource_name:
+- scripts/setup/backfill_vector_search_index.py:L91: "VERTEX_VECTOR_SEARCH_INDEX_RESOURCE_NAME is required "
+- scripts/setup/backfill_vector_search_index.py:L92: "(= module.vector_search.index_resource_name in Terraform outputs)"
+- scripts/setup/backfill_vector_search_index.py:L110: index_resource_name=index_resource_name,
+- scripts/setup/backfill_vector_search_index.py:L144: index_resource_name=spec.index_resource_name,
+- scripts/setup/backfill_vector_search_index.py:L164: f"location={spec.location} index={spec.index_resource_name} "
+- scripts/setup/backfill_vector_search_index.py:L183: f"into {spec.index_resource_name}",
+- scripts/setup/create_schedule.py:L14: pipeline_root = env("PIPELINE_ROOT", f"gs://{env('PIPELINE_ROOT_BUCKET')}/runs")
+- scripts/setup/create_schedule.py:L15: service_account = env("PIPELINE_SERVICE_ACCOUNT")
+- scripts/setup/create_schedule.py:L27: "service_account": service_account,
+- scripts/setup/create_schedule.py:L39: "service_account": service_account,
+- scripts/setup/deploy_all.py:L3: 1. `tf_bootstrap` — enable APIs + create tfstate bucket (idempotent)
+- scripts/setup/deploy_all.py:L4: 2. `tf_init` — terraform init with bucket preflight
+- scripts/setup/deploy_all.py:L6: `make destroy-all` left them soft-deleted (GCP keeps WIF resources for
+- scripts/setup/deploy_all.py:L14: 合成 LightGBM ranker を seed (Phase 7 Run 5: tf-apply 直後の bucket は空で、
+- scripts/setup/deploy_all.py:L233: "tf-bootstrap (enable APIs + tfstate bucket, idempotent)",
+- scripts/setup/deploy_all.py:L304: "upload pipeline/dags/*.py to Composer DAG GCS bucket (Phase 7 W2-4)",
+- scripts/setup/destroy_all.py:L1: """End-to-end teardown of every Terraform-managed resource. **No interactive
+- scripts/setup/destroy_all.py:L9: `feature_mart` dataset destroy with `resourceInUse` otherwise.
+- scripts/setup/destroy_all.py:L21: 5. `wipe-gcs-buckets` — `gcs_cleanup.wipe_all_terraform_managed_buckets` で
+- scripts/setup/destroy_all.py:L22: force_destroy=false の 4 buckets を空にする (object 残存だと bucket destroy
+- scripts/setup/destroy_all.py:L26: protected resource (10 BQ tables + 1 GKE cluster + online serving view 1) の
+- scripts/setup/destroy_all.py:L34: 8. `destroy-main` — `terraform destroy -auto-approve` (永続化 VVS resource は
+- scripts/setup/destroy_all.py:L38: - The tfstate bucket (`<PROJECT_ID>-tfstate`).
+- scripts/setup/destroy_all.py:L39: - API enablements (cost nothing when no resource exists).
+- scripts/setup/destroy_all.py:L50: K8s finalizer cleanup / GCS bucket wipe は `scripts/domain/{gcp,k8s,terraform}/*` に委譲し、
+- scripts/setup/destroy_all.py:L82: # Resource addresses that carry **server-side `deletion_protection`** —
+- scripts/setup/destroy_all.py:L87: # if a new resource that has its own `deletion_protection` is added,
+- scripts/setup/destroy_all.py:L96: "module.data.google_bigquery_table.training_runs",
+- scripts/setup/destroy_all.py:L97: "module.data.google_bigquery_table.search_logs",
+- scripts/setup/destroy_all.py:L98: "module.data.google_bigquery_table.ranking_log",
+- scripts/setup/destroy_all.py:L99: "module.data.google_bigquery_table.feedback_events",
+- scripts/setup/destroy_all.py:L100: "module.data.google_bigquery_table.search_events",
+- scripts/setup/destroy_all.py:L101: "module.data.google_bigquery_table.search_impressions",
+- scripts/setup/destroy_all.py:L102: "module.data.google_bigquery_table.user_actions",
+- scripts/setup/destroy_all.py:L103: "module.data.google_bigquery_table.ranking_labels",
+- scripts/setup/destroy_all.py:L104: "module.data.google_bigquery_table.evaluation_metrics",
+- scripts/setup/destroy_all.py:L105: "module.data.google_bigquery_table.validation_results",
+- scripts/setup/destroy_all.py:L106: "module.data.google_bigquery_table.property_features_daily",
+- scripts/setup/destroy_all.py:L107: "module.data.google_bigquery_table.property_features_online_latest",
+- scripts/setup/destroy_all.py:L108: "module.data.google_bigquery_table.property_embeddings",
+- scripts/setup/destroy_all.py:L109: "module.data.google_bigquery_table.model_monitoring_alerts",
+- scripts/setup/destroy_all.py:L110: "module.data.google_bigquery_table.ranking_log_hourly_ctr",
+- scripts/setup/destroy_all.py:L111: "module.gke.google_container_cluster.hybrid_search",
+- scripts/setup/destroy_all.py:L116: # の `kubernetes` / `helm` provider は `data.google_container_cluster.hybrid_search`
+- scripts/setup/destroy_all.py:L132: # 課金 resource のみを destroy する。Terraform 側にも `lifecycle.prevent_destroy
+- scripts/setup/destroy_all.py:L134: PERSISTENT_VVS_RESOURCES = (
+- scripts/setup/destroy_all.py:L135: "module.vector_search.google_vertex_ai_index.property_embeddings",
+- scripts/setup/destroy_all.py:L136: "module.vector_search.google_vertex_ai_index_endpoint.property_embeddings",
+- scripts/setup/destroy_all.py:L228: # 永続化 VVS resource を **state rm で外す** (= GCP には残置)。
+- scripts/setup/destroy_all.py:L236: "module.vector_search.google_vertex_ai_index_endpoint_deployed_index.property_embeddings[0]",
+- scripts/setup/destroy_all.py:L237: *(f"{p}[0]" for p in PERSISTENT_VVS_RESOURCES),
+- scripts/setup/destroy_all.py:L249: def _run_wipe_gcs_buckets() -> int:
+- scripts/setup/destroy_all.py:L251: print("==> wipe GCS buckets (force_destroy=false blockers)")
+- scripts/setup/destroy_all.py:L252: gcs_cleanup.wipe_all_terraform_managed_buckets(project_id)
+- scripts/setup/destroy_all.py:L259: # (Phase 7 Run 4 で empty-state の destroy-all 再走 → 12 resources added の
+- scripts/setup/destroy_all.py:L271: "in-state resources with deletion_protection> "
+- scripts/setup/destroy_all.py:L334: # 永続化 VVS resource (Index / Endpoint) は destroy 対象から除外する。
+- scripts/setup/destroy_all.py:L340: persistent_prefixes = tuple(f"{p}" for p in PERSISTENT_VVS_RESOURCES)
+- scripts/setup/destroy_all.py:L344: print("==> state は永続化 VVS resource のみ — 本体 destroy をスキップ")
+- scripts/setup/destroy_all.py:L411: "wipe-gcs-buckets",
+- scripts/setup/destroy_all.py:L412: "wipe GCS buckets (force_destroy=false blockers)",
+- scripts/setup/destroy_all.py:L413: _run_wipe_gcs_buckets,
+- scripts/setup/destroy_all.py:L488: # 依存ごと resource を recreate してしまう副作用 (Phase 7 Run 4 で
+- scripts/setup/destroy_all.py:L547: print("    tfstate bucket preserved. Re-provision with: make deploy-all")
+- scripts/setup/print_github_variables.py:L26: ("WORKLOAD_IDENTITY_PROVIDER", "WIF provider resource name", "WORKLOAD_IDENTITY_PROVIDER"),
+- scripts/setup/print_github_variables.py:L27: ("DEPLOYER_SERVICE_ACCOUNT", "sa-github-deployer email", "DEPLOYER_SERVICE_ACCOUNT"),
+- scripts/setup/print_github_variables.py:L30: ("VERTEX_ENCODER_ENDPOINT_ID", "encoder Endpoint resource ID", "VERTEX_ENCODER_ENDPOINT_ID"),
+- scripts/setup/print_github_variables.py:L33: "reranker Endpoint resource ID",
+- scripts/setup/recover_wif.py:L3: GCP の WIF resource は **soft-delete (30 日保持)** で、destroy-all 後に
+- scripts/setup/recover_wif.py:L5: を返す。回避するには (a) 残存する resource を ``gcloud undelete`` で
+- scripts/setup/recover_wif.py:L18: 1. ``gcloud describe`` で resource の現状 (ACTIVE / DELETED / 不在) を取得
+- scripts/setup/recover_wif.py:L42: 本 module は returncode で「resource そのものが存在しない」を判定する
+- scripts/setup/recover_wif.py:L58: ``data.google_container_cluster`` data source. Without that data source
+- scripts/setup/recover_wif.py:L69: pool_address = "module.iam.google_iam_workload_identity_pool.github"
+- scripts/setup/recover_wif.py:L111: provider_address = "module.iam.google_iam_workload_identity_pool_provider.github"
+- scripts/setup/seed_minimal_clean.py:L8: `resourceInUse` (dataset has a table Terraform does not know about).
+- scripts/setup/tf_apply.py:L11: - orphan GCP resource state recovery (`docs/tasks/TASKS_ROADMAP.md §4.10`)
+- scripts/setup/tf_apply.py:L25: from scripts.domain.gcp.state_recovery import recover_orphan_gcp_resources
+- scripts/setup/tf_apply.py:L28: from scripts.domain.gcp.vertex_import import import_persistent_vvs_resources
+- scripts/setup/tf_apply.py:L36: from scripts.lib.gcp_resources import GKE_CLUSTER_NAME_DEFAULT
+- scripts/setup/tf_apply.py:L59: # + GCP 残置** している場合がある。tf-apply 前に既存 GCP resource を state へ
+- scripts/setup/tf_apply.py:L64: imported = import_persistent_vvs_resources(
+- scripts/setup/tf_apply.py:L79: # も fail する罠あり。本 helper は existing GCP resources を type ごとに list して
+- scripts/setup/tf_apply.py:L81: print(f"==> tf-apply pre-step: orphan GCP resource state recovery (region={region})")
+- scripts/setup/tf_apply.py:L82: recovered = recover_orphan_gcp_resources(
+- scripts/setup/tf_apply.py:L89: print(f"==> {recovered} orphan resource(s) imported — tf-apply 'alreadyExists' fail 回避")
+- scripts/setup/tf_apply.py:L107: "==> terraform apply stage1 (core infra before kube provider resources): "
+- scripts/setup/tf_bootstrap.py:L2: bucket. Needs project Owner / Service Usage Admin / Storage Admin on the
+- scripts/setup/tf_bootstrap.py:L35: bucket = f"{project_id}-tfstate"
+- scripts/setup/tf_bootstrap.py:L40: print(f"==> Creating gs://{bucket} if absent...", flush=True)
+- scripts/setup/tf_bootstrap.py:L42: # `gcloud storage buckets describe`; only the return code matters here.
+- scripts/setup/tf_bootstrap.py:L45: "buckets",
+- scripts/setup/tf_bootstrap.py:L47: f"gs://{bucket}",
+- scripts/setup/tf_bootstrap.py:L56: "buckets",
+- scripts/setup/tf_bootstrap.py:L58: f"gs://{bucket}",
+- scripts/setup/tf_bootstrap.py:L61: "--uniform-bucket-level-access",
+- scripts/setup/tf_bootstrap.py:L64: gcloud("storage", "buckets", "update", f"gs://{bucket}", "--versioning")
+- scripts/setup/tf_init.py:L1: """Preflight-check the tfstate bucket (created by `make tf-bootstrap`) before
+- scripts/setup/tf_init.py:L2: running `terraform init`. Aborts with a clear error if the bucket is missing
+- scripts/setup/tf_init.py:L19: bucket = f"{project_id}-tfstate"
+- scripts/setup/tf_init.py:L25: "buckets",
+- scripts/setup/tf_init.py:L27: f"gs://{bucket}",
+- scripts/setup/tf_init.py:L33: f"ERROR: gs://{bucket} does not exist.\n"
+- scripts/setup/upload_encoder_assets.py:L10: gs://{GCS_MODELS_BUCKET or "{PROJECT_ID}-models"}/encoders/multilingual-e5-base/v1/
+- scripts/setup/upload_encoder_assets.py:L27: from scripts._common import env, gcs_bucket_name
+- scripts/setup/upload_encoder_assets.py:L34: """Resolve the spec (model name + bucket + prefix) without SDK calls."""
+- scripts/setup/upload_encoder_assets.py:L36: bucket = env("GCS_MODELS_BUCKET", gcs_bucket_name("models") if project_id else "")
+- scripts/setup/upload_encoder_assets.py:L41: "bucket": bucket,
+- scripts/setup/upload_encoder_assets.py:L43: "gcs_uri": f"gs://{bucket}/{prefix}" if bucket else "",
+- scripts/setup/upload_encoder_assets.py:L63: bucket_name: str,
+- scripts/setup/upload_encoder_assets.py:L71: bucket = client.bucket(bucket_name)
+- scripts/setup/upload_encoder_assets.py:L76: blob = bucket.blob(blob_name)
+- scripts/setup/upload_encoder_assets.py:L80: uploaded.append(f"gs://{bucket_name}/{blob_name}")
+- scripts/setup/upload_encoder_assets.py:L85: if not spec["bucket"]:
+- scripts/setup/upload_encoder_assets.py:L86: raise RuntimeError("GCS bucket is empty; set GCS_MODELS_BUCKET or PROJECT_ID")
+- scripts/setup/upload_encoder_assets.py:L92: spec["bucket"],
+- system_map.html:L247: <div class="resp">Lexical/semantic retrieval, KServe encoder + reranker, Feature Online Store fetcher. <code>resolve_feature_fetcher</code> fails-loud if FOS resource IDs missing.</div>
+- system_map.html:L395: <li><code>upsert_vector_search</code> → Vertex VVS index (skip if <code>vector_search_index_resource_name</code> blank — Strangler).</li>
+- system_map.html:L421: <div class="external"><b>External I/O:</b> Terraform state bucket · GCS · GKE · Artifact Registry · Composer</div>
+- system_map.html:L494: <div class="risk-row"><span class="sev low">low</span><div><b>FOS resource IDs blank → no /search.</b> <code>SearchBuilder.resolve_feature_fetcher</code> fails loud at startup if FOS config is incomplete when <code>enable_search=True</code>.</div></div>
+- system_map.json:L966: "responsibility": "Syncs DAG files + Composer data SQLs to Composer GCS bucket.",
+- system_map.json:L1187: {"module_id": "scripts.deploy.composer_deploy_dags", "action": "Sync DAGs + SQL to Composer GCS bucket."}
+- system_map.json:L1189: "external_io": ["Terraform Cloud / state bucket", "GCS", "GKE", "Artifact Registry", "Composer"],
+- system_map.json:L1248: {"area": "FOS endpoint missing", "issue": "SearchBuilder.resolve_feature_fetcher fails loud at startup if FOS resource IDs are blank when enable_search=True — config drift here = no /search at all.", "severity": "low"},
+- tests/integration/infra/test_destroy_all_table_parity.py:L27: _BQ_TABLE_RE = re.compile(r'resource\s+"google_bigquery_table"\s+"([^"]+)"')
+- tests/integration/infra/test_destroy_all_table_parity.py:L28: _GKE_CLUSTER_RE = re.compile(r'resource\s+"google_container_cluster"\s+"([^"]+)"')
+- tests/integration/infra/test_destroy_all_table_parity.py:L31: BQ_TABLE_PREFIX = "module.data.google_bigquery_table."
+- tests/integration/infra/test_destroy_all_table_parity.py:L32: GKE_CLUSTER_PREFIX = "module.gke.google_container_cluster."
+- tests/integration/infra/test_destroy_all_table_parity.py:L35: def _resources_with_deletion_protection(tf_file: Path, resource_re: re.Pattern[str]) -> set[str]:
+- tests/integration/infra/test_destroy_all_table_parity.py:L36: """Return resource names whose body references ``deletion_protection``
+- tests/integration/infra/test_destroy_all_table_parity.py:L40: ``resource "..." "..."`` approach works because resource blocks don't
+- tests/integration/infra/test_destroy_all_table_parity.py:L45: blocks = re.split(r'(?=resource\s+"[^"]+"\s+"[^"]+"\s*\{)', text)
+- tests/integration/infra/test_destroy_all_table_parity.py:L47: m = resource_re.match(block)
+- tests/integration/infra/test_destroy_all_table_parity.py:L82: tf_tables = _resources_with_deletion_protection(DATA_TF, _BQ_TABLE_RE)
+- tests/integration/infra/test_destroy_all_table_parity.py:L95: ``resource not in state``.
+- tests/integration/infra/test_destroy_all_table_parity.py:L97: tf_tables = _resources_with_deletion_protection(DATA_TF, _BQ_TABLE_RE)
+- tests/integration/infra/test_destroy_all_table_parity.py:L113: tf_clusters = _resources_with_deletion_protection(GKE_TF, _GKE_CLUSTER_RE)
+- tests/integration/infra/test_destroy_all_table_parity.py:L125: Bump this when adding any new protected resource so future readers see
+- tests/integration/infra/test_destroy_all_table_parity.py:L130: f"Expected 16 protected resources (15 BQ tables + 1 GKE cluster, "
+- tests/integration/infra/test_infra_ranker_tables.py:L31: def _extract_resource_block(kind: str, name: str) -> str:
+- tests/integration/infra/test_infra_ranker_tables.py:L33: r'resource\s+"' + re.escape(kind) + r'"\s+"' + re.escape(name) + r'"\s*\{',
+- tests/integration/infra/test_infra_ranker_tables.py:L38: assert match, f"resource {kind}.{name} not found in {INFRA_PATH}"
+- tests/integration/infra/test_infra_ranker_tables.py:L55: block = _extract_resource_block("google_bigquery_table", "property_features_daily")
+- tests/integration/infra/test_infra_ranker_tables.py:L62: block = _extract_resource_block("google_bigquery_table", "property_embeddings")
+- tests/integration/infra/test_infra_ranker_tables.py:L73: block = _extract_resource_block("google_bigquery_table", "search_logs")
+- tests/integration/infra/test_infra_ranker_tables.py:L82: block = _extract_resource_block("google_bigquery_table", "ranking_log")
+- tests/integration/infra/test_infra_ranker_tables.py:L94: block = _extract_resource_block("google_bigquery_table", "feedback_events")
+- tests/integration/infra/test_infra_ranker_tables.py:L100: block = _extract_resource_block("google_bigquery_table", "search_events")
+- tests/integration/infra/test_infra_ranker_tables.py:L106: block = _extract_resource_block("google_bigquery_table", "search_impressions")
+- tests/integration/infra/test_infra_ranker_tables.py:L112: block = _extract_resource_block("google_bigquery_table", "user_actions")
+- tests/integration/infra/test_infra_ranker_tables.py:L119: block = _extract_resource_block("google_bigquery_table", "ranking_labels")
+- tests/integration/infra/test_infra_ranker_tables.py:L128: block = _extract_resource_block("google_bigquery_table", "training_runs")
+- tests/integration/infra/test_infra_ranker_tables.py:L135: block = _extract_resource_block("google_bigquery_table", "training_runs")
+- tests/integration/infra/test_infra_ranker_tables.py:L145: assert 'resource "google_bigquery_table" "predictions_log"' not in text, (
+- tests/integration/infra/test_manifests_structure.py:L5: (resource limits, HPA bounds, NetworkPolicy boundary, KServe InferenceService
+- tests/integration/infra/test_manifests_structure.py:L31: assert len(docs) == 1, f"{path.name} must carry exactly one resource doc, got {len(docs)}"
+- tests/integration/infra/test_manifests_structure.py:L42: listed = {entry for entry in kust.get("resources", [])}
+- tests/integration/infra/test_manifests_structure.py:L55: # search-api Deployment — resource limits non-negotiable
+- tests/integration/infra/test_manifests_structure.py:L59: def test_search_api_deployment_resource_limits_match_nonnegotiable() -> None:
+- tests/integration/infra/test_manifests_structure.py:L70: resources = containers[0]["resources"]
+- tests/integration/infra/test_manifests_structure.py:L71: assert resources["requests"] == {"cpu": "500m", "memory": "1Gi"}, (
+- tests/integration/infra/test_manifests_structure.py:L74: assert resources["limits"] == {"cpu": "2", "memory": "2Gi"}, (
+- tests/integration/infra/test_manifests_structure.py:L178: metrics_by_resource = {
+- tests/integration/infra/test_manifests_structure.py:L179: m["resource"]["name"]: m["resource"]["target"]["averageUtilization"]
+- tests/integration/infra/test_manifests_structure.py:L181: if m.get("type") == "Resource"
+- tests/integration/infra/test_manifests_structure.py:L183: assert metrics_by_resource.get("cpu") == 70, "HPA CPU threshold must be 70%"
+- tests/integration/infra/test_manifests_structure.py:L184: assert metrics_by_resource.get("memory") == 80, "HPA Memory threshold must be 80%"
+- tests/integration/infra/test_public_domain_consistency.py:L40: # Default resource names in modules/dns/variables.tf — the Gateway annotation
+- tests/integration/infra/test_public_domain_consistency.py:L79: assert 'data "google_dns_managed_zone" "public"' in main
+- tests/integration/infra/test_public_domain_consistency.py:L80: assert 'resource "google_dns_managed_zone"' not in main
+- tests/integration/infra/test_public_domain_consistency.py:L82: assert 'resource "google_compute_global_address" "search_api"' in main
+- tests/integration/infra/test_public_domain_consistency.py:L83: assert 'resource "google_dns_record_set" "apex_a"' in main
+- tests/integration/infra/test_public_domain_consistency.py:L84: assert "google_compute_global_address.search_api.address" in main
+- tests/integration/infra/test_public_domain_consistency.py:L86: assert 'resource "google_certificate_manager_dns_authorization" "search_api"' in main
+- tests/integration/infra/test_public_domain_consistency.py:L87: assert 'resource "google_certificate_manager_certificate" "search_api"' in main
+- tests/integration/infra/test_public_domain_consistency.py:L88: assert "google_certificate_manager_dns_authorization.search_api.id" in main, (
+- tests/integration/infra/test_public_domain_consistency.py:L91: assert 'resource "google_certificate_manager_certificate_map" "search_api"' in main
+- tests/integration/infra/test_public_domain_consistency.py:L92: assert 'resource "google_certificate_manager_certificate_map_entry" "search_api"' in main
+- tests/integration/infra/test_public_domain_consistency.py:L94: assert "dns_resource_record[0].name" in main and "dns_resource_record[0].data" in main
+- tests/integration/parity/parity_invariant.py:L12: - Use ``extract_terraform_block(text, resource_type=..., name=...)``
+- tests/integration/parity/parity_invariant.py:L13: when you need a brace-balanced ``resource "..." "..." {...}`` body
+- tests/integration/parity/parity_invariant.py:L54: def extract_terraform_block(text: str, *, resource_type: str, name: str) -> str | None:
+- tests/integration/parity/parity_invariant.py:L55: """Return the body of ``resource "<resource_type>" "<name>" {...}`` in ``text``.
+- tests/integration/parity/parity_invariant.py:L59: (without the outer ``{`` / ``}``) or ``None`` if the resource is
+- tests/integration/parity/parity_invariant.py:L63: rf'resource\s+"{re.escape(resource_type)}"\s+"{re.escape(name)}"\s*{{',
+- tests/integration/parity/test_codebase_invariants.py:L92: """``scripts/`` may still name Terraform/GCP cleanup resources (meili-*); app must not."""
+- tests/integration/parity/test_codebase_invariants.py:L118: assert "meili" not in dep.lower(), "deployment.yaml must not reference meili resources"
+- tests/integration/parity/test_configmap_drift.py:L92: "models_bucket:",
+- tests/integration/parity/test_event_schema_parity.py:L83: resource_type="google_bigquery_table",
+- tests/integration/parity/test_event_schema_parity.py:L86: assert body is not None, "user_actions resource missing in main.tf"
+- tests/integration/parity/test_event_schema_parity.py:L95: resource_type="google_bigquery_table",
+- tests/integration/parity/test_event_schema_parity.py:L194: resource_type="google_bigquery_table",
+- tests/integration/parity/test_event_schema_parity.py:L197: assert body is not None, "evaluation_metrics resource missing in main.tf"
+- tests/integration/parity/test_event_schema_parity.py:L225: resource_type="google_bigquery_table",
+- tests/integration/workflow/conftest.py:L15: - `test_vertex_resources_contract.py` — Vertex Vector Search / Feature Online
+- tests/integration/workflow/test_composer_module_contract.py:L39: "PIPELINE_ROOT_BUCKET",
+- tests/integration/workflow/test_composer_module_contract.py:L40: "VERTEX_VECTOR_SEARCH_INDEX_RESOURCE_NAME",
+- tests/integration/workflow/test_composer_module_contract.py:L68: "GCS_BUCKET",
+- tests/integration/workflow/test_composer_module_contract.py:L132: def test_composer_module_outputs_dag_bucket_and_airflow_uri() -> None:
+- tests/integration/workflow/test_composer_module_contract.py:L135: 'output "dag_bucket"',
+- tests/integration/workflow/test_composer_module_contract.py:L166: "composer_service_account_email",
+- tests/integration/workflow/test_composer_module_contract.py:L167: "pipeline_root_bucket_name",
+- tests/integration/workflow/test_composer_module_contract.py:L168: "vector_search_index_resource_name",
+- tests/integration/workflow/test_composer_module_contract.py:L188: 'output "composer_dag_bucket"',
+- tests/integration/workflow/test_composer_module_contract.py:L210: assert 'resource "google_service_account" "composer" {' in iam_main
+- tests/integration/workflow/test_composer_module_contract.py:L214: '"roles/composer.worker"',
+- tests/integration/workflow/test_composer_module_contract.py:L215: '"roles/aiplatform.user"',
+- tests/integration/workflow/test_composer_module_contract.py:L216: '"roles/bigquery.jobUser"',
+- tests/integration/workflow/test_composer_module_contract.py:L217: '"roles/bigquery.dataViewer"',
+- tests/integration/workflow/test_composer_module_contract.py:L218: '"roles/run.invoker"',
+- tests/integration/workflow/test_composer_module_contract.py:L222: assert "google_project_iam_member" in iam_main and '"roles/composer.admin"' in iam_main, (
+- tests/integration/workflow/test_composer_module_contract.py:L223: "github_deployer must have roles/composer.admin to provision Composer env"
+- tests/integration/workflow/test_composer_module_contract.py:L226: assert "composer          = google_service_account.composer" in iam_outputs
+- tests/integration/workflow/test_composer_module_contract.py:L236: assert 'resource "google_service_account" "composer"' in iam_main
+- tests/integration/workflow/test_composer_module_contract.py:L238: assert "composer          = google_service_account.composer" in iam_outputs
+- tests/integration/workflow/test_composer_module_contract.py:L239: assert "module.iam.service_accounts.composer.email" in dev_main
+- tests/integration/workflow/test_composer_module_contract.py:L244: assert "module.iam.service_accounts.composer.email" in main_tf
+- tests/integration/workflow/test_composer_module_contract.py:L281: """`enable_composer=false` → terraform output `composer_dag_bucket` 空 →
+- tests/integration/workflow/test_composer_module_contract.py:L299: def test_composer_dag_bucket_terraform_output_consumed_by_deploy_script() -> None:
+- tests/integration/workflow/test_composer_module_contract.py:L300: """`composer_dag_bucket` output 名が deploy script と outputs.tf で同一。"""
+- tests/integration/workflow/test_composer_module_contract.py:L305: assert '_terraform_output("composer_dag_bucket")' in deploy_script
+- tests/integration/workflow/test_composer_module_contract.py:L306: assert 'output "composer_dag_bucket" {' in outputs_tf
+- tests/integration/workflow/test_composer_module_contract.py:L307: assert 'output "dag_bucket" {' in composer_outputs_tf
+- tests/integration/workflow/test_composer_module_contract.py:L308: assert "module.composer.dag_bucket" in outputs_tf
+- tests/integration/workflow/test_deploy_all_contract.py:L80: monkeypatch.setenv("MODELS_BUCKET", "mlops-test-models")
+- tests/integration/workflow/test_deploy_all_contract.py:L84: def _fake_generate(*, project_id: str, models_bucket: str, **kwargs: str):
+- tests/integration/workflow/test_deploy_all_contract.py:L86: captured["models_bucket"] = models_bucket
+- tests/integration/workflow/test_deploy_all_contract.py:L114: "models_bucket": "mlops-test-models",
+- tests/integration/workflow/test_deploy_all_contract.py:L131: monkeypatch.setenv("MODELS_BUCKET", "mlops-test-models")
+- tests/integration/workflow/test_deploy_all_contract.py:L135: def _fake_generate(*, project_id: str, models_bucket: str, **kwargs: str):
+- tests/integration/workflow/test_destroy_all_contract.py:L5: BigQuery `deletion_protection` flip, GCS bucket `force_destroy` wipe, and
+- tests/integration/workflow/test_destroy_all_contract.py:L16: assert "module.gke.google_container_cluster.hybrid_search" in destroy_all.PROTECTED_TARGETS
+- tests/integration/workflow/test_destroy_all_contract.py:L17: assert "module.data.google_bigquery_table.property_features_daily" in (
+- tests/integration/workflow/test_destroy_all_contract.py:L95: r'resource "google_bigquery_table" "(\w+)"',
+- tests/integration/workflow/test_destroy_all_contract.py:L98: for table_resource in declared_tables:
+- tests/integration/workflow/test_destroy_all_contract.py:L99: assert table_resource in destroy_all_py or "deletion_protection = false" in data_tf, (
+- tests/integration/workflow/test_destroy_all_contract.py:L100: f"google_bigquery_table.{table_resource} should appear in destroy_all.py "
+- tests/integration/workflow/test_destroy_all_contract.py:L105: def test_destroy_all_force_destroys_blocking_gcs_buckets() -> None:
+- tests/integration/workflow/test_destroy_all_contract.py:L106: """`force_destroy=false` な GCS bucket が中身を持つと destroy が止まる。
+- tests/integration/workflow/test_destroy_all_contract.py:L110: assert "wipe_all_terraform_managed_buckets" in destroy_all_py
+- tests/integration/workflow/test_destroy_all_contract.py:L214: '"wipe-gcs-buckets"',
+- tests/integration/workflow/test_destroy_all_contract.py:L263: resource (e.g. deployed_index → Endpoint) を block できず、`Instance cannot
+- tests/integration/workflow/test_destroy_all_contract.py:L271: 2. `destroy_all.py` で `PERSISTENT_VVS_RESOURCES` を state rm する
+- tests/integration/workflow/test_destroy_all_contract.py:L272: 3. `deploy_all.py` で `import_persistent_vvs_resources` を呼ぶ
+- tests/integration/workflow/test_destroy_all_contract.py:L277: # tf-apply の business logic (import_persistent_vvs_resources の呼出し含む) は
+- tests/integration/workflow/test_destroy_all_contract.py:L293: assert "PERSISTENT_VVS_RESOURCES" in destroy_all_py
+- tests/integration/workflow/test_destroy_all_contract.py:L294: assert '"module.vector_search.google_vertex_ai_index.property_embeddings"' in destroy_all_py
+- tests/integration/workflow/test_destroy_all_contract.py:L296: '"module.vector_search.google_vertex_ai_index_endpoint.property_embeddings"'
+- tests/integration/workflow/test_destroy_all_contract.py:L300: "destroy_all must `state rm` PERSISTENT_VVS_RESOURCES (= GCP 残置 / state 外し)"
+- tests/integration/workflow/test_destroy_all_contract.py:L305: assert "import_persistent_vvs_resources" in tf_apply_py, (
+- tests/integration/workflow/test_destroy_all_contract.py:L306: "tf_apply must invoke import_persistent_vvs_resources before terraform apply"
+- tests/integration/workflow/test_destroy_all_contract.py:L309: # vertex_import.py が gcloud で existing resource を確認 + terraform import を発行
+- tests/integration/workflow/test_destroy_all_contract.py:L311: assert "def import_persistent_vvs_resources(" in vertex_import_py
+- tests/integration/workflow/test_destroy_all_contract.py:L316: def test_no_vertex_pipeline_job_schedule_resource_in_terraform() -> None:
+- tests/integration/workflow/test_destroy_all_contract.py:L322: forbidden_patterns = ("google_vertex_ai_pipeline_job_schedule", "PipelineJobSchedule")
+- tests/integration/workflow/test_destroy_all_contract.py:L343: の主要課金 resource を `gcloud delete --async` で直接消す経路を runbook に
+- tests/integration/workflow/test_destroy_all_contract.py:L371: 次回 `make deploy-all` が「Resource not found」で fail するのを防ぐため、
+- tests/integration/workflow/test_destroy_all_contract.py:L397: resources のみを対象にすべきだが、`gcloud delete --async` で Composer/GKE/Cloud Run
+- tests/integration/workflow/test_destroy_all_contract.py:L403: 1. `scripts/domain/gcp/state_recovery.py` が存在し、`recover_orphan_gcp_resources` を export
+- tests/integration/workflow/test_destroy_all_contract.py:L404: 2. `scripts/setup/deploy_all.py::_run_tf_apply` が tf-apply 直前に `recover_orphan_gcp_resources` を呼ぶ
+- tests/integration/workflow/test_destroy_all_contract.py:L406: 4. recovery 対象 resource type が IAM SA / BQ dataset+table / Pub/Sub topic+sub /
+- tests/integration/workflow/test_destroy_all_contract.py:L416: assert "def recover_orphan_gcp_resources(" in state_recovery_py, (
+- tests/integration/workflow/test_destroy_all_contract.py:L417: "state_recovery.py must export `recover_orphan_gcp_resources`"
+- tests/integration/workflow/test_destroy_all_contract.py:L421: "from scripts.domain.gcp.state_recovery import recover_orphan_gcp_resources" in tf_apply_py
+- tests/integration/workflow/test_destroy_all_contract.py:L423: assert "recover_orphan_gcp_resources(" in tf_apply_py, (
+- tests/integration/workflow/test_destroy_all_contract.py:L424: "tf_apply.py must call recover_orphan_gcp_resources before terraform apply"
+- tests/integration/workflow/test_destroy_all_contract.py:L429: # 4. recovery resource types が 11 種網羅 (2026-05-03 後 incident で複数回拡張:
+- tests/integration/workflow/test_destroy_all_contract.py:L430: # Artifact Registry / Secret Manager / Dataform repo / GCS buckets / Feature Store
+- tests/integration/workflow/test_destroy_all_contract.py:L432: # + Feature View の 3 sub-resource を 1 helper で recover)
+- tests/integration/workflow/test_destroy_all_contract.py:L443: "_recover_gcs_buckets",
+- tests/integration/workflow/test_destroy_all_contract.py:L449: "Artifact Registry / Secret Manager / Dataform / GCS buckets / "
+- tests/integration/workflow/test_destroy_all_contract.py:L456: modules/iam/main.tf` の `google_service_account` resource label と完全一致する。
+- tests/integration/workflow/test_destroy_all_contract.py:L466: declared_sas = set(_re.findall(r'resource "google_service_account" "(\w+)"', iam_main_tf))
+- tests/integration/workflow/test_destroy_all_contract.py:L481: resource を state から消すと、再 deploy が `alreadyExists` で fail) と、
+- tests/integration/workflow/test_destroy_all_contract.py:L496: "GCP resources orphan (IAM SA / BQ / Pub/Sub etc.) and tf-apply will fail with "
+- tests/integration/workflow/test_infra_apis_contract.py:L20: 新 module が GCP resource を増やすたびに API enablement の漏れが起きる事故を
+- tests/integration/workflow/test_infra_apis_contract.py:L21: contract で先回り。`google_*` resource → 必要な API URL のマッピングを辞書で
+- tests/integration/workflow/test_infra_apis_contract.py:L26: resource_to_api: dict[str, str] = {
+- tests/integration/workflow/test_infra_apis_contract.py:L27: "google_composer_environment": "composer.googleapis.com",
+- tests/integration/workflow/test_infra_apis_contract.py:L28: "google_vertex_ai_index": "aiplatform.googleapis.com",
+- tests/integration/workflow/test_infra_apis_contract.py:L29: "google_vertex_ai_index_endpoint": "aiplatform.googleapis.com",
+- tests/integration/workflow/test_infra_apis_contract.py:L30: "google_vertex_ai_endpoint": "aiplatform.googleapis.com",
+- tests/integration/workflow/test_infra_apis_contract.py:L31: "google_vertex_ai_feature_online_store": "aiplatform.googleapis.com",
+- tests/integration/workflow/test_infra_apis_contract.py:L32: "google_vertex_ai_feature_group": "aiplatform.googleapis.com",
+- tests/integration/workflow/test_infra_apis_contract.py:L33: "google_container_cluster": "container.googleapis.com",
+- tests/integration/workflow/test_infra_apis_contract.py:L34: "google_cloud_run_v2_service": "run.googleapis.com",
+- tests/integration/workflow/test_infra_apis_contract.py:L35: "google_artifact_registry_repository": "artifactregistry.googleapis.com",
+- tests/integration/workflow/test_infra_apis_contract.py:L36: "google_cloudbuild_trigger": "cloudbuild.googleapis.com",
+- tests/integration/workflow/test_infra_apis_contract.py:L37: "google_pubsub_topic": "pubsub.googleapis.com",
+- tests/integration/workflow/test_infra_apis_contract.py:L38: "google_eventarc_trigger": "eventarc.googleapis.com",
+- tests/integration/workflow/test_infra_apis_contract.py:L39: "google_cloudfunctions2_function": "cloudfunctions.googleapis.com",
+- tests/integration/workflow/test_infra_apis_contract.py:L40: "google_cloud_scheduler_job": "cloudscheduler.googleapis.com",
+- tests/integration/workflow/test_infra_apis_contract.py:L41: "google_secret_manager_secret": <redacted>
+- tests/integration/workflow/test_infra_apis_contract.py:L42: "google_bigquery_dataset": "bigquery.googleapis.com",
+- tests/integration/workflow/test_infra_apis_contract.py:L43: "google_bigquery_table": "bigquery.googleapis.com",
+- tests/integration/workflow/test_infra_apis_contract.py:L44: "google_dataform_repository": "dataform.googleapis.com",
+- tests/integration/workflow/test_infra_apis_contract.py:L45: "google_monitoring_alert_policy": "monitoring.googleapis.com",
+- tests/integration/workflow/test_infra_apis_contract.py:L46: "google_logging_metric": "logging.googleapis.com",
+- tests/integration/workflow/test_infra_apis_contract.py:L47: "google_iam_workload_identity_pool": "iam.googleapis.com",
+- tests/integration/workflow/test_infra_apis_contract.py:L51: used_resource_types: set[str] = set()
+- tests/integration/workflow/test_infra_apis_contract.py:L54: for resource_type in resource_to_api:
+- tests/integration/workflow/test_infra_apis_contract.py:L55: if re.search(rf'resource "{re.escape(resource_type)}"', text):
+- tests/integration/workflow/test_infra_apis_contract.py:L56: used_resource_types.add(resource_type)
+- tests/integration/workflow/test_infra_apis_contract.py:L58: assert used_resource_types, "could not detect any GCP resources in modules/"
+- tests/integration/workflow/test_infra_apis_contract.py:L61: for resource_type in sorted(used_resource_types):
+- tests/integration/workflow/test_infra_apis_contract.py:L62: api = resource_to_api[resource_type]
+- tests/integration/workflow/test_infra_apis_contract.py:L64: missing_apis.append((resource_type, api))
+- tests/integration/workflow/test_infra_apis_contract.py:L68: "needed by terraform resources. Each resource's backing API must be in "
+- tests/integration/workflow/test_infra_apis_contract.py:L69: "google_project_service.enabled, otherwise apply fails with PERMISSION_DENIED. "
+- tests/integration/workflow/test_vertex_resources_contract.py:L64: assert "depends_on          = [google_bigquery_table.property_features_daily]" in data_tf
+- tests/integration/workflow/test_vertex_resources_contract.py:L66: "FROM `${var.project_id}.${google_bigquery_dataset.feature_mart.dataset_id}.property_features_daily`"
+- tests/unit/app/test_ops_handler.py:L29: label="Managed residual buckets", severity="WARN", items=("mlops-dev-a-tfstate",)
+- tests/unit/app/test_ops_handler.py:L76: "model_path": "gs://bucket/model.txt",
+- tests/unit/app/test_search_builder_canonical.py:L13: - fully-qualified endpoint resource name (Terraform output 直流し) でも
+- tests/unit/app/test_search_builder_canonical.py:L75: def test_build_vertex_vector_search_assembles_endpoint_resource_name() -> None:
+- tests/unit/app/test_search_builder_canonical.py:L86: """Terraform output may already contain the full resource name."""
+- tests/unit/app/test_vertex_vector_search_semantic_search.py:L149: def test_endpoint_factory_called_with_resource_name_once() -> None:
+- tests/unit/ml/common/test_gcs.py:L6: assert p.bucket == "bkt"
+- tests/unit/ml/common/test_gcs.py:L11: def test_parse_bucket_only() -> None:
+- tests/unit/ml/common/test_gcs.py:L13: assert p.bucket == "bkt"
+- tests/unit/ml/common/test_gcs.py:L30: p = model_prefix(bucket="bkt", run_id="r1", date_str="2026-04-18")
+- tests/unit/ml/common/test_gcs_io.py:L21: fake_bucket = MagicMock()
+- tests/unit/ml/common/test_gcs_io.py:L22: fake_bucket.blob.return_value = fake_blob
+- tests/unit/ml/common/test_gcs_io.py:L24: fake_client.bucket.return_value = fake_bucket
+- tests/unit/ml/common/test_gcs_io.py:L26: dest = GcsPrefix(bucket="bkt", prefix="lgbm/2026-04-18/r1")
+- tests/unit/ml/common/test_gcs_io.py:L34: fake_client.bucket.assert_called_once_with("bkt")
+- tests/unit/ml/common/test_gcs_io.py:L36: blob_names = {c.args[0] for c in fake_bucket.blob.call_args_list}
+- tests/unit/ml/common/test_gcs_io.py:L48: fake_bucket = MagicMock()
+- tests/unit/ml/common/test_gcs_io.py:L49: fake_bucket.blob.return_value = fake_blob
+- tests/unit/ml/common/test_gcs_io.py:L51: fake_client.bucket.return_value = fake_bucket
+- tests/unit/ml/common/test_gcs_io.py:L53: dest = GcsPrefix(bucket="bkt", prefix="")
+- tests/unit/ml/common/test_gcs_io.py:L58: fake_bucket.blob.assert_called_once_with("f.txt")
+- tests/unit/ml/common/test_gcs_io.py:L63: fake_bucket = MagicMock()
+- tests/unit/ml/common/test_gcs_io.py:L64: fake_bucket.blob.return_value = fake_blob
+- tests/unit/ml/common/test_gcs_io.py:L66: fake_client.bucket.return_value = fake_bucket
+- tests/unit/ml/common/test_gcs_io.py:L74: fake_client.bucket.assert_called_once_with("bkt")
+- tests/unit/ml/common/test_gcs_io.py:L75: fake_bucket.blob.assert_called_once_with("lgbm/d/r/model.txt")
+- tests/unit/ml/training/test_vertex_experiments_tracker.py:L27: google_pkg = types.ModuleType("google")
+- tests/unit/ml/training/test_vertex_experiments_tracker.py:L29: google_pkg.cloud = cloud_pkg  # type: ignore[attr-defined]
+- tests/unit/ml/training/test_vertex_experiments_tracker.py:L32: monkeypatch.setitem(sys.modules, "google", google_pkg)
+- tests/unit/pipeline/test_data_job_dag_wiring.py:L37: ``vector_search_index_resource_name=""``, ``vector_search_upsert_batch_size=500``.
+- tests/unit/pipeline/test_data_job_dag_wiring.py:L41: assert 'vector_search_index_resource_name: str = ""' in src
+- tests/unit/pipeline/test_data_job_dag_wiring.py:L54: assert '"vector_search_index_resource_name": ""' in src
+- tests/unit/pipeline/test_vector_search_writer.py:L88: index_resource_name="projects/x/locations/r/indexes/12345",
+- tests/unit/pipeline/test_vector_search_writer.py:L106: index_resource_name="projects/x/locations/r/indexes/12345",
+- tests/unit/pipeline/test_vector_search_writer.py:L130: index_resource_name="projects/x/locations/r/indexes/12345",
+- tests/unit/pipeline/test_vector_search_writer.py:L150: index_resource_name="projects/x/locations/r/indexes/12345",
+- tests/unit/pipeline/test_vector_search_writer.py:L164: ({"index_resource_name": ""}, "index_resource_name"),
+- tests/unit/pipeline/test_vector_search_writer.py:L173: "index_resource_name": "projects/x/locations/r/indexes/12345",
+- tests/unit/scripts/test_composer_deploy_dags.py:L4: - `terraform output composer_dag_bucket` が空文字 → early-return (rc=0)
+- tests/unit/scripts/test_composer_deploy_dags.py:L33: def test_main_early_returns_when_dag_bucket_empty(monkeypatch, capsys) -> None:
+- tests/unit/scripts/test_composer_deploy_dags.py:L34: """`composer_dag_bucket=""` (= enable_composer=false) のとき rc=0 で skip。"""
+- tests/unit/scripts/test_composer_deploy_dags.py:L46: def test_main_uploads_dags_when_bucket_set(monkeypatch, capsys) -> None:
+- tests/unit/scripts/test_composer_deploy_dags.py:L47: """`composer_dag_bucket=gs://...` が返ったとき DAG entrypoint + pipeline shim
+- tests/unit/scripts/test_composer_deploy_dags.py:L55: proc.stdout = json.dumps({"composer_dag_bucket": {"value": "gs://composer-bucket/dags"}})
+- tests/unit/scripts/test_composer_deploy_dags.py:L76: assert entrypoint_call[-1] == "gs://composer-bucket/dags"
+- tests/unit/scripts/test_composer_deploy_dags.py:L108: assert data_call[-1].startswith("gs://composer-bucket/data/")
+- tests/unit/scripts/test_composer_deploy_dags.py:L152: + `pipeline/dags/_pod.py` の 4 件を、Composer DAG bucket 上の階層 (`pipeline/...`)
+- tests/unit/scripts/test_composer_deploy_dags.py:L168: folder へ upload する事を pin。DAG bucket に置くと Airflow が DAG として
+- tests/unit/scripts/test_deploy_all_step_timing.py:L186: patch("scripts.setup.tf_apply.recover_orphan_gcp_resources", return_value=0),
+- tests/unit/scripts/test_deploy_all_step_timing.py:L187: patch("scripts.setup.tf_apply.import_persistent_vvs_resources", return_value=0),
+- tests/unit/scripts/test_destroy_check.py:L6: def test_classify_bucket_names_splits_fail_and_warn() -> None:
+- tests/unit/scripts/test_destroy_check.py:L7: fail_items, warn_items = destroy_check._classify_bucket_names(
+- tests/unit/scripts/test_destroy_check.py:L28: def test_classify_artifact_repos_splits_google_managed_repo() -> None:
+- tests/unit/scripts/test_infra_cleanup.py:L60: def test_wipe_bucket_passes_recursive_glob(monkeypatch) -> None:
+- tests/unit/scripts/test_infra_cleanup.py:L69: gcs_cleanup.wipe_bucket("p", "p-models")
+- tests/unit/scripts/test_infra_cleanup.py:L83: def test_wipe_all_iterates_bucket_suffixes(monkeypatch) -> None:
+- tests/unit/scripts/test_infra_cleanup.py:L95: gcs_cleanup.wipe_all_terraform_managed_buckets()
+- tests/unit/scripts/test_infra_terraform_state.py:L64: out = "module.data.google_bigquery_table.t1\nmodule.data.google_bigquery_table.t2\n"
+- tests/unit/scripts/test_infra_terraform_state.py:L66: "module.data.google_bigquery_table.t1",
+- tests/unit/scripts/test_infra_terraform_state.py:L67: "module.data.google_bigquery_table.absent",
+- tests/unit/scripts/test_infra_terraform_state.py:L68: "module.data.google_bigquery_table.t2",
+- tests/unit/scripts/test_infra_terraform_state.py:L73: "module.data.google_bigquery_table.t1",
+- tests/unit/scripts/test_infra_terraform_state.py:L74: "module.data.google_bigquery_table.t2",
+- tests/unit/scripts/test_kserve_models_deploy.py:L44: self._gca_resource = types.SimpleNamespace(artifact_uri=uri)
+- tests/unit/scripts/test_kserve_models_deploy.py:L63: google_mod = sys.modules.setdefault("google", types.ModuleType("google"))
+- tests/unit/scripts/test_kserve_models_deploy.py:L68: _ = google_mod  # keep ref
+- tests/unit/scripts/test_kserve_models_deploy.py:L88: uri="gs://bucket/lgbm/2026-04-24/v3",
+- tests/unit/scripts/test_kserve_models_deploy.py:L94: uri="gs://bucket/lgbm/2026-04-20/v2",
+- tests/unit/scripts/test_kserve_models_deploy.py:L100: uri="gs://bucket/lgbm/2026-04-10/v1",
+- tests/unit/scripts/test_kserve_models_deploy.py:L110: assert resolved.artifact_uri == "gs://bucket/lgbm/2026-04-20/v2"
+- tests/unit/scripts/test_kserve_models_deploy.py:L128: uri="gs://bucket/encoder/v1",
+- tests/unit/scripts/test_kserve_models_deploy.py:L151: """If the Model exists but ``uri`` + ``_gca_resource.artifact_uri`` are
+- tests/unit/scripts/test_kserve_models_deploy.py:L163: bad_model._gca_resource = types.SimpleNamespace(artifact_uri="")
+- tests/unit/scripts/test_kserve_models_deploy.py:L218: kserve_models._patch_reranker_storage_uri("gs://bucket/lgbm/2026-04-20/v2")
+- tests/unit/scripts/test_kserve_models_deploy.py:L236: "storageUri": "gs://bucket/lgbm/2026-04-20/v2",
+- tests/unit/scripts/test_kserve_models_deploy.py:L257: kserve_models._patch_encoder_storage_uri("gs://bucket/encoders/v3/")
+- tests/unit/scripts/test_kserve_models_deploy.py:L282: uri="gs://bucket/v7",
+- tests/unit/scripts/test_lib_config.py:L4: の resource ID / endpoint に加え同義語用 `synonym_backend` /
+- tests/unit/scripts/test_lib_config.py:L23: "models_bucket",
+- tests/unit/scripts/test_lib_config.py:L43: models_bucket="b",
+- tests/unit/scripts/test_lib_config.py:L49: def test_committed_example_defaults_are_empty_for_vertex_resources() -> None:
+- tests/unit/scripts/test_lib_config.py:L51: data = generate_configmap_data(project_id="p", models_bucket="b")
+- tests/unit/scripts/test_lib_config.py:L67: models_bucket="b",
+- tests/unit/scripts/test_lib_config.py:L89: models_bucket="mlops-dev-a-models",
+- tests/unit/scripts/test_lib_config.py:L96: data = generate_configmap_data(project_id="p", models_bucket="b")
+- tests/unit/scripts/test_lib_config.py:L108: data = generate_configmap_data(project_id="p", models_bucket="b")
+- tests/unit/scripts/test_lib_gcp_resources.py:L1: """Pin scripts/lib/gcp_resources.py — リソース名 single source.
+- tests/unit/scripts/test_lib_gcp_resources.py:L10: from scripts.lib.gcp_resources import (
+- tests/unit/scripts/test_lib_gcp_resources.py:L11: BUCKET_SUFFIXES,
+- tests/unit/scripts/test_lib_gcp_resources.py:L25: def test_bucket_suffixes_pin() -> None:
+- tests/unit/scripts/test_lib_gcp_resources.py:L26: assert BUCKET_SUFFIXES == ["models", "artifacts", "pipeline-root"]
+- tests/unit/scripts/test_promote.py:L124: to an artifact_uri that pointed to an empty bucket, causing a
+- tests/unit/scripts/test_promote.py:L127: target = _FakeModel(version_id="1", aliases=["staging"], uri="gs://empty-bucket/v1/")
+- tests/unit/scripts/test_promote.py:L142: target = _FakeModel(version_id="1", aliases=["staging"], uri="gs://bucket/v1/")
+- tests/unit/scripts/test_promote.py:L145: monkeypatch.setattr(promote_mod, "_gsutil_ls", lambda _uri: <redacted>
+- tests/unit/scripts/test_promote.py:L158: lambda _: ["gs://bucket/v1/model.bst", "gs://bucket/v1/model.txt"],
+- tests/unit/scripts/test_promote.py:L160: target_uri = promote_mod._bst_rename_if_needed("gs://bucket/v1/", apply=True)
+- tests/unit/scripts/test_promote.py:L161: assert target_uri == "gs://bucket/v1/model.bst"
+- tests/unit/scripts/test_promote.py:L166: monkeypatch.setattr(promote_mod, "_gsutil_ls", lambda _: <redacted>
+- tests/unit/scripts/test_promote.py:L172: target_uri = promote_mod._bst_rename_if_needed("gs://bucket/v1/", apply=False)
+- tests/unit/scripts/test_promote.py:L173: assert target_uri == "gs://bucket/v1/model.bst"
+- tests/unit/scripts/test_promote.py:L177: monkeypatch.setattr(promote_mod, "_gsutil_ls", lambda _: <redacted>
+- tests/unit/scripts/test_promote.py:L178: assert promote_mod._bst_rename_if_needed("gs://bucket/v1/", apply=True) is None
+- tests/unit/scripts/test_submit_train_pipeline.py:L12: def test_main_requires_pipeline_root_bucket(monkeypatch: <redacted>
+- tests/unit/scripts/test_submit_train_pipeline.py:L13: monkeypatch.delenv("PIPELINE_ROOT_BUCKET", raising= <redacted>
+- tests/unit/scripts/test_submit_train_pipeline.py:L20: def env_no_bucket(name: str, default: str | None = None) -> str:
+- tests/unit/scripts/test_submit_train_pipeline.py:L21: if name == "PIPELINE_ROOT_BUCKET":
+- tests/unit/scripts/test_submit_train_pipeline.py:L25: monkeypatch.setattr("scripts.ops.submit_train_pipeline.env", env_no_bucket)
+- tests/unit/scripts/test_submit_train_pipeline.py:L32: monkeypatch.setenv("PIPELINE_ROOT_BUCKET", "my-proj-pipeline-root")
+- tests/unit/scripts/test_vertex_ops_scripts.py:L55: "VERTEX_VECTOR_SEARCH_INDEX_RESOURCE_NAME",
+- tests/unit/scripts/test_vertex_ops_scripts.py:L64: assert spec.index_resource_name.endswith("/indexes/123")
+- tests/unit/scripts/test_vertex_ops_scripts.py:L71: monkeypatch.delenv("VERTEX_VECTOR_SEARCH_INDEX_RESOURCE_NAME", raising= <redacted>
+- tests/unit/scripts/test_vertex_ops_scripts.py:L76: "vector_search_index_resource_name": (
+- tests/unit/scripts/test_vertex_ops_scripts.py:L84: assert spec.index_resource_name.endswith("/indexes/123")
+- tests/unit/scripts/test_vertex_ops_scripts.py:L90: "VERTEX_VECTOR_SEARCH_INDEX_RESOURCE_NAME",
+- tests/unit/scripts/test_vertex_ops_scripts.py:L369: "resource_name": "projects/x/locations/r/pipelineJobs/run-1",
+- tests/unit/scripts/test_vertex_ops_scripts.py:L410: "resource_name": "projects/x/locations/r/pipelineJobs/run-gcp",
+- tests/unit/scripts/test_vertex_ops_scripts.py:L448: "resource_name": "projects/x/locations/r/pipelineJobs/run-1",

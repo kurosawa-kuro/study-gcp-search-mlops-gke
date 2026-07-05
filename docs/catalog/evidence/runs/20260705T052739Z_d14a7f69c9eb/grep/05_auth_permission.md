@@ -1,0 +1,764 @@
+# grep: auth_permission
+
+evidence_id: ev.grep.auth_permission
+description: auth / permission / role
+
+- .claude/hooks/show-tasks.sh:L2: # SessionStart hook: show the head of the current sprint/task document so the
+- .claude/hooks/show-tasks.sh:L3: # user (and the model) start each session with the active sprint in mind.
+- .claude/hooks/show-tasks.sh:L11: # and never block the session.
+- .claude/settings.json:L3: "SessionStart": [
+- .claude/settings.local.json:L2: "permissions": {
+- .github/actions/setup-gcp/action.yml:L2: description: Workload Identity Federation auth + gcloud + optional Artifact Registry docker login.
+- .github/actions/setup-gcp/action.yml:L8: service_account:
+- .github/actions/setup-gcp/action.yml:L19: description: If "true", run gcloud auth configure-docker against ${region}-docker.pkg.dev
+- .github/actions/setup-gcp/action.yml:L26: - uses: google-github-actions/auth@v2
+- .github/actions/setup-gcp/action.yml:L29: service_account: ${{ inputs.service_account }}
+- .github/actions/setup-gcp/action.yml:L38: run: gcloud auth configure-docker ${{ inputs.region }}-docker.pkg.dev --quiet
+- .github/workflows/ci.yml:L10: permissions:
+- .github/workflows/deploy-api.yml:L16: permissions:
+- .github/workflows/deploy-api.yml:L36: service_account: ${{ vars.DEPLOYER_SERVICE_ACCOUNT }}
+- .github/workflows/deploy-api.yml:L50: - name: Install gke-gcloud-auth-plugin
+- .github/workflows/deploy-api.yml:L52: gcloud components install gke-gcloud-auth-plugin --quiet
+- .github/workflows/deploy-dataform.yml:L12: permissions:
+- .github/workflows/deploy-dataform.yml:L30: service_account: ${{ vars.DEPLOYER_SERVICE_ACCOUNT }}
+- .github/workflows/deploy-dataform.yml:L54: -H "Authorization: <redacted>
+- .github/workflows/deploy-encoder-image.yml:L22: permissions:
+- .github/workflows/deploy-encoder-image.yml:L41: service_account: ${{ vars.DEPLOYER_SERVICE_ACCOUNT }}
+- .github/workflows/deploy-pipeline.yml:L29: permissions:
+- .github/workflows/deploy-pipeline.yml:L49: service_account: ${{ vars.DEPLOYER_SERVICE_ACCOUNT }}
+- .github/workflows/deploy-reranker-image.yml:L22: permissions:
+- .github/workflows/deploy-reranker-image.yml:L41: service_account: ${{ vars.DEPLOYER_SERVICE_ACCOUNT }}
+- .github/workflows/deploy-trainer-image.yml:L23: permissions:
+- .github/workflows/deploy-trainer-image.yml:L42: service_account: ${{ vars.DEPLOYER_SERVICE_ACCOUNT }}
+- .github/workflows/terraform.yml:L12: permissions:
+- .github/workflows/terraform.yml:L31: service_account: ${{ vars.DEPLOYER_SERVICE_ACCOUNT }}
+- .github/workflows/terraform.yml:L90: service_account: ${{ vars.DEPLOYER_SERVICE_ACCOUNT }}
+- app/domain/event.py:L22: session_id: str | None = None
+- app/main.py:L15: - **Probes** — ``/livez`` ``/healthz`` ``/readyz`` (k8s, no auth)
+- app/main.py:L16: - **Prom exposition** — ``/metrics`` (GMP / SLO scrape target, no auth)
+- app/main.py:L133: # Probes (no prefix, no auth, OpenAPI-excluded by route definitions).
+- app/services/adapters/bigquery_event_repository.py:L36: session_id,
+- app/services/adapters/bigquery_event_repository.py:L51: session_id=_optional_str(row.get("session_id")),
+- app/services/adapters/cloud_logging_event_writer.py:L29: session_id: str | None = None,
+- app/services/adapters/cloud_logging_event_writer.py:L38: "session_id": session_id,
+- app/services/adapters/elasticsearch_lexical.py:L41: h["authorization"] = <redacted>
+- app/services/adapters/elasticsearch_lexical.py:L74: auth = None
+- app/services/adapters/elasticsearch_lexical.py:L76: auth = <redacted>
+- app/services/adapters/elasticsearch_lexical.py:L79: auth=auth,
+- app/services/adapters/internal/pubsub_diagnostics.py:L5: Logging のデフォルト ``PermissionDenied`` だけでは「どの topic / どの SA / 第二・
+- app/services/adapters/internal/pubsub_diagnostics.py:L25: """Best-effort identity label for the current worker (no auth round trip)."""
+- app/services/adapters/internal/pubsub_diagnostics.py:L27: os.getenv("K_SERVICE_ACCOUNT", "")
+- app/services/adapters/internal/pubsub_diagnostics.py:L29: or os.getenv("CLOUD_RUN_SERVICE_ACCOUNT", "")
+- app/services/adapters/internal/pubsub_diagnostics.py:L47: if isinstance(exc, google_exceptions.PermissionDenied):
+- app/services/adapters/internal/pubsub_diagnostics.py:L49: "H1: runtime SA (sa-api) に roles/pubsub.publisher が欠落 — "
+- app/services/adapters/internal/pubsub_diagnostics.py:L50: "`gcloud pubsub topics get-iam-policy <topic>` で確認、"
+- app/services/adapters/kserve_encoder.py:L4: Authentication is not required at the HTTP layer.
+- app/services/adapters/pubsub_event_writer.py:L67: session_id: str | None = None,
+- app/services/adapters/pubsub_event_writer.py:L77: "session_id": session_id,
+- app/services/noop_adapters/__init__.py:L6: that is the role of ``tests/fakes/`` (Phase F-1).
+- app/services/noop_adapters/noop_event_writer.py:L15: session_id: str | None = None,
+- app/services/protocols/event_writer.py:L16: session_id: str | None = None,
+- app/services/protocols/feature_fetcher.py:L59: may raise on transport / auth failures; callers decide whether to
+- app/services/ranking.py:L43: raises with a loud ``log_publish_failure`` ERROR log + IAM hints
+- app/services/ranking.py:L45: we swallow so a Pub/Sub topic / IAM regression does not turn /search
+- app/services/ranking.py:L64: "candidates=%d). Adapter ERROR log carries the IAM / topic hint.",
+- app/settings/api.py:L110: synonym_redis_password_env: str = <redacted>
+- app/static/css/custom.css:L240: .panel [role="button"] {
+- app/static/css/pico-admin-components.css:L761: .admin-header__actions > [role="button"] {
+- app/static/css/pico-admin-components.css:L838: .admin-auth-card {
+- app/static/css/pico-admin-components.css:L843: .admin-auth-card form {
+- app/static/css/pico-admin-components.css:L847: .admin-auth-links {
+- app/static/css/pico-admin-layout.css:L58: .admin-auth {
+- app/static/css/pico-admin-layout.css:L64: .admin-auth__panel {
+- app/static/css/pico-admin-layout.css:L70: .admin-auth__aside {
+- app/static/css/pico-admin-layout.css:L293: .admin-auth {
+- app/static/css/pico-admin-layout.css:L297: .admin-auth__panel,
+- app/static/css/pico-admin-layout.css:L298: .admin-auth__aside {
+- app/static/css/pico-admin-theme.css:L96: [role="button"],
+- app/templates/property_detail.html:L38: <div class="action-row" role="group">
+- env/config/setting.yaml:L47: # 制約に焼き込まれる (タイポすると CI が auth できなくなる)。ONCALL_EMAIL は
+- infra/manifests/elasticsearch/elasticsearch.yaml:L12: # のまま、anonymous role で auth bypass。production 化時は HTTPS + password
+- infra/manifests/elasticsearch/elasticsearch.yaml:L13: # auth へ移行 (TASKS_ROADMAP backlog)。詳細:
+- infra/manifests/elasticsearch/elasticsearch.yaml:L26: # anonymous superuser で auth bypass。学習プロジェクト前提。
+- infra/manifests/elasticsearch/elasticsearch.yaml:L27: xpack.security.authc.anonymous.username: anonymous_user
+- infra/manifests/elasticsearch/elasticsearch.yaml:L28: xpack.security.authc.anonymous.roles: superuser
+- infra/manifests/elasticsearch/elasticsearch.yaml:L29: xpack.security.authc.anonymous.authz_exception: false
+- infra/manifests/kustomization.yaml:L18: - search-api/synonym-redis-auth-externalsecret.yaml
+- infra/manifests/kustomization.yaml:L19: - search-api/iap-oauth-client-secret-externalsecret.yaml
+- infra/manifests/policies/search-api-iap-policy.yaml:L14: #   /livez /healthz /readyz   k8s probe (auth なし、cluster 内のみ)
+- infra/manifests/policies/search-api-iap-policy.yaml:L15: #   /metrics                  Prometheus / GMP scrape (auth なし)
+- infra/manifests/policies/search-api-iap-policy.yaml:L18: #   IAP を有効にするには (a) GCP Console で OAuth consent screen を Internal/External
+- infra/manifests/policies/search-api-iap-policy.yaml:L19: #   いずれかで設定し (b) `gcloud iap oauth-clients create` で OAuth client を作って
+- infra/manifests/policies/search-api-iap-policy.yaml:L21: #   `search-api-iap-oauth-client-secret` に投入する 3 ステップ手作業が必要。
+- infra/manifests/policies/search-api-iap-policy.yaml:L23: #   (OAuth consent screen は project レベルで残存するが client は再作成が必要)。
+- infra/manifests/policies/search-api-iap-policy.yaml:L25: #   `Invalid: <redacted>
+- infra/manifests/policies/search-api-iap-policy.yaml:L40: clientID: "CHANGE_ME_OAUTH_CLIENT_ID"
+- infra/manifests/policies/search-api-iap-policy.yaml:L41: oauth2ClientSecret:
+- infra/manifests/policies/search-api-iap-policy.yaml:L42: name: <redacted>
+- infra/manifests/search-api/deployment.yaml:L138: # に流し込む。AUTH 文字列は Memorystore が生成 → Secret Manager に
+- infra/manifests/search-api/deployment.yaml:L139: # ミラー → External Secrets Operator が ``synonym-redis-auth``
+- infra/manifests/search-api/deployment.yaml:L154: - name: REDIS_AUTH
+- infra/manifests/search-api/deployment.yaml:L157: name: synonym-redis-auth
+- infra/manifests/search-api/deployment.yaml:L158: key: <redacted>
+- infra/manifests/search-api/iap-oauth-client-secret-externalsecret.yaml:L4: name: <redacted>
+- infra/manifests/search-api/iap-oauth-client-secret-externalsecret.yaml:L12: name: <redacted>
+- infra/manifests/search-api/iap-oauth-client-secret-externalsecret.yaml:L17: key: <redacted>
+- infra/manifests/search-api/synonym-redis-auth-externalsecret.yaml:L4: name: synonym-redis-auth
+- infra/manifests/search-api/synonym-redis-auth-externalsecret.yaml:L12: name: synonym-redis-auth
+- infra/manifests/search-api/synonym-redis-auth-externalsecret.yaml:L15: - secretKey: <redacted>
+- infra/manifests/search-api/synonym-redis-auth-externalsecret.yaml:L17: key: <redacted>
+- infra/run/services/composer_runner/Dockerfile:L4: # **背景**: 過去 session の Claude が DAG を `BashOperator: uv run python -m scripts.X`
+- infra/terraform/environments/dev/apis.tf:L12: "iam.googleapis.com",
+- infra/terraform/environments/dev/apis.tf:L13: "iamcredentials.googleapis.com",
+- infra/terraform/environments/dev/main.tf:L3: #   iam          → Service Accounts / WIF / project-level role bindings
+- infra/terraform/environments/dev/main.tf:L4: #   data         → BigQuery / GCS / Artifact Registry / Secret Manager + data IAM
+- infra/terraform/environments/dev/main.tf:L16: # 2 段階 apply: 初回は `-target=module.gke -target=module.iam -target=module.data`
+- infra/terraform/environments/dev/main.tf:L17: # で cluster / IAM / storage を作り、provider.tf で kubernetes/helm provider を
+- infra/terraform/environments/dev/main.tf:L21: module "iam" {
+- infra/terraform/environments/dev/main.tf:L22: source = "../../modules/iam"
+- infra/terraform/environments/dev/main.tf:L40: service_accounts                  = module.iam.service_accounts
+- infra/terraform/environments/dev/main.tf:L44: github_deployer_sa_email          = "sa-github-deployer@${var.project_id}.iam.gserviceaccount.com"
+- infra/terraform/environments/dev/main.tf:L72: composer_service_account_email    = module.iam.service_accounts.composer.email
+- infra/terraform/environments/dev/main.tf:L84: module.iam,
+- infra/terraform/environments/dev/main.tf:L97: service_accounts                 = module.iam.service_accounts
+- infra/terraform/environments/dev/main.tf:L115: module.iam,
+- infra/terraform/environments/dev/main.tf:L127: service_accounts    = module.iam.service_accounts
+- infra/terraform/environments/dev/main.tf:L131: module.iam,
+- infra/terraform/environments/dev/main.tf:L139: service_accounts = module.iam.service_accounts
+- infra/terraform/environments/dev/main.tf:L188: service_accounts            = module.iam.service_accounts
+- infra/terraform/environments/dev/main.tf:L222: service_accounts            = module.iam.service_accounts
+- infra/terraform/environments/dev/main.tf:L232: # creates sa-dataflow + IAM. Flip enable_streaming_job=true after the
+- infra/terraform/environments/dev/outputs.tf:L71: output "service_accounts" {
+- infra/terraform/environments/dev/outputs.tf:L73: api               = module.iam.service_accounts.api.email
+- infra/terraform/environments/dev/outputs.tf:L74: job_train         = module.iam.service_accounts.job_train.email
+- infra/terraform/environments/dev/outputs.tf:L75: job_embed         = module.iam.service_accounts.job_embed.email
+- infra/terraform/environments/dev/outputs.tf:L76: dataform          = module.iam.service_accounts.dataform.email
+- infra/terraform/environments/dev/outputs.tf:L77: scheduler         = module.iam.service_accounts.scheduler.email
+- infra/terraform/environments/dev/outputs.tf:L78: pipeline          = module.iam.service_accounts.pipeline.email
+- infra/terraform/environments/dev/outputs.tf:L79: endpoint_encoder  = module.iam.service_accounts.endpoint_encoder.email
+- infra/terraform/environments/dev/outputs.tf:L80: endpoint_reranker = module.iam.service_accounts.endpoint_reranker.email
+- infra/terraform/environments/dev/outputs.tf:L81: pipeline_trigger  = module.iam.service_accounts.pipeline_trigger.email
+- infra/terraform/environments/dev/outputs.tf:L82: external_secrets  = <redacted>
+- infra/terraform/environments/dev/outputs.tf:L168: value       = module.iam.workload_identity_provider
+- infra/terraform/environments/dev/outputs.tf:L172: description = "Register as GitHub Actions var DEPLOYER_SERVICE_ACCOUNT"
+- infra/terraform/environments/dev/outputs.tf:L173: value       = module.iam.github_deployer_sa_email
+- infra/terraform/environments/dev/outputs.tf:L228: output "synonym_redis_auth_secret_id" {
+- infra/terraform/environments/dev/outputs.tf:L229: description = <redacted>
+- infra/terraform/environments/dev/outputs.tf:L230: value       = <redacted>
+- infra/terraform/environments/dev/provider.tf:L28: #   1. `terraform apply -target=module.iam -target=module.data -target=module.gke`
+- infra/terraform/environments/dev/variables.tf:L39: description = <redacted>
+- infra/terraform/environments/dev/variables.tf:L83: description = "Cloud DNS managed-zone resource name that hosts public_domain. The zone is created out-of-band (console); Terraform reads it via data source and only manages record-sets + the Certificate Manager DNS authorization CNAME."
+- infra/terraform/environments/dev/variables.tf:L177: description = "Provision the Dataflow streaming module (sa-dataflow + IAM). Default false; flip to true after ranking-log has meaningful traffic."
+- infra/terraform/modules/composer/main.tf:L72: service_account = var.composer_service_account_email
+- infra/terraform/modules/composer/variables.tf:L29: variable "composer_service_account_email" {
+- infra/terraform/modules/composer/variables.tf:L30: description = "GCP service account email the Composer environment runs as. Created in `module.iam.google_service_account.composer`."
+- infra/terraform/modules/data/main.tf:L88: # Real-estate hybrid search tables (現行 hybrid-search schema、authoritative).
+- infra/terraform/modules/data/main.tf:L98: #   mlops.search_events                  — canonical search session header.
+- infra/terraform/modules/data/main.tf:L292: { name = "session_id", type = "STRING", mode = "NULLABLE" },
+- infra/terraform/modules/data/main.tf:L524: # Secret Manager — IAP OAuth client (dev placeholder; real value out-of-band)
+- infra/terraform/modules/data/main.tf:L526: resource "google_secret_manager_secret" "search_api_iap_oauth_client_secret" {
+- infra/terraform/modules/data/main.tf:L527: secret_id = <redacted>
+- infra/terraform/modules/data/main.tf:L537: # oauth2ClientSecret cannot be found` even though `iap.enabled: <redacted>
+- infra/terraform/modules/data/main.tf:L541: #   `gcloud iap oauth-clients create ...`
+- infra/terraform/modules/data/main.tf:L543: #   `gcloud secrets versions add search-api-iap-oauth-client-secret --data-file= <redacted>
+- infra/terraform/modules/data/main.tf:L545: resource "google_secret_manager_secret_version" "search_api_iap_oauth_client_secret_dev_placeholder" {
+- infra/terraform/modules/data/main.tf:L546: secret      = <redacted>
+- infra/terraform/modules/data/main.tf:L551: # IAM — runtime SAs ↔ data resources
+- infra/terraform/modules/data/main.tf:L558: resource "google_bigquery_dataset_iam_member" "api_mlops_viewer" {
+- infra/terraform/modules/data/main.tf:L560: role       = "roles/bigquery.dataViewer"
+- infra/terraform/modules/data/main.tf:L561: member     = "serviceAccount:${var.service_accounts.api.email}"
+- infra/terraform/modules/data/main.tf:L564: resource "google_bigquery_dataset_iam_member" "api_feature_viewer" {
+- infra/terraform/modules/data/main.tf:L566: role       = "roles/bigquery.dataViewer"
+- infra/terraform/modules/data/main.tf:L567: member     = "serviceAccount:${var.service_accounts.api.email}"
+- infra/terraform/modules/data/main.tf:L570: resource "google_storage_bucket_iam_member" "api_models_read" {
+- infra/terraform/modules/data/main.tf:L572: role   = "roles/storage.objectViewer"
+- infra/terraform/modules/data/main.tf:L573: member = "serviceAccount:${var.service_accounts.api.email}"
+- infra/terraform/modules/data/main.tf:L576: resource "google_secret_manager_secret_iam_member" "external_secrets_search_api_iap_oauth_client_secret_access" {
+- infra/terraform/modules/data/main.tf:L577: secret_id = <redacted>
+- infra/terraform/modules/data/main.tf:L578: role      = <redacted>
+- infra/terraform/modules/data/main.tf:L579: member    = <redacted>
+- infra/terraform/modules/data/main.tf:L583: resource "google_bigquery_dataset_iam_member" "train_feature_viewer" {
+- infra/terraform/modules/data/main.tf:L585: role       = "roles/bigquery.dataViewer"
+- infra/terraform/modules/data/main.tf:L586: member     = "serviceAccount:${var.service_accounts.job_train.email}"
+- infra/terraform/modules/data/main.tf:L589: resource "google_bigquery_dataset_iam_member" "train_mlops_editor" {
+- infra/terraform/modules/data/main.tf:L591: role       = "roles/bigquery.dataEditor"
+- infra/terraform/modules/data/main.tf:L592: member     = "serviceAccount:${var.service_accounts.job_train.email}"
+- infra/terraform/modules/data/main.tf:L595: resource "google_storage_bucket_iam_member" "train_models_admin" {
+- infra/terraform/modules/data/main.tf:L597: role   = "roles/storage.objectAdmin"
+- infra/terraform/modules/data/main.tf:L598: member = "serviceAccount:${var.service_accounts.job_train.email}"
+- infra/terraform/modules/data/main.tf:L601: resource "google_storage_bucket_iam_member" "train_pipeline_root_admin" {
+- infra/terraform/modules/data/main.tf:L603: role   = "roles/storage.objectAdmin"
+- infra/terraform/modules/data/main.tf:L604: member = "serviceAccount:${var.service_accounts.job_train.email}"
+- infra/terraform/modules/data/main.tf:L609: # Kept separate from sa-job-train so the embedding job's IAM blast radius
+- infra/terraform/modules/data/main.tf:L611: resource "google_bigquery_dataset_iam_member" "embed_feature_viewer" {
+- infra/terraform/modules/data/main.tf:L613: role       = "roles/bigquery.dataViewer"
+- infra/terraform/modules/data/main.tf:L614: member     = "serviceAccount:${var.service_accounts.job_embed.email}"
+- infra/terraform/modules/data/main.tf:L617: resource "google_bigquery_dataset_iam_member" "embed_feature_editor" {
+- infra/terraform/modules/data/main.tf:L619: role       = "roles/bigquery.dataEditor"
+- infra/terraform/modules/data/main.tf:L620: member     = "serviceAccount:${var.service_accounts.job_embed.email}"
+- infra/terraform/modules/data/main.tf:L623: resource "google_storage_bucket_iam_member" "embed_models_viewer" {
+- infra/terraform/modules/data/main.tf:L625: role   = "roles/storage.objectViewer"
+- infra/terraform/modules/data/main.tf:L626: member = "serviceAccount:${var.service_accounts.job_embed.email}"
+- infra/terraform/modules/data/main.tf:L629: resource "google_bigquery_dataset_iam_member" "pipeline_feature_viewer" {
+- infra/terraform/modules/data/main.tf:L631: role       = "roles/bigquery.dataViewer"
+- infra/terraform/modules/data/main.tf:L632: member     = "serviceAccount:${var.service_accounts.pipeline.email}"
+- infra/terraform/modules/data/main.tf:L635: resource "google_bigquery_dataset_iam_member" "pipeline_mlops_editor" {
+- infra/terraform/modules/data/main.tf:L637: role       = "roles/bigquery.dataEditor"
+- infra/terraform/modules/data/main.tf:L638: member     = "serviceAccount:${var.service_accounts.pipeline.email}"
+- infra/terraform/modules/data/main.tf:L641: resource "google_storage_bucket_iam_member" "pipeline_models_admin" {
+- infra/terraform/modules/data/main.tf:L643: role   = "roles/storage.objectAdmin"
+- infra/terraform/modules/data/main.tf:L644: member = "serviceAccount:${var.service_accounts.pipeline.email}"
+- infra/terraform/modules/data/main.tf:L647: resource "google_storage_bucket_iam_member" "pipeline_root_pipeline_admin" {
+- infra/terraform/modules/data/main.tf:L649: role   = "roles/storage.objectAdmin"
+- infra/terraform/modules/data/main.tf:L650: member = "serviceAccount:${var.service_accounts.pipeline.email}"
+- infra/terraform/modules/data/main.tf:L656: resource "google_storage_bucket_iam_member" "pipeline_root_composer_object_admin" {
+- infra/terraform/modules/data/main.tf:L658: role   = "roles/storage.objectAdmin"
+- infra/terraform/modules/data/main.tf:L659: member = "serviceAccount:${var.service_accounts.composer.email}"
+- infra/terraform/modules/data/main.tf:L662: resource "google_storage_bucket_iam_member" "endpoint_encoder_models_viewer" {
+- infra/terraform/modules/data/main.tf:L664: role   = "roles/storage.objectViewer"
+- infra/terraform/modules/data/main.tf:L665: member = "serviceAccount:${var.service_accounts.endpoint_encoder.email}"
+- infra/terraform/modules/data/main.tf:L668: resource "google_storage_bucket_iam_member" "endpoint_reranker_models_viewer" {
+- infra/terraform/modules/data/main.tf:L670: role   = "roles/storage.objectViewer"
+- infra/terraform/modules/data/main.tf:L671: member = "serviceAccount:${var.service_accounts.endpoint_reranker.email}"
+- infra/terraform/modules/data/main.tf:L675: resource "google_bigquery_dataset_iam_member" "dataform_feature_editor" {
+- infra/terraform/modules/data/main.tf:L677: role       = "roles/bigquery.dataEditor"
+- infra/terraform/modules/data/main.tf:L678: member     = "serviceAccount:${var.service_accounts.dataform.email}"
+- infra/terraform/modules/data/main.tf:L684: resource "google_bigquery_dataset_iam_member" "dataform_mlops_editor" {
+- infra/terraform/modules/data/main.tf:L686: role       = "roles/bigquery.dataEditor"
+- infra/terraform/modules/data/main.tf:L687: member     = "serviceAccount:${var.service_accounts.dataform.email}"
+- infra/terraform/modules/data/main.tf:L705: # service_account is the identity Dataform uses when executing compiled SQL.
+- infra/terraform/modules/data/main.tf:L706: service_account = var.service_accounts.dataform.email
+- infra/terraform/modules/data/main.tf:L713: authentication_token_secret_version = <redacted>
+- infra/terraform/modules/data/main.tf:L725: resource "google_dataform_repository_iam_member" "admin_self" {
+- infra/terraform/modules/data/main.tf:L731: role       = "roles/dataform.admin"
+- infra/terraform/modules/data/main.tf:L732: member     = "serviceAccount:${var.service_accounts.dataform.email}"
+- infra/terraform/modules/data/main.tf:L737: resource "google_dataform_repository_iam_member" "deployer_editor" {
+- infra/terraform/modules/data/main.tf:L745: role       = "roles/dataform.editor"
+- infra/terraform/modules/data/outputs.tf:L92: search_api_iap_oauth_client_secret = <redacted>
+- infra/terraform/modules/data/variables.tf:L31: variable "service_accounts" {
+- infra/terraform/modules/data/variables.tf:L32: description = "Map of SA resources emitted by the iam module. Uses .email for IAM bindings."
+- infra/terraform/modules/dns/main.tf:L9: #   3. **Certificate Manager** managed certificate via **DNS-01** authorization
+- infra/terraform/modules/dns/main.tf:L46: resource "google_certificate_manager_dns_authorization" "search_api" {
+- infra/terraform/modules/dns/main.tf:L47: name        = var.dns_authorization_name
+- infra/terraform/modules/dns/main.tf:L51: description = "DNS-01 authorization for ${var.public_domain} (search-api Gateway TLS)"
+- infra/terraform/modules/dns/main.tf:L54: # The CNAME record the DNS authorization requires (Certificate Manager fills in
+- infra/terraform/modules/dns/main.tf:L56: resource "google_dns_record_set" "cert_auth_cname" {
+- infra/terraform/modules/dns/main.tf:L57: name         = google_certificate_manager_dns_authorization.search_api.dns_resource_record[0].name
+- infra/terraform/modules/dns/main.tf:L58: type         = google_certificate_manager_dns_authorization.search_api.dns_resource_record[0].type
+- infra/terraform/modules/dns/main.tf:L62: rrdatas      = [google_certificate_manager_dns_authorization.search_api.dns_resource_record[0].data]
+- infra/terraform/modules/dns/main.tf:L73: dns_authorizations = [
+- infra/terraform/modules/dns/main.tf:L74: google_certificate_manager_dns_authorization.search_api.id,
+- infra/terraform/modules/dns/variables.tf:L34: variable "dns_authorization_name" {
+- infra/terraform/modules/dns/variables.tf:L35: description = "Certificate Manager DNS authorization resource name (used for DNS-01 validation of the managed certificate)."
+- infra/terraform/modules/dns/variables.tf:L37: default     = "search-api-dns-auth"
+- infra/terraform/modules/dns/variables.tf:L41: description = "TTL (seconds) for the A record and the DNS-authorization CNAME."
+- infra/terraform/modules/gke/main.tf:L54: resource "google_service_account_iam_member" "api_wi" {
+- infra/terraform/modules/gke/main.tf:L55: service_account_id = var.service_accounts.api.name
+- infra/terraform/modules/gke/main.tf:L56: role               = "roles/iam.workloadIdentityUser"
+- infra/terraform/modules/gke/main.tf:L60: resource "google_service_account_iam_member" "encoder_wi" {
+- infra/terraform/modules/gke/main.tf:L61: service_account_id = var.service_accounts.endpoint_encoder.name
+- infra/terraform/modules/gke/main.tf:L62: role               = "roles/iam.workloadIdentityUser"
+- infra/terraform/modules/gke/main.tf:L66: resource "google_service_account_iam_member" "reranker_wi" {
+- infra/terraform/modules/gke/main.tf:L67: service_account_id = var.service_accounts.endpoint_reranker.name
+- infra/terraform/modules/gke/main.tf:L68: role               = "roles/iam.workloadIdentityUser"
+- infra/terraform/modules/gke/main.tf:L72: resource "google_service_account_iam_member" "external_secrets_wi" {
+- infra/terraform/modules/gke/main.tf:L73: service_account_id = <redacted>
+- infra/terraform/modules/gke/main.tf:L74: role               = "roles/iam.workloadIdentityUser"
+- infra/terraform/modules/gke/outputs.tf:L15: value     = google_container_cluster.hybrid_search.master_auth[0].cluster_ca_certificate
+- infra/terraform/modules/gke/variables.tf:L29: variable "service_accounts" {
+- infra/terraform/modules/gke/variables.tf:L30: description = "Map of SA resources emitted by the iam module. Uses .email / .name for Workload Identity bindings."
+- infra/terraform/modules/iam/main.tf:L3: resource "google_service_account" "api" {
+- infra/terraform/modules/iam/main.tf:L8: resource "google_service_account" "job_train" {
+- infra/terraform/modules/iam/main.tf:L13: resource "google_service_account" "job_embed" {
+- infra/terraform/modules/iam/main.tf:L18: resource "google_service_account" "dataform" {
+- infra/terraform/modules/iam/main.tf:L23: resource "google_service_account" "scheduler" {
+- infra/terraform/modules/iam/main.tf:L28: resource "google_service_account" "pipeline" {
+- infra/terraform/modules/iam/main.tf:L33: resource "google_service_account" "endpoint_encoder" {
+- infra/terraform/modules/iam/main.tf:L38: resource "google_service_account" "endpoint_reranker" {
+- infra/terraform/modules/iam/main.tf:L43: resource "google_service_account" "pipeline_trigger" {
+- infra/terraform/modules/iam/main.tf:L48: resource "google_service_account" "external_secrets" {
+- infra/terraform/modules/iam/main.tf:L55: resource "google_iam_workload_identity_pool" "github" {
+- infra/terraform/modules/iam/main.tf:L60: resource "google_iam_workload_identity_pool_provider" "github" {
+- infra/terraform/modules/iam/main.tf:L61: workload_identity_pool_id          = google_iam_workload_identity_pool.github.workload_identity_pool_id
+- infra/terraform/modules/iam/main.tf:L78: resource "google_service_account" "github_deployer" {
+- infra/terraform/modules/iam/main.tf:L83: resource "google_service_account_iam_member" "github_wif_binding" {
+- infra/terraform/modules/iam/main.tf:L84: service_account_id = google_service_account.github_deployer.name
+- infra/terraform/modules/iam/main.tf:L85: role               = "roles/iam.workloadIdentityUser"
+- infra/terraform/modules/iam/main.tf:L86: member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github.name}/attribute.repository/${var.github_repo}"
+- infra/terraform/modules/iam/main.tf:L93: # `gcloud auth print-identity-token --impersonate-service-account= <redacted>
+- infra/terraform/modules/iam/main.tf:L99: resource "google_service_account_iam_member" "api_token_creator_for_admins" {
+- infra/terraform/modules/iam/main.tf:L101: service_account_id = google_service_account.api.name
+- infra/terraform/modules/iam/main.tf:L102: role               = <redacted>
+- infra/terraform/modules/iam/main.tf:L107: # Keep it a single role for this PoC; tighten later.
+- infra/terraform/modules/iam/main.tf:L108: resource "google_project_iam_member" "github_deployer_editor" {
+- infra/terraform/modules/iam/main.tf:L110: role    = "roles/editor"
+- infra/terraform/modules/iam/main.tf:L111: member  = "serviceAccount:${google_service_account.github_deployer.email}"
+- infra/terraform/modules/iam/main.tf:L114: resource "google_project_iam_member" "github_deployer_sa_user" {
+- infra/terraform/modules/iam/main.tf:L116: role    = "roles/iam.serviceAccountUser"
+- infra/terraform/modules/iam/main.tf:L117: member  = "serviceAccount:${google_service_account.github_deployer.email}"
+- infra/terraform/modules/iam/main.tf:L120: # ----- Project-level IAM for runtime SAs -----
+- infra/terraform/modules/iam/main.tf:L122: resource "google_project_iam_member" "api_bq_job_user" {
+- infra/terraform/modules/iam/main.tf:L124: role    = "roles/bigquery.jobUser"
+- infra/terraform/modules/iam/main.tf:L125: member  = "serviceAccount:${google_service_account.api.email}"
+- infra/terraform/modules/iam/main.tf:L129: # namespace using the node's default compute engine SA. 本構成の IAM
+- infra/terraform/modules/iam/main.tf:L130: # lockdown stripped the project's default `roles/monitoring.metricWriter`
+- infra/terraform/modules/iam/main.tf:L134: # Re-grant the writer role to the compute default SA so /metrics scraped
+- infra/terraform/modules/iam/main.tf:L136: resource "google_project_iam_member" "gmp_compute_metric_writer" {
+- infra/terraform/modules/iam/main.tf:L138: role    = "roles/monitoring.metricWriter"
+- infra/terraform/modules/iam/main.tf:L146: resource "google_project_iam_member" "api_aiplatform_user" {
+- infra/terraform/modules/iam/main.tf:L148: role    = "roles/aiplatform.user"
+- infra/terraform/modules/iam/main.tf:L149: member  = "serviceAccount:${google_service_account.api.email}"
+- infra/terraform/modules/iam/main.tf:L152: resource "google_project_iam_member" "train_bq_job_user" {
+- infra/terraform/modules/iam/main.tf:L154: role    = "roles/bigquery.jobUser"
+- infra/terraform/modules/iam/main.tf:L155: member  = "serviceAccount:${google_service_account.job_train.email}"
+- infra/terraform/modules/iam/main.tf:L158: resource "google_project_iam_member" "train_bq_read_session" {
+- infra/terraform/modules/iam/main.tf:L160: role    = "roles/bigquery.readSessionUser"
+- infra/terraform/modules/iam/main.tf:L161: member  = "serviceAccount:${google_service_account.job_train.email}"
+- infra/terraform/modules/iam/main.tf:L164: resource "google_project_iam_member" "embed_bq_job_user" {
+- infra/terraform/modules/iam/main.tf:L166: role    = "roles/bigquery.jobUser"
+- infra/terraform/modules/iam/main.tf:L167: member  = "serviceAccount:${google_service_account.job_embed.email}"
+- infra/terraform/modules/iam/main.tf:L170: resource "google_project_iam_member" "embed_bq_read_session" {
+- infra/terraform/modules/iam/main.tf:L172: role    = "roles/bigquery.readSessionUser"
+- infra/terraform/modules/iam/main.tf:L173: member  = "serviceAccount:${google_service_account.job_embed.email}"
+- infra/terraform/modules/iam/main.tf:L176: resource "google_project_iam_member" "dataform_bq_job_user" {
+- infra/terraform/modules/iam/main.tf:L178: role    = "roles/bigquery.jobUser"
+- infra/terraform/modules/iam/main.tf:L179: member  = "serviceAccount:${google_service_account.dataform.email}"
+- infra/terraform/modules/iam/main.tf:L182: resource "google_project_iam_member" "pipeline_bq_job_user" {
+- infra/terraform/modules/iam/main.tf:L184: role    = "roles/bigquery.jobUser"
+- infra/terraform/modules/iam/main.tf:L185: member  = "serviceAccount:${google_service_account.pipeline.email}"
+- infra/terraform/modules/iam/main.tf:L188: resource "google_project_iam_member" "pipeline_bq_read_session" {
+- infra/terraform/modules/iam/main.tf:L190: role    = "roles/bigquery.readSessionUser"
+- infra/terraform/modules/iam/main.tf:L191: member  = "serviceAccount:${google_service_account.pipeline.email}"
+- infra/terraform/modules/iam/main.tf:L194: resource "google_project_iam_member" "pipeline_aiplatform_user" {
+- infra/terraform/modules/iam/main.tf:L196: role    = "roles/aiplatform.user"
+- infra/terraform/modules/iam/main.tf:L197: member  = "serviceAccount:${google_service_account.pipeline.email}"
+- infra/terraform/modules/iam/main.tf:L200: resource "google_project_iam_member" "pipeline_trigger_aiplatform_user" {
+- infra/terraform/modules/iam/main.tf:L202: role    = "roles/aiplatform.user"
+- infra/terraform/modules/iam/main.tf:L203: member  = "serviceAccount:${google_service_account.pipeline_trigger.email}"
+- infra/terraform/modules/iam/main.tf:L206: resource "google_project_iam_member" "pipeline_trigger_eventarc_receiver" {
+- infra/terraform/modules/iam/main.tf:L208: role    = "roles/eventarc.eventReceiver"
+- infra/terraform/modules/iam/main.tf:L209: member  = "serviceAccount:${google_service_account.pipeline_trigger.email}"
+- infra/terraform/modules/iam/main.tf:L212: resource "google_project_iam_member" "pipeline_trigger_pubsub_subscriber" {
+- infra/terraform/modules/iam/main.tf:L214: role    = "roles/pubsub.subscriber"
+- infra/terraform/modules/iam/main.tf:L215: member  = "serviceAccount:${google_service_account.pipeline_trigger.email}"
+- infra/terraform/modules/iam/main.tf:L218: resource "google_project_iam_member" "pipeline_trigger_logging_writer" {
+- infra/terraform/modules/iam/main.tf:L220: role    = "roles/logging.logWriter"
+- infra/terraform/modules/iam/main.tf:L221: member  = "serviceAccount:${google_service_account.pipeline_trigger.email}"
+- infra/terraform/modules/iam/main.tf:L224: resource "google_service_account_iam_member" "pipeline_trigger_can_use_pipeline_sa" {
+- infra/terraform/modules/iam/main.tf:L225: service_account_id = google_service_account.pipeline.name
+- infra/terraform/modules/iam/main.tf:L226: role               = "roles/iam.serviceAccountUser"
+- infra/terraform/modules/iam/main.tf:L227: member             = "serviceAccount:${google_service_account.pipeline_trigger.email}"
+- infra/terraform/modules/iam/main.tf:L231: # which calls `PipelineJob.submit(service_account=sa-pipeline@...)`. The caller
+- infra/terraform/modules/iam/main.tf:L232: # must have iam.serviceAccountUser on the pipeline runtime SA (same pattern as
+- infra/terraform/modules/iam/main.tf:L234: resource "google_service_account_iam_member" "composer_can_use_pipeline_sa" {
+- infra/terraform/modules/iam/main.tf:L235: service_account_id = google_service_account.pipeline.name
+- infra/terraform/modules/iam/main.tf:L236: role               = "roles/iam.serviceAccountUser"
+- infra/terraform/modules/iam/main.tf:L237: member             = "serviceAccount:${google_service_account.composer.email}"
+- infra/terraform/modules/iam/main.tf:L240: resource "google_project_iam_member" "endpoint_encoder_logging_writer" {
+- infra/terraform/modules/iam/main.tf:L242: role    = "roles/logging.logWriter"
+- infra/terraform/modules/iam/main.tf:L243: member  = "serviceAccount:${google_service_account.endpoint_encoder.email}"
+- infra/terraform/modules/iam/main.tf:L246: resource "google_project_iam_member" "endpoint_reranker_logging_writer" {
+- infra/terraform/modules/iam/main.tf:L248: role    = "roles/logging.logWriter"
+- infra/terraform/modules/iam/main.tf:L249: member  = "serviceAccount:${google_service_account.endpoint_reranker.email}"
+- infra/terraform/modules/iam/main.tf:L256: # search-api SA (`api`) は既に roles/aiplatform.user 付与済 (line 148-152)
+- infra/terraform/modules/iam/main.tf:L262: #   roles/aiplatform.user は付与しない (最小権限)。
+- infra/terraform/modules/iam/main.tf:L269: resource "google_project_iam_member" "endpoint_reranker_aiplatform_user" {
+- infra/terraform/modules/iam/main.tf:L271: role    = "roles/aiplatform.user"
+- infra/terraform/modules/iam/main.tf:L272: member  = "serviceAccount:${google_service_account.endpoint_reranker.email}"
+- infra/terraform/modules/iam/main.tf:L293: resource "google_service_account" "composer" {
+- infra/terraform/modules/iam/main.tf:L298: resource "google_project_iam_member" "composer_worker" {
+- infra/terraform/modules/iam/main.tf:L300: role    = "roles/composer.worker"
+- infra/terraform/modules/iam/main.tf:L301: member  = "serviceAccount:${google_service_account.composer.email}"
+- infra/terraform/modules/iam/main.tf:L304: resource "google_project_iam_member" "composer_aiplatform_user" {
+- infra/terraform/modules/iam/main.tf:L306: role    = "roles/aiplatform.user"
+- infra/terraform/modules/iam/main.tf:L307: member  = "serviceAccount:${google_service_account.composer.email}"
+- infra/terraform/modules/iam/main.tf:L310: resource "google_project_iam_member" "composer_bq_job_user" {
+- infra/terraform/modules/iam/main.tf:L312: role    = "roles/bigquery.jobUser"
+- infra/terraform/modules/iam/main.tf:L313: member  = "serviceAccount:${google_service_account.composer.email}"
+- infra/terraform/modules/iam/main.tf:L316: resource "google_project_iam_member" "composer_bq_data_viewer" {
+- infra/terraform/modules/iam/main.tf:L318: role    = "roles/bigquery.dataViewer"
+- infra/terraform/modules/iam/main.tf:L319: member  = "serviceAccount:${google_service_account.composer.email}"
+- infra/terraform/modules/iam/main.tf:L322: resource "google_project_iam_member" "composer_run_invoker" {
+- infra/terraform/modules/iam/main.tf:L324: role    = "roles/run.invoker"
+- infra/terraform/modules/iam/main.tf:L325: member  = "serviceAccount:${google_service_account.composer.email}"
+- infra/terraform/modules/iam/main.tf:L328: # V5 fix (2026-05-03、§4.1): 過去 session の Claude が DAG を `BashOperator: uv
+- infra/terraform/modules/iam/main.tf:L340: resource "google_project_iam_member" "composer_artifactregistry_reader" {
+- infra/terraform/modules/iam/main.tf:L342: role    = "roles/artifactregistry.reader"
+- infra/terraform/modules/iam/main.tf:L343: member  = "serviceAccount:${google_service_account.composer.email}"
+- infra/terraform/modules/iam/main.tf:L346: resource "google_project_iam_member" "composer_storage_object_viewer" {
+- infra/terraform/modules/iam/main.tf:L348: role    = "roles/storage.objectViewer"
+- infra/terraform/modules/iam/main.tf:L349: member  = "serviceAccount:${google_service_account.composer.email}"
+- infra/terraform/modules/iam/main.tf:L354: resource "google_project_iam_member" "github_deployer_composer_admin" {
+- infra/terraform/modules/iam/main.tf:L356: role    = "roles/composer.admin"
+- infra/terraform/modules/iam/main.tf:L357: member  = "serviceAccount:${google_service_account.github_deployer.email}"
+- infra/terraform/modules/iam/outputs.tf:L1: output "service_accounts" {
+- infra/terraform/modules/iam/outputs.tf:L4: api               = google_service_account.api
+- infra/terraform/modules/iam/outputs.tf:L5: job_train         = google_service_account.job_train
+- infra/terraform/modules/iam/outputs.tf:L6: job_embed         = google_service_account.job_embed
+- infra/terraform/modules/iam/outputs.tf:L7: dataform          = google_service_account.dataform
+- infra/terraform/modules/iam/outputs.tf:L8: scheduler         = google_service_account.scheduler
+- infra/terraform/modules/iam/outputs.tf:L9: pipeline          = google_service_account.pipeline
+- infra/terraform/modules/iam/outputs.tf:L10: endpoint_encoder  = google_service_account.endpoint_encoder
+- infra/terraform/modules/iam/outputs.tf:L11: endpoint_reranker = google_service_account.endpoint_reranker
+- infra/terraform/modules/iam/outputs.tf:L12: pipeline_trigger  = google_service_account.pipeline_trigger
+- infra/terraform/modules/iam/outputs.tf:L13: external_secrets  = <redacted>
+- infra/terraform/modules/iam/outputs.tf:L14: composer          = google_service_account.composer
+- infra/terraform/modules/iam/outputs.tf:L19: description = "sa-github-deployer email — register as GitHub Actions var DEPLOYER_SERVICE_ACCOUNT"
+- infra/terraform/modules/iam/outputs.tf:L20: value       = google_service_account.github_deployer.email
+- infra/terraform/modules/iam/outputs.tf:L25: value       = google_iam_workload_identity_pool_provider.github.name
+- infra/terraform/modules/kserve/main.tf:L26: resource "kubernetes_service_account" "api" {
+- infra/terraform/modules/kserve/main.tf:L31: "iam.gke.io/gcp-service-account" = var.service_accounts.api.email
+- infra/terraform/modules/kserve/main.tf:L36: resource "kubernetes_service_account" "encoder" {
+- infra/terraform/modules/kserve/main.tf:L41: "iam.gke.io/gcp-service-account" = var.service_accounts.endpoint_encoder.email
+- infra/terraform/modules/kserve/main.tf:L46: resource "kubernetes_service_account" "reranker" {
+- infra/terraform/modules/kserve/main.tf:L51: "iam.gke.io/gcp-service-account" = var.service_accounts.endpoint_reranker.email
+- infra/terraform/modules/kserve/main.tf:L60: # Autopilot の managed-namespaces-limitation Warden authz で
+- infra/terraform/modules/kserve/main.tf:L126: name  = "serviceAccount.annotations.iam\\.gke\\.io/gcp-service-account"
+- infra/terraform/modules/kserve/main.tf:L127: value = <redacted>
+- infra/terraform/modules/kserve/outputs.tf:L11: name      = kubernetes_service_account.api.metadata[0].name
+- infra/terraform/modules/kserve/outputs.tf:L12: namespace = kubernetes_service_account.api.metadata[0].namespace
+- infra/terraform/modules/kserve/outputs.tf:L18: name      = kubernetes_service_account.encoder.metadata[0].name
+- infra/terraform/modules/kserve/outputs.tf:L19: namespace = kubernetes_service_account.encoder.metadata[0].namespace
+- infra/terraform/modules/kserve/outputs.tf:L25: name      = kubernetes_service_account.reranker.metadata[0].name
+- infra/terraform/modules/kserve/outputs.tf:L26: namespace = kubernetes_service_account.reranker.metadata[0].namespace
+- infra/terraform/modules/kserve/tls_dev.tf:L42: "server_auth",
+- infra/terraform/modules/kserve/variables.tf:L47: variable "service_accounts" {
+- infra/terraform/modules/kserve/variables.tf:L48: description = "GCP service accounts (from iam module) for Workload Identity annotations"
+- infra/terraform/modules/messaging/main.tf:L38: resource "google_pubsub_topic_iam_member" "api_publish_ranking_log" {
+- infra/terraform/modules/messaging/main.tf:L40: role   = "roles/pubsub.publisher"
+- infra/terraform/modules/messaging/main.tf:L41: member = "serviceAccount:${var.service_accounts.api.email}"
+- infra/terraform/modules/messaging/main.tf:L44: resource "google_pubsub_topic_iam_member" "api_publish_feedback" {
+- infra/terraform/modules/messaging/main.tf:L46: role   = "roles/pubsub.publisher"
+- infra/terraform/modules/messaging/main.tf:L47: member = "serviceAccount:${var.service_accounts.api.email}"
+- infra/terraform/modules/messaging/main.tf:L50: resource "google_pubsub_topic_iam_member" "api_publish_retrain" {
+- infra/terraform/modules/messaging/main.tf:L52: role   = "roles/pubsub.publisher"
+- infra/terraform/modules/messaging/main.tf:L53: member = "serviceAccount:${var.service_accounts.api.email}"
+- infra/terraform/modules/messaging/main.tf:L56: resource "google_pubsub_topic_iam_member" "scheduler_publish_retrain" {
+- infra/terraform/modules/messaging/main.tf:L58: role   = "roles/pubsub.publisher"
+- infra/terraform/modules/messaging/main.tf:L59: member = "serviceAccount:${var.service_accounts.scheduler.email}"
+- infra/terraform/modules/messaging/main.tf:L62: resource "google_pubsub_topic_iam_member" "api_publish_search_events" {
+- infra/terraform/modules/messaging/main.tf:L64: role   = "roles/pubsub.publisher"
+- infra/terraform/modules/messaging/main.tf:L65: member = "serviceAccount:${var.service_accounts.api.email}"
+- infra/terraform/modules/messaging/main.tf:L68: resource "google_pubsub_topic_iam_member" "api_publish_search_impressions" {
+- infra/terraform/modules/messaging/main.tf:L70: role   = "roles/pubsub.publisher"
+- infra/terraform/modules/messaging/main.tf:L71: member = "serviceAccount:${var.service_accounts.api.email}"
+- infra/terraform/modules/messaging/main.tf:L74: resource "google_pubsub_topic_iam_member" "api_publish_user_actions" {
+- infra/terraform/modules/messaging/main.tf:L76: role   = "roles/pubsub.publisher"
+- infra/terraform/modules/messaging/main.tf:L77: member = "serviceAccount:${var.service_accounts.api.email}"
+- infra/terraform/modules/messaging/main.tf:L95: google_project_iam_member.pubsub_bq_writer,
+- infra/terraform/modules/messaging/main.tf:L96: google_project_iam_member.pubsub_bq_metadata_viewer,
+- infra/terraform/modules/messaging/main.tf:L115: google_project_iam_member.pubsub_bq_writer,
+- infra/terraform/modules/messaging/main.tf:L116: google_project_iam_member.pubsub_bq_metadata_viewer,
+- infra/terraform/modules/messaging/main.tf:L135: google_project_iam_member.pubsub_bq_writer,
+- infra/terraform/modules/messaging/main.tf:L136: google_project_iam_member.pubsub_bq_metadata_viewer,
+- infra/terraform/modules/messaging/main.tf:L155: google_project_iam_member.pubsub_bq_writer,
+- infra/terraform/modules/messaging/main.tf:L156: google_project_iam_member.pubsub_bq_metadata_viewer,
+- infra/terraform/modules/messaging/main.tf:L175: google_project_iam_member.pubsub_bq_writer,
+- infra/terraform/modules/messaging/main.tf:L176: google_project_iam_member.pubsub_bq_metadata_viewer,
+- infra/terraform/modules/messaging/main.tf:L181: pubsub_service_agent = "serviceAccount:service-${data.google_project.current.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
+- infra/terraform/modules/messaging/main.tf:L184: resource "google_project_iam_member" "pubsub_bq_writer" {
+- infra/terraform/modules/messaging/main.tf:L186: role    = "roles/bigquery.dataEditor"
+- infra/terraform/modules/messaging/main.tf:L190: resource "google_project_iam_member" "pubsub_bq_metadata_viewer" {
+- infra/terraform/modules/messaging/main.tf:L192: role    = "roles/bigquery.metadataViewer"
+- infra/terraform/modules/messaging/main.tf:L220: service_account_email = var.service_accounts.scheduler.email
+- infra/terraform/modules/messaging/variables.tf:L46: variable "service_accounts" {
+- infra/terraform/modules/messaging/variables.tf:L47: description = "Map of SA resources emitted by the iam module. Uses .email for bindings."
+- infra/terraform/modules/monitoring/main.tf:L159: # DTS requires either `version_info` (OAuth code, only works for user identities)
+- infra/terraform/modules/monitoring/main.tf:L160: # or `service_account_name` (SA delegation). sa-dataform already has
+- infra/terraform/modules/monitoring/main.tf:L162: service_account_name = var.service_accounts.dataform.email
+- infra/terraform/modules/monitoring/main.tf:L177: service_account_name   = var.service_accounts.dataform.email
+- infra/terraform/modules/monitoring/variables.tf:L26: variable "service_accounts" {
+- infra/terraform/modules/monitoring/variables.tf:L27: description = "Map of SA resources emitted by the iam module. The dataform SA is used as google_bigquery_data_transfer_config.service_account_name so the Scheduled Query has a valid credential (otherwise DTS creation fails with 'Failed to find a valid credential')."
+- infra/terraform/modules/redis_synonym/main.tf:L21: authorized_network = var.vpc_network
+- infra/terraform/modules/redis_synonym/main.tf:L23: auth_enabled       = var.auth_enabled
+- infra/terraform/modules/redis_synonym/main.tf:L34: role  = "synonym-dict"
+- infra/terraform/modules/redis_synonym/main.tf:L38: # AUTH string mirrored into Secret Manager so the search-api KSA can pull
+- infra/terraform/modules/redis_synonym/main.tf:L39: # it via External Secrets Operator (same pattern as ``search-api-iap-oauth-client-secret``).
+- infra/terraform/modules/redis_synonym/main.tf:L40: resource "google_secret_manager_secret" "redis_auth" {
+- infra/terraform/modules/redis_synonym/main.tf:L41: count     = var.auth_enabled ? 1 : 0
+- infra/terraform/modules/redis_synonym/main.tf:L43: secret_id = <redacted>
+- infra/terraform/modules/redis_synonym/main.tf:L51: role  = "synonym-redis-auth"
+- infra/terraform/modules/redis_synonym/main.tf:L55: resource "google_secret_manager_secret_version" "redis_auth" {
+- infra/terraform/modules/redis_synonym/main.tf:L56: count       = var.auth_enabled ? 1 : 0
+- infra/terraform/modules/redis_synonym/main.tf:L57: secret      = <redacted>
+- infra/terraform/modules/redis_synonym/main.tf:L58: secret_data = <redacted>
+- infra/terraform/modules/redis_synonym/outputs.tf:L12: description = "Composed redis:// URL for ``synonym_redis_url`` settings (sans AUTH)"
+- infra/terraform/modules/redis_synonym/outputs.tf:L16: output "auth_secret_id" {
+- infra/terraform/modules/redis_synonym/outputs.tf:L17: description = <redacted>
+- infra/terraform/modules/redis_synonym/outputs.tf:L18: value       = <redacted>
+- infra/terraform/modules/redis_synonym/variables.tf:L35: variable "auth_enabled" {
+- infra/terraform/modules/redis_synonym/variables.tf:L37: description = <redacted>
+- infra/terraform/modules/redis_synonym/variables.tf:L46: variable "auth_secret_id" {
+- infra/terraform/modules/redis_synonym/variables.tf:L48: description = <redacted>
+- infra/terraform/modules/redis_synonym/variables.tf:L49: default     = "mlops-synonym-redis-auth"
+- infra/terraform/modules/streaming/main.tf:L3: # Provisions the Service Account (sa-dataflow) + IAM plumbing for a Flex
+- infra/terraform/modules/streaming/main.tf:L15: effective_sa    = var.service_account_email != "" ? var.service_account_email : try(google_service_account.dataflow[0].email, "")
+- infra/terraform/modules/streaming/main.tf:L19: resource "google_service_account" "dataflow" {
+- infra/terraform/modules/streaming/main.tf:L20: count = var.create_service_account ? 1 : 0
+- infra/terraform/modules/streaming/main.tf:L29: resource "google_project_iam_member" "dataflow_pubsub_subscriber" {
+- infra/terraform/modules/streaming/main.tf:L30: count = var.create_service_account ? 1 : 0
+- infra/terraform/modules/streaming/main.tf:L33: role    = "roles/pubsub.subscriber"
+- infra/terraform/modules/streaming/main.tf:L34: member  = "serviceAccount:${google_service_account.dataflow[0].email}"
+- infra/terraform/modules/streaming/main.tf:L38: resource "google_project_iam_member" "dataflow_worker" {
+- infra/terraform/modules/streaming/main.tf:L39: count = var.create_service_account ? 1 : 0
+- infra/terraform/modules/streaming/main.tf:L42: role    = "roles/dataflow.worker"
+- infra/terraform/modules/streaming/main.tf:L43: member  = "serviceAccount:${google_service_account.dataflow[0].email}"
+- infra/terraform/modules/streaming/main.tf:L46: resource "google_project_iam_member" "dataflow_storage" {
+- infra/terraform/modules/streaming/main.tf:L47: count = var.create_service_account ? 1 : 0
+- infra/terraform/modules/streaming/main.tf:L50: role    = "roles/storage.objectAdmin"
+- infra/terraform/modules/streaming/main.tf:L51: member  = "serviceAccount:${google_service_account.dataflow[0].email}"
+- infra/terraform/modules/streaming/main.tf:L55: resource "google_project_iam_member" "dataflow_bq_data_editor" {
+- infra/terraform/modules/streaming/main.tf:L56: count = var.create_service_account ? 1 : 0
+- infra/terraform/modules/streaming/main.tf:L59: role    = "roles/bigquery.dataEditor"
+- infra/terraform/modules/streaming/main.tf:L60: member  = "serviceAccount:${google_service_account.dataflow[0].email}"
+- infra/terraform/modules/streaming/main.tf:L63: resource "google_project_iam_member" "dataflow_bq_jobs" {
+- infra/terraform/modules/streaming/main.tf:L64: count = var.create_service_account ? 1 : 0
+- infra/terraform/modules/streaming/main.tf:L67: role    = "roles/bigquery.jobUser"
+- infra/terraform/modules/streaming/main.tf:L68: member  = "serviceAccount:${google_service_account.dataflow[0].email}"
+- infra/terraform/modules/streaming/main.tf:L87: service_account_email = local.effective_sa
+- infra/terraform/modules/streaming/outputs.tf:L1: output "service_account_email" {
+- infra/terraform/modules/streaming/variables.tf:L38: description = "Create google_dataflow_flex_template_job. Set false when only the SA + IAM scaffolding is needed (template not yet built)."
+- infra/terraform/modules/streaming/variables.tf:L43: variable "service_account_email" {
+- infra/terraform/modules/streaming/variables.tf:L49: variable "create_service_account" {
+- infra/terraform/modules/streaming/variables.tf:L50: description = "Create a dedicated sa-dataflow service account inside this module. Set false when service_account_email points to an existing SA owned elsewhere."
+- infra/terraform/modules/streaming/versions.tf:L9: # SA + IAM resources stay in the stable google provider.
+- infra/terraform/modules/vector_search/main.tf:L97: dynamic "deployed_index_auth_config" {
+- infra/terraform/modules/vector_search/variables.tf:L83: variable "service_account_email" {
+- infra/terraform/modules/vertex/main.tf:L59: pubsub_service_agent             = "serviceAccount:service-${data.google_project.current.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
+- infra/terraform/modules/vertex/main.tf:L72: resource "google_bigquery_dataset_iam_member" "pubsub_mlops_editor" {
+- infra/terraform/modules/vertex/main.tf:L74: role       = "roles/bigquery.dataEditor"
+- infra/terraform/modules/vertex/main.tf:L78: resource "google_bigquery_dataset_iam_member" "pubsub_mlops_metadata_viewer" {
+- infra/terraform/modules/vertex/main.tf:L80: role       = "roles/bigquery.metadataViewer"
+- infra/terraform/modules/vertex/main.tf:L99: google_bigquery_dataset_iam_member.pubsub_mlops_editor,
+- infra/terraform/modules/vertex/main.tf:L100: google_bigquery_dataset_iam_member.pubsub_mlops_metadata_viewer,
+- infra/terraform/modules/vertex/main.tf:L148: service_account_email = var.service_accounts.pipeline_trigger.email
+- infra/terraform/modules/vertex/main.tf:L155: PIPELINE_SERVICE_ACCOUNT = var.service_accounts.pipeline.email
+- infra/terraform/modules/vertex/main.tf:L162: resource "google_cloud_run_service_iam_member" "pipeline_trigger_invoker" {
+- infra/terraform/modules/vertex/main.tf:L165: role     = "roles/run.invoker"
+- infra/terraform/modules/vertex/main.tf:L166: member   = "serviceAccount:${var.service_accounts.pipeline_trigger.email}"
+- infra/terraform/modules/vertex/main.tf:L194: service_account = var.service_accounts.pipeline_trigger.email
+- infra/terraform/modules/vertex/main.tf:L198: google_cloud_run_service_iam_member.pipeline_trigger_invoker,
+- infra/terraform/modules/vertex/main.tf:L227: service_account = var.service_accounts.pipeline_trigger.email
+- infra/terraform/modules/vertex/main.tf:L231: google_cloud_run_service_iam_member.pipeline_trigger_invoker,
+- infra/terraform/modules/vertex/main.tf:L372: resource "google_storage_bucket_iam_member" "endpoint_encoder_models_reader" {
+- infra/terraform/modules/vertex/main.tf:L374: role   = "roles/storage.objectViewer"
+- infra/terraform/modules/vertex/main.tf:L375: member = "serviceAccount:${var.service_accounts.endpoint_encoder.email}"
+- infra/terraform/modules/vertex/main.tf:L378: resource "google_storage_bucket_iam_member" "endpoint_reranker_models_reader" {
+- infra/terraform/modules/vertex/main.tf:L380: role   = "roles/storage.objectViewer"
+- infra/terraform/modules/vertex/main.tf:L381: member = "serviceAccount:${var.service_accounts.endpoint_reranker.email}"
+- infra/terraform/modules/vertex/variables.tf:L16: variable "service_accounts" {
+- infra/terraform/modules/vertex/variables.tf:L17: description = "Map of SA resources emitted by the iam module. Reserved for future Vertex resources."
+- ml/streaming/pipeline.py:L137: options = PipelineOptions(beam_args, streaming=True, save_main_session=True)
+- pipeline/dags/_pod.py:L3: 過去 incident: 過去 session の Claude が DAG を `BashOperator: uv run python -m
+- pipeline/dags/_pod.py:L124: # service_account_name は Composer Gen 3 のデフォルト KSA (= sa-composer に
+- pipeline/data_job/ports/vector_search_writer.py:L10: Implementations may raise on transport / quota / auth errors. The
+- pipeline/training_job/adapters/kfp_orchestrator.py:L7: machinery so new jobs can be authored Port-first.
+- pipeline/training_job/components/register_reranker.py:L19: service_account: str,
+- pipeline/training_job/main.py:L62: deploy_service_account: str = "",
+- pipeline/training_job/main.py:L95: service_account=deploy_service_account,
+- pipeline/workflow/compile.py:L134: service_account: str,
+- pipeline/workflow/compile.py:L147: job.submit(service_account=service_account or None)
+- pipeline/workflow/compile.py:L199: service_account=args.service_account,
+- pipeline/workflow/trigger.py:L87: service_account = os.getenv("PIPELINE_SERVICE_ACCOUNT", "").strip()
+- pipeline/workflow/trigger.py:L103: job.submit(service_account=service_account or None)
+- pipeline/workflow/trigger_zip/main.py:L87: service_account = os.getenv("PIPELINE_SERVICE_ACCOUNT", "").strip()
+- pipeline/workflow/trigger_zip/main.py:L103: job.submit(service_account=service_account or None)
+- pyproject.toml:L26: "google-auth>=2.36",
+- scripts/_common.py:L4: common shell idioms (gcloud subprocess calls, IAM-gated HTTP requests,
+- scripts/_common.py:L316: """Mint an OIDC token for IAM-gated Cloud Run calls."""
+- scripts/_common.py:L317: return gcloud("auth", "print-identity-token", capture= <redacted>
+- scripts/_common.py:L322: """Resolved API endpoint + auth mode for ops scripts.
+- scripts/_common.py:L347: """Invoke ``http_json`` with this target's URL prefix and auth context."""
+- scripts/_common.py:L440: headers["Authorization"] = <redacted>
+- scripts/adapters/gcloud.py:L35: gcloud_run("services", "enable", "--project=mlops-dev-a", "iam.googleapis.com")
+- scripts/deploy/api_gke.py:L79: # が ``x509: certificate signed by unknown authority`` で失敗する。
+- scripts/deploy/api_gke_local.py:L20: - `gcloud auth configure-docker <region>-docker.pkg.dev` previously run, OR
+- scripts/deploy/api_gke_local.py:L88: def _ensure_ar_auth(region: str) -> None:
+- scripts/deploy/api_gke_local.py:L92: "auth",
+- scripts/deploy/api_gke_local.py:L100: _diag("gcloud auth configure-docker", proc)
+- scripts/deploy/api_gke_local.py:L102: f"[error] `gcloud auth configure-docker {registry}` failed — run "
+- scripts/deploy/api_gke_local.py:L103: "`gcloud auth login` first."
+- scripts/deploy/api_gke_local.py:L140: _step("[1/4] ensure docker buildx + AR auth + kubectl context")
+- scripts/deploy/api_gke_local.py:L142: _ensure_ar_auth(region)
+- scripts/deploy/build_kserve_images_local.py:L66: def _ensure_ar_auth(region: str) -> None:
+- scripts/deploy/build_kserve_images_local.py:L69: "auth",
+- scripts/deploy/build_kserve_images_local.py:L77: _diag("gcloud auth configure-docker", proc)
+- scripts/deploy/build_kserve_images_local.py:L79: f"[error] `gcloud auth configure-docker {registry}` failed — run `gcloud auth login` first."
+- scripts/deploy/build_kserve_images_local.py:L170: _ensure_ar_auth(region)
+- scripts/deploy/composer_runner.py:L7: 過去 incident: 過去 session の Claude が DAG を `BashOperator: uv run python -m
+- scripts/deploy/configmap_overlay.py:L52: "auth",
+- scripts/deploy/configmap_overlay.py:L66: headers= <redacted>
+- scripts/domain/gcp/feature_view_sync.py:L51: proc = <redacted>
+- scripts/domain/gcp/feature_view_sync.py:L54: raise SystemExit("[error] gcloud auth print-access-token failed for Feature View sync")
+- scripts/domain/gcp/feature_view_sync.py:L66: "Authorization": <redacted>
+- scripts/domain/gcp/state_recovery.py:L7: で Composer / GKE / Cloud Run しか消していない場合、IAM SA / BigQuery / Pub/Sub /
+- scripts/domain/gcp/state_recovery.py:L11: - 特に IAM SA は soft-delete 30 日 window があるため、gcloud delete → 即 terraform
+- scripts/domain/gcp/state_recovery.py:L24: - IAM bindings (`google_project_iam_member` etc.) は recover しない (依存 SA を import
+- scripts/domain/gcp/state_recovery.py:L45: # IAM service accounts: account_id 'sa-X' → terraform address `module.iam.google_service_account.X`
+- scripts/domain/gcp/state_recovery.py:L47: IAM_SA_NAMES = (
+- scripts/domain/gcp/state_recovery.py:L118: ("search-api-iap-oauth-client-secret", "data", "search_api_iap_oauth_client_secret"),
+- scripts/domain/gcp/state_recovery.py:L205: # IAM SA recovery
+- scripts/domain/gcp/state_recovery.py:L209: def _recover_iam_sas(infra_dir: Path, project_id: str, var_args: list[str]) -> int:
+- scripts/domain/gcp/state_recovery.py:L212: ["gcloud", "iam", "service-accounts", "list", f"--project={project_id}", "--format=json"]
+- scripts/domain/gcp/state_recovery.py:L215: for sa_name in IAM_SA_NAMES:
+- scripts/domain/gcp/state_recovery.py:L216: addr = f"module.iam.google_service_account.{sa_name}"
+- scripts/domain/gcp/state_recovery.py:L219: # email = sa-{tf_name.replace("_","-")}@<project>.iam.gserviceaccount.com
+- scripts/domain/gcp/state_recovery.py:L221: email = f"{gcp_account_id}@{project_id}.iam.gserviceaccount.com"
+- scripts/domain/gcp/state_recovery.py:L491: ["curl", "-sS", "-H", f"Authorization: <redacted>
+- scripts/domain/gcp/state_recovery.py:L510: "auth",
+- scripts/domain/gcp/state_recovery.py:L596: "auth",
+- scripts/domain/gcp/state_recovery.py:L609: f"Authorization: <redacted>
+- scripts/domain/gcp/state_recovery.py:L654: total += _recover_iam_sas(infra_dir, project_id, var_args)
+- scripts/domain/gcp/vertex_feature_store_wait.py:L29: "auth",
+- scripts/domain/gcp/vertex_feature_store_wait.py:L41: ["curl", "-sS", "-H", f"Authorization: <redacted>
+- scripts/domain/k8s/elasticsearch_wait.py:L8: (= TLS handshake / auth not yet ready).
+- scripts/domain/k8s/kubectl_context.py:L12: `kubectl apply` が `x509: certificate signed by unknown authority` で
+- scripts/domain/terraform/stage_apply.py:L23: "module.iam",
+- scripts/ops/slo_status.py:L104: token = <redacted>
+- scripts/ops/slo_status.py:L106: return fail("could not mint access token via `gcloud auth print-access-token`")
+- scripts/ops/submit_train_pipeline.py:L7: process cwd or permissions did not match local `make` runs.
+- scripts/ops/submit_train_pipeline.py:L53: service_account = f"sa-pipeline@{project}.iam.gserviceaccount.com"
+- scripts/ops/submit_train_pipeline.py:L69: service_account,
+- scripts/ops/sync_elasticsearch.py:L7: Authentication (optional):
+- scripts/ops/sync_elasticsearch.py:L8: - ``ELASTICSEARCH_API_KEY`` — sent as ``Authorization: <redacted>
+- scripts/ops/sync_elasticsearch.py:L9: Otherwise no auth header (dev single-node with ``xpack.security.enabled=false``).
+- scripts/ops/sync_elasticsearch.py:L41: h["authorization"] = <redacted>
+- scripts/ops/sync_elasticsearch.py:L201: auth: tuple[str, str] | None = None
+- scripts/ops/sync_elasticsearch.py:L203: auth = <redacted>
+- scripts/ops/sync_elasticsearch.py:L210: with httpx.Client(timeout=120.0, verify=verify_tls, auth=auth) as client:
+- scripts/ops/sync_synonyms.py:L15: Auth:
+- scripts/ops/sync_synonyms.py:L16: - Cloud Memorystore AUTH string is read from ``REDIS_AUTH`` env var
+- scripts/ops/sync_synonyms.py:L17: (mirrors the ``synonym-redis-auth`` Secret in the GKE Pod).
+- scripts/ops/sync_synonyms.py:L18: - When AUTH is disabled the env var is unset and the URL is used as-is.
+- scripts/ops/sync_synonyms.py:L96: def _resolve_redis_auth(*, project_id: <redacted>
+- scripts/ops/sync_synonyms.py:L97: explicit = os.environ.get("REDIS_AUTH", "").strip()
+- scripts/ops/sync_synonyms.py:L111: # Match the legacy Makefile contract: REDIS_AUTH env is consumed by
+- scripts/ops/sync_synonyms.py:L112: # ``redis.from_url`` via ``os.environ.get('REDIS_AUTH')`` below.
+- scripts/ops/sync_synonyms.py:L113: os.environ["REDIS_AUTH"] = minted
+- scripts/ops/sync_synonyms.py:L133: "--redis-auth-secret-id",
+- scripts/ops/sync_synonyms.py:L134: default= <redacted>
+- scripts/ops/sync_synonyms.py:L135: help= <redacted>
+- scripts/ops/sync_synonyms.py:L219: _resolve_redis_auth(
+- scripts/ops/sync_synonyms.py:L221: secret_id= <redacted>
+- scripts/ops/sync_synonyms.py:L230: password = <redacted>
+- scripts/ops/vertex/feature_group.py:L25: 1  — config error / endpoint not yet provisioned / IAM / not-found
+- scripts/ops/vertex/feature_group.py:L40: proc = <redacted>
+- scripts/ops/vertex/feature_group.py:L43: raise RuntimeError("gcloud auth print-access-token failed")
+- scripts/ops/vertex/feature_group.py:L50: headers= <redacted>
+- scripts/ops/vertex/monitoring.py:L18: 1  — config / IAM error
+- scripts/ops/vertex/vector_search.py:L19: 1  — config error / endpoint not provisioned / IAM / 0 neighbors
+- scripts/setup/create_schedule.py:L15: service_account = env("PIPELINE_SERVICE_ACCOUNT")
+- scripts/setup/create_schedule.py:L27: "service_account": service_account,
+- scripts/setup/create_schedule.py:L39: "service_account": service_account,
+- scripts/setup/destroy_all.py:L43: session may hold the lock. Terraform commands use ``scripts/domain/terraform/lock.py``
+- scripts/setup/local_hybrid.py:L66: "(ENABLE_SEARCH will be disabled for this session)."
+- scripts/setup/print_github_variables.py:L27: ("DEPLOYER_SERVICE_ACCOUNT", "sa-github-deployer email", "DEPLOYER_SERVICE_ACCOUNT"),
+- scripts/setup/recover_wif.py:L69: pool_address = "module.iam.google_iam_workload_identity_pool.github"
+- scripts/setup/recover_wif.py:L72: "iam",
+- scripts/setup/recover_wif.py:L85: "iam",
+- scripts/setup/recover_wif.py:L111: provider_address = "module.iam.google_iam_workload_identity_pool_provider.github"
+- scripts/setup/recover_wif.py:L116: "iam",
+- scripts/setup/recover_wif.py:L134: "iam",
+- scripts/setup/tf_apply.py:L14: - terraform apply stage1 (core infra: iam / data / vector_search / vertex /
+- scripts/setup/tf_apply.py:L75: # 後に runbook §1.4-emergency の `state rm` で全 state を消すと、IAM SA / BQ /
+- scripts/setup/tf_apply.py:L78: # IAM SA は soft-delete 30 日 window があるため gcloud delete → 即 terraform create
+- scripts/setup/tf_bootstrap.py:L23: "iam.googleapis.com",
+- system_map.html:L492: <div class="risk-row"><span class="sev med">med</span><div><b>ranking_log publish is best-effort.</b> <code>search_service.run_search</code> swallows publish failures (telemetry). A persistent Pub/Sub / IAM outage would silently void retraining data.</div></div>
+- system_map.json:L1243: {"area": "Elasticsearch hardening parked", "issue": "ECK manifest is intentionally HTTP + anonymous superuser (learning mode). A contract test pins this state, so adding auth requires deliberate flip. RISK becomes prod-grade only if endpoint is exposed beyond GKE cluster.", "severity": "med"},
+- system_map.json:L1247: {"area": "ranking_log publish best-effort", "issue": "search_service.run_search swallows ranking_log publish failures (telemetry). A persistent Pub/Sub topic/IAM outage would silently void retraining data.", "severity": "med"},
+- tests/_fakes/in_memory_event_writer.py:L21: session_id: str | None = None,
+- tests/_fakes/in_memory_event_writer.py:L32: session_id=session_id,
+- tests/e2e/test_full_recreate_gate.py:L5: ``deploy-all`` may hit HTTP **409** (same symptom as 2026-05-03 session). This
+- tests/integration/infra/test_manifests_structure.py:L129: ext = <redacted>
+- tests/integration/infra/test_manifests_structure.py:L132: assert ext["metadata"]["name"] = <redacted>
+- tests/integration/infra/test_manifests_structure.py:L134: assert ext["spec"]["target"]["name"] = <redacted>
+- tests/integration/infra/test_manifests_structure.py:L138: "remoteRef": <redacted>
+- tests/integration/infra/test_manifests_structure.py:L275: # dev default は `enabled: <redacted>
+- tests/integration/infra/test_manifests_structure.py:L278: assert iap["oauth2ClientSecret"]["name"] = <redacted>
+- tests/integration/infra/test_public_domain_consistency.py:L9: Manager DNS-01 chain (dns_authorization → managed certificate → certificate_map
+- tests/integration/infra/test_public_domain_consistency.py:L86: assert 'resource "google_certificate_manager_dns_authorization" "search_api"' in main
+- tests/integration/infra/test_public_domain_consistency.py:L88: assert "google_certificate_manager_dns_authorization.search_api.id" in main, (
+- tests/integration/infra/test_public_domain_consistency.py:L89: "managed certificate must reference the DNS authorization"
+- tests/integration/infra/test_public_domain_consistency.py:L93: # The DNS authorization's CNAME record is published in the zone.
+- tests/integration/infra/test_workflows_structure.py:L71: f"{filename} must request id-token: <redacted>
+- tests/integration/parity/test_api_route_prefixes.py:L34: "/docs/oauth2-redirect",
+- tests/integration/parity/test_codebase_invariants.py:L139: def test_es_manifest_pins_http_and_anonymous_auth() -> None:
+- tests/integration/parity/test_codebase_invariants.py:L140: """2026-05-10 incident: ECK 8.x default は HTTPS + auth 必須だが、本リポの
+- tests/integration/parity/test_codebase_invariants.py:L145: 2. `xpack.security.authc.anonymous.username: anonymous_user` + `roles: superuser`
+- tests/integration/parity/test_codebase_invariants.py:L146: (anonymous auth bypass、学習プロジェクト前提)
+- tests/integration/parity/test_codebase_invariants.py:L148: production 化 (HTTPS + password auth) する時は本 contract を更新すること。
+- tests/integration/parity/test_codebase_invariants.py:L160: # 2. anonymous superuser (auth bypass)
+- tests/integration/parity/test_codebase_invariants.py:L161: assert "xpack.security.authc.anonymous.username: anonymous_user" in es_yaml, (
+- tests/integration/parity/test_codebase_invariants.py:L162: "ES manifest must define anonymous user for HTTP auth bypass (学習用)"
+- tests/integration/parity/test_codebase_invariants.py:L164: assert "xpack.security.authc.anonymous.roles: superuser" in es_yaml, (
+- tests/integration/parity/test_codebase_invariants.py:L165: "anonymous user must have superuser role to allow sync-elasticsearch bulk indexing"
+- tests/integration/workflow/conftest.py:L11: - `test_composer_module_contract.py` — Composer Terraform module + IAM SA +
+- tests/integration/workflow/test_composer_module_contract.py:L1: """canonical 構成 workflow contract — Cloud Composer Terraform module + IAM SA + Make targets.
+- tests/integration/workflow/test_composer_module_contract.py:L3: Pin the Composer module skeleton, IAM `sa-composer` SA + roles, dev environment
+- tests/integration/workflow/test_composer_module_contract.py:L143: """`module "composer"` が iam / data / vector_search / vertex に depends_on 接続。"""
+- tests/integration/workflow/test_composer_module_contract.py:L150: for required_dep in ("module.iam", "module.data", "module.vector_search", "module.vertex"):
+- tests/integration/workflow/test_composer_module_contract.py:L166: "composer_service_account_email",
+- tests/integration/workflow/test_composer_module_contract.py:L206: def test_iam_module_provisions_sa_composer_with_required_roles() -> None:
+- tests/integration/workflow/test_composer_module_contract.py:L207: iam_main = _read("infra/terraform/modules/iam/main.tf")
+- tests/integration/workflow/test_composer_module_contract.py:L208: iam_outputs = _read("infra/terraform/modules/iam/outputs.tf")
+- tests/integration/workflow/test_composer_module_contract.py:L210: assert 'resource "google_service_account" "composer" {' in iam_main
+- tests/integration/workflow/test_composer_module_contract.py:L211: assert 'account_id   = "sa-composer"' in iam_main
+- tests/integration/workflow/test_composer_module_contract.py:L213: for required_role in (
+- tests/integration/workflow/test_composer_module_contract.py:L214: '"roles/composer.worker"',
+- tests/integration/workflow/test_composer_module_contract.py:L215: '"roles/aiplatform.user"',
+- tests/integration/workflow/test_composer_module_contract.py:L216: '"roles/bigquery.jobUser"',
+- tests/integration/workflow/test_composer_module_contract.py:L217: '"roles/bigquery.dataViewer"',
+- tests/integration/workflow/test_composer_module_contract.py:L218: '"roles/run.invoker"',
+- tests/integration/workflow/test_composer_module_contract.py:L220: assert required_role in iam_main
+- tests/integration/workflow/test_composer_module_contract.py:L222: assert "google_project_iam_member" in iam_main and '"roles/composer.admin"' in iam_main, (
+- tests/integration/workflow/test_composer_module_contract.py:L223: "github_deployer must have roles/composer.admin to provision Composer env"
+- tests/integration/workflow/test_composer_module_contract.py:L226: assert "composer          = google_service_account.composer" in iam_outputs
+- tests/integration/workflow/test_composer_module_contract.py:L230: """`sa-composer` が Composer module + IAM module + outputs map の 3 箇所で
+- tests/integration/workflow/test_composer_module_contract.py:L232: iam_main = _read("infra/terraform/modules/iam/main.tf")
+- tests/integration/workflow/test_composer_module_contract.py:L233: iam_outputs = _read("infra/terraform/modules/iam/outputs.tf")
+- tests/integration/workflow/test_composer_module_contract.py:L236: assert 'resource "google_service_account" "composer"' in iam_main
+- tests/integration/workflow/test_composer_module_contract.py:L237: assert 'account_id   = "sa-composer"' in iam_main
+- tests/integration/workflow/test_composer_module_contract.py:L238: assert "composer          = google_service_account.composer" in iam_outputs
+- tests/integration/workflow/test_composer_module_contract.py:L239: assert "module.iam.service_accounts.composer.email" in dev_main
+- tests/integration/workflow/test_composer_module_contract.py:L244: assert "module.iam.service_accounts.composer.email" in main_tf
+- tests/integration/workflow/test_destroy_all_contract.py:L44: "module.iam",
+- tests/integration/workflow/test_destroy_all_contract.py:L398: しか消していない場合に全件 state rm すると、IAM SA / BQ / Pub/Sub / Cloud Function /
+- tests/integration/workflow/test_destroy_all_contract.py:L406: 4. recovery 対象 resource type が IAM SA / BQ dataset+table / Pub/Sub topic+sub /
+- tests/integration/workflow/test_destroy_all_contract.py:L434: "_recover_iam_sas",
+- tests/integration/workflow/test_destroy_all_contract.py:L448: "(IAM SA / BQ / Pub/Sub / Cloud Function / Eventarc / Cloud Run / "
+- tests/integration/workflow/test_destroy_all_contract.py:L454: def test_state_recovery_iam_sa_mapping_matches_terraform() -> None:
+- tests/integration/workflow/test_destroy_all_contract.py:L455: """**IAM SA mapping 整合契約**: `state_recovery.IAM_SA_NAMES` は `infra/terraform/
+- tests/integration/workflow/test_destroy_all_contract.py:L456: modules/iam/main.tf` の `google_service_account` resource label と完全一致する。
+- tests/integration/workflow/test_destroy_all_contract.py:L462: iam_main_tf = _read("infra/terraform/modules/iam/main.tf")
+- tests/integration/workflow/test_destroy_all_contract.py:L466: declared_sas = set(_re.findall(r'resource "google_service_account" "(\w+)"', iam_main_tf))
+- tests/integration/workflow/test_destroy_all_contract.py:L467: # state_recovery.IAM_SA_NAMES tuple の中身を抽出 (multi-line tuple)
+- tests/integration/workflow/test_destroy_all_contract.py:L468: tuple_match = _re.search(r"IAM_SA_NAMES\s*=\s*\(([^)]*)\)", state_recovery_py, flags=_re.DOTALL)
+- tests/integration/workflow/test_destroy_all_contract.py:L469: assert tuple_match, "state_recovery.py must define IAM_SA_NAMES tuple"
+- tests/integration/workflow/test_destroy_all_contract.py:L473: f"state_recovery.IAM_SA_NAMES is missing SAs declared in iam/main.tf: {sorted(missing)}. "
+- tests/integration/workflow/test_destroy_all_contract.py:L474: "Add them to IAM_SA_NAMES so `make state-recover` can import them after orphan cleanup."
+- tests/integration/workflow/test_destroy_all_contract.py:L480: orphan cleanup 手順に、bare `state rm` の罠 (= IAM SA など実は GCP に残っている
+- tests/integration/workflow/test_destroy_all_contract.py:L484: 過去事故 (2026-05-03): 同じレシピで全件 state rm した結果 14 IAM SA + 4 Pub/Sub +
+- tests/integration/workflow/test_destroy_all_contract.py:L496: "GCP resources orphan (IAM SA / BQ / Pub/Sub etc.) and tf-apply will fail with "
+- tests/integration/workflow/test_docs_canonical_contract.py:L101: user authoritative wording (2026-05-02 終端) を pin: 3h cycle ¥870-1,200 +
+- tests/integration/workflow/test_docs_canonical_contract.py:L108: "runbook must pin canonical 構成 full 3h cycle cost as ~¥870-1,200 (user authoritative)"
+- tests/integration/workflow/test_infra_apis_contract.py:L4: 長時間 recovery 系の事故 (PERMISSION_DENIED for unenabled API、cross-region
+- tests/integration/workflow/test_infra_apis_contract.py:L47: "google_iam_workload_identity_pool": "iam.googleapis.com",
+- tests/integration/workflow/test_infra_apis_contract.py:L69: "google_project_service.enabled, otherwise apply fails with PERMISSION_DENIED. "
+- tests/unit/app/test_event_repositories.py:L25: "session_id": "sess-1",
+- tests/unit/app/test_model_handler.py:L4: evaluation (the role originally implied by ``/metrics``). We pin:
+- tests/unit/app/test_pubsub_event_writer.py:L51: session_id="ses1",
+- tests/unit/app/test_pubsub_event_writer.py:L118: fake_future.result.side_effect = RuntimeError("permission denied")
+- tests/unit/app/test_pubsub_event_writer.py:L121: with pytest.raises(RuntimeError, match="permission denied"):
+- tests/unit/app/test_ranking_service.py:L121: raises with a loud ERROR log + IAM hint so ops sees the breakage.
+- tests/unit/app/test_ranking_service.py:L132: raise RuntimeError("simulated Pub/Sub topic permission denial")
+- tests/unit/scripts/test_adapters.py:L75: gcloud_run("services", "enable", "--project=mlops-dev-a", "iam.googleapis.com")
+- tests/unit/scripts/test_adapters.py:L77: assert cmd == ["gcloud", "services", "enable", "--project=mlops-dev-a", "iam.googleapis.com"]
+- tests/unit/scripts/test_adapters.py:L82: gcloud_run("auth", "print-access-token", capture= <redacted>
+- tests/unit/scripts/test_destroy_check.py:L43: "PERMISSION_DENIED: API [run.googleapis.com] has not been used in project"
+- tests/unit/scripts/test_destroy_check.py:L45: assert not destroy_check._looks_like_api_disabled("permission denied for caller")
+- tests/unit/scripts/test_infra_terraform_state.py:L31: out = "module.iam.foo\n\nmodule.gke.bar\n"
+- tests/unit/scripts/test_infra_terraform_state.py:L33: assert ts.state_list(Path("/x")) == ["module.iam.foo", "module.gke.bar"]
+- tests/unit/scripts/test_infra_terraform_state.py:L47: out = "module.kserve.helm_release.kserve_crd\nmodule.iam.foo\nmodule.kserve.kubernetes_namespace.search\n"
+- tests/unit/scripts/test_infra_terraform_state.py:L57: out = "module.iam.foo\nmodule.gke.bar\n"
+- tests/unit/scripts/test_infra_terraform_state.py:L59: assert ts.is_in_state(Path("/x"), "module.iam.foo") is True
+- tests/unit/scripts/test_infra_terraform_state.py:L60: assert ts.is_in_state(Path("/x"), "module.iam.absent") is False

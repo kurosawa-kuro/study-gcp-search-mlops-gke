@@ -1,0 +1,11 @@
+{
+  "task": "dcm llm draft",
+  "provider": "openai",
+  "model": "gpt-5-mini",
+  "prompt_hash": "8dac65f660f7b9b9170e1a1d6dc254c3da92f8ee9ee2010df59b79a0458ac588",
+  "target_git_commit": "6e2858f83aa27d9e18e3080f3c5f981bcf938ce7",
+  "target_git_dirty": true,
+  "generated_at": 1783229402,
+  "duration_ms": 67478,
+  "dcm_version": "0.1.0"
+}

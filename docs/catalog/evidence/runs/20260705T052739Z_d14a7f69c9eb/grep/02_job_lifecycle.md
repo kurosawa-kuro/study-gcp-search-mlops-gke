@@ -1,0 +1,1060 @@
+# grep: job_lifecycle
+
+evidence_id: ev.grep.job_lifecycle
+description: job lifecycle / retry / timeout / status
+
+- .claude/hooks/check-layers.sh:L12: #   - pipeline/<job>/ports/, pipeline/dags/
+- .github/workflows/ci.yml:L13: jobs:
+- .github/workflows/ci.yml:L47: run: test -f pipeline/data_job/dataform/workflow_settings.yaml
+- .github/workflows/deploy-api.yml:L27: jobs:
+- .github/workflows/deploy-api.yml:L65: kubectl rollout status \
+- .github/workflows/deploy-api.yml:L68: --timeout=300s
+- .github/workflows/deploy-dataform.yml:L7: - pipeline/data_job/dataform/**
+- .github/workflows/deploy-dataform.yml:L21: jobs:
+- .github/workflows/deploy-dataform.yml:L46: working-directory: pipeline/data_job/dataform
+- .github/workflows/deploy-encoder-image.yml:L32: jobs:
+- .github/workflows/deploy-pipeline.yml:L8: # Vertex PipelineJobSchedule は併存禁止 (CLAUDE.md 非負制約)。
+- .github/workflows/deploy-pipeline.yml:L9: # `create_schedule.py` が PipelineJobSchedule を実際に apply している場合は
+- .github/workflows/deploy-pipeline.yml:L16: - pipeline/data_job/**
+- .github/workflows/deploy-pipeline.yml:L17: - pipeline/training_job/**
+- .github/workflows/deploy-pipeline.yml:L18: - pipeline/evaluation_job/**
+- .github/workflows/deploy-pipeline.yml:L19: - pipeline/batch_serving_job/**
+- .github/workflows/deploy-pipeline.yml:L38: jobs:
+- .github/workflows/deploy-pipeline.yml:L69: - name: Ensure Model Monitoring job
+- .github/workflows/deploy-pipeline.yml:L73: - name: Ensure PipelineJobSchedule (daily embed + weekly train)
+- .github/workflows/deploy-reranker-image.yml:L32: jobs:
+- .github/workflows/deploy-trainer-image.yml:L16: - infra/run/jobs/training/**
+- .github/workflows/deploy-trainer-image.yml:L33: jobs:
+- .github/workflows/deploy-trainer-image.yml:L53: dockerfile: infra/run/jobs/training/Dockerfile
+- .github/workflows/terraform.yml:L22: jobs:
+- app/api/dependencies.py:L15: from fastapi import Depends, HTTPException, Request, status
+- app/api/dependencies.py:L27: status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+- app/api/middleware/request_logging.py:L68: "status": response.status_code,
+- app/api/routers/health_router.py:L19: return {"status": "ok"}
+- app/api/routers/health_router.py:L25: return JSONResponse({"status": "loading"}, status_code=503)
+- app/api/routers/health_router.py:L28: "status": "ready",
+- app/api/routers/model_router.py:L36: raise HTTPException(status_code=503, detail="model_metrics_service not configured")
+- app/api/routers/ops_router.py:L98: raise HTTPException(status_code=503, detail=str(exc)) from exc
+- app/api/routers/ops_router.py:L114: raise HTTPException(status_code=503, detail=str(exc)) from exc
+- app/api/routers/retrain_router.py:L1: """``POST /jobs/check-retrain`` — evaluate retrain conditions, publish trigger.
+- app/api/routers/retrain_router.py:L29: @router.post("/jobs/check-retrain")
+- app/api/routers/search_router.py:L31: return JSONResponse({"detail": str(exc)}, status_code=503)
+- app/api/routers/ui_router.py:L77: return RedirectResponse(url="/docs", status_code=308)
+- app/composition_root.py:L8: Phase A-1 status: factories were lifted out of ``app/main.py`` (was 699 lines;
+- app/container/infra.py:L284: socket_connect_timeout=2.0,
+- app/container/infra.py:L285: socket_timeout=2.0,
+- app/container/search.py:L226: "build_encoder_client enable_search=%s kserve_encoder_url=%r timeout=%.1fs",
+- app/container/search.py:L229: kserve.predict_timeout_seconds,
+- app/container/search.py:L242: timeout_seconds=kserve.predict_timeout_seconds,
+- app/container/search.py:L258: "build_reranker_client enable_rerank=%s kserve_reranker_url=%r timeout=%.1fs",
+- app/container/search.py:L261: kserve.predict_timeout_seconds,
+- app/container/search.py:L277: timeout_seconds=kserve.predict_timeout_seconds,
+- app/main.py:L12: - **Operations API** — ``/ops/jobs/check-retrain`` ``/ops/model/info``
+- app/main.py:L20: Legacy paths (``/search`` ``/feedback`` ``/jobs/check-retrain`` ``/model/*``)
+- app/main.py:L67: "/jobs/check-retrain": "/ops/jobs/check-retrain",
+- app/main.py:L83: return RedirectResponse(url=location, status_code=307)
+- app/main.py:L127: ops.include_router(retrain_router)  # /ops/jobs/check-retrain
+- app/main.py:L144: return RedirectResponse(url="/ui/", status_code=308)
+- app/main.py:L148: # (``metric.label."service"="search-api"`` and ``status=~"2.."``);
+- app/observability.py:L43: _REQUEST_LABELS = ("service", "method", "handler", "status")
+- app/observability.py:L92: ``metric.label."service"="search-api" AND status=~"2.."`` で
+- app/observability.py:L113: raw_status = (
+- app/observability.py:L114: str(info.response.status_code)
+- app/observability.py:L115: if info.response is not None and info.response.status_code is not None
+- app/observability.py:L118: status_class = (
+- app/observability.py:L119: f"{raw_status[0]}xx" if raw_status and raw_status[0].isdigit() else "unknown"
+- app/observability.py:L125: status=status_class,
+- app/observability.py:L131: status=status_class,
+- app/services/adapters/bigquery_candidate_retriever.py:L138: job_config=bigquery.QueryJobConfig(query_parameters=params),
+- app/services/adapters/bigquery_event_repository.py:L152: job = self._client.query(
+- app/services/adapters/bigquery_event_repository.py:L154: job_config=bigquery.QueryJobConfig(query_parameters=params),
+- app/services/adapters/bigquery_event_repository.py:L156: return [dict(row.items()) for row in job.result()]
+- app/services/adapters/bigquery_label_repository.py:L59: job_config=bigquery.QueryJobConfig(
+- app/services/adapters/bigquery_label_repository.py:L100: job_config=bigquery.QueryJobConfig(query_parameters=params),
+- app/services/adapters/bigquery_metrics_repository.py:L98: job_config=bigquery.QueryJobConfig(query_parameters=params),
+- app/services/adapters/bigquery_metrics_repository.py:L142: job_config=bigquery.QueryJobConfig(
+- app/services/adapters/bqml_popularity_scorer.py:L87: job_config=bigquery.QueryJobConfig(query_parameters=params),
+- app/services/adapters/cloud_logging_event_writer.py:L4: Pub/Sub / BigQuery curated job で `search_events` / `search_impressions` /
+- app/services/adapters/elasticsearch_lexical.py:L23: timeout_seconds: float = 3.0,
+- app/services/adapters/elasticsearch_lexical.py:L31: self._timeout_seconds = timeout_seconds
+- app/services/adapters/elasticsearch_lexical.py:L78: timeout=self._timeout_seconds,
+- app/services/adapters/elasticsearch_lexical.py:L83: resp.raise_for_status()
+- app/services/adapters/feature_online_store_fetcher.py:L72: "sync (cron `0 * * * *`) and retry."
+- app/services/adapters/internal/kserve_common.py:L43: "%s NON_JSON_RESPONSE status=%d content_type=%r body[:%d]=%r exc=%s",
+- app/services/adapters/internal/kserve_common.py:L45: response.status_code,
+- app/services/adapters/internal/kserve_common.py:L53: f"(status={response.status_code}, content_type={content_type!r}). "
+- app/services/adapters/internal/kserve_common.py:L68: """Emit a consistent preview log before ``raise_for_status``.
+- app/services/adapters/internal/kserve_common.py:L72: ``HTTPStatusError``.
+- app/services/adapters/internal/kserve_common.py:L79: response.status_code,
+- app/services/adapters/internal/pubsub_diagnostics.py:L25: """Best-effort identity label for the current worker (no auth round trip)."""
+- app/services/adapters/internal/pubsub_diagnostics.py:L64: elif isinstance(exc, google_exceptions.DeadlineExceeded | TimeoutError):
+- app/services/adapters/internal/pubsub_diagnostics.py:L67: "H2: publisher client の batching 中にローカル timeout (.result(timeout=5) 固定)",
+- app/services/adapters/internal/pubsub_diagnostics.py:L72: "H1: 未分類の gRPC / network 例外 — exc.__class__ と grpc status を確認",
+- app/services/adapters/kserve_encoder.py:L45: timeout_seconds: float = 30.0,
+- app/services/adapters/kserve_encoder.py:L53: self._timeout_seconds = timeout_seconds
+- app/services/adapters/kserve_encoder.py:L58: self._client = client or httpx.Client(timeout=timeout_seconds)
+- app/services/adapters/kserve_encoder.py:L60: "KServeEncoder init endpoint_url=%s timeout=%.1fs expected_dim=%d "
+- app/services/adapters/kserve_encoder.py:L63: timeout_seconds,
+- app/services/adapters/kserve_encoder.py:L92: if response.status_code >= 400:
+- app/services/adapters/kserve_encoder.py:L93: # Phase 5 Run 6 の 422 再発を即座に検知するため status + body 先頭を dump
+- app/services/adapters/kserve_encoder.py:L100: response.raise_for_status()
+- app/services/adapters/kserve_reranker.py:L112: timeout_seconds: float = 30.0,
+- app/services/adapters/kserve_reranker.py:L126: self._timeout_seconds = timeout_seconds
+- app/services/adapters/kserve_reranker.py:L127: self._client = client or httpx.Client(timeout=timeout_seconds)
+- app/services/adapters/kserve_reranker.py:L129: "KServeReranker init endpoint_url=%s explain_url=%s timeout=%.1fs (expect "
+- app/services/adapters/kserve_reranker.py:L134: timeout_seconds,
+- app/services/adapters/kserve_reranker.py:L184: if response.status_code >= 400:
+- app/services/adapters/kserve_reranker.py:L192: response.raise_for_status()
+- app/services/adapters/kserve_reranker.py:L304: if response.status_code >= 400:
+- app/services/adapters/kserve_reranker.py:L311: response.raise_for_status()
+- app/services/adapters/publisher.py:L32: self._client.publish(self._topic_path, data).result(timeout=5)
+- app/services/adapters/pubsub_event_writer.py:L8: 各 emit は 1 publish (timeout 5s)。失敗時は raise (caller が retry / 503 を選ぶ)。
+- app/services/adapters/pubsub_event_writer.py:L133: self._client.publish(topic_path, data).result(timeout=5)
+- app/services/adapters/pubsub_feedback_recorder.py:L39: self._client.publish(self._topic_path, data).result(timeout=5)
+- app/services/adapters/pubsub_ranking_log_publisher.py:L74: self._client.publish(self._topic_path, data).result(timeout=5)
+- app/services/adapters/retrain.py:L48: job = self._client.query(
+- app/services/adapters/retrain.py:L50: job_config=bigquery.QueryJobConfig(
+- app/services/adapters/retrain.py:L54: row = next(iter(job.result()))
+- app/services/adapters/retrain.py:L66: job = self._client.query(
+- app/services/adapters/retrain.py:L68: job_config=bigquery.QueryJobConfig(
+- app/services/adapters/retrain.py:L75: row = next(iter(job.result()))
+- app/services/protocols/feedback_recorder.py:L24: ``(request_id, property_id, action)`` because the HTTP client may retry.
+- app/settings/api.py:L32: predict_timeout_seconds: float
+- app/settings/api.py:L93: kserve_predict_timeout_seconds: float = 30.0
+- app/settings/api.py:L138: predict_timeout_seconds=self.kserve_predict_timeout_seconds,
+- app/static/css/custom.css:L86: .status-note,
+- app/static/css/custom.css:L113: .status-card {
+- app/static/css/custom.css:L187: .status-card strong,
+- app/static/css/custom.css:L188: .status-label {
+- app/static/css/custom.css:L198: .status-grid {
+- app/static/css/custom.css:L205: .status-card-danger {
+- app/static/css/custom.css:L209: .status-card-wide {
+- app/static/css/custom.css:L301: .component-status-wrap,
+- app/static/css/custom.css:L302: .status-card,
+- app/static/css/custom.css:L310: .status-label {
+- app/static/css/custom.css:L319: .status-card strong {
+- app/static/css/custom.css:L325: .status-ok {
+- app/static/css/custom.css:L329: .status-warn {
+- app/static/css/custom.css:L333: .status-note {
+- app/static/css/custom.css:L369: #result-card > .component-status-wrap,
+- app/static/css/custom.css:L434: .component-status-wrap {
+- app/static/css/custom.css:L439: #result-card > .component-status-wrap,
+- app/static/css/custom.css:L453: .component-status-wrap {
+- app/static/js/search_ui.js:L115: function renderComponentStatus(root, results) {
+- app/static/js/search_ui.js:L118: ([name, status]) => {
+- app/static/js/search_ui.js:L122: stateNode.textContent = status.label;
+- app/static/js/search_ui.js:L123: stateNode.classList.toggle("status-ok", status.active);
+- app/static/js/search_ui.js:L124: stateNode.classList.toggle("status-warn", !status.active);
+- app/static/js/search_ui.js:L125: noteNode.textContent = status.note;
+- app/static/js/search_ui.js:L196: " ・ status=" +
+- app/static/js/search_ui.js:L197: res.status +
+- app/static/js/search_ui.js:L255: renderComponentStatus(root, results);
+- app/static/js/search_ui.js:L289: resultNode.textContent = JSON.stringify({ status: res.status, body: body }, null, 2);
+- app/templates/_search_results.html:L12: <section class="component-status-wrap admin-grid admin-grid--3">
+- app/templates/_search_results.html:L13: <div class="status-card admin-card admin-card--compact admin-card--dense">
+- app/templates/_search_results.html:L14: <p class="status-label">Lexical</p>
+- app/templates/_search_results.html:L16: <p id="component-lexical-note" class="status-note">検索実行後に判定します。</p>
+- app/templates/_search_results.html:L18: <div class="status-card admin-card admin-card--compact admin-card--dense">
+- app/templates/_search_results.html:L19: <p class="status-label">Semantic</p>
+- app/templates/_search_results.html:L21: <p id="component-semantic-note" class="status-note">検索実行後に判定します。</p>
+- app/templates/_search_results.html:L23: <div class="status-card admin-card admin-card--compact admin-card--dense">
+- app/templates/_search_results.html:L24: <p class="status-label">Rerank</p>
+- app/templates/_search_results.html:L26: <p id="component-rerank-note" class="status-note">検索実行後に判定します。</p>
+- app/templates/data.html:L70: meta.textContent = `error: HTTP ${res.status}`;
+- app/templates/model_metrics.html:L66: document.getElementById("acc-meta").textContent = `error: HTTP ${res.status} ${JSON.stringify(body)}`;
+- app/templates/ops.html:L16: <section class="admin-grid admin-grid--3 status-grid">
+- app/templates/ops.html:L17: <article class="status-card admin-card admin-card--compact admin-card--dense">
+- app/templates/ops.html:L18: <span class="status-label">OK</span>
+- app/templates/ops.html:L21: <article class="status-card admin-card admin-card--compact admin-card--dense">
+- app/templates/ops.html:L22: <span class="status-label">WARN</span>
+- app/templates/ops.html:L25: <article class="status-card status-card-danger admin-card admin-card--compact admin-card--dense">
+- app/templates/ops.html:L26: <span class="status-label">FAIL / ERROR</span>
+- app/templates/ops.html:L31: <section class="admin-grid admin-grid--3 status-grid">
+- app/templates/ops.html:L32: <article class="status-card admin-card admin-card--compact admin-card--dense">
+- app/templates/ops.html:L33: <span class="status-label">SEARCH 24H</span>
+- app/templates/ops.html:L35: <small id="ops-search-window" class="status-note">-</small>
+- app/templates/ops.html:L37: <article class="status-card status-card-wide admin-card admin-card--compact admin-card--dense">
+- app/templates/ops.html:L38: <span class="status-label">RECENT TRAIN RUNS</span>
+- app/templates/ops.html:L40: <small class="status-note">直近 5 件</small>
+- app/templates/ops.html:L125: return { detail: raw || `HTTP ${res.status}` };
+- app/templates/ops.html:L147: meta.textContent = `error: HTTP ${destroyRes.status}`;
+- app/templates/ops.html:L164: volumeBody.detail || `HTTP ${volumeRes.status}`;
+- app/templates/ops.html:L169: const runsErrorText = escapeHtml(runsBody.detail || `HTTP ${runsRes.status}`);
+- app/templates/property_detail.html:L54: function logResult(action, status, payload) {
+- app/templates/property_detail.html:L56: const line = `[${stamp}] ${action} → ${status}\n${payload}`;
+- app/templates/property_detail.html:L72: logResult(action, response.status, text);
+- env/config/setting.yaml:L72: # Dataform — pipeline/data_job/dataform/workflow_settings.yaml は本ファイルから自動生成される
+- infra/manifests/search-api/deployment.yaml:L98: - name: KSERVE_PREDICT_TIMEOUT_SECONDS
+- infra/run/services/composer_runner/Dockerfile:L5: # で書いたが、Composer worker は uv 不在 / repo source 不在のため `task SUCCEEDED`
+- infra/run/services/composer_runner/Dockerfile:L11: #   * scripts.ops.check_retrain / promote / slo_status / vertex.pipeline_wait
+- infra/run/services/composer_runner/Dockerfile:L83: # Composer worker の env_variables (REGION / VERTEX_LOCATION / GCP_PROJECT etc.)
+- infra/run/services/composer_runner/cloudbuild.yaml:L28: timeout: 1800s
+- infra/run/services/encoder/cloudbuild.yaml:L24: timeout: 1800s
+- infra/run/services/reranker/cloudbuild.yaml:L26: timeout: 1200s
+- infra/terraform/environments/dev/main.tf:L10: #   streaming    → Dataflow streaming job scaffold
+- infra/terraform/environments/dev/main.tf:L230: # Dataflow streaming job scaffold (ranking-log hourly CTR).
+- infra/terraform/environments/dev/main.tf:L232: # creates sa-dataflow + IAM. Flip enable_streaming_job=true after the
+- infra/terraform/environments/dev/main.tf:L233: # template is in GCS to register the streaming job itself.
+- infra/terraform/environments/dev/main.tf:L245: create_job             = var.enable_streaming_job
+- infra/terraform/environments/dev/outputs.tf:L74: job_train         = module.iam.service_accounts.job_train.email
+- infra/terraform/environments/dev/outputs.tf:L75: job_embed         = module.iam.service_accounts.job_embed.email
+- infra/terraform/environments/dev/variables.tf:L182: variable "enable_streaming_job" {
+- infra/terraform/environments/dev/variables.tf:L183: description = "Actually launch the Flex Template streaming job. Requires enable_streaming=true AND streaming_flex_template_gcs_path to be non-empty (= template already built)."
+- infra/terraform/environments/dev/variables.tf:L189: description = "GCS path to the compiled Flex Template spec JSON (built out-of-band by scripts/setup/build_streaming_template.py). Empty suppresses the Dataflow job resource."
+- infra/terraform/modules/composer/main.tf:L11: # を選ぶ。Gen 3 image (`composer-3-airflow-2.10.5`) は Autopilot worker で
+- infra/terraform/modules/composer/main.tf:L12: # 動き、scheduler / web_server / worker の cpu/memory を細かく指定できる。
+- infra/terraform/modules/composer/main.tf:L87: worker {
+- infra/terraform/modules/composer/main.tf:L100: # かかるので、provider 側 timeout を明示する (default は 30 min で短い)。
+- infra/terraform/modules/composer/main.tf:L101: timeouts {
+- infra/terraform/modules/composer/variables.tf:L40: description = "GCS path to compiled KFP pipeline YAML (e.g. `gs://<bucket>/templates/property-search-train.yaml`). DAG `retrain_orchestration` reads this to submit Vertex PipelineJob via `scripts.ops.train_now`."
+- infra/terraform/modules/composer/variables.tf:L64: description = "Public HTTPS URL of search-api GKE Gateway. DAG `retrain_orchestration::check_retrain` POSTs `/ops/jobs/check-retrain` to this URL as a smoke."
+- infra/terraform/modules/data/main.tf:L93: #                                          written by the embedding-job.
+- infra/terraform/modules/data/main.tf:L405: { name = "status", type = "STRING", mode = "REQUIRED", description = "OK / WARN / FAIL" },
+- infra/terraform/modules/data/main.tf:L513: # Artifact Registry — Docker images for search-api and training-job
+- infra/terraform/modules/data/main.tf:L520: description   = "hybrid-search-cloud MLOps container images (api, training job)"
+- infra/terraform/modules/data/main.tf:L582: # sa-job-train: <redacted>
+- infra/terraform/modules/data/main.tf:L586: member     = "serviceAccount:${var.service_accounts.job_train.email}"
+- infra/terraform/modules/data/main.tf:L592: member     = "serviceAccount:${var.service_accounts.job_train.email}"
+- infra/terraform/modules/data/main.tf:L598: member = "serviceAccount:${var.service_accounts.job_train.email}"
+- infra/terraform/modules/data/main.tf:L604: member = "serviceAccount:${var.service_accounts.job_train.email}"
+- infra/terraform/modules/data/main.tf:L607: # sa-job-embed: read raw.properties via feature_mart.properties_cleaned view +
+- infra/terraform/modules/data/main.tf:L609: # Kept separate from sa-job-train so the embedding job's IAM blast radius
+- infra/terraform/modules/data/main.tf:L614: member     = "serviceAccount:${var.service_accounts.job_embed.email}"
+- infra/terraform/modules/data/main.tf:L620: member     = "serviceAccount:${var.service_accounts.job_embed.email}"
+- infra/terraform/modules/data/main.tf:L626: member = "serviceAccount:${var.service_accounts.job_embed.email}"
+- infra/terraform/modules/data/main.tf:L653: # sa-composer submits PipelineJobs with a local compiled YAML; Vertex / KFP
+- infra/terraform/modules/iam/main.tf:L8: resource "google_service_account" "job_train" {
+- infra/terraform/modules/iam/main.tf:L9: account_id   = "sa-job-train"
+- infra/terraform/modules/iam/main.tf:L10: display_name = "Cloud Run Jobs (LightGBM LambdaRank training) runtime SA"
+- infra/terraform/modules/iam/main.tf:L13: resource "google_service_account" "job_embed" {
+- infra/terraform/modules/iam/main.tf:L14: account_id   = "sa-job-embed"
+- infra/terraform/modules/iam/main.tf:L15: display_name = "Cloud Run Jobs (multilingual-e5 embedding batch) runtime SA"
+- infra/terraform/modules/iam/main.tf:L122: resource "google_project_iam_member" "api_bq_job_user" {
+- infra/terraform/modules/iam/main.tf:L124: role    = "roles/bigquery.jobUser"
+- infra/terraform/modules/iam/main.tf:L152: resource "google_project_iam_member" "train_bq_job_user" {
+- infra/terraform/modules/iam/main.tf:L154: role    = "roles/bigquery.jobUser"
+- infra/terraform/modules/iam/main.tf:L155: member  = "serviceAccount:${google_service_account.job_train.email}"
+- infra/terraform/modules/iam/main.tf:L161: member  = "serviceAccount:${google_service_account.job_train.email}"
+- infra/terraform/modules/iam/main.tf:L164: resource "google_project_iam_member" "embed_bq_job_user" {
+- infra/terraform/modules/iam/main.tf:L166: role    = "roles/bigquery.jobUser"
+- infra/terraform/modules/iam/main.tf:L167: member  = "serviceAccount:${google_service_account.job_embed.email}"
+- infra/terraform/modules/iam/main.tf:L173: member  = "serviceAccount:${google_service_account.job_embed.email}"
+- infra/terraform/modules/iam/main.tf:L176: resource "google_project_iam_member" "dataform_bq_job_user" {
+- infra/terraform/modules/iam/main.tf:L178: role    = "roles/bigquery.jobUser"
+- infra/terraform/modules/iam/main.tf:L182: resource "google_project_iam_member" "pipeline_bq_job_user" {
+- infra/terraform/modules/iam/main.tf:L184: role    = "roles/bigquery.jobUser"
+- infra/terraform/modules/iam/main.tf:L231: # which calls `PipelineJob.submit(service_account=sa-pipeline@...)`. The caller
+- infra/terraform/modules/iam/main.tf:L278: # Composer Gen 3 環境本体が Airflow scheduler / web_server / worker pod を
+- infra/terraform/modules/iam/main.tf:L285: # - composer.worker: Composer 環境本体の管理 (env / config / DAG bucket)
+- infra/terraform/modules/iam/main.tf:L288: # - bigquery.jobUser + bigquery.dataViewer: monitoring SQL 実行 + 結果 read
+- infra/terraform/modules/iam/main.tf:L289: # - run.invoker: smoke で `/jobs/check-retrain` (search-api Gateway) を
+- infra/terraform/modules/iam/main.tf:L298: resource "google_project_iam_member" "composer_worker" {
+- infra/terraform/modules/iam/main.tf:L300: role    = "roles/composer.worker"
+- infra/terraform/modules/iam/main.tf:L310: resource "google_project_iam_member" "composer_bq_job_user" {
+- infra/terraform/modules/iam/main.tf:L312: role    = "roles/bigquery.jobUser"
+- infra/terraform/modules/iam/main.tf:L329: # run python -m scripts.X` で書いたが Composer worker は uv 不在 / repo source
+- infra/terraform/modules/iam/main.tf:L333: # - artifactregistry.reader: Composer worker が `composer-runner` image を
+- infra/terraform/modules/iam/main.tf:L338: # (composer.worker は Composer 自身の GKE 上で Pod を起動する権限を含むため
+- infra/terraform/modules/iam/outputs.tf:L5: job_train         = google_service_account.job_train
+- infra/terraform/modules/iam/outputs.tf:L6: job_embed         = google_service_account.job_embed
+- infra/terraform/modules/messaging/main.tf:L6: # 置かない。Scheduler は GKE Gateway 経由で /ops/jobs/check-retrain を叩く。
+- infra/terraform/modules/messaging/main.tf:L206: resource "google_cloud_scheduler_job" "check_retrain_daily" {
+- infra/terraform/modules/messaging/main.tf:L210: description = "[smoke / 軽量代替] POST /ops/jobs/check-retrain (本線 retrain は Composer DAG retrain_orchestration、本 trigger は月 1 回 smoke のみ)"
+- infra/terraform/modules/messaging/main.tf:L217: uri         = "${var.api_external_url}/ops/jobs/check-retrain"
+- infra/terraform/modules/messaging/main.tf:L225: retry_config {
+- infra/terraform/modules/messaging/main.tf:L226: retry_count          = 1
+- infra/terraform/modules/messaging/main.tf:L227: max_retry_duration   = "120s"
+- infra/terraform/modules/monitoring/main.tf:L161: # bigquery.jobUser on the project + dataEditor on feature_mart and mlops.
+- infra/terraform/modules/slo/main.tf:L42: metric.label."status"=monitoring.regex.full_match("2..")
+- infra/terraform/modules/streaming/main.tf:L4: # Template streaming job that aggregates ranking-log events into hourly
+- infra/terraform/modules/streaming/main.tf:L9: # The google_dataflow_flex_template_job resource is gated behind
+- infra/terraform/modules/streaming/main.tf:L10: # ``create_job`` since the job only launches cleanly once the template
+- infra/terraform/modules/streaming/main.tf:L16: will_create_job = var.create_job && var.flex_template_gcs_path != "" && local.effective_sa != ""
+- infra/terraform/modules/streaming/main.tf:L24: display_name = "Dataflow streaming worker"
+- infra/terraform/modules/streaming/main.tf:L25: description  = "Runs the ranking-log-hourly-ctr Flex Template streaming job. Pub/Sub subscriber + BQ data editor + Dataflow worker."
+- infra/terraform/modules/streaming/main.tf:L37: # Dataflow worker baseline + storage access.
+- infra/terraform/modules/streaming/main.tf:L38: resource "google_project_iam_member" "dataflow_worker" {
+- infra/terraform/modules/streaming/main.tf:L42: role    = "roles/dataflow.worker"
+- infra/terraform/modules/streaming/main.tf:L63: resource "google_project_iam_member" "dataflow_bq_jobs" {
+- infra/terraform/modules/streaming/main.tf:L67: role    = "roles/bigquery.jobUser"
+- infra/terraform/modules/streaming/main.tf:L71: resource "google_dataflow_flex_template_job" "ranking_log_hourly_ctr" {
+- infra/terraform/modules/streaming/main.tf:L72: count = local.will_create_job ? 1 : 0
+- infra/terraform/modules/streaming/main.tf:L93: # Dataflow streaming jobs are updated by launching a new job with
+- infra/terraform/modules/streaming/outputs.tf:L6: output "job_id" {
+- infra/terraform/modules/streaming/outputs.tf:L7: description = "google_dataflow_flex_template_job.id — empty when create_job=false."
+- infra/terraform/modules/streaming/outputs.tf:L8: value       = local.will_create_job ? google_dataflow_flex_template_job.ranking_log_hourly_ctr[0].id : ""
+- infra/terraform/modules/streaming/outputs.tf:L11: output "job_name" {
+- infra/terraform/modules/streaming/outputs.tf:L12: description = "Dataflow job name — empty when create_job=false."
+- infra/terraform/modules/streaming/outputs.tf:L13: value       = local.will_create_job ? google_dataflow_flex_template_job.ranking_log_hourly_ctr[0].name : ""
+- infra/terraform/modules/streaming/variables.tf:L2: description = "GCP project hosting the Dataflow Flex Template + streaming job."
+- infra/terraform/modules/streaming/variables.tf:L7: description = "Region for Dataflow job + temp/staging buckets. Must match the Pub/Sub topic region."
+- infra/terraform/modules/streaming/variables.tf:L12: description = "Fully-qualified Pub/Sub topic resource ID for ranking-log (projects/.../topics/ranking-log). The streaming job reads from this."
+- infra/terraform/modules/streaming/variables.tf:L28: description = "GCS temp path used by Dataflow workers."
+- infra/terraform/modules/streaming/variables.tf:L33: description = "GCS staging path for Dataflow worker binaries."
+- infra/terraform/modules/streaming/variables.tf:L37: variable "create_job" {
+- infra/terraform/modules/streaming/variables.tf:L38: description = "Create google_dataflow_flex_template_job. Set false when only the SA + IAM scaffolding is needed (template not yet built)."
+- infra/terraform/modules/streaming/variables.tf:L44: description = "SA email used by the Dataflow job. Created in this module as sa-dataflow; callers can override to share an existing SA."
+- infra/terraform/modules/streaming/versions.tf:L8: # google_dataflow_flex_template_job lives in google-beta as of 5.40;
+- infra/terraform/modules/vertex/main.tf:L125: # 本線重複防止のため、同一 retrain job を 2 経路から起動しないことが契約。
+- infra/terraform/modules/vertex/main.tf:L147: timeout_seconds       = 60
+- ml/common/__init__.py:L1: """Shared primitives (config / logging / utilities) for app and ml jobs."""
+- ml/common/config/__init__.py:L1: """Application / job settings entry points (pydantic-settings)."""
+- ml/common/config/embedding.py:L1: """Embedding-job settings (thin subset of BaseAppSettings)."""
+- ml/common/config/training.py:L1: """Training-job settings (LightGBM LambdaRank)."""
+- ml/common/logging/structured_logging.py:L44: (``K_SERVICE`` / ``CLOUD_RUN_JOB`` env var is set).
+- ml/common/logging/structured_logging.py:L52: if os.getenv("LOG_AS_JSON") == "1" or os.getenv("K_SERVICE") or os.getenv("CLOUD_RUN_JOB"):
+- ml/data/datasets/embedding_batch.py:L1: """Pure orchestration for the embedding-job.
+- ml/data/feature_engineering/schema.py:L5: 1. ``pipeline/data_job/dataform/features/property_features_daily.sqlx``  (training SQL)
+- ml/data/loaders/embedding_store.py:L120: job_config=bigquery.QueryJobConfig(
+- ml/data/loaders/ranker_repository.py:L129: job = self._client.query(  # type: ignore[attr-defined]
+- ml/data/loaders/ranker_repository.py:L131: job_config=bigquery.QueryJobConfig(
+- ml/data/loaders/ranker_repository.py:L137: df = job.result().to_dataframe(create_bqstorage_client=True)
+- ml/registry/metadata_store.py:L5: scripts and the evaluation job.
+- ml/registry/model_registry.py:L4: 実体は `pipeline/training_job/components/register_reranker.py` の KFP コンポーネ
+- ml/registry/ports/model_registry.py:L5: artifact URI) and ``pipeline/training_job/components/register_reranker.py``
+- ml/serving/adapters/kserve_predictor.py:L4: batch scoring (``pipeline/batch_serving_job``). The interactive /search
+- ml/serving/adapters/kserve_predictor.py:L23: timeout_seconds: float = 30.0,
+- ml/serving/adapters/kserve_predictor.py:L26: self._timeout_seconds = timeout_seconds
+- ml/serving/adapters/kserve_predictor.py:L30: with httpx.Client(timeout=self._timeout_seconds) as client:
+- ml/serving/adapters/kserve_predictor.py:L32: resp.raise_for_status()
+- ml/serving/encoder.py:L161: return {"status": "ok"}
+- ml/serving/encoder.py:L168: raise HTTPException(status_code=503, detail="encoder not loaded")
+- ml/serving/encoder.py:L172: raise HTTPException(status_code=422, detail=str(exc)) from exc
+- ml/serving/ports/__init__.py:L7: batch_serving_job).
+- ml/serving/predictor.py:L25: timeout_seconds: float = 30.0
+- ml/serving/reranker.py:L111: return {"status": "ok"}
+- ml/serving/reranker.py:L118: raise HTTPException(status_code=503, detail="booster not loaded")
+- ml/serving/reranker.py:L138: raise HTTPException(status_code=503, detail="booster not loaded")
+- ml/streaming/pipeline.py:L6: Dataflow job from the Phase 5 BQ Subscription raw sink.
+- ml/streaming/ports/stream_processor.py:L6: caller (``scripts/`` deployment driver, ``pipeline/data_job``).
+- ml/streaming/ports/stream_processor.py:L30: """Submit / launch the streaming pipeline; returns a job-id-ish handle."""
+- ml/training/experiments/adapters/vertex_experiments_tracker.py:L37: ``resume=True`` so re-running a job with the same id appends
+- ml/training/trainer.py:L12: Vertex AI Pipelines training job (``pipeline.training_job.main``) and the
+- ml/training/trainer.py:L312: parser = argparse.ArgumentParser(description="LightGBM LambdaRank training job")
+- ml/training/trainer.py:L313: parser.add_argument("--mode", choices=["job", "kfp"], default="job")
+- ml/training/trainer.py:L343: logger.exception("Ranker training job failed")
+- pipeline/batch_serving_job/main.py:L1: """Batch serving job: offline re-rank of cached queries.
+- pipeline/dags/_common.py:L3: Composer 環境の Airflow worker が DAG を import するときに走る軽量 helper。
+- pipeline/dags/_pod.py:L4: scripts.X` で書いたが Composer worker は uv 不在 / repo source 不在で task
+- pipeline/dags/_pod.py:L15: 権限。aiplatform.user / bigquery.jobUser / run.invoker 等)
+- pipeline/dags/_pod.py:L129: startup_timeout_seconds=300,
+- pipeline/dags/_pod.py:L160: startup_timeout_seconds=300,
+- pipeline/dags/daily_feature_refresh.py:L12: Composer worker 上で実行しようとしていたが、Composer worker に必要 venv が無く
+- pipeline/dags/daily_feature_refresh.py:L16: retry / state 管理が provider 側で処理される)。
+- pipeline/dags/monitoring_validation.py:L6: 3. SLO + burn-rate alert 確認 (`scripts.ops.slo_status`)
+- pipeline/dags/monitoring_validation.py:L13: (Composer worker 上で `python -m` 実行を試みていた) から `KubernetesPodOperator`
+- pipeline/dags/monitoring_validation.py:L15: `BigQueryInsertJobOperator` で問題なし。
+- pipeline/dags/monitoring_validation.py:L30: from airflow.providers.google.cloud.operators.bigquery import BigQueryInsertJobOperator
+- pipeline/dags/monitoring_validation.py:L60: run_feature_skew = BigQueryInsertJobOperator(
+- pipeline/dags/monitoring_validation.py:L70: run_model_output_drift = BigQueryInsertJobOperator(
+- pipeline/dags/monitoring_validation.py:L82: module="scripts.ops.slo_status",
+- pipeline/dags/retrain_orchestration.py:L4: Vertex `PipelineJobSchedule` を置き換える上下関係。詳細: docs/architecture/
+- pipeline/dags/retrain_orchestration.py:L17: **V5 fix (2026-05-03)**: 旧版は BashOperator + subprocess (Composer worker 上で
+- pipeline/dags/retrain_orchestration.py:L18: 直接 `python -m ...` 実行) だったが、Composer worker に必要 venv が無く task
+- pipeline/data_job/__init__.py:L1: """Data job pipeline (embedding refresh)."""
+- pipeline/data_job/adapters/__init__.py:L1: """Pipeline-side adapters for ``data_job`` (embed pipeline)."""
+- pipeline/data_job/adapters/in_memory_vector_search_writer.py:L10: from pipeline.data_job.ports.vector_search_writer import EmbeddingDatapoint
+- pipeline/data_job/adapters/vertex_vector_search_writer.py:L23: from pipeline.data_job.ports.vector_search_writer import EmbeddingDatapoint
+- pipeline/data_job/components/__init__.py:L1: """Data-job pipeline components (embedding refresh)."""
+- pipeline/data_job/main.py:L1: """Data job: KFP property-text embedding pipeline definition + compile CLI.
+- pipeline/data_job/main.py:L5: * ``python -m pipeline.data_job.main compile``  — KFP compile → YAML
+- pipeline/data_job/main.py:L6: * ``python -m pipeline.data_job.main submit``   — Vertex PipelineJob submit
+- pipeline/data_job/main.py:L17: from pipeline.data_job.components import (
+- pipeline/data_job/ports/__init__.py:L1: """Pipeline-side Ports for ``data_job`` (embed pipeline).
+- pipeline/evaluation_job/__init__.py:L1: """Evaluation job pipeline (gating / skew checks)."""
+- pipeline/evaluation_job/main.py:L1: """Evaluation job: gate the latest trained model against offline metrics.
+- pipeline/labeling_job/__init__.py:L1: """Phase 7 ranking-label materialization job."""
+- pipeline/labeling_job/main.py:L15: logger = get_logger("pipeline.labeling_job")
+- pipeline/labeling_job/main.py:L59: logger.info("labeling_job done: labels=%d window_days=%d", len(labels), window_days)
+- pipeline/training_dataset_job/__init__.py:L1: """Phase 7 training dataset export job."""
+- pipeline/training_dataset_job/main.py:L10: logger = get_logger("pipeline.training_dataset_job")
+- pipeline/training_dataset_job/main.py:L26: "training_dataset_job done: rows=%d output=%s generated_at=%s",
+- pipeline/training_job/__init__.py:L1: """Training job pipeline (reranker training + gating + registration)."""
+- pipeline/training_job/adapters/__init__.py:L1: """Adapters implementing ``pipeline/training_job/ports``."""
+- pipeline/training_job/adapters/kfp_orchestrator.py:L4: ``google.cloud.aiplatform.PipelineJob``. The existing ``@dsl.pipeline``
+- pipeline/training_job/adapters/kfp_orchestrator.py:L5: decorated function in ``pipeline/training_job/main.py`` can be migrated
+- pipeline/training_job/adapters/kfp_orchestrator.py:L7: machinery so new jobs can be authored Port-first.
+- pipeline/training_job/adapters/kfp_orchestrator.py:L14: from pipeline.training_job.ports.pipeline_component import (
+- pipeline/training_job/adapters/kfp_orchestrator.py:L18: from pipeline.training_job.ports.pipeline_orchestrator import (
+- pipeline/training_job/adapters/kfp_orchestrator.py:L79: job = aiplatform.PipelineJob(
+- pipeline/training_job/adapters/kfp_orchestrator.py:L85: job.submit()
+- pipeline/training_job/adapters/kfp_orchestrator.py:L86: return str(job.resource_name)
+- pipeline/training_job/components/__init__.py:L1: """Training-job pipeline components (feature load / train / gate / register)."""
+- pipeline/training_job/components/train_reranker.py:L9: 直接実行する (Vertex AI Custom Job 経由で trainer_image を spawn する正式系は
+- pipeline/training_job/main.py:L1: """Training job: KFP reranker training pipeline definition + compile CLI.
+- pipeline/training_job/main.py:L5: * ``python -m pipeline.training_job.main compile``  — KFP compile → YAML
+- pipeline/training_job/main.py:L6: * ``python -m pipeline.training_job.main submit``   — Vertex PipelineJob submit
+- pipeline/training_job/main.py:L31: from pipeline.training_job.components import (
+- pipeline/training_job/ports/__init__.py:L1: """Ports for ``pipeline/training_job`` (canonical location).
+- pipeline/training_job/ports/__init__.py:L4: orchestration abstraction. The other ``pipeline/<verb>_job/ports/``
+- pipeline/training_job/ports/__init__.py:L5: packages re-export from this module so all four jobs share one
+- pipeline/training_job/ports/pipeline_orchestrator.py:L5: without changing the job-level ``main.py`` files that compose the DAG.
+- pipeline/training_job/ports/pipeline_orchestrator.py:L48: """Submit a compiled pipeline; return a runtime job identifier."""
+- pipeline/workflow/compile.py:L86: from pipeline.data_job.main import get_pipeline as _get
+- pipeline/workflow/compile.py:L90: from pipeline.training_job.main import get_pipeline as _get
+- pipeline/workflow/compile.py:L140: job = aiplatform.PipelineJob(
+- pipeline/workflow/compile.py:L147: job.submit(service_account=service_account or None)
+- pipeline/workflow/compile.py:L148: return job.resource_name
+- pipeline/workflow/compile.py:L158: job = aiplatform.PipelineJob(
+- pipeline/workflow/compile.py:L164: job.submit()
+- pipeline/workflow/compile.py:L165: return job.resource_name
+- pipeline/workflow/trigger.py:L1: """Gen2 Cloud Function that submits a Vertex AI PipelineJob.
+- pipeline/workflow/trigger.py:L69: def _build_job_id(prefix: str) -> str:
+- pipeline/workflow/trigger.py:L95: job = aiplatform.PipelineJob(
+- pipeline/workflow/trigger.py:L96: display_name=_build_job_id(display_name_prefix),
+- pipeline/workflow/trigger.py:L103: job.submit(service_account=service_account or None)
+- pipeline/workflow/trigger.py:L106: "pipeline_job_resource_name": job.resource_name,
+- pipeline/workflow/trigger_zip/main.py:L1: """Gen2 Cloud Function that submits a Vertex AI PipelineJob.
+- pipeline/workflow/trigger_zip/main.py:L69: def _build_job_id(prefix: str) -> str:
+- pipeline/workflow/trigger_zip/main.py:L95: job = aiplatform.PipelineJob(
+- pipeline/workflow/trigger_zip/main.py:L96: display_name=_build_job_id(display_name_prefix),
+- pipeline/workflow/trigger_zip/main.py:L103: job.submit(service_account=service_account or None)
+- pipeline/workflow/trigger_zip/main.py:L106: "pipeline_job_resource_name": job.resource_name,
+- pyproject.toml:L41: # CLI を Cloud Run Job / Composer / kubectl exec から実行する場合、
+- pyproject.toml:L74: embed = "pipeline.data_job.main:main"
+- scripts/_common.py:L203: timeout: int | None = None,
+- scripts/_common.py:L226: timeout=timeout,
+- scripts/_common.py:L269: "--format=value(status.url)",
+- scripts/_common.py:L286: ``status.addresses[0].value`` (= 外部 IP) を返す。IP 直叩き時は HTTPRoute の
+- scripts/_common.py:L302: "jsonpath={.status.addresses[0].value}",
+- scripts/_common.py:L345: timeout: int = 30,
+- scripts/_common.py:L353: timeout=timeout,
+- scripts/_common.py:L427: timeout: int = 30,
+- scripts/_common.py:L432: """POST/GET JSON with optional Bearer token. Returns (status_code, body_text).
+- scripts/_common.py:L454: with urllib.request.urlopen(req, timeout=timeout, context=context) as resp:
+- scripts/_common.py:L455: return resp.status, resp.read().decode("utf-8", errors="replace")
+- scripts/_common.py:L476: *, project_id: str, config: str, substitutions: str, timeout: int | None = None
+- scripts/_common.py:L492: timeout=timeout,
+- scripts/_common.py:L504: timeout_sec: int,
+- scripts/_common.py:L507: """Poll Cloud Build status and fail fast on timeout/failure."""
+- scripts/_common.py:L516: "--format=value(logUrl,status,createTime,startTime,finishTime)",
+- scripts/_common.py:L524: deadline = time.monotonic() + timeout_sec
+- scripts/_common.py:L526: status = gcloud(
+- scripts/_common.py:L531: "--format=value(status)",
+- scripts/_common.py:L534: if status == "SUCCESS":
+- scripts/_common.py:L536: if status in {"FAILURE", "INTERNAL_ERROR", "TIMEOUT", "CANCELLED", "EXPIRED"}:
+- scripts/_common.py:L538: raise RuntimeError(f"cloud build {build_id} failed with status={status}")
+- scripts/_common.py:L546: f"cloud build {build_id} exceeded timeout ({timeout_sec}s) and was cancelled"
+- scripts/adapters/gcloud.py:L28: timeout: int | None = None,
+- scripts/adapters/gcloud.py:L37: # proc.stdout has the JSON / table output, proc.returncode for status
+- scripts/adapters/gcloud.py:L43: timeout=timeout,
+- scripts/adapters/kubectl.py:L12: - Future cross-cutting concerns (timeouts, retry, structured logging) can be added
+- scripts/adapters/kubectl.py:L27: timeout: int | None = None,
+- scripts/adapters/kubectl.py:L40: out = kubectl_run("get", "elasticsearch", "-o", "jsonpath={.status.health}", capture=True)
+- scripts/adapters/kubectl.py:L46: timeout=timeout,
+- scripts/adapters/terraform.py:L10: - For state-lock-aware retry, callers should still use
+- scripts/adapters/terraform.py:L11: `scripts.domain.terraform.lock.run_terraform_streaming_with_lock_retry`. This
+- scripts/adapters/terraform.py:L27: timeout: int | None = None,
+- scripts/adapters/terraform.py:L43: return _run(cmd, capture=capture, check=check, timeout=timeout, input=input, env=env)
+- scripts/ci/layers.py:L95: # pipeline/<job>/ports/ — canonical lives under ``pipeline/training_job/ports``.
+- scripts/ci/layers.py:L96: # data/eval/batch_serving jobs pull Ports via direct
+- scripts/ci/layers.py:L97: # ``from pipeline.training_job.ports import ...``.
+- scripts/ci/layers.py:L98: "pipeline/training_job/ports/": ADAPTER_BANS | frozenset({"kfp"}),
+- scripts/ci/layers.py:L100: # scripts.* import 可 (Composer worker が動かす)、ただし `app.*` import 禁止
+- scripts/ci/layers.py:L101: # — search-api コードを Composer worker が引っ張ると import が重く scheduler
+- scripts/ci/sync_dataform.py:L1: """Generate pipeline/data_job/dataform/workflow_settings.yaml from setting.yaml.
+- scripts/ci/sync_dataform.py:L21: / "data_job"
+- scripts/deploy/api_gke.py:L14: * Phase 5 Run 2-3 で Cloud Build timeout / Docker COPY 欠落により deploy が
+- scripts/deploy/api_gke.py:L20: `kubectl rollout status` + 失敗時は `kubectl get pods` / `kubectl describe`
+- scripts/deploy/api_gke.py:L36: BUILD_TIMEOUT_SEC = 1800
+- scripts/deploy/api_gke.py:L37: ROLLOUT_TIMEOUT_SEC = 300
+- scripts/deploy/api_gke.py:L171: _step(f"[3/4] Cloud Build wait (timeout={BUILD_TIMEOUT_SEC}s)")
+- scripts/deploy/api_gke.py:L177: timeout_sec=BUILD_TIMEOUT_SEC,
+- scripts/deploy/api_gke.py:L187: _step(f"[4/4] kubectl set image + rollout status (timeout={ROLLOUT_TIMEOUT_SEC}s)")
+- scripts/deploy/api_gke.py:L201: "status",
+- scripts/deploy/api_gke.py:L204: f"--timeout={ROLLOUT_TIMEOUT_SEC}s",
+- scripts/deploy/api_gke.py:L211: _diag("kubectl rollout status", proc)
+- scripts/deploy/api_gke_local.py:L36: ROLLOUT_TIMEOUT_SEC = 300
+- scripts/deploy/api_gke_local.py:L177: _step(f"[4/4] kubectl rollout status (timeout={ROLLOUT_TIMEOUT_SEC}s)")
+- scripts/deploy/api_gke_local.py:L181: "status",
+- scripts/deploy/api_gke_local.py:L184: f"--timeout={ROLLOUT_TIMEOUT_SEC}s",
+- scripts/deploy/api_gke_local.py:L191: _diag("kubectl rollout status", rollout_proc)
+- scripts/deploy/build_kserve_images.py:L49: BUILD_TIMEOUT_SEC = 1800
+- scripts/deploy/build_kserve_images.py:L92: wait_cloud_build(project_id=project_id, build_id=build_id, timeout_sec=BUILD_TIMEOUT_SEC)
+- scripts/deploy/composer_deploy_dags.py:L89: # 旧 BashOperator + uv run path は Composer worker 非互換のため、
+- scripts/deploy/composer_runner.py:L8: scripts.X` で書いたが Composer worker に uv / repo source が無く task SUCCEEDED
+- scripts/deploy/composer_runner.py:L20: BUILD_TIMEOUT_SEC = 1800
+- scripts/deploy/composer_runner.py:L70: _step(f"[2/2] Cloud Build wait (timeout={BUILD_TIMEOUT_SEC}s)")
+- scripts/deploy/composer_runner.py:L76: timeout_sec=BUILD_TIMEOUT_SEC,
+- scripts/deploy/configmap_overlay.py:L70: with urllib.request.urlopen(req, timeout=60) as resp:
+- scripts/deploy/configmap_overlay.py:L72: except (urllib.error.URLError, json.JSONDecodeError, TimeoutError, OSError):
+- scripts/deploy/kserve_models.py:L39: ROLLOUT_TIMEOUT_SEC = 600
+- scripts/deploy/kserve_models.py:L238: _step(f"wait inferenceservice/{name} for condition=Ready timeout={ROLLOUT_TIMEOUT_SEC}s")
+- scripts/deploy/kserve_models.py:L245: f"--timeout={ROLLOUT_TIMEOUT_SEC}s",
+- scripts/deploy/kserve_models.py:L254: f"{name} did not become Ready within {ROLLOUT_TIMEOUT_SEC}s "
+- scripts/deploy/monitor.py:L10: 3) During Cloud Build wait, periodically prints build status/log URL.
+- scripts/deploy/monitor.py:L12: 5) On failure, prints likely timeout root cause with step/build context.
+- scripts/deploy/monitor.py:L125: status = str(payload.get("status") or "")
+- scripts/deploy/monitor.py:L127: return status, log_url
+- scripts/deploy/monitor.py:L131: _BUILD_WAIT_RE = re.compile(r"Cloud Build wait id=([a-z0-9-]+)\s+timeout=(\d+)s")
+- scripts/deploy/monitor.py:L140: current_build_timeout_sec: int = 0
+- scripts/deploy/monitor.py:L158: state.current_build_timeout_sec = 0
+- scripts/deploy/monitor.py:L171: state.current_build_timeout_sec = int(m.group(2))
+- scripts/deploy/monitor.py:L175: f"timeout_sec={state.current_build_timeout_sec} step={state.current_step_no}"
+- scripts/deploy/monitor.py:L189: status, log_url = _build_describe(project_id, state.current_build_id)
+- scripts/deploy/monitor.py:L191: timeout_sec = state.current_build_timeout_sec
+- scripts/deploy/monitor.py:L192: remaining = max(0, timeout_sec - elapsed) if timeout_sec else -1
+- scripts/deploy/monitor.py:L194: f"{base} build_id={state.current_build_id} build_status={status} "
+- scripts/deploy/monitor.py:L273: status, log_url = _build_describe(project_id, state.current_build_id)
+- scripts/deploy/monitor.py:L274: if status in {"WORKING", "QUEUED"}:
+- scripts/deploy/monitor.py:L277: f"(build_id={state.current_build_id}, status={status}, step={state.current_step_no})"
+- scripts/deploy/monitor.py:L282: f"(build_id={state.current_build_id}, status={status}, step={state.current_step_no}, "
+- scripts/deploy/monitor.py:L287: if status == "TIMEOUT":
+- scripts/deploy/monitor.py:L288: failure_reason += " timeout detected in Cloud Build"
+- scripts/domain/gcp/feature_view_sync.py:L11: 3. polling `featureViewSyncs:list` until the new sync reaches finalStatus=OK.
+- scripts/domain/gcp/feature_view_sync.py:L71: with urllib.request.urlopen(req, timeout=60) as resp:
+- scripts/domain/gcp/feature_view_sync.py:L108: timeout_sec: int = 1800,
+- scripts/domain/gcp/feature_view_sync.py:L122: deadline = time.monotonic() + timeout_sec
+- scripts/domain/gcp/feature_view_sync.py:L129: latest_code = int((latest.get("finalStatus") or {}).get("code") or 0)
+- scripts/domain/gcp/feature_view_sync.py:L133: message = str((latest.get("finalStatus") or {}).get("message") or "")
+- scripts/domain/gcp/feature_view_sync.py:L145: f"after {timeout_sec}s for feature view {feature_view}"
+- scripts/domain/gcp/state_recovery.py:L46: # (X は dash-to-underscore 変換。例: sa-job-train → job_train)
+- scripts/domain/gcp/state_recovery.py:L49: "job_train",
+- scripts/domain/gcp/state_recovery.py:L50: "job_embed",
+- scripts/domain/gcp/vertex_cleanup.py:L123: timeout で fail する事故が起きる。
+- scripts/domain/gcp/vertex_cleanup.py:L186: timeout_seconds: int = 900,
+- scripts/domain/gcp/vertex_cleanup.py:L204: deadline = time.monotonic() + timeout_seconds
+- scripts/domain/gcp/vertex_cleanup.py:L217: f"{timeout_seconds}s; previous undeploy/delete likely still in progress"
+- scripts/domain/gcp/vertex_feature_store_wait.py:L86: timeout_seconds: int = 3600,
+- scripts/domain/gcp/vertex_feature_store_wait.py:L90: deadline = time.monotonic() + timeout_seconds
+- scripts/domain/gcp/vertex_feature_store_wait.py:L120: f"{feature_online_store_id!r} still listed after {timeout_seconds}s — "
+- scripts/domain/gcp/vertex_feature_store_wait.py:L127: timeout_seconds: int = 3600,
+- scripts/domain/gcp/vertex_feature_store_wait.py:L136: timeout_seconds=timeout_seconds,
+- scripts/domain/k8s/elasticsearch_wait.py:L6: - ES pod was Running 1/1 but ECK status was `Phase=ApplyingChanges Health=unknown`,
+- scripts/domain/k8s/elasticsearch_wait.py:L10: step fails with no retry, forcing the whole pipeline to stall.
+- scripts/domain/k8s/elasticsearch_wait.py:L12: Fix: poll the ECK Elasticsearch CR's `.status.health` until it reports `green`
+- scripts/domain/k8s/elasticsearch_wait.py:L14: (`kubectl get` per 15s) and bounded by `timeout_s`. If the cluster is genuinely
+- scripts/domain/k8s/elasticsearch_wait.py:L30: # Poll cadence and overall timeout. Real ECK bootstrap on a freshly created GKE
+- scripts/domain/k8s/elasticsearch_wait.py:L34: DEFAULT_TIMEOUT_S = 300
+- scripts/domain/k8s/elasticsearch_wait.py:L44: """Return current `.status.health` value (empty string if not set yet)."""
+- scripts/domain/k8s/elasticsearch_wait.py:L52: "jsonpath={.status.health}",
+- scripts/domain/k8s/elasticsearch_wait.py:L67: "jsonpath={.status.phase}",
+- scripts/domain/k8s/elasticsearch_wait.py:L77: timeout_s: int = DEFAULT_TIMEOUT_S,
+- scripts/domain/k8s/elasticsearch_wait.py:L79: """Block until ECK Elasticsearch CR `.status.health` is `green` or `yellow`.
+- scripts/domain/k8s/elasticsearch_wait.py:L81: Returns the final health value on success. Raises ``TimeoutError`` if the
+- scripts/domain/k8s/elasticsearch_wait.py:L82: cluster does not reach a healthy state within ``timeout_s`` — typically a
+- scripts/domain/k8s/elasticsearch_wait.py:L85: deadline = time.monotonic() + timeout_s
+- scripts/domain/k8s/elasticsearch_wait.py:L90: f"timeout={timeout_s}s healthy_states={HEALTHY_STATES}"
+- scripts/domain/k8s/elasticsearch_wait.py:L103: elapsed = timeout_s
+- scripts/domain/k8s/elasticsearch_wait.py:L104: raise TimeoutError(
+- scripts/domain/k8s/kube_cleanup.py:L8: (~3 分 retry のあとステップ全体が stall する)。同じ理由で ExternalSecret の
+- scripts/domain/k8s/kube_cleanup.py:L38: "--timeout=60s",
+- scripts/domain/k8s/kube_cleanup.py:L47: "--timeout=60s",
+- scripts/domain/k8s/kubectl_context.py:L45: def wait_until_api_ready(*, timeout_seconds: int = 600, poll_seconds: int = 10) -> None:
+- scripts/domain/k8s/kubectl_context.py:L52: with i/o timeout.
+- scripts/domain/k8s/kubectl_context.py:L54: deadline = time.monotonic() + timeout_seconds
+- scripts/domain/k8s/kubectl_context.py:L73: f"kubernetes API did not become reachable within {timeout_seconds}s "
+- scripts/domain/terraform/lock.py:L63: def run_terraform_streaming_with_lock_retry(
+- scripts/domain/terraform/lock.py:L68: """Run ``terraform`` with stdout streamed; on state-lock error print help or unlock+retry.
+- scripts/domain/terraform/lock.py:L86: "    Automated retry: set TERRAFORM_STATE_FORCE_UNLOCK=1 and re-run "
+- scripts/domain/terraform/lock.py:L113: print("==> retrying terraform command once after force-unlock\n", flush=True)
+- scripts/domain/terraform/stage_apply.py:L45: """Run stage1 apply; on state lock optionally force-unlock; on Vertex 409 sleep+retry."""
+- scripts/domain/terraform/stage_apply.py:L47: sleep_s = int(env("TF_APPLY_STAGE1_RETRY_SLEEP_SEC", "120"))
+- scripts/domain/terraform/stage_apply.py:L86: print("==> retrying stage1 apply after force-unlock\n", flush=True)
+- scripts/domain/terraform/stage_apply.py:L90: retryable = attempt < max_attempts and any(
+- scripts/domain/terraform/stage_apply.py:L100: if retryable:
+- scripts/domain/terraform/stage_apply.py:L103: f"(Vertex eventual consistency?) — sleep {sleep_s}s then retry"
+- scripts/lib/step_timing.py:L27: HEADER = ("recorded_at_utc", "flow", "step_number", "step_name", "elapsed_sec", "status")
+- scripts/lib/step_timing.py:L44: def record(flow: str, step_number: int, step_name: str, elapsed_sec: float, status: str) -> None:
+- scripts/lib/step_timing.py:L55: status,
+- scripts/lib/step_timing.py:L82: """Median elapsed-seconds per step name over recent ``status == "ok"`` rows for ``flow``."""
+- scripts/lib/step_timing.py:L89: if rec.get("flow") != flow or rec.get("status") != "ok":
+- scripts/ops/accuracy_report.py:L137: status, body = resolved.call("POST", "/api/v1/search", payload=payload)
+- scripts/ops/accuracy_report.py:L138: if status != 200:
+- scripts/ops/accuracy_report.py:L139: return fail(f"accuracy-report search failed ({case.name}) HTTP {status}: {body}")
+- scripts/ops/check_retrain.py:L1: """POST /ops/jobs/check-retrain on search-api with an OIDC token. The endpoint
+- scripts/ops/check_retrain.py:L37: _diag("calling POST /ops/jobs/check-retrain ...")
+- scripts/ops/check_retrain.py:L39: status, body = target.call("POST", "/ops/jobs/check-retrain")
+- scripts/ops/check_retrain.py:L43: _diag(f"response status={status} body_len={len(body)} body={body[:500]!r}")
+- scripts/ops/check_retrain.py:L44: if status != 200:
+- scripts/ops/check_retrain.py:L45: return fail(f"check-retrain returned HTTP {status}: {body}")
+- scripts/ops/composer_task_states.py:L88: proc = gcloud_run(*args, check=False, capture=True, timeout=300)
+- scripts/ops/destroy_check.py:L139: def _collect_dataflow_jobs(project_id: str, region: str) -> tuple[tuple[str, ...], str | None]:
+- scripts/ops/destroy_check.py:L144: "jobs",
+- scripts/ops/destroy_check.py:L148: "--status=active",
+- scripts/ops/destroy_check.py:L334: dataflow_jobs, dataflow_error = _collect_dataflow_jobs(project_id, region)
+- scripts/ops/destroy_check.py:L351: _evaluate("Dataflow active jobs", dataflow_jobs, dataflow_error),
+- scripts/ops/feedback.py:L22: status, body = target.call("POST", "/api/v1/search", payload={"query": query, "top_k": 1})
+- scripts/ops/feedback.py:L23: if status != 200:
+- scripts/ops/feedback.py:L24: return fail(f"search returned HTTP {status}: {body}")
+- scripts/ops/feedback.py:L35: fb_status, fb_body = target.call(
+- scripts/ops/feedback.py:L40: if fb_status != 200:
+- scripts/ops/feedback.py:L41: return fail(f"feedback returned HTTP {fb_status}: {fb_body}")
+- scripts/ops/label_seed.py:L39: status, body = target.call("POST", "/api/v1/search", payload=search_payload)
+- scripts/ops/label_seed.py:L40: if status != 200:
+- scripts/ops/livez.py:L16: status, body = target.call("GET", "/livez")
+- scripts/ops/livez.py:L17: if status != 200:
+- scripts/ops/livez.py:L18: return fail(f"livez returned HTTP {status}: {body}")
+- scripts/ops/promote.py:L59: (see ``pipeline/training_job/main.py``), while Terraform creates
+- scripts/ops/ranking.py:L23: status, body = target.call("POST", "/api/v1/search", payload=payload)
+- scripts/ops/ranking.py:L24: if status != 200:
+- scripts/ops/ranking.py:L25: return fail(f"search returned HTTP {status}: {body}")
+- scripts/ops/register_model.py:L4: を付けた `register-reranker` component の worker が起動直後に exit 1 する事象が
+- scripts/ops/register_model.py:L11: uv run python -m scripts.ops.register_model --pipeline-job-id property-search-train-20260423172541 --apply
+- scripts/ops/register_model.py:L25: """Resource name of the most recent SUCCEEDED PipelineJob."""
+- scripts/ops/register_model.py:L29: jobs = aiplatform.PipelineJob.list(
+- scripts/ops/register_model.py:L33: for j in jobs[:20]:
+- scripts/ops/register_model.py:L53: # Walk resource tree to resolve PROJECT_NUMBER: fetch the job, which
+- scripts/ops/register_model.py:L56: job = aiplatform.PipelineJob.get(pipeline_resource_name)
+- scripts/ops/register_model.py:L57: numeric = job.resource_name.split("/")[1]
+- scripts/ops/register_model.py:L59: pipeline_job_name = parts[-1]
+- scripts/ops/register_model.py:L61: base = f"runs/{project_num}/{pipeline_job_name}/"
+- scripts/ops/register_model.py:L133: "--pipeline-job-id",
+- scripts/ops/register_model.py:L135: help="Explicit pipeline job id (e.g. property-search-train-20260423172541). "
+- scripts/ops/register_model.py:L158: if args.pipeline_job_id:
+- scripts/ops/register_model.py:L160: f"projects/{project_id}/locations/{location}/pipelineJobs/{args.pipeline_job_id}"
+- scripts/ops/search.py:L25: retry_sleep = float(os.environ.get("SEARCH_RETRY_SLEEP", "2.0"))
+- scripts/ops/search.py:L31: status, body = _search_once(payload=payload)
+- scripts/ops/search.py:L33: except (TimeoutError, URLError, OSError) as exc:
+- scripts/ops/search.py:L42: f"(sleep {retry_sleep:.1f}s, retrying)",
+- scripts/ops/search.py:L45: time.sleep(retry_sleep)
+- scripts/ops/search.py:L53: if status != 200:
+- scripts/ops/search.py:L54: return fail(f"search returned HTTP {status}: {body}")
+- scripts/ops/search_components.py:L50: status, body = resolved.call("POST", "/api/v1/search", payload=payload)
+- scripts/ops/search_components.py:L51: if status != 200:
+- scripts/ops/search_components.py:L52: return fail(f"component-check search returned HTTP {status}: {body}")
+- scripts/ops/search_components.py:L63: readyz_status, readyz_body = resolved.call("GET", "/readyz")
+- scripts/ops/search_components.py:L64: if readyz_status == 200:
+- scripts/ops/slo_status.py:L52: status, body = <redacted>
+- scripts/ops/slo_status.py:L53: if status != 200:
+- scripts/ops/slo_status.py:L54: raise RuntimeError(f"describe SLO failed HTTP {status}: {body}")
+- scripts/ops/slo_status.py:L74: status, body = <redacted>
+- scripts/ops/slo_status.py:L75: if status != 200:
+- scripts/ops/slo_status.py:L76: raise RuntimeError(f"burn_rate lookup failed HTTP {status}: {body}")
+- scripts/ops/sync_elasticsearch.py:L64: if head.status_code == 200:
+- scripts/ops/sync_elasticsearch.py:L67: if head.status_code not in (404,):
+- scripts/ops/sync_elasticsearch.py:L68: head.raise_for_status()
+- scripts/ops/sync_elasticsearch.py:L71: resp.raise_for_status()
+- scripts/ops/sync_elasticsearch.py:L99: resp.raise_for_status()
+- scripts/ops/sync_elasticsearch.py:L154: with socket.create_connection(("127.0.0.1", local_port), timeout=1.0):
+- scripts/ops/sync_elasticsearch.py:L166: proc.wait(timeout=5)
+- scripts/ops/sync_elasticsearch.py:L167: except subprocess.TimeoutExpired:
+- scripts/ops/sync_elasticsearch.py:L210: with httpx.Client(timeout=120.0, verify=verify_tls, auth=auth) as client:
+- scripts/ops/sync_synonyms.py:L5: invoked as a one-shot Cloud Run Job, a Composer DAG step, or locally:
+- scripts/ops/sync_synonyms.py:L46: timeout=60,
+- scripts/ops/sync_synonyms.py:L234: socket_connect_timeout=5.0,
+- scripts/ops/sync_synonyms.py:L235: socket_timeout=5.0,
+- scripts/ops/vertex/explain.py:L36: status, body = target.call("POST", "/search?explain=true", payload=payload)
+- scripts/ops/vertex/explain.py:L37: if status != 200:
+- scripts/ops/vertex/explain.py:L38: return fail(f"vertex-explain: HTTP {status}: {body[:300]}")
+- scripts/ops/vertex/feature_group.py:L53: with urllib.request.urlopen(req, timeout=60) as resp:
+- scripts/ops/vertex/feature_group.py:L73: final_status = sync.get("finalStatus") or {}
+- scripts/ops/vertex/feature_group.py:L79: f" final_code={final_status.get('code', '-')}"
+- scripts/ops/vertex/feature_group.py:L151: "after terraform apply + initial sync, then retry."
+- scripts/ops/vertex/pipeline_status.py:L10: make ops-vertex-pipeline-status [LIMIT=10]
+- scripts/ops/vertex/pipeline_status.py:L29: return fail("vertex-pipeline-status: PROJECT_ID is required")
+- scripts/ops/vertex/pipeline_status.py:L36: runs = aiplatform.PipelineJob.list(order_by="create_time desc")
+- scripts/ops/vertex/pipeline_status.py:L38: return fail(f"vertex-pipeline-status: list error: {exc}")
+- scripts/ops/vertex/pipeline_status.py:L44: 1: "QUEUED",
+- scripts/ops/vertex/pipeline_status.py:L69: f"vertex-pipeline-status: 0 SUCCEEDED runs in last {limit} — "
+- scripts/ops/vertex/pipeline_wait.py:L9: PIPELINE_WAIT_TIMEOUT_SECONDS  default: ``1800``
+- scripts/ops/vertex/pipeline_wait.py:L27: 1: "QUEUED",
+- scripts/ops/vertex/pipeline_wait.py:L40: def _latest_job(*, aiplatform: Any, display_name: str) -> Any | None:
+- scripts/ops/vertex/pipeline_wait.py:L41: jobs = aiplatform.PipelineJob.list(
+- scripts/ops/vertex/pipeline_wait.py:L45: for job in jobs[:20]:
+- scripts/ops/vertex/pipeline_wait.py:L46: if getattr(job, "display_name", "") == display_name:
+- scripts/ops/vertex/pipeline_wait.py:L47: return job
+- scripts/ops/vertex/pipeline_wait.py:L55: timeout_seconds = int(os.environ.get("PIPELINE_WAIT_TIMEOUT_SECONDS", "1800"))
+- scripts/ops/vertex/pipeline_wait.py:L66: deadline = time.monotonic() + timeout_seconds
+- scripts/ops/vertex/pipeline_wait.py:L69: job = _latest_job(aiplatform=aiplatform, display_name=display_name)
+- scripts/ops/vertex/pipeline_wait.py:L70: if job is None:
+- scripts/ops/vertex/pipeline_wait.py:L72: f"vertex-pipeline-wait: no PipelineJob found with display_name={display_name!r}"
+- scripts/ops/vertex/pipeline_wait.py:L74: state = _state_name(getattr(job, "state", None))
+- scripts/ops/vertex/pipeline_wait.py:L75: resource_name = str(getattr(job, "resource_name", "") or getattr(job, "name", "-"))
+- scripts/ops/vertex/pipeline_wait.py:L77: print(f"vertex-pipeline-wait: state={state} job={resource_name}")
+- scripts/ops/vertex/pipeline_wait.py:L88: f"(display_name={display_name!r}, timeout_seconds={timeout_seconds})"
+- scripts/setup/backfill_vector_search_index.py:L11: - ``pipeline.data_job.adapters.vertex_vector_search_writer.VertexVectorSearchWriter``
+- scripts/setup/backfill_vector_search_index.py:L130: from pipeline.data_job.ports.vector_search_writer import EmbeddingDatapoint  # lazy
+- scripts/setup/backfill_vector_search_index.py:L139: from pipeline.data_job.adapters.vertex_vector_search_writer import (  # lazy
+- scripts/setup/deploy_all.py:L10: 4. `sync_dataform` — regenerate pipeline/data_job/dataform/workflow_settings.yaml
+- scripts/setup/deploy_all.py:L278: # precondition で ES `.status.health` ∈ {green, yellow} まで待つ。
+- scripts/setup/deploy_all.py:L279: # 5 min timeout = ECK Operator 停滞のシグナル
+- scripts/setup/destroy_all.py:L16: `deploy-all` が step 6 stage1 apply で 15 min wait timeout になる事故を防ぐ。
+- scripts/setup/destroy_all.py:L40: - Local artifacts (`infra/tfplan`, `pipeline/data_job/dataform/workflow_settings.yaml`).
+- scripts/setup/destroy_all.py:L68: from scripts.domain.terraform.lock import run_terraform_streaming_with_lock_retry
+- scripts/setup/destroy_all.py:L219: # deploy-all が step 6 stage1 apply で 15 min wait timeout になる事故を
+- scripts/setup/destroy_all.py:L275: run_terraform_streaming_with_lock_retry(
+- scripts/setup/destroy_all.py:L298: run_terraform_streaming_with_lock_retry(
+- scripts/setup/destroy_all.py:L354: run_terraform_streaming_with_lock_retry(
+- scripts/setup/destroy_all.py:L367: run_terraform_streaming_with_lock_retry(
+- scripts/setup/local_hybrid.py:L41: def _http_available(url: str, *, timeout_sec: float = 1.5) -> bool:
+- scripts/setup/local_hybrid.py:L45: deadline = time.monotonic() + timeout_sec
+- scripts/setup/local_hybrid.py:L48: with urllib.request.urlopen(url, timeout=0.5) as resp:
+- scripts/setup/local_hybrid.py:L49: if 200 <= resp.status < 500:
+- scripts/setup/local_hybrid.py:L92: def _wait_http(url: str, *, timeout_sec: float = 120.0) -> None:
+- scripts/setup/local_hybrid.py:L96: deadline = time.monotonic() + timeout_sec
+- scripts/setup/local_hybrid.py:L99: with urllib.request.urlopen(url, timeout=5) as resp:
+- scripts/setup/local_hybrid.py:L100: if 200 <= resp.status < 500:
+- scripts/setup/local_hybrid.py:L104: raise SystemExit(f"[error] startup timeout waiting for {url}")
+- scripts/setup/local_hybrid.py:L109: sock.settimeout(0.2)
+- scripts/setup/local_hybrid.py:L217: proc.wait(timeout=10)
+- scripts/setup/local_hybrid.py:L218: except subprocess.TimeoutExpired:
+- scripts/setup/local_hybrid.py:L220: proc.wait(timeout=5)
+- scripts/setup/seed_minimal.py:L4: (`property_features_daily`) + embedding-job. Here we bypass all of those and
+- scripts/setup/tf_apply.py:L31: from scripts.domain.terraform.lock import run_terraform_streaming_with_lock_retry
+- scripts/setup/tf_apply.py:L117: run_terraform_streaming_with_lock_retry(
+- scripts/setup/tf_plan.py:L20: from scripts.domain.terraform.lock import run_terraform_streaming_with_lock_retry
+- scripts/setup/tf_plan.py:L47: run_terraform_streaming_with_lock_retry(
+- system_map.html:L98: <p>Elasticsearch BM25 + multilingual-e5 + Vertex AI Vector Search are fused via RRF and reranked by a LightGBM LambdaRank model. Behaviour events (3-table Pub/Sub canonical) feed a labeling job → training pipeline → Vertex Model Registry promote, orchestrated by Cloud Composer DAGs.</p>
+- system_map.html:L119: <tr><td><span class="tag pipeline">pipeline</span></td><td><code>pipeline/training_job/main.py</code></td><td>KFP <code>property-search-train</code>: load_features → train_reranker → evaluate → gated register_reranker.</td></tr>
+- system_map.html:L120: <tr><td><span class="tag pipeline">pipeline</span></td><td><code>pipeline/data_job/main.py</code></td><td>KFP <code>property-search-embed</code>: load_properties → batch_predict → write_embeddings → upsert_vector_search.</td></tr>
+- system_map.html:L121: <tr><td><span class="tag pipeline">pipeline (stub)</span></td><td><code>pipeline/evaluation_job/main.py</code></td><td>STUB <code>property-search-evaluate</code> — components not wired.</td></tr>
+- system_map.html:L122: <tr><td><span class="tag pipeline">pipeline (stub)</span></td><td><code>pipeline/batch_serving_job/main.py</code></td><td>STUB <code>property-search-batch-serve</code>.</td></tr>
+- system_map.html:L123: <tr><td><span class="tag cli">cli</span></td><td><code>pipeline/labeling_job/main.py</code></td><td>BQ impressions × user_actions → mlops.ranking_labels via <code>compute_label</code>.</td></tr>
+- system_map.html:L124: <tr><td><span class="tag cli">cli</span></td><td><code>pipeline/training_dataset_job/main.py</code></td><td>Materialise CSV training dataset under <code>dist/training_datasets/&lt;run_id&gt;/</code>.</td></tr>
+- system_map.html:L126: <tr><td><span class="tag pipeline">worker</span></td><td><code>pipeline/dags/daily_feature_refresh.py</code></td><td>Airflow DAG @ 01:00 JST: Dataform → Feature View sync → optional VVS backfill.</td></tr>
+- system_map.html:L127: <tr><td><span class="tag pipeline">worker</span></td><td><code>pipeline/dags/retrain_orchestration.py</code></td><td>Airflow DAG @ 04:00 JST: <b>canonical retrain</b> — check_retrain → submit → wait → AUTO_PROMOTE gate → promote.</td></tr>
+- system_map.html:L128: <tr><td><span class="tag pipeline">worker</span></td><td><code>pipeline/dags/monitoring_validation.py</code></td><td>Airflow DAG @ 04:30 JST: feature_skew + model_output_drift SQL + SLO burn-rate.</td></tr>
+- system_map.html:L129: <tr><td><span class="tag pipeline">worker</span></td><td><code>ml/streaming/pipeline.py</code></td><td>Beam/Dataflow streaming: ranking-log → 1h tumbling → mlops.ranking_log_hourly_ctr.</td></tr>
+- system_map.html:L133: <tr><td><span class="tag cli">cli</span></td><td><code>pipeline/workflow/trigger_zip/main.py</code></td><td>Cloud Function HTTP trigger to submit Vertex PipelineJobs (smoke/manual alt).</td></tr>
+- system_map.html:L205: <h5>ml.training.ports · ml.registry.ports · ml.serving.ports · ml.streaming.ports · ml.training.experiments.ports · pipeline.data_job.ports · pipeline.training_job.ports <span class="tag port">port</span></h5>
+- system_map.html:L210: <details><summary>adapter — concrete I/O (DB / HTTP / queue / ML backend)</summary>
+- system_map.html:L266: <div class="resp"><code>POST /ops/jobs/check-retrain</code> — kept as Composer-task smoke / monthly Cloud Scheduler / manual trigger only. <b>Not</b> the canonical scheduler (Composer DAG owns that).</div>
+- system_map.html:L280: <h5>scripts.ops.check_retrain · submit_train_pipeline · promote · slo_status · accuracy_report · sync_elasticsearch · label_seed · feedback · ranking · search · livez · composer_dag · composer_task_states · vertex.* <span class="tag cli">cli</span></h5>
+- system_map.html:L294: <div class="module"><h5>pipeline.training_job <span class="tag pipeline">pipeline</span></h5><div class="resp">KFP <code>property-search-train</code>. Components: load_features → train_reranker (containerised LightGBM) → evaluate (NDCG@10 gate vs threshold) → register_reranker (Vertex Model Registry upload + endpoint traffic split). Sub-Port: <code>PipelineOrchestrator</code> (KFP adapter).</div></div>
+- system_map.html:L295: <div class="module"><h5>pipeline.data_job <span class="tag pipeline">pipeline</span></h5><div class="resp">KFP <code>property-search-embed</code>. Components: load_properties → batch_predict_embeddings (Vertex BatchPrediction on ME5) → write_embeddings (BQ feature_mart.property_embeddings) → upsert_vector_search (Strangler default off). Sub-Port: <code>VectorSearchWriter</code> with Vertex and InMemory adapters. Plus the <b>Dataform</b> definitions (sources / staging / features / monitoring / assertions).</div></div>
+- system_map.html:L296: <div class="module"><h5>pipeline.labeling_job <span class="tag pipeline">pipeline</span></h5><div class="resp">Aggregates impressions × user_actions → mlops.ranking_labels using <code>compute_label</code>. Reuses app-side BQ adapters.</div></div>
+- system_map.html:L297: <div class="module"><h5>pipeline.training_dataset_job <span class="tag pipeline">pipeline</span></h5><div class="resp">Materialises a CSV snapshot of the training frame for offline inspection (<code>dist/training_datasets/&lt;run_id&gt;/</code>).</div></div>
+- system_map.html:L298: <div class="module"><h5>pipeline.evaluation_job · pipeline.batch_serving_job <span class="tag pipeline">stub</span></h5><div class="resp">KFP definitions with placeholder bodies — components not wired (see Risks).</div></div>
+- system_map.html:L372: <li><code>BigQueryInsertJobOperator</code> runs <code>validate_feature_skew.sql</code> → <code>mlops.validation_results</code>.</li>
+- system_map.html:L373: <li><code>BigQueryInsertJobOperator</code> runs <code>validate_model_output_drift.sql</code> → <code>mlops.model_monitoring_alerts</code>.</li>
+- system_map.html:L374: <li>KubernetesPodOperator → <code>scripts.ops.slo_status</code> (SLO + burn-rate alert check).</li>
+- system_map.html:L379: <details><summary>3.6 labeling_pipeline — <code>python -m pipeline.labeling_job.main</code></summary>
+- system_map.html:L389: <details><summary>3.7 property_embedding_refresh — <code>python -m pipeline.data_job.main submit</code></summary>
+- system_map.html:L410: <details><summary>3.9 check_retrain_smoke — <code>POST /ops/jobs/check-retrain</code></summary>
+- system_map.html:L459: <tr><td>VectorSearchWriter (pipeline.data_job.ports)</td><td>VertexVectorSearchWriter · InMemoryVectorSearchWriter</td></tr>
+- system_map.html:L487: <div class="risk-row"><span class="sev med">med</span><div><b>Composer cron cannibalization.</b> Cloud Scheduler still hits <code>/ops/jobs/check-retrain</code> — if reconfigured to a high-frequency cron it would double-fire retrain alongside the Composer DAG (CLAUDE.md non-negotiable).</div></div>
+- system_map.html:L488: <div class="risk-row"><span class="sev med">med</span><div><b>Stub pipelines.</b> <code>pipeline.evaluation_job.main</code> and <code>pipeline.batch_serving_job.main</code> are KFP stubs (<code>del project_id</code>) — compile but do nothing. README implies offline eval is wired.</div></div>
+- system_map.html:L501: <li>Does <code>pipeline.evaluation_job.main</code> get wired before the Wave 5 dashboard goes GA, or does it rely on <code>training_runs</code> only?</li>
+- system_map.html:L503: <li>Is the <code>retrain-trigger</code> Pub/Sub topic subscribed to anything in canonical mode, or is it dead-letter telemetry for the smoke endpoint?</li>
+- system_map.json:L34: {"type": "pipeline", "path": "pipeline/training_job/main.py", "description": "KFP pipeline `property-search-train`: load_features → train_reranker → evaluate → register_reranker (gate)."},
+- system_map.json:L35: {"type": "pipeline", "path": "pipeline/data_job/main.py", "description": "KFP pipeline `property-search-embed`: load_properties → batch_predict_embeddings → write_embeddings → upsert_vector_search."},
+- system_map.json:L36: {"type": "pipeline", "path": "pipeline/evaluation_job/main.py", "description": "STUB KFP pipeline `property-search-evaluate` (no real components wired yet)."},
+- system_map.json:L37: {"type": "pipeline", "path": "pipeline/batch_serving_job/main.py", "description": "STUB KFP pipeline `property-search-batch-serve`."},
+- system_map.json:L38: {"type": "cli", "path": "pipeline/labeling_job/main.py::run", "description": "Aggregates impressions + user_actions into mlops.ranking_labels (weighted relevance)."},
+- system_map.json:L39: {"type": "cli", "path": "pipeline/training_dataset_job/main.py::run", "description": "Builds training_dataset.csv from ranker repository (offline dataset snapshot)."},
+- system_map.json:L41: {"type": "worker", "path": "pipeline/dags/daily_feature_refresh.py", "description": "Airflow DAG @ 01:00 JST: Dataform run → Feature View sync → (opt) VVS incremental backfill."},
+- system_map.json:L42: {"type": "worker", "path": "pipeline/dags/retrain_orchestration.py", "description": "Airflow DAG @ 04:00 JST (CANONICAL retrain): check_retrain → submit train pipeline → wait → AUTO_PROMOTE gate → promote."},
+- system_map.json:L43: {"type": "worker", "path": "pipeline/dags/monitoring_validation.py", "description": "Airflow DAG @ 04:30 JST: feature_skew SQL + model_output_drift SQL + SLO burn-rate."},
+- system_map.json:L44: {"type": "worker", "path": "ml/streaming/pipeline.py::run", "description": "Apache Beam / Dataflow streaming job: ranking-log Pub/Sub → hourly CTR aggregation → BigQuery."},
+- system_map.json:L48: {"type": "cli", "path": "pipeline/workflow/trigger_zip/main.py", "description": "Cloud Function HTTP trigger that submits Vertex PipelineJobs (smoke/manual alt to Composer)."}
+- system_map.json:L126: "responsibility": "POST /ops/jobs/check-retrain: evaluates retrain policy + publishes trigger. DEMOTED: not the canonical scheduler (Composer DAG owns that).",
+- system_map.json:L129: "side_effects": ["queue_publish", "db_read"],
+- system_map.json:L189: "side_effects": ["queue_publish", "http_call"],
+- system_map.json:L199: "side_effects": ["queue_publish"],
+- system_map.json:L209: "side_effects": ["queue_publish"],
+- system_map.json:L389: "side_effects": ["queue_publish"],
+- system_map.json:L399: "side_effects": ["queue_publish"],
+- system_map.json:L409: "side_effects": ["queue_publish"],
+- system_map.json:L426: "responsibility": "Reads impressions / user_actions from BigQuery for the labeling job.",
+- system_map.json:L479: "side_effects": ["db_read", "queue_publish"],
+- system_map.json:L489: "side_effects": ["queue_publish"],
+- system_map.json:L689: "side_effects": ["queue_publish", "db_write"],
+- system_map.json:L709: "side_effects": ["queue_publish"],
+- system_map.json:L723: "id": "pipeline.training_job.main",
+- system_map.json:L724: "path": "pipeline/training_job/main.py",
+- system_map.json:L727: "depends_on": ["pipeline.training_job.components", "pipeline.workflow.compile"],
+- system_map.json:L733: "id": "pipeline.training_job.components",
+- system_map.json:L734: "path": "pipeline/training_job/components/",
+- system_map.json:L743: "id": "pipeline.training_job.ports",
+- system_map.json:L744: "path": "pipeline/training_job/ports/",
+- system_map.json:L753: "id": "pipeline.training_job.adapters.kfp_orchestrator",
+- system_map.json:L754: "path": "pipeline/training_job/adapters/kfp_orchestrator.py",
+- system_map.json:L757: "depends_on": ["pipeline.training_job.ports"],
+- system_map.json:L763: "id": "pipeline.data_job.main",
+- system_map.json:L764: "path": "pipeline/data_job/main.py",
+- system_map.json:L767: "depends_on": ["pipeline.data_job.components"],
+- system_map.json:L773: "id": "pipeline.data_job.components",
+- system_map.json:L774: "path": "pipeline/data_job/components/",
+- system_map.json:L777: "depends_on": ["pipeline.data_job.ports"],
+- system_map.json:L783: "id": "pipeline.data_job.ports",
+- system_map.json:L784: "path": "pipeline/data_job/ports/",
+- system_map.json:L793: "id": "pipeline.data_job.adapters",
+- system_map.json:L794: "path": "pipeline/data_job/adapters/",
+- system_map.json:L797: "depends_on": ["pipeline.data_job.ports"],
+- system_map.json:L803: "id": "pipeline.data_job.dataform",
+- system_map.json:L804: "path": "pipeline/data_job/dataform/",
+- system_map.json:L813: "id": "pipeline.labeling_job.main",
+- system_map.json:L814: "path": "pipeline/labeling_job/main.py",
+- system_map.json:L823: "id": "pipeline.training_dataset_job.main",
+- system_map.json:L824: "path": "pipeline/training_dataset_job/main.py",
+- system_map.json:L833: "id": "pipeline.evaluation_job.main",
+- system_map.json:L834: "path": "pipeline/evaluation_job/main.py",
+- system_map.json:L843: "id": "pipeline.batch_serving_job.main",
+- system_map.json:L844: "path": "pipeline/batch_serving_job/main.py",
+- system_map.json:L856: "responsibility": "KFP compile + Vertex PipelineJob submit helpers shared across data/training jobs.",
+- system_map.json:L866: "responsibility": "Cloud Function HTTP entrypoint to submit Vertex PipelineJobs (smoke/manual alternative).",
+- system_map.json:L889: "side_effects": ["http_call", "queue_publish"],
+- system_map.json:L897: "depends_on": ["pipeline.dags._common", "pipeline.dags._pod", "scripts.ops.slo_status"],
+- system_map.json:L949: "side_effects": ["db_read", "queue_publish"],
+- system_map.json:L1042: "Reranker timeout → propagates"
+- system_map.json:L1067: {"module_id": "pipeline.data_job.dataform", "action": "Run Dataform: sources → staging → features → monitoring SQL refresh feature_mart.*."},
+- system_map.json:L1085: {"module_id": "pipeline.training_job.main", "action": "Pipeline runs: load_features (BQ JOIN) → train_reranker → evaluate (NDCG@10 gate) → register_reranker (conditional)."},
+- system_map.json:L1088: {"module_id": "pipeline.training_job.components", "action": "evaluate → register_reranker: Vertex Model Registry upload + Endpoint traffic split (if gate passed)."},
+- system_map.json:L1089: {"module_id": "scripts.ops.vertex.pipeline_wait", "action": "Block until PipelineJob SUCCEEDED."},
+- system_map.json:L1094: "Empty ranking_labels frame → load_features fails (root cause: labeling job didn't run / ordering violation)",
+- system_map.json:L1105: {"module_id": "pipeline.dags.monitoring_validation", "action": "BigQueryInsertJobOperator runs validate_feature_skew.sql → mlops.validation_results."},
+- system_map.json:L1106: {"module_id": "pipeline.dags.monitoring_validation", "action": "BigQueryInsertJobOperator runs validate_model_output_drift.sql → mlops.model_monitoring_alerts."},
+- system_map.json:L1107: {"module_id": "scripts.ops.slo_status", "action": "Check SLO + burn-rate (Cloud Monitoring) and emit alerts."}
+- system_map.json:L1119: "trigger": "CLI `python -m pipeline.labeling_job.main` (invoked by `make label-build` in run-all)",
+- system_map.json:L1134: "trigger": "Manual: `python -m pipeline.data_job.main submit` (or future Composer DAG)",
+- system_map.json:L1136: {"module_id": "pipeline.data_job.components", "action": "load_properties (BQ → properties_cleaned slice)."},
+- system_map.json:L1137: {"module_id": "pipeline.data_job.components", "action": "batch_predict_embeddings (Vertex BatchPrediction on ME5)."},
+- system_map.json:L1138: {"module_id": "pipeline.data_job.components", "action": "write_embeddings (BQ feature_mart.property_embeddings upsert)."},
+- system_map.json:L1139: {"module_id": "pipeline.data_job.adapters", "action": "upsert_vector_search → Vertex Vector Search index (skip if index unset)."}
+- system_map.json:L1151: "trigger": "Dataflow streaming job: `python -m ml.streaming.pipeline --streaming ...`",
+- system_map.json:L1167: "trigger": "HTTP POST /ops/jobs/check-retrain (Composer task + Cloud Scheduler monthly smoke + manual)",
+- system_map.json:L1220: {"name": "VectorSearchWriter (pipeline.data_job.ports)", "implementations": ["VertexVectorSearchWriter", "InMemoryVectorSearchWriter"]},
+- system_map.json:L1222: {"name": "PipelineOrchestrator (pipeline.training_job.ports)", "implementations": ["KfpOrchestrator"]},
+- system_map.json:L1241: {"area": "Composer cron cannibalization", "issue": "Cloud Scheduler retains /jobs/check-retrain trigger. CLAUDE.md explicitly forbids it from acting as a parallel scheduler (would double-fire retrain).", "severity": "med"},
+- system_map.json:L1242: {"area": "Stub pipelines", "issue": "pipeline.evaluation_job.main and pipeline.batch_serving_job.main are KFP stubs with `del project_id` — they compile but do nothing. README/docs imply offline eval is wired.", "severity": "med"},
+- system_map.json:L1253: "Does pipeline.evaluation_job.main get wired before Wave 5 dashboard goes GA, or does the dashboard rely on training_runs only?",
+- system_map.json:L1255: "Is the retrain-trigger Pub/Sub topic actually subscribed to anything in canonical mode, or is it dead-letter telemetry for the smoke endpoint?",
+- tests/e2e/live_acceptance_checks.py:L23: timeout=120,
+- tests/e2e/live_acceptance_checks.py:L41: _run(repo_root, ["make", "ops-search-components"], timeout=300)
+- tests/e2e/live_acceptance_checks.py:L45: timeout=300,
+- tests/e2e/live_acceptance_checks.py:L47: _run(repo_root, ["make", "ops-vertex-feature-group"], timeout=300)
+- tests/e2e/live_acceptance_checks.py:L48: _run(repo_root, ["make", "ops-feedback"], timeout=300)
+- tests/e2e/live_acceptance_checks.py:L49: _run(repo_root, ["make", "ops-ranking"], timeout=300)
+- tests/e2e/live_acceptance_checks.py:L50: _run(repo_root, ["make", "ops-accuracy-report"], timeout=300)
+- tests/e2e/live_acceptance_checks.py:L53: def _run(repo_root: Path, cmd: list[str], *, timeout: int) -> None:
+- tests/e2e/live_acceptance_checks.py:L60: timeout=timeout,
+- tests/e2e/test_full_recreate_gate.py:L45: def _run(cmd: list[str], *, timeout: int) -> None:
+- tests/e2e/test_full_recreate_gate.py:L52: timeout=timeout,
+- tests/e2e/test_full_recreate_gate.py:L62: _run(["make", "destroy-all"], timeout=1800)
+- tests/e2e/test_full_recreate_gate.py:L63: _run(["make", "deploy-all"], timeout=3600)
+- tests/integration/infra/test_workflows_structure.py:L34: "deploy-training-job.yml",
+- tests/integration/infra/test_workflows_structure.py:L35: "deploy-embedding-job.yml",
+- tests/integration/infra/test_workflows_structure.py:L48: """KFP 移行で deleted the Cloud Run Jobs `training-job` / `embedding-job`.
+- tests/integration/infra/test_workflows_structure.py:L89: assert "infra/run/jobs/training/Dockerfile" in text
+- tests/integration/infra/test_workflows_structure.py:L95: assert "pipeline/data_job/**" in text
+- tests/integration/infra/test_workflows_structure.py:L96: assert "pipeline/training_job/**" in text
+- tests/integration/infra/test_workflows_structure.py:L106: new image via ``kubectl set image`` + ``kubectl rollout status`` (not
+- tests/integration/infra/test_workflows_structure.py:L121: assert "rollout status" in text, (
+- tests/integration/infra/test_workflows_structure.py:L122: "`kubectl rollout status` must gate the CI step on successful rollout."
+- tests/integration/parity/test_api_route_prefixes.py:L13: 旧 ``/search`` / ``/feedback`` / ``/jobs/check-retrain`` / ``/model/*`` は
+- tests/integration/parity/test_api_route_prefixes.py:L46: "/jobs/check-retrain": "/ops/jobs/check-retrain",
+- tests/integration/parity/test_api_route_prefixes.py:L128: "/ops/jobs/check-retrain",
+- tests/integration/parity/test_api_route_prefixes.py:L145: if old_path in {"/search", "/feedback", "/jobs/check-retrain"}
+- tests/integration/parity/test_api_route_prefixes.py:L150: assert response.status_code == 307, (
+- tests/integration/parity/test_api_route_prefixes.py:L151: f"{old_path}: expected 307, got {response.status_code}"
+- tests/integration/parity/test_api_route_prefixes.py:L189: "/ops/jobs/check-retrain",
+- tests/integration/parity/test_dataform_workflow_settings.py:L1: """The Dataform repo root file `pipeline/data_job/dataform/workflow_settings.yaml` is not
+- tests/integration/parity/test_feature_parity_ranking.py:L24: REPO_ROOT / "pipeline" / "data_job" / "dataform" / "features" / "property_features_daily.sqlx"
+- tests/integration/workflow/test_composer_dags_contract.py:L120: "scripts.ops.slo_status": "scripts/ops/slo_status.py",
+- tests/integration/workflow/test_composer_dags_contract.py:L135: """`pipeline/dags/` は `app.*` import 禁止 (Composer worker reparse 軽量化)。"""
+- tests/integration/workflow/test_composer_module_contract.py:L104: def test_composer_environment_has_proper_create_destroy_timeouts() -> None:
+- tests/integration/workflow/test_composer_module_contract.py:L112: """Composer worker `max_count` 指定で autoscaling 上限を pin (コスト爆発防止)。"""
+- tests/integration/workflow/test_composer_module_contract.py:L114: worker_match = re.search(
+- tests/integration/workflow/test_composer_module_contract.py:L115: r"worker\s*\{[^}]*max_count\s*=\s*(\d+)",
+- tests/integration/workflow/test_composer_module_contract.py:L119: assert worker_match is not None
+- tests/integration/workflow/test_composer_module_contract.py:L120: max_count = int(worker_match.group(1))
+- tests/integration/workflow/test_composer_module_contract.py:L122: f"Composer worker.max_count={max_count} is outside sane range for dev (1-5)"
+- tests/integration/workflow/test_composer_module_contract.py:L126: def test_composer_module_workloads_config_has_scheduler_web_worker() -> None:
+- tests/integration/workflow/test_composer_module_contract.py:L128: for required in ("scheduler {", "web_server {", "worker {"):
+- tests/integration/workflow/test_composer_module_contract.py:L214: '"roles/composer.worker"',
+- tests/integration/workflow/test_composer_module_contract.py:L216: '"roles/bigquery.jobUser"',
+- tests/integration/workflow/test_composer_module_contract.py:L364: """`apache-airflow` は Composer worker で動く想定 — runtime / dev deps 不要。"""
+- tests/integration/workflow/test_composer_module_contract.py:L374: "apache-airflow must NOT be in [project] dependencies (Composer worker only). "
+- tests/integration/workflow/test_deploy_all_contract.py:L246: 既デプロイ済 v2 が「absent になるのを待ち続ける」15 min timeout で fail。
+- tests/integration/workflow/test_destroy_all_contract.py:L72: `make deploy-all` step 6 で 15 min wait timeout で fail。`deploy-all` 側
+- tests/integration/workflow/test_destroy_all_contract.py:L131: response` and the step failed with no retry, stalling the entire pipeline.
+- tests/integration/workflow/test_destroy_all_contract.py:L166: "(2026-05-09 incident: ECK ApplyingChanges → HTTP API unreachable → step fail no retry)"
+- tests/integration/workflow/test_destroy_all_contract.py:L316: def test_no_vertex_pipeline_job_schedule_resource_in_terraform() -> None:
+- tests/integration/workflow/test_destroy_all_contract.py:L317: """カニバリ NG: Vertex `PipelineJobSchedule` は canonical 構成 で完全撤去
+- tests/integration/workflow/test_destroy_all_contract.py:L322: forbidden_patterns = ("google_vertex_ai_pipeline_job_schedule", "PipelineJobSchedule")
+- tests/integration/workflow/test_docs_canonical_contract.py:L7: - substantive な不変ルール (Composer 本線 = Vertex PipelineJobSchedule 完全撤去 等) は CLAUDE.md /
+- tests/integration/workflow/test_docs_canonical_contract.py:L68: "ops/vertex/{models_list,pipeline_status,vector_search,feature_group,monitoring,explain}.py",
+- tests/integration/workflow/test_docs_canonical_contract.py:L79: substantive な不変ルール (Vertex `PipelineJobSchedule` 完全撤去 = 二重起動禁止) は CLAUDE.md /
+- tests/integration/workflow/test_docs_canonical_contract.py:L90: "CLAUDE.md must pin 'Vertex PipelineJobSchedule は完全撤去 (二重起動禁止)'"
+- tests/integration/workflow/test_docs_canonical_contract.py:L92: assert "PipelineJobSchedule" in roadmap, (
+- tests/integration/workflow/test_docs_canonical_contract.py:L93: "TASKS_ROADMAP must pin the Composer = 上位 / Vertex Pipelines = 下位 / PipelineJobSchedule 併存禁止 rule"
+- tests/integration/workflow/test_ground_truth_contract.py:L58: pipeline_main = _read("pipeline/training_job/main.py")
+- tests/integration/workflow/test_ground_truth_contract.py:L59: load_features = _read("pipeline/training_job/components/load_features.py")
+- tests/integration/workflow/test_ground_truth_contract.py:L79: dataform = _read("pipeline/data_job/dataform/features/property_features_daily.sqlx")
+- tests/integration/workflow/test_infra_apis_contract.py:L40: "google_cloud_scheduler_job": "cloudscheduler.googleapis.com",
+- tests/integration/workflow/test_infra_apis_contract.py:L96: 時間影響: race で全 apply が無効化されると最大 30-40 min の retry コスト。
+- tests/integration/workflow/test_infra_apis_contract.py:L116: "ops-vertex-all: ops-vertex-models-list ops-vertex-pipeline-status "
+- tests/integration/workflow/test_local_workflow_contract.py:L96: 'target.call("POST", "/ops/jobs/check-retrain")',
+- tests/integration/workflow/test_vertex_resources_contract.py:L5: + Cloud Scheduler / Cloud Function / Eventarc / `/jobs/check-retrain` の
+- tests/unit/app/test_adapters.py:L17: def _fake_httpx_client(response_json: Any, *, status_code: int = 200) -> MagicMock:
+- tests/unit/app/test_adapters.py:L19: fake_response.status_code = status_code
+- tests/unit/app/test_adapters.py:L22: fake_response.raise_for_status.return_value = None
+- tests/unit/app/test_adapters.py:L268: fake_response.status_code = 502
+- tests/unit/app/test_adapters.py:L272: fake_response.raise_for_status.return_value = None
+- tests/unit/app/test_api_contract_template.py:L60: assert r.status_code == 200
+- tests/unit/app/test_api_contract_template.py:L61: assert r.json().get("status") == "ready"
+- tests/unit/app/test_api_contract_template.py:L66: assert r.status_code == 200
+- tests/unit/app/test_api_contract_template.py:L72: assert r.status_code == 200
+- tests/unit/app/test_api_contract_template.py:L78: assert r.status_code == 200
+- tests/unit/app/test_api_contract_template.py:L90: assert r.status_code == 200
+- tests/unit/app/test_api_contract_template.py:L98: assert r.status_code == 422
+- tests/unit/app/test_api_contract_template.py:L109: assert r.status_code == 422
+- tests/unit/app/test_api_contract_template.py:L118: assert r.status_code == 422
+- tests/unit/app/test_api_contract_template.py:L127: assert r.status_code == 503
+- tests/unit/app/test_bq_retrain_queries.py:L47: job_config = client.query.call_args.kwargs["job_config"]
+- tests/unit/app/test_bq_retrain_queries.py:L48: params = {p.name: p.value for p in job_config.query_parameters}
+- tests/unit/app/test_check_retrain_endpoint.py:L49: r = client.post("/ops/jobs/check-retrain")
+- tests/unit/app/test_check_retrain_endpoint.py:L50: assert r.status_code == 200
+- tests/unit/app/test_check_retrain_endpoint.py:L66: r = client.post("/ops/jobs/check-retrain")
+- tests/unit/app/test_check_retrain_endpoint.py:L67: assert r.status_code == 200
+- tests/unit/app/test_check_retrain_endpoint.py:L85: r = client.post("/ops/jobs/check-retrain")
+- tests/unit/app/test_elasticsearch_lexical.py:L21: mock_resp.raise_for_status = MagicMock()
+- tests/unit/app/test_elasticsearch_lexical.py:L40: mock_resp.raise_for_status.side_effect = RuntimeError("upstream failure")
+- tests/unit/app/test_event_repositories.py:L12: job = MagicMock()
+- tests/unit/app/test_event_repositories.py:L13: job.result.return_value = list(rows)
+- tests/unit/app/test_event_repositories.py:L14: return job
+- tests/unit/app/test_event_repositories.py:L43: job_config = client.query.call_args.kwargs["job_config"]
+- tests/unit/app/test_event_repositories.py:L44: params = {param.name: param.value for param in job_config.query_parameters}
+- tests/unit/app/test_event_repositories.py:L113: params = client.query.call_args.kwargs["job_config"].query_parameters
+- tests/unit/app/test_feedback_handler_http.py:L12: assert response.status_code == 200
+- tests/unit/app/test_feedback_handler_http.py:L27: assert response.status_code == 422
+- tests/unit/app/test_feedback_handler_http.py:L42: assert response.status_code == 200, action
+- tests/unit/app/test_health_handler.py:L8: assert response.status_code == 200
+- tests/unit/app/test_health_handler.py:L9: assert response.json() == {"status": "ok"}
+- tests/unit/app/test_health_handler.py:L14: assert response.status_code == 200
+- tests/unit/app/test_health_handler.py:L19: assert response.status_code == 200
+- tests/unit/app/test_health_handler.py:L21: assert body["status"] == "ready"
+- tests/unit/app/test_health_handler.py:L31: assert response.status_code == 503
+- tests/unit/app/test_health_handler.py:L32: assert response.json()["status"] == "loading"
+- tests/unit/app/test_kserve_wiring.py:L31: "kserve_predict_timeout_seconds": 30.0,
+- tests/unit/app/test_kserve_wiring.py:L60: assert settings.kserve_predict_timeout_seconds == 30.0
+- tests/unit/app/test_kserve_wiring.py:L64: assert settings.kserve.predict_timeout_seconds == 30.0
+- tests/unit/app/test_kserve_wiring.py:L84: monkeypatch.setenv("KSERVE_PREDICT_TIMEOUT_SECONDS", "45.0")
+- tests/unit/app/test_kserve_wiring.py:L90: assert settings.kserve_predict_timeout_seconds == 45.0
+- tests/unit/app/test_kserve_wiring.py:L94: assert settings.kserve.predict_timeout_seconds == 45.0
+- tests/unit/app/test_logging_middleware.py:L14: assert r.status_code == 200
+- tests/unit/app/test_logging_middleware.py:L21: assert r.status_code == 200
+- tests/unit/app/test_logging_middleware.py:L32: assert r.status_code == 200
+- tests/unit/app/test_main_routing.py:L58: assert r.status_code == 308
+- tests/unit/app/test_main_routing.py:L65: assert r.status_code == 200
+- tests/unit/app/test_main_routing.py:L73: assert r.status_code == 200
+- tests/unit/app/test_main_routing.py:L80: assert r.status_code == 200
+- tests/unit/app/test_main_routing.py:L87: assert r.status_code == 200
+- tests/unit/app/test_main_routing.py:L94: assert r.status_code == 200
+- tests/unit/app/test_main_routing.py:L109: assert r.status_code == 200
+- tests/unit/app/test_main_routing.py:L120: ``metric.label."status"=monitoring.regex.full_match("2..")``. If the
+- tests/unit/app/test_main_routing.py:L131: assert any('service="search-api"' in s and 'status="2xx"' in s for s in samples), (
+- tests/unit/app/test_main_routing.py:L138: assert client.get("/livez").status_code == 200
+- tests/unit/app/test_main_routing.py:L139: assert client.get("/healthz").status_code == 200
+- tests/unit/app/test_model_handler.py:L73: assert res.status_code == 200, res.text
+- tests/unit/app/test_model_handler.py:L94: assert res.status_code == 503
+- tests/unit/app/test_model_handler.py:L106: assert res.status_code == 422
+- tests/unit/app/test_model_handler.py:L117: assert res.status_code == 200
+- tests/unit/app/test_model_handler.py:L134: assert res.status_code == 200
+- tests/unit/app/test_ops_handler.py:L38: assert res.status_code == 200
+- tests/unit/app/test_ops_handler.py:L61: assert res.status_code == 200
+- tests/unit/app/test_ops_handler.py:L84: assert res.status_code == 200
+- tests/unit/app/test_ops_handler.py:L100: assert res.status_code == 503
+- tests/unit/app/test_ops_handler.py:L114: assert res.status_code == 503
+- tests/unit/app/test_pubsub_event_writer.py:L67: fake_future.result.assert_called_once_with(timeout=5)
+- tests/unit/app/test_search_api.py:L35: assert r.status_code == 200
+- tests/unit/app/test_search_api.py:L55: assert r.status_code == 200
+- tests/unit/app/test_search_api.py:L68: assert r.status_code == 200
+- tests/unit/app/test_search_api.py:L76: assert r.status_code == 422
+- tests/unit/app/test_search_api.py:L85: assert r.status_code == 503
+- tests/unit/app/test_search_api.py:L96: assert r.status_code == 200
+- tests/unit/app/test_search_api.py:L113: assert r.status_code == 422
+- tests/unit/app/test_search_api.py:L121: assert r.status_code == 200
+- tests/unit/app/test_search_api.py:L123: assert body["status"] == "ready"
+- tests/unit/app/test_search_api.py:L133: assert r.status_code == 503
+- tests/unit/app/test_search_api.py:L142: assert r.status_code == 503
+- tests/unit/app/test_search_api.py:L150: assert r.status_code == 200
+- tests/unit/app/test_search_api.py:L151: assert r.json() == {"status": "ok"}
+- tests/unit/app/test_search_api.py:L202: assert r.status_code == 200
+- tests/unit/app/test_search_handler_http.py:L44: assert response.status_code == 200, response.text
+- tests/unit/app/test_search_handler_http.py:L81: assert response.status_code == 503
+- tests/unit/app/test_search_handler_http.py:L95: assert response.status_code == 200, response.text
+- tests/unit/app/test_search_handler_http.py:L116: assert response.status_code == 200, response.text
+- tests/unit/arch/test_import_boundaries.py:L11: (top-level), ``ml/<feature>/ports/`` and ``pipeline/<job>/ports/``
+- tests/unit/ml/data/test_bigquery_ranker_repository.py:L56: job_config = client.query.call_args.kwargs["job_config"]
+- tests/unit/ml/data/test_bigquery_ranker_repository.py:L57: params = {p.name: p.value for p in job_config.query_parameters}
+- tests/unit/pipeline/dags/test_dag_files.py:L3: Composer (Airflow Gen 3) は Composer worker 上で実行されるため、ローカル CI で
+- tests/unit/pipeline/dags/test_dag_files.py:L13: Composer worker に uv / repo source が無く `BashOperator: uv run python -m`
+- tests/unit/pipeline/dags/test_dag_files.py:L70: Composer worker に uv / repo source が無いため `BashOperator(bash_command="uv
+- tests/unit/pipeline/dags/test_dag_files.py:L74: / BigQueryInsertJobOperator 等) を使う契約。
+- tests/unit/pipeline/dags/test_dag_files.py:L78: f"{dag_file}: BashOperator は禁止 (V5 fix §4.1、Composer worker 非互換)"
+- tests/unit/pipeline/dags/test_dag_files.py:L84: f"{dag_file}: 'uv run python' は禁止 (Composer worker に uv 不在)"
+- tests/unit/pipeline/dags/test_dag_files.py:L113: / BigQueryInsertJobOperator 等) のみで task を構成する契約。"""
+- tests/unit/pipeline/dags/test_dag_files.py:L118: or "BigQueryInsertJobOperator" in text
+- tests/unit/pipeline/test_data_job_dag_wiring.py:L1: """Composition wiring for ``data_job`` DAG (canonical 構成 PR-3).
+- tests/unit/pipeline/test_data_job_dag_wiring.py:L8: NOTE on test strategy: ``pipeline.data_job.main`` cannot be imported
+- tests/unit/pipeline/test_data_job_dag_wiring.py:L23: MAIN_PATH = Path(__file__).resolve().parents[3] / "pipeline" / "data_job" / "main.py"
+- tests/unit/pipeline/test_data_job_dag_wiring.py:L83: assert "upsert_vector_search" in src.split("from pipeline.data_job.components import")[1]
+- tests/unit/pipeline/test_ground_truth_jobs.py:L11: def test_labeling_job_builds_labels_from_impressions_and_actions(monkeypatch) -> None:
+- tests/unit/pipeline/test_ground_truth_jobs.py:L12: from pipeline.labeling_job import main as module
+- tests/unit/pipeline/test_ground_truth_jobs.py:L85: def test_training_dataset_job_exports_relevance_label_csv(monkeypatch, tmp_path: <redacted>
+- tests/unit/pipeline/test_ground_truth_jobs.py:L86: from pipeline.training_dataset_job import main as module
+- tests/unit/pipeline/test_kfp_orchestrator.py:L13: from pipeline.training_job.adapters import KFPOrchestrator
+- tests/unit/pipeline/test_kfp_orchestrator.py:L14: from pipeline.training_job.ports import (
+- tests/unit/pipeline/test_pipeline_trigger.py:L7: _build_job_id,
+- tests/unit/pipeline/test_pipeline_trigger.py:L55: def test_build_job_id_uses_prefix() -> None:
+- tests/unit/pipeline/test_pipeline_trigger.py:L56: job_id = _build_job_id("property-train")
+- tests/unit/pipeline/test_pipeline_trigger.py:L58: assert job_id.startswith("property-train-")
+- tests/unit/pipeline/test_pipeline_trigger.py:L59: assert len(job_id.split("-")) >= 4
+- tests/unit/pipeline/test_vector_search_writer.py:L20: from pipeline.data_job.adapters.in_memory_vector_search_writer import (
+- tests/unit/pipeline/test_vector_search_writer.py:L23: from pipeline.data_job.adapters.vertex_vector_search_writer import (
+- tests/unit/pipeline/test_vector_search_writer.py:L26: from pipeline.data_job.ports.vector_search_writer import EmbeddingDatapoint
+- tests/unit/scripts/test_adapters.py:L30: def test_kubectl_run_forwards_capture_check_timeout() -> None:
+- tests/unit/scripts/test_adapters.py:L32: kubectl_run("version", capture=True, check=False, timeout=10)
+- tests/unit/scripts/test_adapters.py:L37: "timeout": 10,
+- tests/unit/scripts/test_adapters.py:L80: def test_gcloud_run_forwards_capture_check_timeout() -> None:
+- tests/unit/scripts/test_adapters.py:L82: gcloud_run("auth", "print-access-token", capture= <redacted>
+- tests/unit/scripts/test_adapters.py:L87: "timeout": 10,
+- tests/unit/scripts/test_deploy_all_step_timing.py:L180: "scripts.setup.tf_apply.run_terraform_streaming_with_lock_retry",
+- tests/unit/scripts/test_deploy_all_step_timing.py:L308: """Precondition failures (e.g. ECK 5-min timeout) must surface as a step
+- tests/unit/scripts/test_deploy_all_step_timing.py:L315: raise TimeoutError("simulated ECK reconcile stall")
+- tests/unit/scripts/test_deploy_all_step_timing.py:L335: pytest.raises(TimeoutError, match="simulated ECK reconcile stall"),
+- tests/unit/scripts/test_elasticsearch_wait.py:L4: not start until ECK Elasticsearch CR `.status.health` is green or yellow.
+- tests/unit/scripts/test_elasticsearch_wait.py:L40: assert wait_until_es_healthy(timeout_s=60) == "green"
+- tests/unit/scripts/test_elasticsearch_wait.py:L54: assert wait_until_es_healthy(timeout_s=60) == "yellow"
+- tests/unit/scripts/test_elasticsearch_wait.py:L65: if "{.status.health}" in args[-1]:
+- tests/unit/scripts/test_elasticsearch_wait.py:L80: assert wait_until_es_healthy(timeout_s=60) == "green"
+- tests/unit/scripts/test_elasticsearch_wait.py:L83: def test_wait_raises_timeout_on_stuck_unknown() -> None:
+- tests/unit/scripts/test_elasticsearch_wait.py:L86: Verify we raise TimeoutError pointing at the troubleshooting doc rather
+- tests/unit/scripts/test_elasticsearch_wait.py:L99: pytest.raises(TimeoutError, match="eck-license-reconcile-stall"),
+- tests/unit/scripts/test_elasticsearch_wait.py:L101: wait_until_es_healthy(timeout_s=60)
+- tests/unit/scripts/test_infra_feature_view_sync.py:L37: def _fake_urlopen(req, timeout=60):
+- tests/unit/scripts/test_infra_feature_view_sync.py:L54: "finalStatus": {"code": 0},
+- tests/unit/scripts/test_infra_feature_view_sync.py:L70: timeout_sec=30,
+- tests/unit/scripts/test_monitor.py:L49: def test_build_wait_regex_extracts_build_id_and_timeout() -> None:
+- tests/unit/scripts/test_monitor.py:L50: line = "[3/4] Cloud Build wait id=abc-123-def timeout=1800s"
+- tests/unit/scripts/test_monitor.py:L57: def test_build_wait_regex_requires_numeric_timeout() -> None:
+- tests/unit/scripts/test_monitor.py:L58: # Missing timeout value → no match (monitor would not start build tracking)
+- tests/unit/scripts/test_monitor.py:L59: assert _BUILD_WAIT_RE.search("Cloud Build wait id=xyz timeout=") is None
+- tests/unit/scripts/test_monitor.py:L68: state.current_build_timeout_sec = 1200
+- tests/unit/scripts/test_monitor.py:L77: assert state.current_build_timeout_sec == 0
+- tests/unit/scripts/test_monitor.py:L92: "[3/4] Cloud Build wait id=build-xyz timeout=1800s",
+- tests/unit/scripts/test_monitor.py:L97: assert state.current_build_timeout_sec == 1800
+- tests/unit/scripts/test_monitor.py:L105: assert state.current_build_timeout_sec == 0
+- tests/unit/scripts/test_setup_policy_guard.py:L46: assert "rollout status" in api_gke
+- tests/unit/scripts/test_setup_policy_guard.py:L67: itself was unusable for individual step retry — exactly the slicing
+- tests/unit/scripts/test_step_timing.py:L46: assert "tf-plan" not in base  # only status == "ok" rows count
+- tests/unit/scripts/test_vertex_feature_store_wait.py:L32: timeout_seconds=5,
+- tests/unit/scripts/test_vertex_feature_store_wait.py:L61: timeout_seconds=1,
+- tests/unit/scripts/test_vertex_ops_scripts.py:L20: def test_ops_search_retries_transient_timeout(monkeypatch, capsys) -> None:
+- tests/unit/scripts/test_vertex_ops_scripts.py:L22: monkeypatch.setenv("SEARCH_RETRY_SLEEP", "0")
+- tests/unit/scripts/test_vertex_ops_scripts.py:L30: raise TimeoutError("timed out")
+- tests/unit/scripts/test_vertex_ops_scripts.py:L41: def test_ops_search_fails_after_retry_budget(monkeypatch, capsys) -> None:
+- tests/unit/scripts/test_vertex_ops_scripts.py:L43: monkeypatch.setenv("SEARCH_RETRY_SLEEP", "0")
+- tests/unit/scripts/test_vertex_ops_scripts.py:L269: "finalStatus": {"code": 0},
+- tests/unit/scripts/test_vertex_ops_scripts.py:L341: monkeypatch.setenv("PIPELINE_WAIT_TIMEOUT_SECONDS", "5")
+- tests/unit/scripts/test_vertex_ops_scripts.py:L351: fake_ai.PipelineJob = MagicMock()
+- tests/unit/scripts/test_vertex_ops_scripts.py:L364: "Job",
+- tests/unit/scripts/test_vertex_ops_scripts.py:L369: "resource_name": "projects/x/locations/r/pipelineJobs/run-1",
+- tests/unit/scripts/test_vertex_ops_scripts.py:L373: monkeypatch.setattr(pipeline_wait, "_latest_job", fake_latest)
+- tests/unit/scripts/test_vertex_ops_scripts.py:L386: monkeypatch.setenv("PIPELINE_WAIT_TIMEOUT_SECONDS", "5")
+- tests/unit/scripts/test_vertex_ops_scripts.py:L396: fake_ai.PipelineJob = MagicMock()
+- tests/unit/scripts/test_vertex_ops_scripts.py:L405: "Job",
+- tests/unit/scripts/test_vertex_ops_scripts.py:L410: "resource_name": "projects/x/locations/r/pipelineJobs/run-gcp",
+- tests/unit/scripts/test_vertex_ops_scripts.py:L414: monkeypatch.setattr(pipeline_wait, "_latest_job", fake_latest)
+- tests/unit/scripts/test_vertex_ops_scripts.py:L426: monkeypatch.setenv("PIPELINE_WAIT_TIMEOUT_SECONDS", "5")
+- tests/unit/scripts/test_vertex_ops_scripts.py:L434: fake_ai.PipelineJob = MagicMock()
+- tests/unit/scripts/test_vertex_ops_scripts.py:L443: "Job",
+- tests/unit/scripts/test_vertex_ops_scripts.py:L448: "resource_name": "projects/x/locations/r/pipelineJobs/run-1",
+- tests/unit/scripts/test_vertex_ops_scripts.py:L452: monkeypatch.setattr(pipeline_wait, "_latest_job", fake_latest)
+- tools/check_docker_layout.py:L34: "2/study-ml-app-pipeline/infra/run/jobs/trainer/Dockerfile",
+- tools/check_docker_layout.py:L36: "3/study-hybrid-search-local/infra/run/jobs/pipeline/Dockerfile",
+- tools/check_docker_layout.py:L118: and parts[2] in {"jobs", "services"}
+- tools/check_docker_layout.py:L147: status = "OK" if c.ok else "NG"
+- tools/check_docker_layout.py:L148: print(f"[{status}] {c.message}")

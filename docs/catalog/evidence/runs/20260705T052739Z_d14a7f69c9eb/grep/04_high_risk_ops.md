@@ -1,0 +1,607 @@
+# grep: high_risk_ops
+
+evidence_id: ev.grep.high_risk_ops
+description: delete / drop / truncate / migration
+
+- .claude/settings.local.json:L5: "Bash(awk '/^def /{if\\(prev\\){print prev_line, NR-prev_line, \"lines\"} prev=$2; prev_line=NR}' scripts/setup/destroy_all.py)"
+- .github/workflows/terraform.yml:L63: const truncated = text.length > 60000 ? text.substring(0, 60000) + '\n...(truncated)' : text;
+- .github/workflows/terraform.yml:L68: body: `### Terraform Plan\n\`\`\`\n${truncated}\n\`\`\``
+- app/api/routers/ops_router.py:L12: DestroyCheckFindingResponse,
+- app/api/routers/ops_router.py:L13: DestroyCheckResponse,
+- app/api/routers/ops_router.py:L14: DestroyCheckSummaryResponse,
+- app/api/routers/ops_router.py:L20: from scripts.ops.destroy_check import collect_findings
+- app/api/routers/ops_router.py:L23: # 本ファイルは prefix を持たず、内部 path のみを定義する (``/destroy-check`` 等)。
+- app/api/routers/ops_router.py:L53: @router.get("/destroy-check", response_model=DestroyCheckResponse)
+- app/api/routers/ops_router.py:L54: def destroy_check(
+- app/api/routers/ops_router.py:L58: ) -> DestroyCheckResponse:
+- app/api/routers/ops_router.py:L68: return DestroyCheckResponse(
+- app/api/routers/ops_router.py:L72: summary=DestroyCheckSummaryResponse(
+- app/api/routers/ops_router.py:L80: DestroyCheckFindingResponse(
+- app/main.py:L13: ``/ops/model/metrics`` ``/ops/destroy-check`` ``/ops/search-volume``
+- app/main.py:L22: client-migration buffer; remove after the new prefix is canonical.
+- app/main.py:L123: # Existing ops_router defines ``/destroy-check`` ``/search-volume``
+- app/main.py:L129: ops.include_router(ops_router)  # /ops/destroy-check, /ops/search-volume, /ops/runs-recent
+- app/schemas/ops.py:L8: class DestroyCheckFindingResponse(BaseModel):
+- app/schemas/ops.py:L15: class DestroyCheckSummaryResponse(BaseModel):
+- app/schemas/ops.py:L23: class DestroyCheckResponse(BaseModel):
+- app/schemas/ops.py:L27: summary: DestroyCheckSummaryResponse
+- app/schemas/ops.py:L28: findings: list[DestroyCheckFindingResponse]
+- app/services/adapters/internal/pubsub_diagnostics.py:L59: "H1: topic が存在しない (destroy-all の後など) — "
+- app/services/adapters/kserve_reranker.py:L68: "fallback. Dropping attributions to preserve /search response; fix the "
+- app/services/adapters/pubsub_event_writer.py:L11: (`use_table_schema=true` + `drop_unknown_fields=true`)。新フィールド追加時は
+- app/services/ranking.py:L101: - Replacing the entire dict would drop everything else.
+- app/services/ranking.py:L170: """Execute one search and return ranked candidates truncated to top_k.
+- app/services/retrain_policy.py:L6: (b) recent NDCG@10 dropped by ``NDCG_DEGRADATION`` absolute vs 7 days ago
+- app/services/retrain_policy.py:L23: NDCG_DEGRADATION: float = 0.03  # absolute drop (NDCG ∈ [0, 1])
+- app/services/retrain_policy.py:L71: reasons.append(f"ndcg_drop={delta:.3f}>={thresholds.ndcg_degradation}")
+- app/static/css/pico-admin-layout.css:L19: backdrop-filter: blur(18px);
+- app/static/css/pico-admin-layout.css:L234: .admin-sidebar-backdrop {
+- app/static/css/pico-admin-layout.css:L273: .admin-sidebar-backdrop {
+- app/static/css/pico-admin-layout.css:L280: body[data-sidebar-open="true"] .admin-sidebar-backdrop {
+- app/static/css/pico-admin-theme.css:L45: --pico-dropdown-background-color: var(--admin-bg-elevated);
+- app/static/css/pico-admin-theme.css:L46: --pico-dropdown-border-color: var(--admin-border);
+- app/static/js/search_ui.js:L150: btn.removeAttribute("aria-busy");
+- app/static/js/search_ui.js:L265: button.removeAttribute("aria-busy");
+- app/templates/base.html:L15: <div class="admin-sidebar-backdrop" data-sidebar-backdrop></div>
+- app/templates/base.html:L86: document.querySelector("[data-sidebar-backdrop]")?.addEventListener("click", close);
+- app/templates/data.html:L80: btn.removeAttribute("aria-busy");
+- app/templates/model_metrics.html:L92: btn.removeAttribute("aria-busy");
+- app/templates/ops.html:L5: {% block page_copy %}`destroy-all` 後の削除漏れ、検索件数、直近学習 run を同じ運用コンソールで確認します。{% endblock %}
+- app/templates/ops.html:L136: const [destroyRes, volumeRes, runsRes] = await Promise.all([
+- app/templates/ops.html:L137: fetch("/ops/destroy-check"),
+- app/templates/ops.html:L141: const [destroyBody, volumeBody, runsBody] = await Promise.all([
+- app/templates/ops.html:L142: parseResponseBody(destroyRes),
+- app/templates/ops.html:L146: if (!destroyRes.ok) {
+- app/templates/ops.html:L147: meta.textContent = `error: HTTP ${destroyRes.status}`;
+- app/templates/ops.html:L148: root.innerHTML = `<article class="panel"><pre>${escapeHtml(JSON.stringify(destroyBody, null, 2))}</pre></article>`;
+- app/templates/ops.html:L151: document.getElementById("ops-ok").textContent = destroyBody.summary.ok;
+- app/templates/ops.html:L152: document.getElementById("ops-warn").textContent = destroyBody.summary.warn;
+- app/templates/ops.html:L153: document.getElementById("ops-bad").textContent = destroyBody.summary.fail + destroyBody.summary.error;
+- app/templates/ops.html:L154: meta.textContent = `${destroyBody.project_id} / ${destroyBody.region} / passed=${destroyBody.summary.passed}`;
+- app/templates/ops.html:L155: root.innerHTML = (destroyBody.findings || []).map(renderFinding).join("");
+- app/templates/ops.html:L176: btn.removeAttribute("aria-busy");
+- definitions/synonyms/real_estate_ja.yaml:L19: #   ``synonym_max_synonyms_per_token`` setting truncates further at the
+- infra/manifests/policies/search-api-iap-policy.yaml:L22: #   PDCA dev project を `destroy-all → deploy-all` で何度も回す前提では不適当
+- infra/run/services/composer_runner/Dockerfile:L68: && apt-get purge -y --auto-remove curl gnupg \
+- infra/terraform/environments/dev/apis.tf:L39: disable_on_destroy = false
+- infra/terraform/environments/dev/variables.tf:L93: description = "Toggle BQ table deletion_protection across the data module. Default true (production-safe). `make destroy-all` runs `terraform apply -var=enable_deletion_protection=false` first so the subsequent destroy can proceed (Terraform refuses to destroy a table whose state still says deletion_protection=true)."
+- infra/terraform/environments/dev/variables.tf:L135: ## the override is no longer needed. **Variable removed**; provider.tf no
+- infra/terraform/environments/dev/variables.tf:L199: description = "Provision the Vertex AI Feature Online Store + FeatureView so feature_group.py fetches return featureValues. Default true for the dev PDCA environment; cost is bounded by `make destroy-all` between cycles. Optimized FOS rejects updates; module.vertex ignores drift on optimized/dedicated_serving_endpoint/labels. Live serving hostname for Pods comes from Vertex API in `scripts/deploy/configmap_overlay.py` when terraform output is empty."
+- infra/terraform/environments/dev/variables.tf:L211: description = "Provision the Vertex AI Vector Search index + endpoint + deployed index. Default true for the dev PDCA environment so `make deploy-all` provisions the canonical semantic-search backend without TF_VAR overrides; rely on `make destroy-all` between PDCA cycles to bound replica cost."
+- infra/terraform/environments/dev/variables.tf:L222: # リスクは destroy leak (24h leak ≒ ~¥4,000-6,000, multi-day / monthly は
+- infra/terraform/modules/composer/main.tf:L17: # - destroy 漏れで 1 日放置 (24h) → 約 ¥2,800
+- infra/terraform/modules/composer/main.tf:L20: # 真のリスクは **destroy 漏れ**。1 回の verify そのものは安い。
+- infra/terraform/modules/composer/main.tf:L21: # `make destroy-all` で連鎖 destroy するか、`enable_composer=false` で
+- infra/terraform/modules/composer/main.tf:L39: # destroy → re-create で値が消えるが、env_variables なら terraform
+- infra/terraform/modules/composer/main.tf:L99: # Composer 環境 の create / destroy は GCP 側で 15-25 min / 8-12 min
+- infra/terraform/modules/composer/main.tf:L104: delete = "30m"
+- infra/terraform/modules/composer/variables.tf:L2: description = "Provision the Cloud Composer (Gen 3, Managed Airflow 2.x) environment for canonical 本線 orchestration. Default true; cost is bounded by `make destroy-all` between PDCA cycles. DCU-hour pricing (Gen 3): ~$0.72/h (12 DCU × $0.06) ≒ ~¥115/h. Single 50-65min verify costs ~¥150-300; the real risk is destroy leak (24h leak ≒ ¥2,800, multi-day leak can reach ¥10,000+, full month always-on ≒ ¥84,000)."
+- infra/terraform/modules/data/main.tf:L43: # BigQuery does not support dropping RECORD sub-fields in-place; the legacy
+- infra/terraform/modules/data/main.tf:L73: # removed: google_bigquery_table.predictions_log
+- infra/terraform/modules/data/main.tf:L76: # performing the in-place migration on an existing project must run:
+- infra/terraform/modules/data/main.tf:L462: force_destroy               = false
+- infra/terraform/modules/data/main.tf:L483: force_destroy               = false
+- infra/terraform/modules/data/main.tf:L490: type = "Delete"
+- infra/terraform/modules/data/main.tf:L499: force_destroy               = false
+- infra/terraform/modules/data/variables.tf:L27: description = "GCS bucket name for general-purpose artifacts (code drops, Dataform logs)"
+- infra/terraform/modules/data/variables.tf:L61: description = "Toggle BQ table deletion_protection across the data module. Default true (production-safe). `make destroy-all` flips this to false in a preceding apply so the subsequent terraform destroy can proceed (Terraform refuses to destroy a table whose state still says deletion_protection=true, even if the actual GCP resource was unprotected via bq CLI)."
+- infra/terraform/modules/gke/variables.tf:L18: description = "Cluster deletion protection. Set to false in dev to allow destroy-all"
+- infra/terraform/modules/iam/main.tf:L131: # binding, which causes GMP to silently drop all `prometheus.googleapis.com/*`
+- infra/terraform/modules/kserve/tls_dev.tf:L6: # 2. `destroy-all → deploy-all` is the PDCA dev loop: with TF-managed
+- infra/terraform/modules/kserve/tls_dev.tf:L8: #    `destroy-all` cleanly removes them too.
+- infra/terraform/modules/messaging/main.tf:L87: drop_unknown_fields = true
+- infra/terraform/modules/messaging/main.tf:L107: drop_unknown_fields = true
+- infra/terraform/modules/messaging/main.tf:L127: drop_unknown_fields = true
+- infra/terraform/modules/messaging/main.tf:L147: drop_unknown_fields = true
+- infra/terraform/modules/messaging/main.tf:L167: drop_unknown_fields = true
+- infra/terraform/modules/monitoring/main.tf:L60: force_delete = false
+- infra/terraform/modules/monitoring/main.tf:L146: # removed: ``california_housing_skew_check`` transfer config.
+- infra/terraform/modules/monitoring/main.tf:L147: # Operators on an existing project must delete the old transfer via
+- infra/terraform/modules/monitoring/main.tf:L149: # otherwise the destroy leaves the config orphaned. See ``docs/runbook/05_運用.md
+- infra/terraform/modules/monitoring/main.tf:L150: # §3.9`` for the full migration checklist.
+- infra/terraform/modules/streaming/main.tf:L90: on_delete = "cancel"
+- infra/terraform/modules/vector_search/main.tf:L58: # `destroy-all` で **state rm + GCP 残置** する (Terraform 依存閉包で
+- infra/terraform/modules/vector_search/main.tf:L59: # `lifecycle.prevent_destroy = true` だけでは依存元 resource の destroy が
+- infra/terraform/modules/vector_search/main.tf:L60: # 連鎖して `Instance cannot be destroyed` で全体 destroy が止まる事故を
+- infra/terraform/modules/vector_search/main.tf:L61: # 2026-05-03 に観測したため、prevent_destroy は採用しない)。永続化は
+- infra/terraform/modules/vector_search/main.tf:L62: # `scripts/setup/destroy_all.py::PERSISTENT_VVS_RESOURCES` の state rm
+- infra/terraform/modules/vector_search/main.tf:L78: # 永続化契約 (2026-05-03): Index Endpoint も Index と同じく `destroy-all`
+- infra/terraform/modules/vector_search/main.tf:L79: # で **state rm + GCP 残置** する。`prevent_destroy` は依存閉包で全 destroy
+- infra/terraform/modules/vector_search/variables.tf:L30: description = "Deployed index ID exposed by the index endpoint. Must be unique within the endpoint and stable across applies (consumed via `VERTEX_VECTOR_SEARCH_DEPLOYED_INDEX_ID` env). Bumped v1→v2 on 2026-05-02 then v2→v3 on 2026-05-03: GCP API holds the previous deployed_index_id in 'being undeployed / failed' soft-state for an extended grace period (>30 min observed) even after `gcloud ai index-endpoints list` reports it as gone, blocking re-creation with HTTP 400 'There exists a DeployedIndex with same ID either in failed state or being undeployed'. Bumping the version sidesteps the grace period; destroy-all's `undeploy_all_vvs_deployed_indexes` guard prevents stale state for future clean PDCA cycles."
+- infra/terraform/modules/vertex/main.tf:L91: drop_unknown_fields = true
+- ml/common/logging/structured_logging.py:L49: root.removeHandler(h)
+- ml/data/loaders/embedding_store.py:L114: delete_stmt = f"""
+- ml/data/loaders/embedding_store.py:L115: DELETE FROM `{self._embeddings_table}`
+- ml/data/loaders/embedding_store.py:L119: delete_stmt,
+- ml/serving/encoder.py:L8: Mixing them silently drops retrieval quality by several NDCG points. Keep the
+- ml/training/model_builder.py:L71: df = df.sort_values(RANKER_GROUP_COL, kind="stable").reset_index(drop=True)
+- ml/training/model_builder.py:L89: train_df = df[train_mask].reset_index(drop=True)
+- ml/training/model_builder.py:L90: test_df = df[~train_mask].reset_index(drop=True)
+- pipeline/dags/_pod.py:L128: is_delete_operator_pod=True,
+- pipeline/dags/_pod.py:L159: is_delete_operator_pod=True,
+- pipeline/training_job/adapters/kfp_orchestrator.py:L5: decorated function in ``pipeline/training_job/main.py`` can be migrated
+- pipeline/training_job/components/train_reranker.py:L40: executor has historically dropped large Input[Model] payloads silently).
+- pipeline/training_job/components/train_reranker.py:L98: train_df = df[df[group_col].isin(train_ids)].reset_index(drop=True)
+- pipeline/training_job/components/train_reranker.py:L99: test_df = df[~df[group_col].isin(train_ids)].reset_index(drop=True)
+- pyproject.toml:L131: "full_recreate: destroy-all then deploy-all (separate from routine acceptance; can flake on Vertex async delete)",
+- scripts/_common.py:L163: # Canonical Terraform ``-var`` list passed by every deploy/destroy/import path.
+- scripts/_common.py:L165: # (deploy_all / destroy_all / tf_apply / recover_wif / state_recovery).
+- scripts/_common.py:L182: deploy_all / destroy_all で同じ ``-var=...`` リストを独立に組み立てて
+- scripts/_common.py:L192: seed_lgbm_model.py / upload_encoder_assets.py / destroy_all.py が独自に
+- scripts/adapters/gcloud.py:L10: Migration note (2026-05-10):
+- scripts/ci/layers.py:L234: # files outside app/ml/pipeline) so removed-rule drift is caught.
+- scripts/deploy/api_gke.py:L8: - never delete tags before push;
+- scripts/deploy/api_gke.py:L76: # Phase 7 Run 5 — destroy-all → deploy-all で cluster を同じ name で
+- scripts/deploy/api_gke.py:L87: f"{cluster_name} --region={region}` (avoid stale CA after destroy/recreate)"
+- scripts/deploy/api_gke_local.py:L108: # Phase 7 Run 5 — destroy-all → deploy-all で cluster を再作成すると
+- scripts/deploy/monitor.py:L104: drop it before exec.
+- scripts/domain/gcp/gcs_cleanup.py:L1: """GCS bucket cleanup helpers for destroy-all.
+- scripts/domain/gcp/gcs_cleanup.py:L4: `force_destroy = false` で作成されているので、object が
+- scripts/domain/gcp/gcs_cleanup.py:L5: 残ったままだと `terraform destroy` が
+- scripts/domain/gcp/gcs_cleanup.py:L6: ``Error trying to delete bucket ... containing objects without 'force_destroy'
+- scripts/domain/gcp/gcs_cleanup.py:L8: の薄ラッパーを提供して、destroy_all step 3/6 から呼ぶ。
+- scripts/domain/gcp/gcs_cleanup.py:L19: """Recursively delete every object in one GCS bucket. Benign on absence.
+- scripts/domain/gcp/state_recovery.py:L6: - これは GCP 側で **本当に消えた resources** のための clean-up だが、`gcloud delete --async`
+- scripts/domain/gcp/state_recovery.py:L11: - 特に IAM SA は soft-delete 30 日 window があるため、gcloud delete → 即 terraform
+- scripts/domain/gcp/state_recovery.py:L26: - GCS buckets は force_destroy 設計が module 側で固定されているため復元しない
+- scripts/domain/gcp/vertex_cleanup.py:L1: """Vertex AI Endpoint cleanup helpers for destroy-all.
+- scripts/domain/gcp/vertex_cleanup.py:L6: `terraform destroy` が HTTP 400 ``Endpoint has deployed or being-deployed
+- scripts/domain/gcp/vertex_cleanup.py:L89: yet (being-undeployed ghost from prior destroy / mid-attach). Callers
+- scripts/domain/gcp/vertex_cleanup.py:L118: """Proactively undeploy ALL Vertex Vector Search deployed indexes before destroy.
+- scripts/domain/gcp/vertex_cleanup.py:L121: 前 PDCA cycle で `destroy-all` が deployed index を残したまま終わると、次回
+- scripts/domain/gcp/vertex_cleanup.py:L125: 本 helper は `destroy-all` 時点で「endpoint に attach されている全
+- scripts/domain/gcp/vertex_cleanup.py:L193: - ``absent`` — fresh deploy after destroy-all completed cleanly.
+- scripts/domain/gcp/vertex_cleanup.py:L201: ghost ``being undeployed`` state after destroy-all, or mid-attach).
+- scripts/domain/gcp/vertex_cleanup.py:L217: f"{timeout_seconds}s; previous undeploy/delete likely still in progress"
+- scripts/domain/gcp/vertex_feature_store_wait.py:L3: After ``destroy-all``, Vertex AI keeps ``featureGroups/<id>`` and
+- scripts/domain/gcp/vertex_feature_store_wait.py:L7: Error 409: Re-using the same name as a FeatureGroup being deleted
+- scripts/domain/gcp/vertex_feature_store_wait.py:L113: "==> waiting for async Vertex Feature Store delete "
+- scripts/domain/gcp/vertex_import.py:L4: `destroy-all` は `module.vector_search` の Index / Endpoint を **state rm + GCP
+- scripts/domain/k8s/elasticsearch_wait.py:L17: destroy-all the cluster.
+- scripts/domain/k8s/kube_cleanup.py:L1: """Kubernetes finalizer cleanup for destroy-all.
+- scripts/domain/k8s/kube_cleanup.py:L3: Phase 7 Run 5 で踏んだ事故: `terraform destroy -target=module.kserve` は
+- scripts/domain/k8s/kube_cleanup.py:L7: `kubernetes_namespace.{search,inference}` の destroy が無限ループに陥る
+- scripts/domain/k8s/kube_cleanup.py:L12: 対策: operator を destroy する前に、operator が watch しているカスタム
+- scripts/domain/k8s/kube_cleanup.py:L14: どちらも `kubectl delete --all -n <ns> --ignore-not-found` で operator が
+- scripts/domain/k8s/kube_cleanup.py:L15: finalizer を即座に処理するので、namespace の destroy が finalizer 待ちで
+- scripts/domain/k8s/kube_cleanup.py:L18: cluster が既に消滅している (前回 destroy-all が部分成功) ケースでは
+- scripts/domain/k8s/kube_cleanup.py:L27: def delete_orphan_workloads() -> None:
+- scripts/domain/k8s/kube_cleanup.py:L28: """Pre-destroy: cluster-scoped CR を operator 健在のうちに掃除する。"""
+- scripts/domain/k8s/kube_cleanup.py:L29: print("==>   pre-destroy: kubectl delete orphan workloads (avoid finalizer deadlock)")
+- scripts/domain/k8s/kube_cleanup.py:L33: "delete",
+- scripts/domain/k8s/kube_cleanup.py:L42: "delete",
+- scripts/domain/k8s/kube_cleanup.py:L56: # 区別せず吸収。`check=False` の趣旨はあくまで destroy-all を
+- scripts/domain/k8s/kubectl_context.py:L8: Phase 7 Run 5 教訓 — `destroy-all → deploy-all` PDCA loop では cluster を
+- scripts/domain/terraform/lock.py:L4: ``destroy-all`` / ``deploy-all`` / interrupted CI can leave a stale lock if a
+- scripts/domain/terraform/lock.py:L7: (aliases: ``DESTROY_ALL_FORCE_UNLOCK``, ``DEPLOY_ALL_FORCE_UNLOCK``).
+- scripts/domain/terraform/lock.py:L33: "DESTROY_ALL_FORCE_UNLOCK",
+- scripts/domain/terraform/lock.py:L81: "\n==> Terraform remote state is locked (another apply/destroy may be running).\n"
+- scripts/domain/terraform/stage_apply.py:L95: "being deleted",
+- scripts/domain/terraform/state.py:L3: destroy_all / deploy_all から `terraform state list / rm` を呼ぶ業務ロジックを
+- scripts/domain/terraform/state.py:L4: 集約。Phase 7 Run 4 で観測した「`-target` destroy が exit 0 でも cluster
+- scripts/domain/terraform/state.py:L5: unreachable で何も消えていなかった」「empty-state での destroy 再走で
+- scripts/domain/terraform/state.py:L23: state の有無を判定する用途で使う (空判定 = state 未初期化 or destroy 済)。
+- scripts/domain/terraform/state.py:L45: Used to skip destroy when the previous run already cleared everything
+- scripts/domain/terraform/state.py:L46: (idempotent destroy-all). Without this guard, re-running destroy on an
+- scripts/domain/terraform/state.py:L48: **recreates** targets, hitting WIF pool 30-day soft-delete (ADR 0003).
+- scripts/domain/terraform/state.py:L59: 末尾 ``.`` を渡す。`-target` destroy が exit 0 でも cluster unreachable で
+- scripts/domain/terraform/state.py:L77: destroy step 4/6 の "state-flip only, no recreate" を honour するため、
+- scripts/domain/terraform/state.py:L80: empty-state の destroy-all 再走 → 12 resources added の事故)。
+- scripts/domain/terraform/state.py:L87: """Remove ``address`` (or a module subtree) from state. Return True on success.
+- scripts/domain/terraform/state.py:L90: 配下の全 resource を一括で剥がせる。targeted destroy が cluster
+- scripts/lib/step_timing.py:L1: """Per-step wall-clock history for the long flows (deploy-all / destroy-all / run-all).
+- scripts/lib/step_timing.py:L9: The CSV carries a ``flow`` column so deploy-all / destroy-all / run-all keep
+- scripts/lib/step_timing.py:L11: `destroy_all.py` and `scripts/ops/run_all.py` all funnel through here so the
+- scripts/ops/composer_task_states.py:L98: # Column widths truncate dag_id; match run_id cells anywhere on the line.
+- scripts/ops/destroy_check.py:L1: """Check for residual high-cost GCP resources after ``make destroy-all``.
+- scripts/ops/destroy_check.py:L6: - ``FAIL``: Phase 7 resources that should have been removed by destroy-all.
+- scripts/ops/destroy_check.py:L51: description="Check residual high-cost GCP resources after destroy-all."
+- scripts/ops/destroy_check.py:L396: return fail(f"destroy-check failed: {len(bad)} problematic finding(s)")
+- scripts/ops/destroy_check.py:L397: print("destroy-check passed: no high-cost residual Phase 7 resources found.")
+- scripts/ops/promote.py:L169: m.versioning_registry.remove_version_aliases(
+- scripts/ops/run_all.py:L6: the median of recent runs — symmetric with deploy-all / destroy-all.
+- scripts/ops/sync_synonyms.py:L244: pipe.delete(key)
+- scripts/setup/deploy_all.py:L5: 3. `recover_wif` — undelete + import WIF pool/provider if a previous
+- scripts/setup/deploy_all.py:L6: `make destroy-all` left them soft-deleted (GCP keeps WIF resources for
+- scripts/setup/deploy_all.py:L7: 30 days after delete; recreating with the same ID otherwise hits HTTP
+- scripts/setup/deploy_all.py:L32: 毎回手作業を要求すると `destroy-all → deploy-all` が成立しない)。
+- scripts/setup/deploy_all.py:L206: (`destroy-all → deploy-all → run-all`) ではこの手作業が成立しないため、
+- scripts/setup/deploy_all.py:L240: "recover WIF pool/provider if soft-deleted (PDCA loop safety)",
+- scripts/setup/destroy_all.py:L3: iteration matters. Pair with `deploy-all` for a build-test-destroy loop.
+- scripts/setup/destroy_all.py:L7: 1. `seed-clean` — drop the out-of-Terraform-state table that
+- scripts/setup/destroy_all.py:L9: `feature_mart` dataset destroy with `resourceInUse` otherwise.
+- scripts/setup/destroy_all.py:L12: to Terraform). Any remaining DeployedModel blocks `terraform destroy` with
+- scripts/setup/destroy_all.py:L19: Terraform 側の `lifecycle.prevent_destroy` だけだと依存閉包で touch されて
+- scripts/setup/destroy_all.py:L20: `Instance cannot be destroyed` で全 destroy が止まる事故を 2026-05-03 に観測。
+- scripts/setup/destroy_all.py:L22: force_destroy=false の 4 buckets を空にする (object 残存だと bucket destroy
+- scripts/setup/destroy_all.py:L30: 7. `destroy-kserve` — `kube_cleanup.delete_orphan_workloads` + `terraform
+- scripts/setup/destroy_all.py:L31: destroy -target=module.kserve`。K8s/Helm リソースを GKE cluster より先に
+- scripts/setup/destroy_all.py:L32: destroy (provider が cluster endpoint に依存)。state に残った場合は
+- scripts/setup/destroy_all.py:L34: 8. `destroy-main` — `terraform destroy -auto-approve` (永続化 VVS resource は
+- scripts/setup/destroy_all.py:L35: `-target` で除外、`prevent_destroy = true` と二重防御)。
+- scripts/setup/destroy_all.py:L45: ``TERRAFORM_STATE_FORCE_UNLOCK=1`` (aliases: ``DESTROY_ALL_FORCE_UNLOCK``,
+- scripts/setup/destroy_all.py:L80: _FLOW = "destroy-all"
+- scripts/setup/destroy_all.py:L83: # Terraform refuses to destroy these while the attribute is `true`. Step
+- scripts/setup/destroy_all.py:L86: # destroy. Kept in sync with the corresponding Terraform module sources;
+- scripts/setup/destroy_all.py:L114: # `module.kserve` 配下の K8s / Helm リソースを `terraform destroy` 本体より
+- scripts/setup/destroy_all.py:L115: # **先に** 個別 destroy するための target。`infra/terraform/environments/dev/provider.tf`
+- scripts/setup/destroy_all.py:L117: # (GKE cluster の endpoint / token) に依存しており、cluster が destroy 過程で
+- scripts/setup/destroy_all.py:L130: # 本契約: `destroy-all` は `module.vector_search` 内の Index / Endpoint を
+- scripts/setup/destroy_all.py:L132: # 課金 resource のみを destroy する。Terraform 側にも `lifecycle.prevent_destroy
+- scripts/setup/destroy_all.py:L141: class DestroyStep:
+- scripts/setup/destroy_all.py:L147: # Currently no destroy step has a precondition, but the field exists so
+- scripts/setup/destroy_all.py:L157: _DESTROY_ALL_STARTED_AT: float | None = None
+- scripts/setup/destroy_all.py:L162: global _DESTROY_ALL_STARTED_AT, _STEP_STARTED_AT
+- scripts/setup/destroy_all.py:L164: if _DESTROY_ALL_STARTED_AT is None:
+- scripts/setup/destroy_all.py:L165: _DESTROY_ALL_STARTED_AT = now
+- scripts/setup/destroy_all.py:L167: total_elapsed = now - _DESTROY_ALL_STARTED_AT
+- scripts/setup/destroy_all.py:L171: print(f" destroy-all  step {n}/{total}: {label}")
+- scripts/setup/destroy_all.py:L181: def _step_done(step: DestroyStep) -> None:
+- scripts/setup/destroy_all.py:L186: print(f" destroy-all  step-done elapsed={elapsed:.0f}s")
+- scripts/setup/destroy_all.py:L221: # しないので、destroy 側でも能動的に undeploy しておく。
+- scripts/setup/destroy_all.py:L229: # `lifecycle.prevent_destroy = true` だけでは依存閉包で touch されて
+- scripts/setup/destroy_all.py:L230: # `Instance cannot be destroyed` で全 destroy が止まる事故を 2026-05-03
+- scripts/setup/destroy_all.py:L251: print("==> wipe GCS buckets (force_destroy=false blockers)")
+- scripts/setup/destroy_all.py:L259: # (Phase 7 Run 4 で empty-state の destroy-all 再走 → 12 resources added の
+- scripts/setup/destroy_all.py:L289: def _run_destroy_kserve() -> int:
+- scripts/setup/destroy_all.py:L291: "==> terraform destroy -target=module.kserve "
+- scripts/setup/destroy_all.py:L294: # operator destroy より先に CR を消して finalizer deadlock を避ける。
+- scripts/setup/destroy_all.py:L295: kube_cleanup.delete_orphan_workloads()
+- scripts/setup/destroy_all.py:L302: "destroy",
+- scripts/setup/destroy_all.py:L320: f"    targeted destroy で K8s/Helm を片付けきれず ({reason}) — "
+- scripts/setup/destroy_all.py:L321: "GKE cluster 既消滅の可能性。state rm で fallback 後、本体 destroy へ進む。"
+- scripts/setup/destroy_all.py:L333: def _run_destroy_main() -> int:
+- scripts/setup/destroy_all.py:L334: # 永続化 VVS resource (Index / Endpoint) は destroy 対象から除外する。
+- scripts/setup/destroy_all.py:L335: # 「除外」は terraform に `-target=` で指定したものだけを destroy する仕様
+- scripts/setup/destroy_all.py:L338: # `prevent_destroy = true` も入っているため二重防御)。
+- scripts/setup/destroy_all.py:L341: destroy_addrs = [a for a in all_addrs if not a.startswith(persistent_prefixes)]
+- scripts/setup/destroy_all.py:L343: if not destroy_addrs:
+- scripts/setup/destroy_all.py:L344: print("==> state は永続化 VVS resource のみ — 本体 destroy をスキップ")
+- scripts/setup/destroy_all.py:L347: excluded = len(all_addrs) - len(destroy_addrs)
+- scripts/setup/destroy_all.py:L350: f"==> terraform destroy -auto-approve "
+- scripts/setup/destroy_all.py:L351: f"(本体: {len(destroy_addrs)} addr 対象、永続 VVS {excluded} addr 除外)"
+- scripts/setup/destroy_all.py:L353: target_args = [arg for addr in destroy_addrs for arg in ("-target", addr)]
+- scripts/setup/destroy_all.py:L358: "destroy",
+- scripts/setup/destroy_all.py:L366: print("==> terraform destroy -auto-approve (本体)")
+- scripts/setup/destroy_all.py:L371: "destroy",
+- scripts/setup/destroy_all.py:L383: def _steps() -> list[DestroyStep]:
+- scripts/setup/destroy_all.py:L385: DestroyStep(
+- scripts/setup/destroy_all.py:L388: "seed-test-clean (drop out-of-TF tables that block dataset destroy)",
+- scripts/setup/destroy_all.py:L391: DestroyStep(
+- scripts/setup/destroy_all.py:L397: DestroyStep(
+- scripts/setup/destroy_all.py:L403: DestroyStep(
+- scripts/setup/destroy_all.py:L409: DestroyStep(
+- scripts/setup/destroy_all.py:L412: "wipe GCS buckets (force_destroy=false blockers)",
+- scripts/setup/destroy_all.py:L415: DestroyStep(
+- scripts/setup/destroy_all.py:L421: DestroyStep(
+- scripts/setup/destroy_all.py:L423: "destroy-kserve",
+- scripts/setup/destroy_all.py:L424: "terraform destroy -target=module.kserve (K8s/Helm を GKE より先に)",
+- scripts/setup/destroy_all.py:L425: _run_destroy_kserve,
+- scripts/setup/destroy_all.py:L427: DestroyStep(
+- scripts/setup/destroy_all.py:L429: "destroy-main",
+- scripts/setup/destroy_all.py:L430: "terraform destroy 本体 (永続化 VVS 除外)",
+- scripts/setup/destroy_all.py:L431: _run_destroy_main,
+- scripts/setup/destroy_all.py:L438: description="Run destroy-all flow with optional step slicing (symmetrical with deploy-all)."
+- scripts/setup/destroy_all.py:L448: help="Stop after this step number or name (e.g. 7, destroy-kserve).",
+- scripts/setup/destroy_all.py:L453: def _resolve_step_ref(ref: str, steps: list[DestroyStep]) -> int:
+- scripts/setup/destroy_all.py:L471: global _DESTROY_ALL_STARTED_AT, _STEP_STARTED_AT
+- scripts/setup/destroy_all.py:L472: _DESTROY_ALL_STARTED_AT = None
+- scripts/setup/destroy_all.py:L484: print(f"==> destroy-all on project {project_id!r}")
+- scripts/setup/destroy_all.py:L487: # state が空なら destroy は何もすることがない。`-target` apply が
+- scripts/setup/destroy_all.py:L489: # WIF pool 30 日 soft-delete に再衝突した事故) を避けるため early-return。
+- scripts/setup/destroy_all.py:L492: print("==> state list is empty — nothing to destroy. (前回の destroy-all で完了済)")
+- scripts/setup/destroy_all.py:L499: f"==> destroy-all selection: from_step={from_step} to_step={to_step} "
+- scripts/setup/destroy_all.py:L504: current_step: DestroyStep | None = None
+- scripts/setup/destroy_all.py:L522: f"==> destroy-all FAILED at step {step.number} ({step.name}) — see logs above"
+- scripts/setup/destroy_all.py:L532: f"==> destroy-all FAILED at step {current_step.number} ({current_step.name}) "
+- scripts/setup/destroy_all.py:L537: if _DESTROY_ALL_STARTED_AT is not None:
+- scripts/setup/destroy_all.py:L538: total_elapsed = time.monotonic() - _DESTROY_ALL_STARTED_AT
+- scripts/setup/destroy_all.py:L541: f"==> destroy-all complete. total_elapsed={total_elapsed:.0f}s "
+- scripts/setup/destroy_all.py:L546: print("==> destroy-all complete.")
+- scripts/setup/recover_wif.py:L3: GCP の WIF resource は **soft-delete (30 日保持)** で、destroy-all 後に
+- scripts/setup/recover_wif.py:L5: を返す。回避するには (a) 残存する resource を ``gcloud undelete`` で
+- scripts/setup/recover_wif.py:L9: 旧実装は **「state==DELETED の時だけ recover」**だったため、deploy-all
+- scripts/setup/recover_wif.py:L11: - 1 回目: undelete 成功 / import 失敗 (cluster data source 不在)
+- scripts/setup/recover_wif.py:L12: - 2 回目: WIF state は ACTIVE (= undelete 済) → recover skip →
+- scripts/setup/recover_wif.py:L18: 1. ``gcloud describe`` で resource の現状 (ACTIVE / DELETED / 不在) を取得
+- scripts/setup/recover_wif.py:L19: 2. DELETED なら undelete (ACTIVE 化)
+- scripts/setup/recover_wif.py:L81: pool_exists_in_gcp = rc == 0 and pool_state in {"ACTIVE", "DELETED"}
+- scripts/setup/recover_wif.py:L82: if pool_exists_in_gcp and pool_state == "DELETED":
+- scripts/setup/recover_wif.py:L83: print("    pool soft-deleted → undelete to ACTIVE")
+- scripts/setup/recover_wif.py:L87: "undelete",
+- scripts/setup/recover_wif.py:L127: # provider の `describe` は ACTIVE でも DELETED でも exit 0。`expireTime`
+- scripts/setup/recover_wif.py:L128: # フィールドが付いてるのは soft-deleted 状態だけ。describe rc != 0 は
+- scripts/setup/recover_wif.py:L132: print("    provider soft-deleted → undelete to ACTIVE")
+- scripts/setup/recover_wif.py:L137: "undelete",
+- scripts/setup/seed_minimal.py:L148: DELETE FROM `{project_id}.feature_mart.property_features_daily`
+- scripts/setup/seed_minimal.py:L166: DELETE FROM `{project_id}.feature_mart.property_embeddings` WHERE TRUE;
+- scripts/setup/seed_minimal_clean.py:L1: """Remove everything `scripts.setup.seed_minimal` wrote. Symmetric with
+- scripts/setup/seed_minimal_clean.py:L4: Drops:
+- scripts/setup/seed_minimal_clean.py:L7: `terraform destroy`, the `feature_mart` dataset drop fails with
+- scripts/setup/seed_minimal_clean.py:L12: Idempotent: missing tables / rows are tolerated (`bq rm -f` / `DELETE`
+- scripts/setup/seed_minimal_clean.py:L14: reused as step 1 of `make destroy-all`.
+- scripts/setup/seed_minimal_clean.py:L27: print("==> drop feature_mart.properties_cleaned (out-of-TF, benign if absent)")
+- scripts/setup/seed_minimal_clean.py:L40: print("==> delete today's rows from feature_mart.property_features_daily")
+- scripts/setup/seed_minimal_clean.py:L47: f"DELETE FROM `{project_id}.feature_mart.property_features_daily` "
+- scripts/setup/seed_minimal_clean.py:L53: print("==> delete all rows from feature_mart.property_embeddings")
+- scripts/setup/seed_minimal_clean.py:L60: f"DELETE FROM `{project_id}.feature_mart.property_embeddings` WHERE TRUE",
+- scripts/setup/tf_apply.py:L49: # を skip すると、WIF pool / provider が soft-delete + tfstate 不一致で残存し、
+- scripts/setup/tf_apply.py:L58: # 前回 destroy-all で `module.vector_search` の Index / Endpoint を **state rm
+- scripts/setup/tf_apply.py:L74: # 緊急 cleanup で `gcloud delete --async` で Composer/GKE/Cloud Run しか消さなかった
+- scripts/setup/tf_apply.py:L78: # IAM SA は soft-delete 30 日 window があるため gcloud delete → 即 terraform create
+- scripts/setup/tf_apply.py:L93: # destroy-all → deploy-all の短間隔では Vertex Feature Group / Feature Online Store が
+- scripts/setup/tf_plan.py:L7: with tf_apply / destroy_all / recover_wif / state_recovery) — adding a var name
+- scripts/verify/__init__.py:L4: ``make destroy-all``, e2e pytest gate) so the recipe stays a single
+- scripts/verify/_runner.py:L4: inline in the Makefile (``verify-deploy-all`` / ``verify-destroy-all`` /
+- scripts/verify/destroy_all.py:L1: """Run ``make destroy-all`` and aggregate output under ``logs/verification/``."""
+- scripts/verify/destroy_all.py:L9: return run("destroy-all", ["make", "destroy-all"])
+- scripts/verify/full_recreate.py:L1: """Run the full-recreate pytest gate (destroy-all → deploy-all → acceptance).
+- system_map.html:L132: <tr><td><span class="tag cli">cli</span></td><td><code>scripts/setup/destroy_all.py</code></td><td>8-step <code>make destroy-all</code> with --from-step/--to-step slicing.</td></tr>
+- system_map.html:L270: <div class="resp">/ops/destroy-check, /ops/search-volume, /ops/runs-recent use <code>subprocess.run</code> against <code>scripts/sql/*.sql</code> — uncharacteristic for an API path.</div>
+- system_map.html:L276: <h5>scripts.setup.deploy_all · destroy_all · run_all <span class="tag cli">cli</span></h5>
+- system_map.html:L339: <div class="external"><b>Failure modes:</b> Pub/Sub publish failure → accepted=false; schema drift between Pydantic <code>ActionType</code> and BQ enum could silently drop rows.</div>
+- system_map.html:L428: <div class="external"><b>Failure modes:</b> deploy/destroy callsites are <b>not</b> exercised by <code>make check</code> (5-bug incident in M-Wave8.6) · two-stage tf apply can land in partial-applied state on stage A failure · Composer Gen 3 auto-sets <code>GCP_PROJECT</code> — user-set <code>PROJECT_ID</code> can fail with HTTP 400.</div>
+- system_map.html:L490: <div class="risk-row"><span class="sev med">med</span><div><b>Deploy-path coverage gap.</b> <code>make check</code> excludes <code>scripts/setup/*</code> and <code>scripts/domain/*</code> callsites; deploy/destroy bugs only surface during real <code>make deploy-all</code> (5-bug incident in M-Wave8.6).</div></div>
+- system_map.html:L495: <div class="risk-row"><span class="sev low">low</span><div><b>API subprocesses out to <code>bq</code>.</b> /ops/destroy-check / search-volume / runs-recent run <code>subprocess.run</code> inside the FastAPI process — uncharacteristic latency/crash mode for an API.</div></div>
+- system_map.html:L506: <li><code>scripts/ops/ops_router</code> shells out to <code>bq</code> — migrate to <code>BigQueryMetricsRepository</code> or keep as operator-only shortcut?</li>
+- system_map.json:L47: {"type": "cli", "path": "scripts/setup/destroy_all.py", "description": "`make destroy-all` no-prompt teardown (8 sliceable steps)."},
+- system_map.json:L146: "responsibility": "GET /ops/destroy-check, /ops/search-volume, /ops/runs-recent — operator BQ smoke endpoints (shells out to bq).",
+- system_map.json:L147: "depends_on": ["app.schemas.ops", "scripts.ops.destroy_check", "scripts._common"],
+- system_map.json:L923: "id": "scripts.setup.destroy_all",
+- system_map.json:L924: "path": "scripts/setup/destroy_all.py",
+- system_map.json:L1058: "Schema drift between Pydantic ActionType and BQ enum could silently drop rows"
+- system_map.json:L1191: "deploy/destroy-only callsites are NOT exercised by `make check` (incident: 5 latent bugs surfaced only via deploy-all)",
+- system_map.json:L1244: {"area": "Deploy-path coverage", "issue": "`make check` excludes scripts/setup/* and scripts/domain/* callsites; deploy/destroy bugs only surface during real `make deploy-all` (5-bug incident in M-Wave8.6).", "severity": "med"},
+- system_map.json:L1249: {"area": "Subprocess shell-out in API", "issue": "/ops/destroy-check + /ops/search-volume + /ops/runs-recent shell out to `bq` CLI from inside the FastAPI process (subprocess.run). Latency + crash mode is uncharacteristic for an API.", "severity": "low"},
+- system_map.json:L1258: "scripts/ops/ops_router shells out to `bq` — should this migrate to BigQueryMetricsRepository or stay as an operator-only shortcut?",
+- tests/e2e/live_acceptance_checks.py:L5: - ``test_phase7_acceptance_gate`` — **existing** deploy (no destroy in test)
+- tests/e2e/live_acceptance_checks.py:L6: - ``test_phase7_full_recreate_gate`` — destroy → deploy → same checks
+- tests/e2e/test_full_recreate_gate.py:L1: """Opt-in **full recreate** gate: destroy-all → deploy-all → same acceptance checks.
+- tests/e2e/test_full_recreate_gate.py:L3: **Unstable by design** after ``destroy-all``: Vertex Feature Group / Feature
+- tests/e2e/test_full_recreate_gate.py:L4: Online Store names can remain in GCP async-delete for many minutes; immediate
+- tests/e2e/test_full_recreate_gate.py:L40: "set RUN_LIVE_GCP_FULL_RECREATE=1 for destroy-all -> deploy-all gate "
+- tests/e2e/test_full_recreate_gate.py:L62: _run(["make", "destroy-all"], timeout=1800)
+- tests/e2e/test_live_acceptance_gate.py:L7: Destructive ``destroy-all -> deploy-all`` PDCA is a separate unstable gate; see
+- tests/integration/infra/test_destroy_all_table_parity.py:L1: """Parity: ``scripts.setup.destroy_all.PROTECTED_TARGETS`` ↔ Terraform sources.
+- tests/integration/infra/test_destroy_all_table_parity.py:L3: ``destroy-all`` の step ``[4/6]`` は **server-side** ``deletion_protection`` を
+- tests/integration/infra/test_destroy_all_table_parity.py:L5: -target=<each>` を打って attribute を server-side で flip してから本体 destroy
+- tests/integration/infra/test_destroy_all_table_parity.py:L6: に進む。`PROTECTED_TARGETS` (旧 `PROTECTED_TABLE_TARGETS`) が destroy 対象と
+- tests/integration/infra/test_destroy_all_table_parity.py:L7: ズレると本体 destroy が `Error: cannot destroy ... deletion_protection=true`
+- tests/integration/infra/test_destroy_all_table_parity.py:L55: def _destroy_all_targets() -> list[str]:
+- tests/integration/infra/test_destroy_all_table_parity.py:L56: from scripts.setup.destroy_all import PROTECTED_TARGETS
+- tests/integration/infra/test_destroy_all_table_parity.py:L61: def _destroy_bq_table_names() -> set[str]:
+- tests/integration/infra/test_destroy_all_table_parity.py:L64: for target in _destroy_all_targets()
+- tests/integration/infra/test_destroy_all_table_parity.py:L69: def _destroy_gke_cluster_names() -> set[str]:
+- tests/integration/infra/test_destroy_all_table_parity.py:L72: for target in _destroy_all_targets()
+- tests/integration/infra/test_destroy_all_table_parity.py:L77: def test_every_protected_bq_table_is_in_destroy_all_targets() -> None:
+- tests/integration/infra/test_destroy_all_table_parity.py:L80: flip and step ``[6/6]`` body destroy fails on that table.
+- tests/integration/infra/test_destroy_all_table_parity.py:L83: destroy_tables = _destroy_bq_table_names()
+- tests/integration/infra/test_destroy_all_table_parity.py:L84: missing = tf_tables - destroy_tables
+- tests/integration/infra/test_destroy_all_table_parity.py:L92: def test_destroy_all_bq_targets_do_not_reference_removed_tables() -> None:
+- tests/integration/infra/test_destroy_all_table_parity.py:L93: """Opposite drift: a table removed from data/main.tf must not linger in
+- tests/integration/infra/test_destroy_all_table_parity.py:L98: destroy_tables = _destroy_bq_table_names()
+- tests/integration/infra/test_destroy_all_table_parity.py:L99: stale = destroy_tables - tf_tables
+- tests/integration/infra/test_destroy_all_table_parity.py:L102: f"{sorted(stale)}. Remove them from destroy_all.py."
+- tests/integration/infra/test_destroy_all_table_parity.py:L106: def test_protected_gke_cluster_is_in_destroy_all_targets() -> None:
+- tests/integration/infra/test_destroy_all_table_parity.py:L109: server-side first the body destroy fails with
+- tests/integration/infra/test_destroy_all_table_parity.py:L110: ``Cannot destroy cluster because deletion_protection is set to true``
+- tests/integration/infra/test_destroy_all_table_parity.py:L114: destroy_clusters = _destroy_gke_cluster_names()
+- tests/integration/infra/test_destroy_all_table_parity.py:L115: missing = tf_clusters - destroy_clusters
+- tests/integration/infra/test_destroy_all_table_parity.py:L128: targets = _destroy_all_targets()
+- tests/integration/infra/test_infra_ranker_tables.py:L142: def test_legacy_predictions_log_removed() -> None:
+- tests/integration/infra/test_infra_ranker_tables.py:L146: "predictions_log must be deleted from Terraform (教育用フェーズ初期0c). "
+- tests/integration/infra/test_infra_ranker_tables.py:L147: "Remaining references indicate the destructive migration is incomplete."
+- tests/integration/infra/test_makefile.py:L8: def test_makefile_declares_destroy_coast_down_target() -> None:
+- tests/integration/infra/test_makefile.py:L9: """`destroy-coast-down` is the post-Phase rename of the legacy
+- tests/integration/infra/test_makefile.py:L10: `destroy-phase7-learning` placeholder. Keep the target alive (even as a
+- tests/integration/infra/test_makefile.py:L14: assert "destroy-coast-down:" in text
+- tests/integration/infra/test_makefile.py:L15: assert "destroy-phase7-learning:" not in text, (
+- tests/integration/infra/test_manifests_structure.py:L81: someone removes the env entry without adding a ConfigMap fallback, the
+- tests/integration/infra/test_public_domain_consistency.py:L4: cannot silently drop:
+- tests/integration/infra/test_public_domain_consistency.py:L166: with "No value for required variable public_domain" — only tf_apply / destroy_all
+- tests/integration/infra/test_public_domain_consistency.py:L167: / recover_wif / state_recovery had been migrated to the shared builder.
+- tests/integration/infra/test_workflows_structure.py:L48: """KFP 移行で deleted the Cloud Run Jobs `training-job` / `embedding-job`.
+- tests/integration/infra/test_workflows_structure.py:L53: f"{filename} must be removed — replaced by KFP pipelines (canonical)"
+- tests/integration/parity/test_api_route_prefixes.py:L131: "/ops/destroy-check",
+- tests/integration/parity/test_codebase_invariants.py:L101: def test_makefile_has_no_removed_sync_meili_target() -> None:
+- tests/integration/parity/test_codebase_invariants.py:L104: "Removed legacy target sync-meili — use sync-elasticsearch (runbook / TASKS_ROADMAP)."
+- tests/integration/parity/test_codebase_invariants.py:L111: "Remove legacy meili-sync console_script from pyproject.toml"
+- tests/integration/parity/test_configmap_drift.py:L85: drops a generator key the manifest test would only catch it after
+- tests/integration/parity/test_configmap_drift.py:L101: assert required in rendered, f"sync_configmap.render() dropped required key: <redacted>
+- tests/integration/parity/test_dataform_workflow_settings.py:L53: """Guard against silently dropping a Dataform-relevant key from setting.yaml."""
+- tests/integration/workflow/conftest.py:L8: - `test_destroy_all_contract.py` — destroy-all teardown / PDCA reproducibility
+- tests/integration/workflow/conftest.py:L10: GCS force_destroy / WIF undelete)
+- tests/integration/workflow/test_composer_dags_contract.py:L44: dag_id = dag_file.removesuffix(".py")
+- tests/integration/workflow/test_composer_dags_contract.py:L77: schedules[dag_file.removesuffix(".py")] = (int(hour), int(minute))
+- tests/integration/workflow/test_composer_gcloud_json_contract.py:L56: """Brackets inside JSON strings must not truncate early."""
+- tests/integration/workflow/test_composer_module_contract.py:L104: def test_composer_environment_has_proper_create_destroy_timeouts() -> None:
+- tests/integration/workflow/test_composer_module_contract.py:L108: assert 'delete = "30m"' in composer_main
+- tests/integration/workflow/test_deploy_all_contract.py:L201: # ETA work the same as deploy-all / destroy-all).
+- tests/integration/workflow/test_deploy_all_contract.py:L260: """Pin destroy→deploy 409 対策: list API 待ち + stage1 apply 再試行。
+- tests/integration/workflow/test_destroy_all_contract.py:L1: """canonical 構成 workflow contract — `make destroy-all` teardown + reproducibility.
+- tests/integration/workflow/test_destroy_all_contract.py:L3: Pin the destroy ordering, the Vertex Endpoint deployed-model undeploy, the
+- tests/integration/workflow/test_destroy_all_contract.py:L5: BigQuery `deletion_protection` flip, GCS bucket `force_destroy` wipe, and
+- tests/integration/workflow/test_destroy_all_contract.py:L6: the WIF pool soft-delete recovery.
+- tests/integration/workflow/test_destroy_all_contract.py:L11: from scripts.setup import destroy_all
+- tests/integration/workflow/test_destroy_all_contract.py:L15: def test_destroy_all_keeps_pdca_reproducibility_guards() -> None:
+- tests/integration/workflow/test_destroy_all_contract.py:L16: assert "module.gke.google_container_cluster.hybrid_search" in destroy_all.PROTECTED_TARGETS
+- tests/integration/workflow/test_destroy_all_contract.py:L18: destroy_all.PROTECTED_TARGETS
+- tests/integration/workflow/test_destroy_all_contract.py:L20: assert destroy_all.KSERVE_MODULE_TARGET == "module.kserve"
+- tests/integration/workflow/test_destroy_all_contract.py:L22: source = _read("scripts/setup/destroy_all.py")
+- tests/integration/workflow/test_destroy_all_contract.py:L23: assert "state list is empty — nothing to destroy" in source
+- tests/integration/workflow/test_destroy_all_contract.py:L26: assert "terraform destroy -target=module.kserve" in source
+- tests/integration/workflow/test_destroy_all_contract.py:L27: assert "terraform destroy -auto-approve (本体)" in source
+- tests/integration/workflow/test_destroy_all_contract.py:L30: def test_destroy_all_destroy_apply_symmetry() -> None:
+- tests/integration/workflow/test_destroy_all_contract.py:L31: """**destroy-all ↔ deploy-all 対称性**: deploy-all が立てる主要 module は
+- tests/integration/workflow/test_destroy_all_contract.py:L32: destroy-all で `terraform destroy -auto-approve` の連鎖で消える契約。
+- tests/integration/workflow/test_destroy_all_contract.py:L34: KServe Helm provider race を回避する `KSERVE_MODULE_TARGET` 先行 destroy が
+- tests/integration/workflow/test_destroy_all_contract.py:L37: destroy_all_py = _read("scripts/setup/destroy_all.py")
+- tests/integration/workflow/test_destroy_all_contract.py:L40: assert 'KSERVE_MODULE_TARGET = "module.kserve"' in destroy_all_py
+- tests/integration/workflow/test_destroy_all_contract.py:L41: assert "terraform destroy -target=module.kserve" in destroy_all_py
+- tests/integration/workflow/test_destroy_all_contract.py:L56: def test_destroy_all_undeploys_vertex_endpoint_models_before_destroy() -> None:
+- tests/integration/workflow/test_destroy_all_contract.py:L58: `terraform destroy` する契約。
+- tests/integration/workflow/test_destroy_all_contract.py:L60: Endpoint が deployed_model を持つ状態で destroy すると HTTP 400
+- tests/integration/workflow/test_destroy_all_contract.py:L63: destroy_all_py = _read("scripts/setup/destroy_all.py")
+- tests/integration/workflow/test_destroy_all_contract.py:L64: assert "vertex_cleanup.undeploy_all_endpoint_shells" in destroy_all_py
+- tests/integration/workflow/test_destroy_all_contract.py:L67: def test_destroy_all_proactively_undeploys_stale_vvs_indexes() -> None:
+- tests/integration/workflow/test_destroy_all_contract.py:L68: """**PDCA reproducibility 契約** (2026-05-02 追加): `destroy-all` は
+- tests/integration/workflow/test_destroy_all_contract.py:L73: `wait_for_deployed_index_absent` は wait しかしないため、destroy 側に
+- tests/integration/workflow/test_destroy_all_contract.py:L75: destroy_all_py = _read("scripts/setup/destroy_all.py")
+- tests/integration/workflow/test_destroy_all_contract.py:L82: assert "vertex_cleanup.undeploy_all_vvs_deployed_indexes" in destroy_all_py
+- tests/integration/workflow/test_destroy_all_contract.py:L85: def test_destroy_all_flips_bq_deletion_protection_before_destroy() -> None:
+- tests/integration/workflow/test_destroy_all_contract.py:L86: """BigQuery table の `deletion_protection=true` を destroy 前に **state-flip**
+- tests/integration/workflow/test_destroy_all_contract.py:L87: する契約 (Terraform default で destroy 拒否される)。"""
+- tests/integration/workflow/test_destroy_all_contract.py:L88: destroy_all_py = _read("scripts/setup/destroy_all.py")
+- tests/integration/workflow/test_destroy_all_contract.py:L91: assert "PROTECTED_TARGETS" in destroy_all_py
+- tests/integration/workflow/test_destroy_all_contract.py:L92: assert "enable_deletion_protection=false" in destroy_all_py
+- tests/integration/workflow/test_destroy_all_contract.py:L99: assert table_resource in destroy_all_py or "deletion_protection = false" in data_tf, (
+- tests/integration/workflow/test_destroy_all_contract.py:L100: f"google_bigquery_table.{table_resource} should appear in destroy_all.py "
+- tests/integration/workflow/test_destroy_all_contract.py:L105: def test_destroy_all_force_destroys_blocking_gcs_buckets() -> None:
+- tests/integration/workflow/test_destroy_all_contract.py:L106: """`force_destroy=false` な GCS bucket が中身を持つと destroy が止まる。
+- tests/integration/workflow/test_destroy_all_contract.py:L107: `gcloud storage rm --recursive` で wipe してから destroy する契約。"""
+- tests/integration/workflow/test_destroy_all_contract.py:L108: destroy_all_py = _read("scripts/setup/destroy_all.py")
+- tests/integration/workflow/test_destroy_all_contract.py:L109: assert "gcs_cleanup" in destroy_all_py
+- tests/integration/workflow/test_destroy_all_contract.py:L110: assert "wipe_all_terraform_managed_buckets" in destroy_all_py
+- tests/integration/workflow/test_destroy_all_contract.py:L113: def test_recover_wif_handles_soft_delete_undelete() -> None:
+- tests/integration/workflow/test_destroy_all_contract.py:L114: """destroy → 即 deploy で WIF pool が soft-delete (30 日保持) のため
+- tests/integration/workflow/test_destroy_all_contract.py:L115: 409 conflict になるのを undelete で recover する契約。
+- tests/integration/workflow/test_destroy_all_contract.py:L117: 自動化なしだと 30 日間 WIF が使えず destroy-all 後の deploy 完全 block。"""
+- tests/integration/workflow/test_destroy_all_contract.py:L122: assert "undelete" in recover_wif_py.lower(), (
+- tests/integration/workflow/test_destroy_all_contract.py:L123: "recover_wif.py must handle WIF pool undelete (30-day soft-delete window)"
+- tests/integration/workflow/test_destroy_all_contract.py:L136: precondition wiring so future regressions cannot silently drop the wait.
+- tests/integration/workflow/test_destroy_all_contract.py:L179: def test_destroy_all_provides_step_slicing_symmetric_with_deploy_all() -> None:
+- tests/integration/workflow/test_destroy_all_contract.py:L180: """2026-05-09 refactor: destroy-all を step 分離 + slicing 対応にし、deploy-all
+- tests/integration/workflow/test_destroy_all_contract.py:L182: destroy 側で阻む** 設計上の不整合だった。
+- tests/integration/workflow/test_destroy_all_contract.py:L185: 1. `DestroyStep` dataclass が存在 (deploy_all の `DeployStep` と同型)
+- tests/integration/workflow/test_destroy_all_contract.py:L188: 4. step 名 (`seed-clean`, `flip-deletion-protection`, `destroy-kserve` 等) で
+- tests/integration/workflow/test_destroy_all_contract.py:L192: destroy_all_py = _read("scripts/setup/destroy_all.py")
+- tests/integration/workflow/test_destroy_all_contract.py:L194: # 1. DestroyStep dataclass
+- tests/integration/workflow/test_destroy_all_contract.py:L195: assert "@dataclass(frozen=True)" in destroy_all_py
+- tests/integration/workflow/test_destroy_all_contract.py:L196: assert "class DestroyStep:" in destroy_all_py
+- tests/integration/workflow/test_destroy_all_contract.py:L198: assert field in destroy_all_py, f"DestroyStep must define field: {field}"
+- tests/integration/workflow/test_destroy_all_contract.py:L201: assert "def _steps() -> list[DestroyStep]:" in destroy_all_py
+- tests/integration/workflow/test_destroy_all_contract.py:L204: assert '"--from-step"' in destroy_all_py and '"--to-step"' in destroy_all_py
+- tests/integration/workflow/test_destroy_all_contract.py:L205: assert "def _parse_args(" in destroy_all_py
+- tests/integration/workflow/test_destroy_all_contract.py:L206: assert "def _resolve_step_ref(" in destroy_all_py
+- tests/integration/workflow/test_destroy_all_contract.py:L216: '"destroy-kserve"',
+- tests/integration/workflow/test_destroy_all_contract.py:L217: '"destroy-main"',
+- tests/integration/workflow/test_destroy_all_contract.py:L219: assert step_name in destroy_all_py, (
+- tests/integration/workflow/test_destroy_all_contract.py:L220: f"destroy_all._steps() must include canonical step {step_name}"
+- tests/integration/workflow/test_destroy_all_contract.py:L224: assert "state_size(INFRA)" in destroy_all_py
+- tests/integration/workflow/test_destroy_all_contract.py:L225: assert "state list is empty" in destroy_all_py
+- tests/integration/workflow/test_destroy_all_contract.py:L230: を skip すると、WIF pool / provider が soft-delete + tfstate 不一致で残存し、
+- tests/integration/workflow/test_destroy_all_contract.py:L255: def test_destroy_all_persists_vvs_index_and_endpoint() -> None:
+- tests/integration/workflow/test_destroy_all_contract.py:L262: 実装パターン: `lifecycle.prevent_destroy = true` は依存閉包で touch される
+- tests/integration/workflow/test_destroy_all_contract.py:L264: be destroyed` で全 destroy が止まる事故を 2026-05-03 に観測したため不採用。
+- tests/integration/workflow/test_destroy_all_contract.py:L269: 1. `module.vector_search` の Index / Endpoint に `prevent_destroy` を入れない
+- tests/integration/workflow/test_destroy_all_contract.py:L271: 2. `destroy_all.py` で `PERSISTENT_VVS_RESOURCES` を state rm する
+- tests/integration/workflow/test_destroy_all_contract.py:L275: destroy_all_py = _read("scripts/setup/destroy_all.py")
+- tests/integration/workflow/test_destroy_all_contract.py:L282: # main.tf — Index / Endpoint には prevent_destroy を入れない (state rm pattern)
+- tests/integration/workflow/test_destroy_all_contract.py:L283: # コメント内の説明文の `prevent_destroy = true` は誤検知させない (lifecycle block のみ確認)
+- tests/integration/workflow/test_destroy_all_contract.py:L287: assert "prevent_destroy = true" not in lifecycle_block, (
+- tests/integration/workflow/test_destroy_all_contract.py:L288: "vector_search/main.tf lifecycle block must NOT use prevent_destroy = true "
+- tests/integration/workflow/test_destroy_all_contract.py:L289: "(2026-05-03 incident: 依存閉包の destroy で block されて全 destroy が止まる)"
+- tests/integration/workflow/test_destroy_all_contract.py:L292: # destroy_all.py の persistent list + state rm 呼出し
+- tests/integration/workflow/test_destroy_all_contract.py:L293: assert "PERSISTENT_VVS_RESOURCES" in destroy_all_py
+- tests/integration/workflow/test_destroy_all_contract.py:L294: assert '"module.vector_search.google_vertex_ai_index.property_embeddings"' in destroy_all_py
+- tests/integration/workflow/test_destroy_all_contract.py:L297: in destroy_all_py
+- tests/integration/workflow/test_destroy_all_contract.py:L299: assert "state rm 永続化 VVS" in destroy_all_py, (
+- tests/integration/workflow/test_destroy_all_contract.py:L300: "destroy_all must `state rm` PERSISTENT_VVS_RESOURCES (= GCP 残置 / state 外し)"
+- tests/integration/workflow/test_destroy_all_contract.py:L302: assert "state_rm(INFRA, addr)" in destroy_all_py
+- tests/integration/workflow/test_destroy_all_contract.py:L333: # 2026-05-03 incident postmortem — destroy-all の hang 事故から学んだ契約。
+- tests/integration/workflow/test_destroy_all_contract.py:L335: # 「destroy-all が実際に詰まったときの recovery 経路」は契約として書かれて
+- tests/integration/workflow/test_destroy_all_contract.py:L342: `make destroy-all` が hang した時の最終手段として、Composer / GKE / Cloud Run
+- tests/integration/workflow/test_destroy_all_contract.py:L343: の主要課金 resource を `gcloud delete --async` で直接消す経路を runbook に
+- tests/integration/workflow/test_destroy_all_contract.py:L346: 過去事故: `lifecycle.prevent_destroy = true` で `[6/6]` 本体 destroy が hang
+- tests/integration/workflow/test_destroy_all_contract.py:L348: 無かったため、user が手動で `gcloud composer environments delete --async` 等
+- tests/integration/workflow/test_destroy_all_contract.py:L359: assert "gcloud composer environments delete" in runbook
+- tests/integration/workflow/test_destroy_all_contract.py:L360: assert "gcloud container clusters delete" in runbook
+- tests/integration/workflow/test_destroy_all_contract.py:L361: assert "gcloud run services delete" in runbook
+- tests/integration/workflow/test_destroy_all_contract.py:L364: "emergency kill switch must use --async — sync delete blocks the shell"
+- tests/integration/workflow/test_destroy_all_contract.py:L368: def test_runbook_documents_orphan_state_cleanup_after_emergency_delete() -> None:
+- tests/integration/workflow/test_destroy_all_contract.py:L370: `gcloud delete --async` で GCP 側を直接消すと tfstate に orphan entry が残る。
+- tests/integration/workflow/test_destroy_all_contract.py:L397: resources のみを対象にすべきだが、`gcloud delete --async` で Composer/GKE/Cloud Run
+- tests/integration/workflow/test_destroy_all_contract.py:L494: assert "alreadyExists" in runbook or "soft-delete" in runbook, (
+- tests/integration/workflow/test_destroy_all_contract.py:L495: "runbook must warn that bare `state rm` after partial gcloud delete leaves "
+- tests/integration/workflow/test_destroy_all_contract.py:L501: def test_destroy_all_lessons_learned_documented_in_roadmap() -> None:
+- tests/integration/workflow/test_destroy_all_contract.py:L502: """**lessons learned 契約** (2026-05-03 incident): `prevent_destroy` 撤回 +
+- tests/integration/workflow/test_destroy_all_contract.py:L507: いう要件で再度 `prevent_destroy` を導入する誤った PR が出る (= 同じ事故を
+- tests/integration/workflow/test_destroy_all_contract.py:L516: assert "Instance cannot be destroyed" in roadmap, (
+- tests/integration/workflow/test_destroy_all_contract.py:L519: assert "prevent_destroy" in roadmap, "§4.9 must explain why prevent_destroy was abandoned"
+- tests/integration/workflow/test_docs_canonical_contract.py:L11: (c) 03 の test inventory 整合、(d) runbook §1.4-bis のコスト見積もり (¥870-1,200 / 3h、当日 destroy
+- tests/integration/workflow/test_docs_canonical_contract.py:L34: "deploy-all -> run-all -> destroy-all",
+- tests/integration/workflow/test_docs_canonical_contract.py:L36: "destroy",  # destroy後再現性 / destroy 後再現性
+- tests/integration/workflow/test_docs_canonical_contract.py:L55: "## 1. PDCA メインフロー (`make deploy-all` → `make run-all` → `make destroy-all`)",
+- tests/integration/workflow/test_docs_canonical_contract.py:L102: Composer なし時 ¥570-900 + 常駐系 vs 従量系の分解 + 当日 destroy 前提 +
+- tests/integration/workflow/test_docs_canonical_contract.py:L103: destroy 漏れリスク 24h / 1 週間 / 月放置。
+- tests/integration/workflow/test_docs_canonical_contract.py:L116: assert "当日 destroy 前提" in runbook, (
+- tests/integration/workflow/test_docs_canonical_contract.py:L117: "runbook must explicitly state 'same-day destroy' contract"
+- tests/integration/workflow/test_docs_canonical_contract.py:L119: assert "destroy 漏れリスク" in runbook, (
+- tests/integration/workflow/test_docs_canonical_contract.py:L120: "runbook must document destroy-leak risk (the real failure mode)"
+- tests/integration/workflow/test_docs_canonical_contract.py:L124: f"runbook must enumerate destroy-leak scenarios including {leak_marker}"
+- tests/integration/workflow/test_elasticsearch_workflow_contract.py:L4: or drift back to removed Meilisearch-era wiring.
+- tests/integration/workflow/test_local_workflow_contract.py:L126: "make destroy-all",
+- tests/unit/app/test_adapters.py:L54: publisher.publish({"reasons": ["ndcg_drop=0.05>=0.03"], "日本語": "ok"})
+- tests/unit/app/test_adapters.py:L61: assert decoded == {"reasons": ["ndcg_drop=0.05>=0.03"], "日本語": "ok"}
+- tests/unit/app/test_check_retrain_endpoint.py:L75: def test_check_retrain_publishes_when_ndcg_drops(app_with_search_stub):
+- tests/unit/app/test_check_retrain_endpoint.py:L88: assert any(reason.startswith("ndcg_drop=") for reason in body["reasons"])
+- tests/unit/app/test_feature_fetcher_adapters.py:L82: """Extra features in the FOS view (e.g. display fields) are dropped."""
+- tests/unit/app/test_main_routing.py:L13: - ``GET /ui/dev/ops`` → HTML (destroy-all residual checker)
+- tests/unit/app/test_ops_handler.py:L9: from scripts.ops.destroy_check import Finding
+- tests/unit/app/test_ops_handler.py:L22: def test_destroy_check_returns_summary(monkeypatch) -> None: <redacted>
+- tests/unit/app/test_ops_handler.py:L36: res = client.get("/ops/destroy-check")
+- tests/unit/app/test_ranking_service.py:L230: def test_run_search_rerank_truncates_to_top_k(top_k: int) -> None:
+- tests/unit/app/test_retrain.py:L74: def test_ndcg_drop_triggers_retrain() -> None:
+- tests/unit/app/test_retrain.py:L82: assert any(r.startswith("ndcg_drop=") for r in d.reasons)
+- tests/unit/app/test_retrain.py:L103: def test_ndcg_small_drop_below_threshold() -> None:
+- tests/unit/app/test_retrain.py:L104: """0.02 drop doesn't cross default 0.03 threshold."""
+- tests/unit/app/test_retrain.py:L121: assert any(r.startswith("ndcg_drop=") for r in d.reasons)
+- tests/unit/app/test_search_api.py:L64: def test_search_top_k_truncates_response(search_client) -> None:
+- tests/unit/app/test_search_service.py:L101: # same truncated pool in this unit test.
+- tests/unit/app/test_synonym_expander.py:L16: - ``max_synonyms_per_token`` truncates runaway entries
+- tests/unit/ml/data/test_bigquery_ranker_repository.py:L77: # Extra keys must be silently dropped.
+- tests/unit/ml/training/test_trainer.py:L42: return pd.DataFrame(rows).sort_values("request_id", kind="stable").reset_index(drop=True)
+- tests/unit/pipeline/dags/test_dag_files.py:L48: expected_dag_id = dag_file.removesuffix(".py")
+- tests/unit/pipeline/test_pipeline_trigger.py:L14: payload = {"reasons": ["ndcg_drop"], "parameters": {"force_full_train": True}}
+- tests/unit/scripts/test_deploy_all_step_timing.py:L247: moved or dropped."""
+- tests/unit/scripts/test_destroy_check.py:L3: from scripts.ops import destroy_check
+- tests/unit/scripts/test_destroy_check.py:L7: fail_items, warn_items = destroy_check._classify_bucket_names(
+- tests/unit/scripts/test_destroy_check.py:L29: fail_items, warn_items = destroy_check._classify_artifact_repos(("gcf-artifacts", "mlops"))
+- tests/unit/scripts/test_destroy_check.py:L36: assert destroy_check._filter_high_cost_datasets(
+- tests/unit/scripts/test_destroy_check.py:L42: assert destroy_check._looks_like_api_disabled(
+- tests/unit/scripts/test_destroy_check.py:L45: assert not destroy_check._looks_like_api_disabled("permission denied for caller")
+- tests/unit/scripts/test_elasticsearch_wait.py:L87: than hanging forever. This is the signal to operator that destroy-all is
+- tests/unit/scripts/test_infra_cleanup.py:L1: """Pin scripts/domain/{k8s/kube_cleanup,gcp/{gcs,vertex}_cleanup}.py — destroy-all 用 cleanup.
+- tests/unit/scripts/test_infra_cleanup.py:L3: destroy_all.py から切り出した cleanup 関数群が想定どおり gcloud /
+- tests/unit/scripts/test_infra_cleanup.py:L24: def test_delete_orphan_workloads_invokes_two_kubectl_deletes() -> None:
+- tests/unit/scripts/test_infra_cleanup.py:L29: return _completed(stdout="deleted\n")
+- tests/unit/scripts/test_infra_cleanup.py:L32: kube_cleanup.delete_orphan_workloads()
+- tests/unit/scripts/test_infra_cleanup.py:L35: # ISVC delete in kserve-inference namespace (preserves operator finalizer order)
+- tests/unit/scripts/test_infra_cleanup.py:L39: # ExternalSecret delete in search namespace
+- tests/unit/scripts/test_infra_cleanup.py:L44: def test_delete_orphan_workloads_swallows_kubectl_failure(capsys) -> None:
+- tests/unit/scripts/test_infra_cleanup.py:L45: """cluster 不在で kubectl が rc!=0 を返しても destroy-all をブロックしない。"""
+- tests/unit/scripts/test_infra_cleanup.py:L51: kube_cleanup.delete_orphan_workloads()  # must not raise
+- tests/unit/scripts/test_infra_terraform_state.py:L3: destroy_all で「`-target` destroy が exit 0 でも何も消えていなかった」
+- tests/unit/scripts/test_infra_terraform_state.py:L4: 「empty-state での destroy 再走で依存閉包が recreate された」事故への
+- tests/unit/scripts/test_promote.py:L25: self.removed: list[tuple[list[str], str]] = []
+- tests/unit/scripts/test_promote.py:L30: def remove_version_aliases(self, *, target_aliases: list[str], version: str) -> None:
+- tests/unit/scripts/test_promote.py:L31: self.removed.append((list(target_aliases), str(version)))
+- tests/unit/scripts/test_promote.py:L110: assert a.versioning_registry.removed == [(["production"], "1")]
+- tests/unit/scripts/test_promote.py:L118: assert a.versioning_registry.removed == []
+- tests/unit/scripts/test_setup_policy_guard.py:L14: destroy_all = _read("scripts/setup/destroy_all.py")
+- tests/unit/scripts/test_setup_policy_guard.py:L22: assert "from scripts.setup.seed_minimal_clean import main as seed_clean_main" in destroy_all
+- tests/unit/scripts/test_setup_policy_guard.py:L28: destroy_all = _read("scripts/setup/destroy_all.py")
+- tests/unit/scripts/test_setup_policy_guard.py:L36: assert expected in destroy_all
+- tests/unit/scripts/test_step_timing.py:L3: Used by deploy-all / destroy-all / run-all so the "is it stuck?" judgment has a
+- tests/unit/scripts/test_step_timing.py:L37: step_timing.record("destroy-all", 1, "tf-apply", 11.0, "ok")  # different flow → separate
+- tests/unit/scripts/test_step_timing.py:L44: assert base["tf-apply"] == 3495.0  # median of [3490, 3500] — destroy-all's 11.0 excluded
+- tests/unit/scripts/test_step_timing.py:L48: assert step_timing.baselines("destroy-all")["tf-apply"] == 11.0
+- tests/unit/scripts/test_step_timing.py:L88: step_timing.record("destroy-all", 1, "a", 30.0, "ok")
+- tests/unit/scripts/test_step_timing.py:L89: step_timing.record("destroy-all", 2, "b", 90.0, "ok")
+- tests/unit/scripts/test_step_timing.py:L90: step_timing.print_eta("destroy-all", ["a", "b"])
+- tests/unit/scripts/test_terraform_lock.py:L30: "DESTROY_ALL_FORCE_UNLOCK",
+- tests/unit/scripts/test_terraform_lock.py:L34: monkeypatch.delenv("DESTROY_ALL_FORCE_UNLOCK", raising= <redacted>
+- tests/unit/scripts/test_terraform_lock.py:L39: monkeypatch.delenv("DESTROY_ALL_FORCE_UNLOCK", raising= <redacted>
+- tests/unit/scripts/test_vertex_feature_store_wait.py:L1: """Unit tests for Vertex Feature Store async-delete polling."""
+- tools/generate_makefile_md.sh:L25: echo "- Keep target names stable; migrate implementation paths underneath them."
+- tools/generate_makefile_md.sh:L26: echo "- For naming and migration policy, see [スクリプト規約.md](スクリプト規約.md)."
